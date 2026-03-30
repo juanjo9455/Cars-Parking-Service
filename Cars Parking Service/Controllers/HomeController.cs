@@ -1,0 +1,667 @@
+using System.Diagnostics;
+using Cars_Parking_Service.Models;
+using Microsoft.AspNetCore.Mvc;
+using Cars_Parking_Service.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.JSInterop.Infrastructure;
+using AspNetCoreGeneratedDocument;
+
+namespace Cars_Parking_Service.Controllers
+{
+    public class HomeController : Controller
+    {
+
+        private readonly ApplicationDbContext _context;
+        public HomeController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public IActionResult Index()
+        {
+            return View();
+        }
+
+        public IActionResult Login()
+        {
+            return View();
+        }
+
+        public IActionResult Administrador()
+        {
+
+            // Consultamos los usuarios del sistema
+            ViewBag.Usuarios = _context.usuarios.ToList();
+
+            // Consultamos las ubicaciones del sistema
+            ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
+
+            // Consultamos los parqueaderos del sistema
+            ViewBag.Parqueaderos = _context.parqueaderos.ToList();
+
+            return View();
+        }
+
+        public IActionResult Tabla_Vehiculos(string placa, int? lugar, string estado_servicio, DateTime? fechaIngreso, DateTime? fechaSalida)
+        {
+            var idUsuarioSesion = HttpContext.Session.GetInt32("id");
+            if (!idUsuarioSesion.HasValue)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            // Consultar ingresos base, limitando al usuario autenticado (banco o valet)
+            var query = _context.ingresos
+                .Where(i => i.id_valet == idUsuarioSesion.Value || i.id_banco == idUsuarioSesion.Value)
+                .AsQueryable();
+
+            // =============== 1. Aplicar Filtros ===============
+
+            // Filtro por Placa
+            if (!string.IsNullOrWhiteSpace(placa))
+            {
+                query = query.Where(i => i.placa.Contains(placa));
+            }
+
+            // Filtro por Lugar (id_ubicacion)
+            if (lugar.HasValue)
+            {
+                query = query.Where(i => i.id_ubicacion == lugar.Value);
+            }
+
+            // Filtro por Estado (por default filtramos por estado_servicio, podria ser pago)
+            if (!string.IsNullOrWhiteSpace(estado_servicio))
+            {
+                query = query.Where(i => i.estado_servicio == estado_servicio);
+            }
+
+            // Filtro por Fecha Ingreso (solo la fecha, ignorando la hora)
+            if (fechaIngreso.HasValue)
+            {
+                query = query.Where(i => i.fecha_ingreso != null && i.fecha_ingreso.Value.Date == fechaIngreso.Value.Date);
+            }
+
+            // Filtro por Fecha Salida
+            if (fechaSalida.HasValue)
+            {
+                query = query.Where(i => i.fecha_salida != null && i.fecha_salida.Value.Date == fechaSalida.Value.Date);
+            }
+
+            // Ordenar para mostrar los más recientes primero
+            var ingresos = query.OrderByDescending(i => i.fecha_ingreso).ToList();
+
+            // =============== 2. Pasar Filtros y Datos a View ===============
+            
+            // Pasar ubicaciones para el dropdown de "Lugar"
+            ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
+
+            // Mantener el estado de los filtros en la vista
+            ViewData["FiltroPlaca"] = placa;
+            ViewData["FiltroLugar"] = lugar;
+            ViewData["FiltroEstado"] = estado_servicio;
+            ViewData["FiltroFechaIn"] = fechaIngreso;
+            ViewData["FiltroFechaOut"] = fechaSalida;
+
+            return View(ingresos);
+        }
+        public IActionResult Ingreso_Vehiculos()
+        {
+            CargarDatosFormulario();
+            return View();
+        }
+        public IActionResult Pago()
+        {
+            return View();
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        //Evento para ingresar a un nuevo vehiculo
+
+        // Este atributo indica que este método responde a peticiones HTTP POST
+        // Es decir, cuando el formulario de registro se envía (method="post")
+        [HttpPost]
+        public IActionResult IngresoVehiculos(ingresos obj_ingreso, string firmaBase64, bool sin_objetos_valor = false, List<string> fotos = null, string videoBase64 = null)
+        {
+            CargarDatosFormulario();
+
+            // Validar que el modelo no sea nulo en caso de interrupción en la subida del formulario
+            if (obj_ingreso == null)
+            {
+                ViewBag.Error = "Error al recibir los datos del formulario. Es posible que la conexión se haya interrumpido o las imágenes sean demasiado pesadas. Por favor, intenta de nuevo.";
+                return View("Ingreso_Vehiculos");
+            }
+
+            // **DEBUG: Verificar si llega la firma**
+            System.Diagnostics.Debug.WriteLine($"=== DEBUG FIRMA ===");
+            System.Diagnostics.Debug.WriteLine($"firmaBase64 es null: {firmaBase64 == null}");
+            System.Diagnostics.Debug.WriteLine($"firmaBase64 está vacío: {string.IsNullOrEmpty(firmaBase64)}");
+            System.Diagnostics.Debug.WriteLine($"Longitud firmaBase64: {firmaBase64?.Length ?? 0}");
+            if (!string.IsNullOrEmpty(firmaBase64))
+            {
+                System.Diagnostics.Debug.WriteLine($"Primeros 50 caracteres: {firmaBase64.Substring(0, Math.Min(50, firmaBase64.Length))}");
+            }
+
+            //primero validamos el modelo del vehiculo y que todos los campos sean validos
+            foreach (var state in ModelState)
+            {
+                foreach (var error in state.Value.Errors)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Campo: {state.Key} | Error: {error.ErrorMessage}");
+                }
+            }
+
+            //Normalizar la placa (Mayusculas y sin espacios)
+            obj_ingreso.placa = obj_ingreso.placa?.Trim().ToUpper();
+
+            if (String.IsNullOrWhiteSpace(obj_ingreso.placa))
+            {
+                ViewBag.Error = "La placa del vehiculo es obligatoria";
+                return View("Ingreso_Vehiculos");
+            }
+
+            try
+            {
+                //Buscar si existe un ingreso activo con esa placa
+                var ingresoActivo = _context.ingresos
+                    .Where(i => i.placa == obj_ingreso.placa)
+                    .OrderByDescending(i => i.fecha_ingreso)
+                    .FirstOrDefault();
+
+                //validar si el vehiculo ya esta en el parqueadero
+                if (ingresoActivo != null)
+                {
+                    //caso 1: El vehiculo esta actualente en servicio (no ha salido)
+                    if (ingresoActivo.estado_servicio == "activo")
+                    {
+                        ViewBag.Error = $"El vehiculo con placa {obj_ingreso.placa} ya tiene un servicio activo";
+                        return View("Ingreso_Vehiculos");
+                    }
+
+                    //caso 2: El vehiculo salio pero tiene un pago pendiente
+                    if (ingresoActivo.estado_pago == "pendiente")
+                    {
+                        ViewBag.Error = $"El vehiculo con placa {obj_ingreso.placa} tiene un pago pendiente. Debe cancelarse antes de un nuevo ingreso es este mismo.";
+                        return View("Ingreso_Vehiculos");
+                    }
+                }
+                
+                // Consultar la propina general desde la configuración de la BD
+                var configPropina = _context.configuraciones.FirstOrDefault(c => c.clave == "PropinaGeneral");
+                decimal valorPropinaCalculado = 0;
+                if (configPropina != null && decimal.TryParse(configPropina.valor, out decimal propinaBd))
+                {
+                    valorPropinaCalculado = propinaBd;
+                }
+
+                // Configurar valores automáticos del ingreso
+                obj_ingreso.fecha_ingreso = DateTime.Now;
+                obj_ingreso.fecha_salida = null; 
+                obj_ingreso.estado_pago = "pendiente";
+                obj_ingreso.estado_servicio = "activo";
+                
+                // Si la ubicación tiene un valor fijo inicial, pudieras ponerlo aquí (opcional)
+                obj_ingreso.valor_servicio = 0; 
+                
+                // ASIGNAMOS LA PROPINA GLOBAL QUE CREAMOS HOY:
+                obj_ingreso.valor_propina = valorPropinaCalculado;
+
+                // Convertir la firma de base64 a byte[]
+                // Verificamos que la firma no llegue vacia
+                if (!string.IsNullOrEmpty(firmaBase64)) {
+                    try
+                    {
+                        //remover el prefijo "data:image/png;base64," si existe
+                        var base64Data = firmaBase64.Contains(",")
+                            ? firmaBase64.Split(',')[1]
+                            : firmaBase64;
+
+                        obj_ingreso.firma = Convert.FromBase64String(base64Data);
+                        System.Diagnostics.Debug.WriteLine($"Firma convertida exitosamente. Tamaño: {obj_ingreso.firma.Length} bytes");
+                    }
+                    catch (Exception exFirma)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error al convertir firma: {exFirma.Message}");
+                        ViewBag.Error = "Error al procesar la firma. Por favor, intenta nuevamente.";
+                        return View("Ingreso_Vehiculos");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("ADVERTENCIA: La firma está vacía o es null");
+                    // Opcional: Puedes hacer que sea obligatoria
+                    // ViewBag.Error = "La firma del cliente es obligatoria";
+                    // return View("Ingreso_Vehiculos");
+                }
+
+                // Manejar el checkbox de sin objetos de valor
+                // Verificamos ue llegue true o fue marcado
+                if (sin_objetos_valor) {
+                    // Verificamos si notas ya era vacia
+                    obj_ingreso.notas = string.IsNullOrWhiteSpace(obj_ingreso.notas)
+                        ? "Sin objetos de valor"
+                        : obj_ingreso.notas;
+                }
+
+                _context.ingresos.Add(obj_ingreso);
+                _context.SaveChanges();
+
+                // Guardamos las fotos en la tabla imagenes
+                if (fotos != null && fotos.Any()) {
+                    foreach (var fotoBase64 in fotos.Take(10)){
+                        if (!string.IsNullOrEmpty(fotoBase64)) {
+                            var base64Data = fotoBase64.Contains(",")
+                                ? fotoBase64.Split(',')[1]
+                                : fotoBase64;
+
+                            var imagen = new imagenes
+                            {
+                                id_ingreso = obj_ingreso.id_ingreso,
+                                dato_imagen = Convert.FromBase64String(base64Data)
+                            };
+                            _context.imagenes.Add(imagen);
+                        }
+                    }
+                    _context.SaveChanges();
+                }
+
+                // Guardar el video si existe
+                if (!string.IsNullOrEmpty(videoBase64))
+                {
+                    var base64Data = videoBase64.Contains(",") ? videoBase64.Split(',')[1] : videoBase64;
+                    var videoImagen = new imagenes
+                    {
+                        id_ingreso = obj_ingreso.id_ingreso,
+                        dato_imagen = Convert.FromBase64String(base64Data)
+                    };
+                    _context.imagenes.Add(videoImagen);
+                    _context.SaveChanges();
+                }
+
+                return RedirectToAction("Tabla_Vehiculos", "Home");
+            }
+            catch (DbUpdateException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DbUpdateException: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Inner Exception: {ex.InnerException?.Message}");
+                ViewBag.Error = "Error al registrar el vehiculo. verifica que todos los datos sean correctos.";
+                return View("Ingreso_Vehiculos");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Exception: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
+                ViewBag.Error = "Ocurrio un error inesperado. Por favor, intenta nuevamente.";
+                return View("Ingreso_Vehiculos");
+            }
+        }
+
+        private void CargarDatosFormulario()
+        {
+            ViewBag.Valets = _context.usuarios.Where(u => u.id_rol == 1).ToList();
+            ViewBag.Bancos = _context.usuarios.Where(u => u.id_rol == 2).ToList();
+            ViewBag.Parqueaderos = _context.parqueaderos.ToList();
+            ViewBag.UbicacionesS = _context.ubicacion_servicios.ToList();
+
+            // Obtener el usuario de la sesion
+            var nombres = HttpContext.Session.GetString("nombre");
+            var apellidos = HttpContext.Session.GetString("apellido");
+            var id = HttpContext.Session.GetInt32("id");
+            var rol = HttpContext.Session.GetInt32("id_rol");
+
+            // Enviamos la sesion a la vista
+            ViewBag.UsuarioSesion = new {
+                nombre = nombres,
+                apellido = apellidos,
+                IdUsuario = id,
+                usuario_rol = rol
+            };
+        }
+
+        // Consultamos la tabla de ingresos
+        public IActionResult Tabla_Ingresos() {
+            var ingresos = _context.ingresos
+                .Include(i => i.placa)
+                .Include(i => i.fecha_ingreso)
+                .Include(i => i.fecha_salida)
+                .Include(i => i.estado_pago)
+                .Include(i => i.estado_servicio)
+                .Include(i => i.id_valet)
+                .Include(i => i.id_banco)
+                .Include(i => i.id_parqueadero)
+                .Include(i => i.id_ubicacion)
+                .Include(i => i.notas)
+                .Include(i => i.firma)
+                .Include(i => i.valor_servicio)
+                .Include(i => i.valor_propina)
+                .Include(i => i.dni)
+                .Include(i => i.telefono)
+                .ToList();
+            return View(ingresos);
+        }
+
+        public IActionResult ActualizarEstadosIngreso(int id_ingreso, string estado_pago, string estado_servicio) {
+            var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            if (ingreso == null) {
+                return NotFound();
+            }
+
+            // Validación 1: No permitir finalizar si no está pagado
+            if (estado_servicio == "finalizado" && estado_pago != "pagado")
+            {
+                TempData["Error"] = $"El servicio del vehículo con placa {ingreso.placa} aun no esta pago";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            // Validación 2: No permitir cancelar si ya está pagado
+            if (estado_servicio == "cancelado" && estado_pago == "pagado")
+            {
+                TempData["Error"] = "No se puede cancelar un servicio que ya está pagado.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            ingreso.estado_pago = estado_pago;
+            ingreso.estado_servicio = estado_servicio;
+
+            if (estado_servicio == "finalizado") {
+                ingreso.fecha_salida = DateTime.Now;
+            }
+
+            _context.SaveChanges();
+
+            return RedirectToAction("Tabla_Vehiculos");
+        }
+
+        public override void OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext context)
+        {
+            // Verifica primero si el usuario tiene sesión, si no, lo manda a login inmediatamente
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("dni")))
+            {
+                context.Result = new RedirectToActionResult("Login", "Auth", null);
+                return;
+            }
+
+            // Cabeceras mágicas para evitar que el navegador guarde la página
+            HttpContext.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+            HttpContext.Response.Headers["Pragma"] = "no-cache";
+            HttpContext.Response.Headers["Expires"] = "-1";
+            
+            base.OnActionExecuting(context);
+        }
+
+        // =========================== Usuario =========================== \\
+
+        // Acción para editar el usuario desde el panel del admin
+        [HttpPost]
+        public IActionResult EditarUsuario(int id_usuario, string dni, string nombre, string apellido, string telefono, int edad, int id_rol, string correo)
+        {
+            // Validar si el nuevo DNI ya le pertenece a OTRO usuario
+            bool existeDni = _context.usuarios
+                .Any(u => u.dni == dni && u.id_usuario != id_usuario);
+
+            // Validar si el correo ya le pertenece a OTRO usuario
+            bool existeCorreo = _context.usuarios
+                .Any(u => u.correo.Trim().ToLower() == correo.Trim().ToLower() && u.id_usuario != id_usuario);
+
+            if (existeDni)
+            {
+                TempData["Error"] = $"El número de identificación (DNI) '{dni}' ya está en uso por otro usuario.";
+                return RedirectToAction("Administrador");
+            }
+            if (existeCorreo)
+            {
+                TempData["Error"] = $"El correo '{correo}' ya está en uso por otro usuario.";
+                return RedirectToAction("Administrador");
+            }
+
+            var usuario = _context.usuarios.FirstOrDefault(u => u.id_usuario == id_usuario);
+            if (usuario != null)
+            {
+                usuario.dni = dni;
+                usuario.nombres = nombre;
+                usuario.apellidos = apellido;
+                usuario.telefono = telefono;
+                usuario.edad = edad; // NUEVO
+                usuario.id_rol = id_rol;
+                usuario.correo = correo;
+
+                _context.SaveChanges();
+                TempData["Mensaje"] = "Los datos del usuario se actualizaron correctamente.";
+            }
+            return RedirectToAction("Administrador");
+        }
+
+        // Acción para eliminar un usuario desde el panel del admin
+        [HttpPost]
+        public IActionResult EliminarUsuario(int id_usuario)
+        {
+            var usuario = _context.usuarios.FirstOrDefault(u => u.id_usuario == id_usuario);
+            if (usuario != null)
+            {
+                _context.usuarios.Remove(usuario);
+                _context.SaveChanges();
+                TempData["Mensaje"] = "El usuario fue eliminado del sistema exitosamente.";
+            }
+            return RedirectToAction("Administrador");
+        }
+
+
+        // =========================== Ubicacion =========================== \\
+
+        // Acción para registrar una nueva ubicación
+        [HttpPost]
+        public IActionResult RegistrarUbicacion(string nombre_ubicacion, string direccion, string ciudad, decimal valor_servicio)
+        {
+            try
+            {
+                // Validar si la ubicación ya existe por nombre
+                bool existeUbicacion = _context.ubicacion_servicios
+                    .Any(u => u.nombre_ubicacion.Trim().ToLower() == nombre_ubicacion.Trim().ToLower());
+
+                // Validar si la dirección ya existe
+                bool existeDireccion = _context.ubicacion_servicios
+                    .Any(u => u.direccion.Trim().ToLower() == direccion.Trim().ToLower());
+
+                if (existeUbicacion)
+                {
+                    TempData["Error"] = $"La ubicación con el nombre '{nombre_ubicacion}' ya se encuentra registrada en el sistema.";
+                    return RedirectToAction("Administrador");
+                }
+                if (existeDireccion)
+                {
+                    TempData["Error"] = $"Ya existe una ubicación registrada con la dirección '{direccion}'.";
+                    return RedirectToAction("Administrador");
+                }
+
+                var nuevaUbicacion = new ubicacion_servicios
+                {
+                    nombre_ubicacion = nombre_ubicacion,
+                    direccion = direccion,
+                    ciudad = ciudad,
+                    valor_servicio = valor_servicio
+                };
+
+                _context.ubicacion_servicios.Add(nuevaUbicacion);
+                _context.SaveChanges();
+
+                TempData["Mensaje"] = "¡La ubicación se ha registrado exitosamente en el sistema!";
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "Ocurrió un error al registrar la ubicación. Por favor, intenta de nuevo.";
+            }
+
+            return RedirectToAction("Administrador");
+        }
+
+        // Acción para editar una ubicación desde el panel de admin
+        [HttpPost]
+        public IActionResult EditarUbicacion(int id_ubicacion, string nombre_ubicacion, string direccion, string ciudad, decimal valor_servicio)
+        {
+            // Validar nombre duplicado (excluyendo el actual)
+            bool existeNombre = _context.ubicacion_servicios
+                .Any(u => u.nombre_ubicacion.Trim().ToLower() == nombre_ubicacion.Trim().ToLower() && u.id_ubicacion != id_ubicacion);
+
+            // Validar dirección duplicada (excluyendo el actual)
+            bool existeDireccion = _context.ubicacion_servicios
+                .Any(u => u.direccion.Trim().ToLower() == direccion.Trim().ToLower() && u.id_ubicacion != id_ubicacion);
+
+            if (existeNombre)
+            {
+                TempData["Error"] = $"Ya existe una ubicación con el nombre '{nombre_ubicacion}'.";
+                return RedirectToAction("Administrador");
+            }
+            if (existeDireccion)
+            {
+                TempData["Error"] = $"Ya existe una ubicación con la dirección '{direccion}'.";
+                return RedirectToAction("Administrador");
+            }
+
+            var ubicacion = _context.ubicacion_servicios.FirstOrDefault(u => u.id_ubicacion == id_ubicacion);
+            if (ubicacion != null)
+            {
+                ubicacion.nombre_ubicacion = nombre_ubicacion;
+                ubicacion.direccion = direccion;
+                ubicacion.ciudad = ciudad;
+                ubicacion.valor_servicio = valor_servicio;
+                _context.SaveChanges();
+                TempData["Mensaje"] = "La ubicación se actualizó correctamente.";
+            }
+            else
+            {
+                TempData["Error"] = "No se encontró la ubicación a editar.";
+            }
+            return RedirectToAction("Administrador");
+        }
+
+        // =========================== Parqueadero =========================== \\
+
+        // Acción para registrar un nuevo parqueadero
+        [HttpPost]
+        public IActionResult RegistrarParqueadero(string nombre_parqueadero, string direccion, string ciudad, decimal tarifa)
+        {
+            try
+            {
+                // Validar si el parqueadero ya existe por nombre
+                bool existeParqueadero = _context.parqueaderos
+                    .Any(p => p.nombre_parqueadero.Trim().ToLower() == nombre_parqueadero.Trim().ToLower());
+
+                // Validar si la dirección ya existe
+                bool existeDireccion = _context.parqueaderos
+                    .Any(p => p.direccion.Trim().ToLower() == direccion.Trim().ToLower());
+
+                if (existeParqueadero)
+                {
+                    TempData["Error"] = $"El parqueadero con el nombre '{nombre_parqueadero}' ya se encuentra registrado en el sistema.";
+                    return RedirectToAction("Administrador");
+                }
+                if (existeDireccion)
+                {
+                    TempData["Error"] = $"Ya existe un parqueadero registrado con la dirección '{direccion}'.";
+                    return RedirectToAction("Administrador");
+                }
+
+                var nuevoParqueadero = new parqueaderos
+                {
+                    nombre_parqueadero = nombre_parqueadero,
+                    direccion = direccion,
+                    ciudad = ciudad,
+                    tarifa = tarifa
+                };
+
+                _context.parqueaderos.Add(nuevoParqueadero);
+                _context.SaveChanges();
+
+                TempData["Mensaje"] = "¡El parqueadero se ha registrado exitosamente en el sistema!";
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error Parqueadero: {ex.Message}");
+                TempData["Error"] = "Ocurrió un error al registrar el parqueadero. Por favor, intenta de nuevo.";
+            }
+
+            return RedirectToAction("Administrador");
+        }
+
+        // Acción para editar un parqueadero desde el panel de admin
+        [HttpPost]
+        public IActionResult EditarParqueadero(int id_parqueadero, string nombre_parqueadero, string direccion, string ciudad, decimal tarifa)
+        {
+            // Validar nombre duplicado (excluyendo el actual)
+            bool existeNombre = _context.parqueaderos
+                .Any(p => p.nombre_parqueadero.Trim().ToLower() == nombre_parqueadero.Trim().ToLower() && p.id_parqueadero != id_parqueadero);
+
+            // Validar dirección duplicada (excluyendo el actual)
+            bool existeDireccion = _context.parqueaderos
+                .Any(p => p.direccion.Trim().ToLower() == direccion.Trim().ToLower() && p.id_parqueadero != id_parqueadero);
+
+            if (existeNombre)
+            {
+                TempData["Error"] = $"Ya existe un parqueadero con el nombre '{nombre_parqueadero}'.";
+                return RedirectToAction("Administrador");
+            }
+            if (existeDireccion)
+            {
+                TempData["Error"] = $"Ya existe un parqueadero con la dirección '{direccion}'.";
+                return RedirectToAction("Administrador");
+            }
+
+            var parqueadero = _context.parqueaderos.FirstOrDefault(p => p.id_parqueadero == id_parqueadero);
+            if (parqueadero != null)
+            {
+                parqueadero.nombre_parqueadero = nombre_parqueadero;
+                parqueadero.direccion = direccion;
+                parqueadero.ciudad = ciudad;
+                parqueadero.tarifa = tarifa;
+                _context.SaveChanges();
+                TempData["Mensaje"] = "Los datos del parqueadero se actualizaron correctamente.";
+            }
+            else
+            {
+                TempData["Error"] = "No se encontró el parqueadero a editar.";
+            }
+            return RedirectToAction("Administrador");
+        }
+
+        // Acción para eliminar una ubicación desde el panel del admin
+        [HttpPost]
+        public IActionResult EliminarUbicacion(int id_ubicacion)
+        {
+            var ubicacion = _context.ubicacion_servicios.FirstOrDefault(u => u.id_ubicacion == id_ubicacion);
+            if (ubicacion != null)
+            {
+                _context.ubicacion_servicios.Remove(ubicacion);
+                _context.SaveChanges();
+                TempData["Mensaje"] = "La ubicación fue eliminada exitosamente.";
+            }
+            else
+            {
+                TempData["Error"] = "No se encontró la ubicación a eliminar.";
+            }
+            return RedirectToAction("Administrador");
+        }
+
+        // Acción para eliminar un parqueadero desde el panel del admin
+        [HttpPost]
+        public IActionResult EliminarParqueadero(int id_parqueadero)
+        {
+            var parqueadero = _context.parqueaderos.FirstOrDefault(p => p.id_parqueadero == id_parqueadero);
+            if (parqueadero != null)
+            {
+                _context.parqueaderos.Remove(parqueadero);
+                _context.SaveChanges();
+                TempData["Mensaje"] = "El parqueadero fue eliminado exitosamente.";
+            }
+            else
+            {
+                TempData["Error"] = "No se encontró el parqueadero a eliminar.";
+            }
+            return RedirectToAction("Administrador");
+        }
+    }
+}

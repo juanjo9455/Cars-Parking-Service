@@ -1,0 +1,177 @@
+﻿@{
+    ViewData["Title"] = "Estado del Servicio";
+}
+
+<section class="servicio-section">
+    <!-- Panel izquierdo: logo -->
+    <div class="servicio-header">
+        <div class="logo-container">
+            <img src="~/img/logo cars parking.png" class="logo-image" alt="Logo Cars Parking"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
+            <!-- Fallback si no carga la imagen -->
+            <div style="display:none; flex-direction:column; align-items:center; color:#fff;">
+                <div style="font-size:48px;">🚗</div>
+                <div style="font-family:'Syne',sans-serif; font-size:18px; font-weight:800; margin-top:8px;">Cars Parking</div>
+                <div style="font-size:11px; letter-spacing:3px; opacity:0.7; margin-top:2px;">SERVICE</div>
+            </div>
+        </div>
+        <div class="header-badge">Parking Service</div>
+    </div>
+
+    <!-- Panel derecho: datos -->
+    <div class="vehiculo">
+        <h1 class="titulo-vehiculo">Mi Vehículo</h1>
+        <p class="titulo-subtexto">Información del servicio activo</p>
+
+        <ol class="descripcion-servicio">
+            <li>
+                <p class="campo-label">Placa del Vehículo</p>
+                <h4 class="campo-valor">ABC123</h4>
+            </li>
+            <li>
+                <p class="campo-label">Nombre del Cliente</p>
+                <h4 class="campo-valor">Juan José Correa</h4>
+            </li>
+            <li>
+                <p class="campo-label">Número Celular</p>
+                <h4 class="campo-valor">3011106690</h4>
+            </li>
+            <li>
+                <p class="campo-label">Estado</p>
+                <h4 class="campo-valor" style="color:#e74c3c; display:flex; align-items:center; gap:6px;">
+                    <span style="width:8px;height:8px;background:#e74c3c;border-radius:50%;display:inline-block;box-shadow:0 0 0 3px rgba(231,76,60,0.2)"></span>
+                    En espera
+                </h4>
+            </li>
+        </ol>
+
+        <button type="submit" class="servicio-btn" id="btn-solicitar">
+            🚗 Solicitar Vehículo
+        </button>
+    </div>
+
+</section>
+
+<!-- ======= Modal Pedir viculo y Pagar ======= -->
+
+<div class="modal-pagar" id="modal-pagar">
+    <div class="informacion" id="informacion_1">
+
+        <!-- HEADER: Tiempo de llegada -->
+        <div class="header-tiempo">
+            <div class="etiqueta-llegada">⏱ Tu vehículo llega en :
+            <!--espcio para variable de tiempo-->
+            <!--EJ:-->
+            8 min
+            </div>
+            <div class="distancia-tag">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
+                1.4 km de distancia
+            </div>
+
+            <div class="barra-track">
+                <div class="barra-fill"></div>
+            </div>
+
+            <div class="carro-container">
+                <span class="carro-icono">🚗</span>
+                <div class="ruta-puntitos">
+                    <span></span><span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <span class="destino-icono">📍</span>
+            </div>
+        </div>
+
+        <!-- INFO DEL CONDUCTOR -->
+        <div class="conductor-section">
+            <div class="conductor-avatar">👨‍✈️</div>
+            <div class="conductor-info">
+                <div class="conductor-nombre">Carlos Mendoza</div>
+                <div class="conductor-detalle">
+                    <span class="estrellas">★★★★★</span>
+                    <span>4.9</span>
+                    <span class="placa-tag">ABC-123</span>
+                </div>
+            </div>
+            <div style="font-size:13px; color:#aaa;">Toyota Corolla<br><span style="color:#555; font-weight:600;">Blanco</span></div>
+        </div>
+
+        <!-- RESUMEN DEL VIAJE -->
+        <div class="resumen-section">
+            <div class="resumen-titulo">Resumen del viaje</div>
+            <div class="resumen-fila">
+                <span>Tarifa base</span>
+                <span class="resumen-valor">$3.500</span>
+            </div>
+            <div class="resumen-fila">
+                <span>Distancia (4.2 km)</span>
+                <span class="resumen-valor">$6.300</span>
+            </div>
+            <div class="resumen-fila">
+                <span>Cargo por servicio</span>
+                <span class="resumen-valor">$700</span>
+            </div>
+            <div class="resumen-total-fila">
+                <span class="total-label">Total a pagar</span>
+                <span class="total-valor">$10.500</span>
+            </div>
+        </div>
+
+        <!-- MÉTODOS DE PAGO -->
+        <div class="pago-section">
+            <div class="pago-titulo">Método de pago</div>
+            <div class="metodos-grid">
+                <button class="metodo-btn activo" onclick="seleccionar(this)">
+                    <span class="ico">💵</span>Efectivo
+                </button>
+                <button class="metodo-btn" onclick="seleccionar(this)">
+                    <span class="ico"><i class="fa-solid fa-qrcode"></i></span>QR
+                </button>
+                <button class="metodo-btn" onclick="seleccionar(this)">
+                    <span class="ico">
+                        <img src="~/img/nequi.ico" styles="width:22px; height:22px; object-fit:contain;" />
+                    </span>Nequi
+                </button>
+            </div>
+
+            <button class="btn-pagar" id="btn-pagar">
+                <span>🔒</span> Confirmar y Pagar
+            </button>
+        </div>
+    </div>
+    <div class="informacion-2" id="informacion_2">
+        <div class="resumen-section-2">
+            <div class="confirmacion-header">
+                <div class="check-circle">✓</div>
+                <h2 class="confirmacion-titulo">¡Solicitud Enviada!</h2>
+                <p class="confirmacion-sub">Tu vehículo está en camino</p>
+            </div>
+
+            <div class="confirmacion-body">
+
+                <!-- Instrucción principal -->
+                <div class="instruccion-card">
+                    <div class="instruccion-icono">🏁</div>
+                    <p class="instruccion-texto">
+                        Acérquese al <strong>Valet Parking</strong><br>para realizar el pago
+                    </p>
+                </div>
+
+                <!-- Tiempo estimado -->
+                <div class="tiempo-card">
+                    <div class="tiempo-icono-wrap">
+                        <span class="carro-anim">🚗</span>
+                    </div>
+                    <div class="tiempo-info">
+                        <div class="tiempo-label">Tu vehículo llega en</div>
+                        <div class="tiempo-valor">
+                            <span id="confirmacion-minutos">8</span>
+                            <span class="tiempo-unidad">minutos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,48 @@
+﻿@model Cars_Parking_Service.Models.parqueaderos
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>parqueaderos</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="direccion" class="control-label"></label>
+                <input asp-for="direccion" class="form-control" />
+                <span asp-validation-for="direccion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ciudad" class="control-label"></label>
+                <input asp-for="ciudad" class="form-control" />
+                <span asp-validation-for="ciudad" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="nombre_parqueadero" class="control-label"></label>
+                <input asp-for="nombre_parqueadero" class="form-control" />
+                <span asp-validation-for="nombre_parqueadero" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="tarifa" class="control-label"></label>
+                <input asp-for="tarifa" class="form-control" />
+                <span asp-validation-for="tarifa" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,179 @@
+﻿@{
+    ViewData["Title"] = "Ingresar Vehiculo";
+}
+
+<div class="ingreso-container">
+    <div class="logo-section">
+        <div class="car-logo">
+            <img src="~/img/logo cars parking.png" alt="Cars Parking Logo" class="logo-img">
+        </div>
+    </div>
+
+    <h1 class="ingreso-title">Ingresar Vehiculo</h1>
+
+    @if (ViewBag.Error != null) {
+        <div class="error-credenciales">
+            <span class="error-text">⚠️ @ViewBag.Error</span>
+        </div>
+    }
+
+    <form method="post" asp-action="IngresoVehiculos" asp-controller="Home" id="ingresoForm" enctype="multipart/form-data">
+        <div class="input-group">
+            <input type="text"
+                   name="placa"
+                   id="placa"
+                   placeholder="ABC123"
+                   pattern="[A-Z]{3}[0-9]{3}"
+                   maxlength="6"
+                   style="text-transform: uppercase;"
+                   required>
+            <div class="error-message" id="errorPlaca">⚠️ La Placa es obligatoria (Formato: ABC123)</div>
+        </div>
+
+        <div class="input-group">
+            <input type="text"
+                   name="dni"
+                   id="dni"
+                   placeholder="Identificacion del Cliente"
+                   maxlength="20">
+        </div>
+
+        <div class="input-group">
+            <input type="tel"
+                   name="telefono"
+                   id="telefono"
+                   placeholder="Teléfono del Cliente"
+                   maxlength="20"
+                   required>
+            <div class="error-message" id="errorTelefono">⚠️ El teléfono es obligatorio</div>
+        </div>
+
+        <!-- Selección de Valet -->
+        <div class="input-group">
+                <select name="id_valet" id="id_valet" style="width:100%;" required>
+                <option value="">Selecciona un Valet</option>
+                @foreach(var valet in ViewBag.Valets){
+                    <option value="@valet.id_usuario">@valet.nombres @valet.apellidos</option>
+                }
+                
+                @if (ViewBag.UsuarioSesion?.usuario_rol == 2)
+                {
+                    <option value="@ViewBag.UsuarioSesion?.IdUsuario">@ViewBag.UsuarioSesion?.nombre @ViewBag.UsuarioSesion?.apellido (banco)</option>
+                }
+            </select>
+            <div class="error-message" id="errorValet">⚠️ Selecciona un valet</div>
+        </div>
+
+        <!-- Banco (Usuario en sesión - no editable) -->
+        <div class="input-group">
+            <input type="text"
+                    id="banco_display"
+                    value="@ViewBag.UsuarioSesion?.nombre @ViewBag.UsuarioSesion?.apellido"
+                    placeholder="Banco/Cajero"
+                    readonly
+                    style="background-color: #f5f5f5; cursor: not-allowed;"
+                    required>
+
+            <input type="hidden"
+                    name="id_banco"
+                    value="@ViewBag.UsuarioSesion?.IdUsuario">
+
+            <div class="error-message" id="errorBanco">⚠️ No hay un cajero en sesión</div>
+        </div>
+
+        <!-- Selección de Parqueadero -->
+        <div class="input-group">
+                <select name="id_parqueadero" id="id_parqueadero" style="width:100%;" required>
+                <option value="">Selecciona un Parqueadero</option>
+                    @foreach (var parqueadero in ViewBag.Parqueaderos)
+                    {
+                        <option value="@parqueadero.id_parqueadero">@parqueadero.nombre_parqueadero</option>
+                    }
+            </select>
+            <div class="error-message" id="errorParqueadero">⚠️ Selecciona un parqueadero</div>
+        </div>
+
+        <!-- Selección de Ubicación -->
+        <div class="input-group">
+                <select name="id_ubicacion" id="id_ubicacion" style="width:100%;" required>
+                <option value="">Selecciona una Ubicación</option>
+                    @foreach (var ubicacionesS in ViewBag.UbicacionesS)
+                    {
+                        <option value="@ubicacionesS.id_ubicacion">@ubicacionesS.nombre_ubicacion</option>
+                    }
+            </select>
+            <div class="error-message" id="errorUbicacion">⚠️ Selecciona una ubicación</div>
+        </div>
+
+        <!-- Notas/Valuables -->
+        <div class="input-group notas-group">
+            <textarea name="notas" id="notas" placeholder="Objetos de valor (opcional)" rows="3"></textarea>
+            <input type="hidden" name="sin_objetos_valor" id="sin_objetos_valor_hidden" value="false" style="width:100%;" />
+            <button type="button" class="notas-toggle-btn" id="noValuablesBtn">
+                <i class="fa-solid fa-shield-check"></i>
+                No hay objetos de valor
+            </button>
+        </div>
+
+        <!-- ========== FOTOS Y VIDEO DEL VEHÍCULO ========== -->
+        <div class="photo-section">
+            <h4 class="photo-title">Fotos y Video del Vehiculo</h4>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="photo-btn" id="tomarFotoBtn">
+                    <svg class="camera-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    Tomar Foto
+                </button>
+                <button type="button" class="photo-btn" id="grabarVideoBtn">
+                    <svg class="camera-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="7" width="15" height="10" rx="2" ry="2"></rect>
+                        <polygon points="21 7 21 17 23 17 23 7 21 7"></polygon>
+                    </svg>
+                    Grabar Video
+                </button>
+            </div>
+
+            <p class="photo-counter" id="photoCounter">0 fotos seleccionadas (max. 10)</p>
+
+            <!-- Contenedor para preview de fotos -->
+            <div class="photos-preview" id="photosPreview"></div>
+
+            <!-- Contenedor para preview de video -->
+            <div id="videoPreviewContainer" style="margin-top: 12px;"></div>
+
+            <!-- Input oculto para invocar la cámara nativa del dispositivo SOLO para fotos -->
+            <input type="file" id="cameraInput" accept="image/*" capture style="display:none;">
+            <!-- Input oculto para grabar video (no se usa para seleccionar, solo para compatibilidad) -->
+            <input type="file" id="videoInput" accept="video/*" capture style="display:none;">
+
+            <!-- Inputs ocultos para enviar los archivos como base64 -->
+            <div id="fotosBase64Container"></div>
+            <input type="hidden" name="videoBase64" id="videoBase64Input" />
+            <div class="error-message" id="errorMedia" style="display:none;"></div>
+        </div>
+
+        <!-- Firma del cliente (canvas centralizado, solo lógica de site.js) -->
+        <div class="firma-section">
+            <h3 class="firma-title">Firma del Cliente</h3>
+            <div class="firma-canvas-container" style="width:100%;max-width:340px;margin:auto;">
+                <canvas id="firmaCanvas" width="340" height="160" style="width:100%;height:160px;border:1px solid #ccc;touch-action: none;"></canvas>
+            </div>
+            <div class="firma-actions">
+                <button type="button" class="firma-btn-limpiar" id="limpiarFirma">
+                    <i class="fa-solid fa-eraser"></i> Limpiar
+                </button>
+            </div>
+            <div class="error-message" id="errorFirma">⚠️ La firma del cliente es obligatoria</div>
+            <input type="hidden" id="firmaBase64" name="firmaBase64">
+        </div>
+        <button type="submit" class="ingreso-btn" id="acceder">Ingresar</button>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/js/ingreso-vehiculos.js" asp-append-version="true" defer></script>
+    <script src="~/js/ingreso-vehiculos-camera.js" asp-append-version="true" defer></script>
+}

@@ -1,0 +1,370 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.login-container {
+    background: transparent;
+    padding: 50px 40px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+/* ===== Logo ===== */
+.logo-section {
+    margin-bottom: 30px;
+}
+
+.logo-img {
+    width: 250px;
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+/* ===== Titulo ===== */
+.login-title {
+    color: black;
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 30px;
+}
+
+/* ===== Formulario - Inputs ===== */
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    background: white;
+    color: var(--ui-input-text);
+    border: 1px solid var(--ui-input-border);
+    border-radius: var(--ui-radius-sm) !important;
+    transition: all 0.3s ease;
+}
+
+.input-group input::placeholder {
+    color: var(--ui-input-placeholder);
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--ui-input-border-focus);
+    box-shadow: var(--ui-input-focus-shadow);
+}
+
+/* Estilos adicionales para select y textarea en el ingreso de vehiculos */
+.input-group select,
+.input-group textarea {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    background: white;
+    color: var(--ui-input-text);
+    border: 1px solid var(--ui-input-border);
+    border-radius: var(--ui-radius-sm) !important;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.input-group select:focus,
+.input-group textarea:focus {
+    outline: none;
+    border-color: var(--ui-input-border-focus);
+    box-shadow: var(--ui-input-focus-shadow);
+}
+
+/* Validaciones para select y textarea */
+.input-group select.input-error,
+.input-group textarea.input-error {
+    border-color: #d32f2f;
+}
+
+.input-group select.input-success,
+.input-group textarea.input-success {
+    border-color: #2e7d32;
+}
+
+/* El select muestra el color #999 si no se ha elegido opción válida */
+.input-group select:invalid {
+    color: #999;
+}
+
+.input-group select:valid {
+    color: #333;
+}
+
+/* ===== Validacion - Estados de error y exito ===== */
+.input-group input.input-error {
+    border-color: #d32f2f;
+}
+
+.input-group input.input-success {
+    border-color: #2e7d32;
+}
+
+.error-message {
+    display: none;
+    color: #d32f2f;
+    font-size: 13px;
+    text-align: left;
+    margin-top: 6px;
+    padding-left: 5px;
+}
+
+.error-message.visible {
+    display: block;
+}
+
+/* ===== Boton ===== */
+.login-btn {
+    width: 100%;
+    padding: 15px;
+    background: #b71c1c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.3s ease;
+}
+
+.login-btn:hover {
+    background: #8b0000;
+}
+
+/* ===== Error de Credenciales ===== */
+.error-credenciales {
+    background: #ffebee;
+    border: 2px solid #d32f2f;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.error-text {
+    color: #c62828;
+    font-size: 14px;
+    font-weight: 600;
+    display: block;
+    text-align: center;
+}
+
+/* ===== Mensaje de éxito ===== */
+.success-message {
+    background: #e8f5e9;
+    border: 2px solid #2e7d32;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    color: #2e7d32;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* ===== Links ===== */
+.forgot-password {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px; 
+}
+
+.forgot-password a {
+    color: #b71c1c;
+    text-decoration: none;
+    font-size: 14px;
+    transition: opacity 0.3s ease;
+}
+
+.forgot-password a:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+}
+
+/* ===== Estilos para la recuperacion de contraseña ===== */
+.forgot-password-container {
+    width: 100%;
+    max-width: 520px;
+}
+
+.forgot-card {
+    background: white;
+    padding: 40px 35px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.forgot-header {
+    margin-bottom: 20px;
+}
+
+.forgot-title {
+    font-size: 28px;
+    margin-bottom: 10px;
+    color: #1f2937;
+}
+
+.forgot-subtitle {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.code-inputs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.code-input {
+    width: 48px !important;
+    height: 56px;
+    text-align: center;
+    font-size: 24px !important;
+    font-weight: 700;
+    padding: 0 !important;
+}
+
+.code-input.error {
+    border-color: #d32f2f !important;
+}
+
+.resend-section {
+    margin: 14px 0 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.timer-text {
+    font-size: 13px;
+    color: #666;
+}
+
+.resend-btn {
+    border: 1px solid #d1d5db;
+    background: white;
+    color: #b71c1c;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.resend-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 15px;
+    background: #b71c1c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.submit-btn:hover {
+    background: #8b0000;
+}
+
+.back-to-login {
+    margin-top: 16px;
+}
+
+.back-link {
+    color: #b71c1c;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+/* ===== Responsive móvil ===== */
+@media (max-width: 576px) {
+    body {
+        align-items: flex-start;
+        padding: 10px;
+    }
+
+    .login-container {
+        max-width: 100%;
+        padding: 24px 14px;
+    }
+
+    .logo-section {
+        margin-bottom: 16px;
+    }
+
+    .logo-img {
+        width: 170px;
+        margin-bottom: 10px;
+    }
+
+    .login-title,
+    .forgot-title {
+        font-size: 22px;
+        margin-bottom: 18px;
+    }
+
+    .input-group {
+        margin-bottom: 14px;
+    }
+
+    .input-group input,
+    .input-group select,
+    .input-group textarea,
+    .login-btn,
+    .submit-btn {
+        padding: 12px;
+        font-size: 15px;
+    }
+
+    .forgot-card {
+        padding: 22px 14px;
+        border-radius: 12px;
+    }
+
+    .code-input {
+        width: 42px !important;
+        height: 50px;
+        font-size: 22px !important;
+    }
+}

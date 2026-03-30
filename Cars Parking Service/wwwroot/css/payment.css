@@ -1,0 +1,1408 @@
+﻿* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f4f4f7;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.page-wrapper {
+    width: 100%;
+    max-width: 25cm; /* ajusta el tamaño que quieres */
+}
+
+
+.main-container {
+    width: 90%;
+    max-width: 600px;
+}
+
+a{
+    text-decoration: nonw;
+}
+
+/*==================== Menu Lateral ====================*/
+.menu-lateral-container {
+    width: 260px;
+    height: 90vh;
+    position: fixed;
+    left: -120%;
+    top: 5%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #d32f2f;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    transition: left .3s ease;
+}
+
+/* Foto de uduario*/
+.usuario {
+    height: 2cm;
+    widows: 2cm;
+}
+
+.usuario .fa-user {
+    font-size: 2cm;
+    color: white;
+}
+
+/* Boton abrir menu */
+.div-abrir-menu {
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    left: 1cm;
+    opacity: 1;
+    transition: opacity .3s ease;
+}
+
+.div-abrir-menu .fa-bars {
+    cursor: pointer;
+    font-size: 25px;
+    position: fixed;
+}
+
+/* Ocultar boton abrir menu */
+.div-abrir-menu.oculto {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Boton cerrar menu */
+.div-cerrar-menu {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    border: 2px solid white;
+    display: flex;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.div-cerrar-menu:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.div-cerrar-menu .fa-x {
+    width: 100%;
+    height: 100%;
+    font-size: 10px;
+    color: white;
+    cursor: pointer;
+    text-align: center;
+    line-height: 14.5px;
+}
+
+
+/* Mostrar Menu*/
+.menu-lateral-container.mostrar {
+    left: 1%;
+    transition: left .3s ease;
+}
+
+.menu-lateral-container {
+    transition: left .3s ease;
+}
+
+.menu-lateral {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+}
+
+.menu-lateral ol {
+    width: 100%;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu-lateral ol li {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.menu-lateral ol li a {
+    display: block;
+    width: 100%;
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.2);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 16px;
+}
+
+.menu-lateral ol li a:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.menu-lateral ol li a:active {
+    background: #b71c1c;
+}
+
+.content {
+    margin-left: 270px;
+    flex: 1;
+    padding: 40px;
+}
+
+/*==================== Fin Menu Lateral ====================*/
+
+
+.pago-section {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.header {
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    margin: -40px -40px 30px -40px;
+    padding: 30px;
+    border-radius: 20px 20px 0 0;
+    text-align: center;
+}
+
+.logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo-image {
+    max-width: 150px;
+    height: auto;
+}
+
+.valor-pago {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 30px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.valor-pago h1 {
+    font-size: 18px;
+    color: #666;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.valor-pago p {
+    font-size: 48px;
+    font-weight: bold;
+    color: #dc2626;
+    margin: 0;
+}
+
+.metodo-pago h1 {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+
+.metodo-pago ul {
+    list-style: none;
+}
+
+.metodo-pago li {
+    background: #f8f9fa;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.metodo-pago li:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    border-color: #dc2626;
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+}
+
+.metodo-pago li:hover span {
+    color: white;
+}
+
+.metodo-pago li:hover .nequi-logo {
+    filter: brightness(0) invert(1);
+}
+
+.metodo-pago li::before {
+    content: '';
+    width: 50px;
+    height: 50px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    flex-shrink: 0;
+}
+
+.metodo-pago li:nth-child(1)::before {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23dc2626"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"/></svg>');
+}
+
+.metodo-pago li:nth-child(2)::before {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23dc2626"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8-2v8h8V3h-8zm6 6h-4V5h4v4zM3 21h8v-8H3v8zm2-6h4v4H5v-4zm13-2h-2v3h-3v2h3v3h2v-3h3v-2h-3z"/></svg>');
+}
+
+.metodo-pago li:nth-child(3) {
+    position: relative;
+}
+
+.metodo-pago li:nth-child(3)::before {
+    display: none;
+}
+
+.nequi-logo {
+    width: 80px;
+    height: auto;
+
+    transition: filter 0.3s ease;
+}
+
+.metodo-pago li:hover::before {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ffffff"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"/></svg>');
+}
+
+.metodo-pago li:nth-child(2):hover::before {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ffffff"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8-2v8h8V3h-8zm6 6h-4V5h4v4zM3 21h8v-8H3v8zm2-6h4v4H5v-4zm13-2h-2v3h-3v2h3v3h2v-3h3v-2h-3z"/></svg>');
+}
+
+.metodo-pago li span {
+    font-size: 18px;
+    color: #333;
+    font-weight: 500;
+}
+
+/* Tablets (768px y menos) */
+@media (max-width: 768px) {
+    .pago-section {
+        padding: 35px 25px;
+        border-radius: 15px;
+    }
+
+    .header {
+        margin: -35px -25px 25px -25px;
+        padding: 25px;
+        border-radius: 15px 15px 0 0;
+    }
+
+    .logo-image {
+        max-width: 130px;
+    }
+
+    .valor-pago {
+        margin-bottom: 30px;
+        padding-bottom: 25px;
+    }
+
+    .valor-pago h1 {
+        font-size: 16px;
+    }
+
+    .valor-pago p {
+        font-size: 40px;
+    }
+
+    .metodo-pago h1 {
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
+
+    .metodo-pago li {
+        padding: 18px;
+        margin-bottom: 12px;
+    }
+
+    .metodo-pago li span {
+        font-size: 17px;
+    }
+
+    .nequi-logo {
+        width: 110px;
+    }
+
+    .metodo-pago li::before {
+        width: 45px;
+        height: 45px;
+    }
+}
+
+/* Móviles (600px y menos) */
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+
+    .pago-section {
+        padding: 30px 20px;
+        border-radius: 12px;
+    }
+
+    .header {
+        margin: -30px -20px 20px -20px;
+        padding: 20px;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .logo-image {
+        max-width: 110px;
+    }
+
+    .valor-pago {
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+    }
+
+    .valor-pago h1 {
+        font-size: 15px;
+        margin-bottom: 8px;
+    }
+
+    .valor-pago p {
+        font-size: 36px;
+    }
+
+    .metodo-pago h1 {
+        font-size: 17px;
+        margin-bottom: 18px;
+    }
+
+    .metodo-pago li {
+        padding: 15px;
+        margin-bottom: 10px;
+        gap: 12px;
+    }
+
+    .metodo-pago li span {
+        font-size: 16px;
+    }
+
+    .nequi-logo {
+        width: 100px;
+    }
+
+    .metodo-pago li::before {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Reducir transformación en hover para móviles */
+    .metodo-pago li:hover {
+        transform: translateX(3px);
+    }
+}
+
+/* Móviles pequeños (400px y menos) */
+@media (max-width: 400px) {
+    .pago-section {
+        padding: 25px 15px;
+    }
+
+    .header {
+        margin: -25px -15px 18px -15px;
+        padding: 18px;
+    }
+
+    .logo-image {
+        max-width: 100px;
+    }
+
+    .valor-pago h1 {
+        font-size: 14px;
+    }
+
+    .valor-pago p {
+        font-size: 32px;
+    }
+
+    .metodo-pago h1 {
+        font-size: 16px;
+        margin-bottom: 15px;
+    }
+
+    .metodo-pago li {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .metodo-pago li span {
+        font-size: 15px;
+    }
+
+    .nequi-logo {
+        width: 90px;
+    }
+
+    .metodo-pago li::before {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+/* Landscape móviles */
+@media (max-height: 600px) and (orientation: landscape) {
+    body {
+        padding: 10px;
+    }
+
+    .pago-section {
+        padding: 20px;
+        max-width: 90%;
+    }
+
+    .header {
+        margin: -20px -20px 15px -20px;
+        padding: 15px;
+    }
+
+    .valor-pago {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+    }
+
+    .valor-pago p {
+        font-size: 32px;
+    }
+
+    .metodo-pago li {
+        padding: 12px;
+    }
+}
+
+/*==================== Estado de Servicio ====================*/
+.servicio-section {
+    background: #fff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 900px;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 380px;
+}
+
+/* ── Panel izquierdo rojo ── */
+.servicio-header {
+    background: linear-gradient(160deg, #c0392b, #e74c3c 50%, #c0392b);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+    .servicio-header::before {
+        content: '';
+        position: absolute;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.06);
+        top: -60px;
+        right: -60px;
+    }
+
+    .servicio-header::after {
+        content: '';
+        position: absolute;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.04);
+        bottom: -30px;
+        left: -30px;
+    }
+
+.logo-container {
+    position: relative;
+    z-index: 1;
+}
+
+.logo-image {
+    width: 160px;
+    max-width: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.25));
+}
+
+.header-badge {
+    position: relative;
+    z-index: 1;
+    margin-top: 20px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 30px;
+    padding: 6px 16px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.85);
+    font-weight: 600;
+}
+
+/* ── Panel derecho (contenido) ── */
+.vehiculo {
+    padding: 40px 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.titulo-vehiculo {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+}
+
+.titulo-subtexto {
+    font-size: 13px;
+    color: #aaa;
+    margin-bottom: 32px;
+    letter-spacing: 0.3px;
+}
+
+/* ── Grid de datos ── */
+.descripcion-servicio {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px 32px;
+    margin-bottom: 36px;
+}
+
+    .descripcion-servicio li {
+        border-left: 3px solid #e74c3c;
+        padding-left: 14px;
+    }
+
+.campo-label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #aaa;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.campo-valor {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+/* ── Botón ── */
+.servicio-btn {
+    align-self: flex-start;
+    padding: 14px 36px;
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.servicio-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(231,76,60,0.4);
+}
+
+.servicio-btn:active {
+    transform: translateY(0);
+}
+
+/* ── RESPONSIVE: tablet ── */
+@media (max-width: 720px) {
+    .servicio-section {
+        grid-template-columns: 1fr;
+        max-width: 480px;
+    }
+
+    .servicio-header {
+        padding: 36px 30px;
+        flex-direction: row;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .logo-image {
+        width: 120px;
+    }
+
+    .header-badge {
+        margin-top: 0;
+    }
+
+    .vehiculo {
+        padding: 28px 28px;
+    }
+
+    .titulo-vehiculo {
+        font-size: 22px;
+    }
+
+    .descripcion-servicio {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .servicio-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ── RESPONSIVE: móvil ── */
+@media (max-width: 480px) {
+    body {
+        padding: 20px 14px;
+    }
+
+    .servicio-header {
+        flex-direction: column;
+        padding: 30px 20px;
+        gap: 12px;
+    }
+
+    .logo-image {
+        width: 100px;
+    }
+
+    .vehiculo {
+        padding: 24px 20px;
+    }
+
+    .titulo-vehiculo {
+        font-size: 20px;
+    }
+
+    .titulo-subtexto {
+        margin-bottom: 20px;
+    }
+
+    .descripcion-servicio {
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+
+    .campo-valor {
+        font-size: 15px;
+    }
+}
+
+/* Modal que muestra el tiempo que se tarda el carro y la opcion de pagar */
+
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes pulso-ring {
+    0% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: scale(1.6);
+        opacity: 0;
+    }
+}
+
+@keyframes carro-slide {
+    0% {
+        transform: translateX(-8px);
+    }
+
+    50% {
+        transform: translateX(4px);
+    }
+
+    100% {
+        transform: translateX(-8px);
+    }
+}
+
+@keyframes contador {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-pagar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+}
+
+.modal-pagar.oculto {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+}
+
+.modal-pagar .informacion {
+    background: #fff;
+    padding: 0;
+    border-radius: 24px;
+    width: min(92%, 420px);
+    max-height: 90%;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+    animation: aparecer 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Header / tiempo ── */
+.header-tiempo {
+    background: linear-gradient(145deg, #c41c0b, #b71c1c, #7c0000);
+    padding: 15px 28px 28px;
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+}
+
+.header-tiempo::before {
+    content: '';
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    top: -80px;
+    right: -60px;
+}
+
+.etiqueta-llegada {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 10px;
+}
+
+.tiempo-wrapper {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.tiempo-numero {
+    font-family: 'Syne', sans-serif;
+    font-size: 72px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: -2px;
+    animation: contador 0.5s ease;
+}
+
+.tiempo-unidad {
+    font-size: 20px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 10px;
+}
+
+.distancia-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 30px;
+    padding: 5px 14px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 20px;
+}
+
+.distancia-tag svg {
+    opacity: 0.7;
+}
+
+/* Barra de progreso */
+.barra-track {
+    height: 4px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.barra-fill {
+    height: 100%;
+    width: 35%;
+    background: linear-gradient(90deg, #a78bfa, #6ee7f7);
+    border-radius: 4px;
+    position: relative;
+}
+
+.barra-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(255,255,255,0.5);
+    animation: pulso-ring 1.4s ease infinite;
+}
+
+/* ── Icono carro ── */
+.carro-container {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.carro-icono {
+    animation: carro-slide 2s ease-in-out infinite;
+    font-size: 26px;
+}
+
+.ruta-puntitos {
+    flex: 1;
+    display: flex;
+    gap: 4px;
+}
+
+.ruta-puntitos span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+}
+
+.ruta-puntitos span:nth-child(1) {
+    background: rgba(255,255,255,0.7);
+}
+
+.ruta-puntitos span:nth-child(2) {
+    background: rgba(255,255,255,0.5);
+}
+
+.ruta-puntitos span:nth-child(3) {
+    background: rgba(255,255,255,0.35);
+}
+
+.destino-icono {
+    font-size: 20px;
+}
+
+/* ── Info del conductor ── */
+.conductor-section {
+    padding: 20px 28px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.conductor-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: white;
+    border: solid 1px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.conductor-info {
+    flex: 1;
+}
+
+.conductor-nombre {
+    font-weight: 600;
+    font-size: 15px;
+    color: #1a1a2e;
+    margin-bottom: 2px;
+}
+
+.conductor-detalle {
+    font-size: 12px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.estrellas {
+    color: #f59e0b;
+    letter-spacing: -2px;
+    font-size: 13px;
+}
+
+.placa-tag {
+    background: #f3f4f6;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #374151;
+    letter-spacing: 1px;
+}
+
+/* ── Resumen del viaje ── */
+.resumen-section {
+    padding: 18px 28px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.resumen-titulo {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #aaa;
+    margin-bottom: 14px;
+}
+
+.resumen-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: #444;
+    margin-bottom: 10px;
+}
+
+.resumen-fila:last-child {
+    margin-bottom: 0;
+}
+
+.resumen-valor {
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.resumen-total-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 2px dashed #f0f0f0;
+    margin-top: 4px;
+}
+
+.total-label {
+    font-weight: 600;
+    font-size: 15px;
+    color: black;
+}
+
+.total-valor {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: black;
+}
+
+/* ── Métodos de pago ── */
+.pago-section {
+    padding: 18px 28px 22px;
+}
+
+.pago-titulo {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #aaa;
+    margin-bottom: 14px;
+}
+
+.metodos-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.metodo-btn {
+    border: 2px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 12px 8px;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    font-size: 11px;
+    font-weight: 500;
+    color: #555;
+    font-family: 'DM Sans', sans-serif;
+}
+
+.metodo-btn:hover {
+    border-color: #b71c1c;
+    color: #302b63;
+    background: #f5f4ff;
+}
+
+.metodo-btn.activo {
+    border-color: #b71c1c;
+    background: #b71c1c;
+    color: #fff;
+}
+
+.metodo-btn .ico {
+    font-size: 22px;
+}
+
+.metodo-btn .ico img {
+    width: 35px;
+    height: 35px;
+    object-fit: contain;
+    display: block;
+}
+
+.btn-pagar {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #b71c1c, #850b0b);
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    margin-bottom: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-pagar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(48,43,99,0.4);
+}
+
+.btn-pagar:active {
+    transform: translateY(0);
+}
+
+/* ================= confirmacon pago ================= */
+
+.informacion-2 {
+    background: #fff;
+    padding: 0;
+    border-radius: 24px;
+    width: min(92%, 420px);
+    max-height: 90%;
+    height: 90%;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+    animation: aparecer 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    display: none;
+    flex-direction: column;
+}
+
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes check-pop {
+    0% {
+        transform: scale(0) rotate(-20deg);
+        opacity: 0;
+    }
+
+    70% {
+        transform: scale(1.15) rotate(3deg);
+    }
+
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes pulso-suave {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(231,76,60,0.25);
+    }
+
+    50% {
+        box-shadow: 0 0 0 18px rgba(231,76,60,0);
+    }
+}
+
+@keyframes fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes carro-slide {
+    0% {
+        transform: translateX(-6px);
+    }
+
+    50% {
+        transform: translateX(4px);
+    }
+
+    100% {
+        transform: translateX(-6px);
+    }
+}
+
+
+/* ── Franja roja superior ── */
+.confirmacion-header {
+    background: linear-gradient(160deg, #c0392b, #e74c3c, #c0392b);
+    padding: 36px 28px 32px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.confirmacion-header::before {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    top: -70px;
+    right: -50px;
+}
+
+.confirmacion-header::after {
+    content: '';
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    bottom: -30px;
+    left: -20px;
+}
+
+/* Ícono check ── */
+.check-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    border: 3px solid rgba(255,255,255,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 32px;
+    position: relative;
+    z-index: 1;
+    animation: check-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.2s both, pulso-suave 2.5s ease 0.8s infinite;
+}
+
+.confirmacion-titulo {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 4px;
+}
+
+.confirmacion-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.65);
+    position: relative;
+    z-index: 1;
+}
+
+/* ── Cuerpo ── */
+.confirmacion-body {
+    padding: 28px 28px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Tarjeta instrucción principal */
+.instruccion-card {
+    background: #fef2f2;
+    border: 1.5px solid #fecaca;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    animation: fade-up 0.5s ease 0.3s both;
+}
+
+.instruccion-icono {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.instruccion-texto {
+    font-size: 15px;
+    font-weight: 600;
+    color: #c0392b;
+    line-height: 1.5;
+}
+
+/* Tiempo estimado */
+.tiempo-card {
+    background: #f9f9fb;
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    animation: fade-up 0.5s ease 0.45s both;
+}
+
+.tiempo-icono-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.carro-anim {
+    font-size: 22px;
+    animation: carro-slide 2s ease-in-out infinite;
+}
+
+.tiempo-info {
+    flex: 1;
+}
+
+.tiempo-label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #aaa;
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.tiempo-valor {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: #1a1a1a;
+    line-height: 1;
+}
+
+.tiempo-unidad {
+    font-size: 14px;
+    font-weight: 400;
+    color: #888;
+    margin-left: 4px;
+}
+
+

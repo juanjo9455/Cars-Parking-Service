@@ -1,0 +1,591 @@
+﻿@model List<Cars_Parking_Service.Models.ubicacion_servicios>
+@{
+    ViewData["Title"] = "Administrador";
+}
+
+<div class="container mt-4 admin-container">
+    <!-- Header -->
+    <div class="header">
+        <div class="logo-container">
+            <img src="~/img/logo cars parking.png" alt="Logo Cars Parking" />
+        </div>
+
+        <div class="header-info" style="flex-grow: 1; padding-left: 15px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                <h2 style="margin: 0;">
+                    <i class="fa-solid fa-user-shield" style="color: #d32f2f;"></i> Panel de Control Administrativo
+                </h2>
+            </div>
+            <p>Gestión centralizada de usuarios, ubicaciones, parqueaderos y configuración del sistema</p>
+        </div>
+
+        <div class="header-actions text-end">
+            <span style="font-size: 12px; font-weight: bold; color: #d32f2f; background: rgba(211, 47, 47, 0.1); padding: 5px 12px; border-radius: 20px;">
+                <i class="fa-solid fa-circle-check"></i> Modo Administrador
+            </span>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    @if (ViewBag.Mensaje != null || TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius: 10px;">
+            <strong>✅ ¡Éxito!</strong> @(ViewBag.Mensaje ?? TempData["Mensaje"])
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Novedad: Alertas de Error por duplicidad u otros problemas -->
+    @if (ViewBag.Error != null || TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" style="border-radius: 10px; border-left: 5px solid #d32f2f;">
+            <strong>⚠️ ¡Atención!</strong> @(ViewBag.Error ?? TempData["Error"])
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Content -->
+    <div class="content">
+
+        <!-- SECTION: Panel de Control -->
+        <div class="section">
+            <div class="section-header" id="acciones-principales-titulo">
+                <span class="section-tag" id="titulo-principal">Acciones Principales</span>
+                <span class="section-tag" id="titulo-usuarios" style="display:none">Acciones Usuarios</span>
+                <span class="section-tag" id="titulo-ubicaciones" style="display:none">Acciones Ubicaciones</span>
+                <span class="section-tag" id="titulo-parqueaderos" style="display:none">Acciones Parqueaderos</span>
+                <div class="section-line"></div>
+            </div>
+
+            <!-- Contenedor de Tarjetas -->
+            <div class="admin-cards-container">
+                <!-- Card Usuarios (Redirige a SignUp) -->
+                <div class="admin-card" id="CardUsuarios">
+                    <div class="admin-card-icon">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </div>
+                    <div class="admin-card-content">
+                        <h3>Gestión de Usuarios</h3>
+                        <p>Registrar y administrar cuentas de Valets, Bancos y Administradores del sistema.</p>
+                    </div>
+                    <span class="admin-card-btn">Ir a registro <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
+
+                <!-- Card Ubicaciones -->
+                <div class="admin-card" id="CardUbicaciones">
+                    <div class="admin-card-icon">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                    </div>
+                    <div class="admin-card-content">
+                        <h3>Ubicaciones de Servicio</h3>
+                        <p>Crear, modificar o eliminar puntos de servicio y configurar sus tarifas correspondientes.</p>
+                    </div>
+                    <span class="admin-card-btn">Ir a gestión <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
+
+                <!-- Card Parqueaderos -->
+                <div class="admin-card" id="CardParqueaderos">
+                    <div class="admin-card-icon">
+                        <i class="fa-solid fa-square-parking"></i>
+                    </div>
+                    <div class="admin-card-content">
+                        <h3>Gestión de Parqueaderos</h3>
+                        <p>Crear, editar o eliminar zonas de parqueadero y administrar espacios disponibles.</p>
+                    </div>
+                    <span class="admin-card-btn">Ir a gestión <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
+            </div>
+
+            <!-- =========================== Usuarios =========================== -->
+            <!-- Aciones Con Usuarios (Ver tabla, Ingresar Usuarios)-->
+            <!-- Card Usuarios (Redirige a SignUp) -->
+            <div class="subcards-row" id="SubCardsUsuarios" style="display : none">
+                <div class="admin-card" id="CardU1" onclick="window.location.href='@Url.Action("SingUp", "Auth")'" >
+                    <div class="admin-card-icon">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </div>
+                    <div class="admin-card-content">
+                        <h3>Registrar Usuarios</h3>
+                        <p>Registrar Valets, Bancos y Administradores en el sistema.</p>
+                    </div>
+                    <span class="admin-card-btn">Ir a registro <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
+
+                <!-- Card pata mostrar Todos Los Usuarios -->
+                <div class="admin-card" id="CardU2">
+                    <div class="admin-card-icon">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div class="admin-card-content">
+                        <h3>Tabla de Usuarios</h3>
+                        <p>administrar cuentas de Valets, Bancos y Administradores del sistema.</p>
+                    </div>
+                    <span class="admin-card-btn">Ir a la tabla <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
+            </div>
+
+            <!-- Boton de regresar al menu principal para sub-cards de Usuarios -->
+            <div id="btnRegresarSubUsuarios" style="display:none; width: 100%; text-align: center; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="window.location.reload()">
+                    <i class="fa-solid fa-arrow-left"></i> Regresar al Menú de Admin
+                </button>
+            </div>
+
+            <!-- Tabla para mostrar todos los usuarios del sistema -->
+            <div id="TablaUsuariosContainer" style="display:none; margin-top: 30px;">
+                <div class="header" style="margin-bottom: 20px;">
+                    <div class="header-info">
+                        <h2>Lista de Usuarios</h2>
+                        <p>Visualización y gestión de todas las cuentas registradas en el sistema</p>
+                    </div>
+                </div>
+
+                <div class="table-container admin-wide-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>DNI</th>
+                                <th>Nombre</th>
+                                <th>Apellido</th>
+                                <th>Teléfono</th>
+                                <th>Edad</th>
+                                <th>Correo</th> <!-- NUEVO -->
+                                <th>Rol</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (ViewBag.Usuarios != null)
+                            {
+                                foreach (var user in ViewBag.Usuarios)
+                                {
+                                    <tr>
+                                        <td>@user.dni</td>
+                                        <td>@user.nombres</td>
+                                        <td>@user.apellidos</td>
+                                        <td>@user.telefono</td>
+                                        <td>@user.edad</td>
+                                        <td>@user.correo</td> <!-- NUEVO -->
+                                        <td>
+                                            @if (user.id_rol == 1)
+                                            {
+                                                <span class="status-badge" style="background: #2196F3; color: white;">Valet</span>
+                                            }
+                                            else if (user.id_rol == 2)
+                                            {
+                                                <span class="status-badge" style="background: #4CAF50; color: white;">Banco</span>
+                                            }
+                                            else if (user.id_rol == 3)
+                                            {
+                                                <span class="status-badge" style="background: #d32f2f; color: white;">Admin</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge" style="background: #999; color: white;">Desconocido</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <button class="btn-action" title="Editar" onclick="abrirModalEditarUsuario('@user.id_usuario', '@user.dni', '@user.nombres', '@user.apellidos', '@user.telefono', '@user.edad', '@user.id_rol', '@user.correo')">
+                                                <i class="fa-solid fa-pen-to-square" style="color: #2196F3;"></i>
+                                            </button>
+                                            <button class="btn-action" title="Eliminar">
+                                                <i class="fa-solid fa-trash" style="color: #d32f2f;" onclick="confirmarEliminarUsuario('@user.id_usuario')"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="margin-top: 25px; text-align: center;">
+                    <button class="btn btn-secondary" onclick="window.location.reload()">
+                        <i class="fa-solid fa-arrow-left"></i> Regresar al Menú de Admin
+                    </button>
+                </div>
+
+                <!-- Modal Editar Usuario -->
+                <div class="Editar-Ingreso" id="ModalEditarUsuario" style="display : none;">
+                    <div class="modal-overlay" onclick="cerrarModalEditarUsuario()"></div>
+                    <div class="Card-Ingreso">
+                        <span class="close-btn" onclick="cerrarModalEditarUsuario()">&times;</span>
+                        <h3>Editar Usuario</h3>
+                        <form id="formEditarUsuario" method="post" action="/Home/EditarUsuario">
+                            <input type="hidden" id="edit_id_usuario" name="id_usuario" />
+
+                            <div class="form-group-modal">
+                                <label>DNI</label>
+                                <input type="text" id="edit_dni" name="dni" class="modal-select" required />
+                            </div>
+                            <div class="form-group-modal">
+                                <label>Nombre</label>
+                                <input type="text" id="edit_nombre" name="nombre" class="modal-select" required />
+                            </div>
+                            <div class="form-group-modal">
+                                <label>Apellido</label>
+                                <input type="text" id="edit_apellido" name="apellido" class="modal-select" required />
+                            </div>
+                            <div class="form-group-modal">
+                                <label>Teléfono</label>
+                                <input type="text" id="edit_telefono" name="telefono" class="modal-select" required />
+                            </div>
+                            <div class="form-group-modal">
+                                <label>Correo</label>
+                                <input type="email" id="edit_correo" name="correo" class="modal-select" required />
+                            </div>
+                            <div class="form-group-modal">
+                                <label>Edad</label>
+                                <input type="number" id="edit_edad" name="edad" class="modal-select" required />
+                            </div>
+                            <div class="form-group-modal">
+                                <label>Rol</label>
+                                <select id="edit_rol" name="id_rol" class="modal-select" required>
+                                    <option value="">Seleccione un rol...</option>
+                                    <option value="1">Valet</option>
+                                    <option value="2">Banco</option>
+                                    <option value="3">Administrador</option>
+                                </select>
+                            </div>
+                            <div class="modal-actions">
+                                <button type="button" class="btn btn-secondary" onclick="cerrarModalEditarUsuario()">Cancelar</button>
+                                <button type="button" class="btn btn-primary" onclick="confirmarGuardarUsuario()">Guardar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Formulario oculto para enviar eliminación -->
+                <form id="formEliminarUsuario" method="post" action="/Home/EliminarUsuario" style="display:none;">
+                    <input type="hidden" id="delete_id_usuario" name="id_usuario" />
+                </form>
+            </div>
+        </div>
+
+
+        <!-- =========================== Ubicacion =========================== -->
+
+        <!-- Estas Acciones Estan Ocultas hasta que se presione alguna Card Principal-->
+        <!-- Aciones Con Ubicaciones de servicio (Ver tabla, Ingresar Ubicaciones)-->
+        <!-- Card Ubicaciones (Redirige a Ingresar Ubicaciones) -->
+        <div class="subcards-row" id="SubCardsUbicaciones" style="display : none">
+            <div class="admin-card" id="CardUb1">
+                <div class="admin-card-icon">
+                    <i class="fa-solid fa-location-dot"></i>
+                </div>
+                <div class="admin-card-content">
+                    <h3>Registrar Ubicaciones</h3>
+                    <p>Registrar Hoteles y restaurantes en el sistema.</p>
+                </div>
+                <span class="admin-card-btn">Abrir registro <i class="fa-solid fa-arrow-right"></i></span>
+            </div>
+
+            <!-- Card pata mostrar Todos Los Usuarios -->
+            <div class="admin-card" id="CardUb2">
+                <div class="admin-card-icon">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                </div>
+                <div class="admin-card-content">
+                    <h3>Gestión Ubicaciones</h3>
+                    <p>Administra las ubicaciones como hoteles y restaurantes del sistema.</p>
+                </div>
+                <span class="admin-card-btn">Ir a la tabla <i class="fa-solid fa-arrow-right"></i></span>
+            </div>
+        </div>
+
+        <!-- Boton de regresar al menu principal para sub-cards de Ubicaciones -->
+        <div id="btnRegresarSubUbicaciones" style="display:none; width: 100%; text-align: center; margin-top: 20px;">
+            <button class="btn btn-secondary" onclick="window.location.reload()">
+                <i class="fa-solid fa-arrow-left"></i> Regresar al Menú de Admin
+            </button>
+        </div>
+
+        <!-- Tabla para mostrar todas las ubicaciones del sistema -->
+        <div id="TablaUbicacionesContainer" style="display:none; margin-top: 30px;">
+            <div class="header" style="margin-bottom: 20px;">
+                <div class="header-info">
+                    <h2>Lista de Ubicaciones</h2>
+                    <p>Visualización y gestión de todas las ubicaciones registradas en el sistema</p>
+                </div>
+            </div>
+
+            <div class="table-container admin-wide-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre Ubicacion</th>
+                            <th>Direccion</th>
+                            <th>Ciudad</th>
+                            <th>Valor Servicio</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (ViewBag.Ubicaciones != null)
+                        {
+                            foreach (var ubicacion in ViewBag.Ubicaciones)
+                            {
+                                <tr>
+                                    <td>@ubicacion.nombre_ubicacion</td>
+                                    <td>@ubicacion.direccion</td>
+                                    <td>@ubicacion.ciudad</td>
+                                    <!-- Formateamos el valor para no mostrar los decimales (,0000) -->
+                                    <td>@ubicacion.valor_servicio.ToString("0")</td>
+                                    <td>
+                                        <!-- Enviamos el valor también formateado al JavaScript -->
+                                        <button class="btn-action" title="Editar" onclick="abrirModalEditarUbicacion('@ubicacion.id_ubicacion', '@ubicacion.nombre_ubicacion', '@ubicacion.direccion', '@ubicacion.ciudad', '@ubicacion.valor_servicio.ToString("0")')">
+                                            <i class="fa-solid fa-pen-to-square" style="color: #2196F3;"></i>
+                                        </button>
+                                        <button class="btn-action" title="Eliminar" onclick="confirmarEliminarUbicacion('@ubicacion.id_ubicacion')">
+                                            <i class="fa-solid fa-trash" style="color: #d32f2f;"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-top: 25px; text-align: center;">
+                <button class="btn btn-secondary" onclick="window.location.reload()">
+                    <i class="fa-solid fa-arrow-left"></i> Regresar al Menú de Admin
+                </button>
+            </div>
+
+
+            <!-- Modal Editar Ubicacion -->
+            <div class="Editar-Ingreso" id="ModalEditarUbicacion" style="display : none;">
+                <div class="modal-overlay" onclick="cerrarModalEditarUbicacion()"></div>
+                <div class="Card-Ingreso">
+                    <span class="close-btn" onclick="cerrarModalEditarUbicacion()">&times;</span>
+                    <h3>Editar Ubicacion</h3>
+                    <form id="formEditarUbicacion" method="post" action="/Home/EditarUbicacion">
+                        <input type="hidden" id="edit_id_ubicacion" name="id_ubicacion" />
+
+                        <div class="form-group-modal">
+                            <label>Nombre Ubicacion</label>
+                            <input type="text" id="edit_nombre_ubicacion" name="nombre_ubicacion" class="modal-select" required />
+                        </div>
+                        <div class="form-group-modal">
+                            <label>Direccion</label>
+                            <input type="text" id="edit_direccion" name="direccion" class="modal-select" required />
+                        </div>
+                        <div class="form-group-modal">
+                            <label>Ciudad</label>
+                            <input type="text" id="edit_ciudad" name="ciudad" class="modal-select" required />
+                        </div>
+                        <div class="form-group-modal">
+                            <label>Valor Servicio</label>
+                            <!-- Importante: En C# estás esperando 'decimal valor_servicio', este input tipo 'number' y step='any' ayuda a su conversión correcta -->
+                            <input type="number" step="any" id="edit_valor_servicio" name="valor_servicio" class="modal-select" required />
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn btn-secondary" onclick="cerrarModalEditarUbicacion()">Cancelar</button>
+                            <!-- Ojo con el type="button" o submit -->
+                            <button type="button" class="btn btn-primary" onclick="confirmarGuardarUbicacion()">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div> <!-- Se cierra correctamente Card-Ingreso/Editar-Ingreso -->
+
+            <!-- Formulario oculto para enviar eliminación DEBE ESTAR COMPLETAMENTE AFUERA DEL MODAL Y TABLA -->
+            <form id="formEliminarUbicacion" method="post" action="/Home/EliminarUbicacion" style="display:none;">
+                <input type="hidden" id="delete_id_ubicacion" name="id_ubicacion" />
+            </form>
+        </div>
+
+        <!-- =========================== Parqueaderos =========================== -->
+        <!-- Estas Acciones Estan Ocultas hasta que se presione alguna Card Principal-->
+        <!-- Aciones Con Parqueaderos (Ver tabla, Ingresar Parqueadero)-->
+        <!-- Card Parqueaderos (Redirige a Ingresar Parqueaderos) -->
+        <div class="subcards-row" id="SubCardsParqueaderos" style="display : none">
+            <div class="admin-card" id="CardP1">
+                <div class="admin-card-icon">
+                    <i class="fa-solid fa-square-parking"></i>
+                </div>
+                <div class="admin-card-content">
+                    <h3>Registrar Parqueadero</h3>
+                    <p>Registrar nuevas zonas de parqueadero en el sistema.</p>
+                </div>
+                <span class="admin-card-btn">Abrir registro <i class="fa-solid fa-arrow-right"></i></span>
+            </div>
+
+            <!-- Card para mostrar Todos Los Parqueaderos -->
+            <div class="admin-card" id="CardP2">
+                <div class="admin-card-icon">
+                    <i class="fa-solid fa-list"></i>
+                </div>
+                <div class="admin-card-content">
+                    <h3>Gestión de Parqueaderos</h3>
+                    <p>Administrar zonas de parqueadero y lugares registrados en el sistema.</p>
+                </div>
+                <span class="admin-card-btn">Ir a la tabla <i class="fa-solid fa-arrow-right"></i></span>
+            </div>
+        </div>
+
+        <!-- Boton de regresar al menu principal para sub-cards de Parqueaderos -->
+        <div id="btnRegresarSubParqueaderos" style="display:none; width: 100%; text-align: center; margin-top: 20px;">
+            <button class="btn btn-secondary" onclick="window.location.reload()">
+                <i class="fa-solid fa-arrow-left"></i> Regresar al Menú de Admin
+            </button>
+        </div>
+
+        <!-- Tabla para mostrar todos los parqueaderos del sistema -->
+        <div id="TablaParqueaderosContainer" style="display:none; margin-top: 30px;">
+            <div class="header" style="margin-bottom: 20px;">
+                <div class="header-info">
+                    <h2>Lista de Parqueaderos</h2>
+                    <p>Visualización y gestión de todos los parqueaderos registrados en el sistema</p>
+                </div>
+            </div>
+
+            <div class="table-container admin-wide-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre Parqueadero</th>
+                            <th>Dirección</th>
+                            <th>Ciudad</th>
+                            <th>Tarifa</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (ViewBag.Parqueaderos != null)
+                        {
+                            foreach (var parqueadero in ViewBag.Parqueaderos)
+                            {
+                                <tr>
+                                    <td>@parqueadero.nombre_parqueadero</td>
+                                    <td>@parqueadero.direccion</td>
+                                    <td>@parqueadero.ciudad</td>
+                                    <td>@parqueadero.tarifa.ToString("0")</td>
+                                    <td>
+                                        <button class="btn-action" title="Editar" onclick="abrirModalEditarParqueadero('@parqueadero.id_parqueadero', '@parqueadero.nombre_parqueadero', '@parqueadero.direccion', '@parqueadero.ciudad', '@parqueadero.tarifa.ToString("0")')">
+                                            <i class="fa-solid fa-pen-to-square" style="color: #2196F3;"></i>
+                                        </button>
+                                        <button class="btn-action" title="Eliminar" onclick="confirmarEliminarParqueadero('@parqueadero.id_parqueadero')">
+                                            <i class="fa-solid fa-trash" style="color: #d32f2f;"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-top: 25px; text-align: center;">
+                <button class="btn btn-secondary" onclick="window.location.reload()">
+                    <i class="fa-solid fa-arrow-left"></i> Regresar al Menú de Admin
+                </button>
+            </div>
+
+            <!-- Modal Editar Parqueadero -->
+            <div class="Editar-Ingreso" id="ModalEditarParqueadero" style="display : none;">
+                <div class="modal-overlay" onclick="cerrarModalEditarParqueadero()"></div>
+                <div class="Card-Ingreso">
+                    <span class="close-btn" onclick="cerrarModalEditarParqueadero()">&times;</span>
+                    <h3>Editar Parqueadero</h3>
+                    <form id="formEditarParqueadero" method="post" action="/Home/EditarParqueadero">
+                        <input type="hidden" id="edit_id_parqueadero" name="id_parqueadero" />
+
+                        <div class="form-group-modal">
+                            <label>Nombre Parqueadero</label>
+                            <input type="text" id="edit_nombre_parqueadero" name="nombre_parqueadero" class="modal-select" required />
+                        </div>
+                        <div class="form-group-modal">
+                            <label>Dirección</label>
+                            <input type="text" id="edit_direccion_parqueadero" name="direccion" class="modal-select" required />
+                        </div>
+                        <div class="form-group-modal">
+                            <label>Ciudad</label>
+                            <input type="text" id="edit_ciudad_parqueadero" name="ciudad" class="modal-select" required />
+                        </div>
+                        <div class="form-group-modal">
+                            <label>Tarifa</label>
+                            <input type="number" step="any" id="edit_tarifa_parqueadero" name="tarifa" class="modal-select" required />
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn btn-secondary" onclick="cerrarModalEditarParqueadero()">Cancelar</button>
+                            <button type="button" class="btn btn-primary" onclick="confirmarGuardarParqueadero()">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Formulario oculto para enviar eliminación -->
+            <form id="formEliminarParqueadero" method="post" action="/Home/EliminarParqueadero" style="display:none;">
+                <input type="hidden" id="delete_id_parqueadero" name="id_parqueadero" />
+            </form>
+        </div>
+
+        <!-- =========================== Formularios de Registro (Nuevos) =========================== -->
+
+        <!-- Formulario para Registrar Nueva Ubicación (Oculto por defecto) -->
+        <div id="ContainerRegistroUbicacion" style="display:none; margin-top: 30px;">
+            <div class="ingreso-container" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <h2 class="ingreso-title"><i class="fa-solid fa-map-location-dot" style="color: #d32f2f;"></i> Registrar Ubicación</h2>
+                
+                <!-- CAMBIO AQUÍ: Usar Tag Helpers para evitar el Error 405 y asegurar Anti-Forgery token -->
+                <form id="formNuevaUbicacion" method="post" asp-controller="Home" asp-action="RegistrarUbicacion">
+                    <div class="input-group">
+                        <input type="text" id="nueva_nombre_ubicacion" name="nombre_ubicacion" placeholder="Nombre (Ej. Hotel Elite)" required />
+                        <div class="error-message" id="errorNuevaUbicacionNombre">⚠️ El nombre es obligatorio</div>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="nueva_direccion" name="direccion" placeholder="Dirección completa" required />
+                        <div class="error-message" id="errorNuevaDireccion">⚠️ La dirección es obligatoria</div>
+                    </div>
+                    <!-- Resto de campos... -->
+                    
+                    <div class="input-group">
+                        <input type="text" id="nueva_ciudad" name="ciudad" placeholder="Ciudad" required />
+                        <div class="error-message" id="errorNuevaCiudad">⚠️ La ciudad es obligatoria</div>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" step="any" id="nuevo_valor_servicio" name="valor_servicio" placeholder="Tarifa del servicio (Ej. 30000)" required />
+                        <div class="error-message" id="errorNuevoValor">⚠️ Ingrese un valor válido (mayor o igual a 0)</div>
+                    </div>
+                    
+                    <button type="submit" class="ingreso-btn">Guardar Ubicación</button>
+                </form>
+                <button class="btn btn-secondary mt-3" style="width: 100%; border-radius: 8px;" onclick="window.location.reload()">
+                    <i class="fa-solid fa-arrow-left"></i> Cancelar / Volver
+                </button>
+            </div>
+        </div>
+
+        <!-- Formulario para Registrar Nuevo Parqueadero (Oculto por defecto) -->
+        <div id="ContainerRegistroParqueadero" style="display:none; margin-top: 30px;">
+            <div class="ingreso-container" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <h2 class="ingreso-title"><i class="fa-solid fa-square-parking" style="color: #d32f2f;"></i> Registrar Parqueadero</h2>
+                
+                <!-- CAMBIO AQUÍ: También aplicarlo para Parqueaderos -->
+                <form id="formNuevoParqueadero" method="post" asp-controller="Home" asp-action="RegistrarParqueadero">
+                    <div class="input-group">
+                        <input type="text" id="nuevo_nombre_parqueadero" name="nombre_parqueadero" placeholder="Nombre del Parqueadero" required />
+                        <div class="error-message" id="errorNuevoParqueaderoNombre">⚠️ El nombre es obligatorio</div>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="nueva_direccion_parqueadero" name="direccion" placeholder="Dirección del parqueadero" required />
+                        <div class="error-message" id="errorNuevaDireccionParqueadero">⚠️ La dirección es obligatoria</div>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="nueva_ciudad_parqueadero" name="ciudad" placeholder="Ciudad" required />
+                        <div class="error-message" id="errorNuevaCiudadParqueadero">⚠️ La ciudad es обязательна</div>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" step="any" id="nueva_tarifa_parqueadero" name="tarifa" placeholder="Tarifa del parqueadero" required />
+                        <div class="error-message" id="errorNuevaTarifaParqueadero">⚠️ La tarifa es obligatoria</div>
+                    </div>
+                    <button type="submit" class="ingreso-btn">Guardar Parqueadero</button>
+                </form>
+                <button class="btn btn-secondary mt-3" style="width: 100%; border-radius: 8px;" onclick="window.location.reload()">
+                    <i class="fa-solid fa-arrow-left"></i> Cancelar / Volver
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

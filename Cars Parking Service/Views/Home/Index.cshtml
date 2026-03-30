@@ -1,0 +1,28 @@
+﻿@using Microsoft.AspNetCore.Http
+@{
+    ViewData["Title"] = "Inicio";
+    var nombre = Context.Session.GetString("nombre") ?? "Usuario";
+}
+
+<section class="home-welcome">
+    <div class="home-card">
+        <div class="home-logo-wrap">
+            <img src="~/img/logo cars parking.png" alt="Logo Cars Parking" class="home-logo" />
+        </div>
+
+        <p class="home-greeting">Bienvenido, @nombre</p>
+        <h1 class="home-title">Cars Parking Service</h1>
+        <p class="home-subtitle">Gestiona ingresos, movimientos y operación diaria de forma rápida y ordenada.</p>
+
+        <div class="home-actions">
+            <a asp-controller="Home" asp-action="Ingreso_Vehiculos" class="home-action-btn primary">
+                <i class="fa-solid fa-car-side"></i>
+                Nuevo ingreso
+            </a>
+            <a asp-controller="Home" asp-action="Tabla_Vehiculos" class="home-action-btn secondary">
+                <i class="fa-solid fa-table-list"></i>
+                Ver tabla de ingresos
+            </a>
+        </div>
+    </div>
+</section>

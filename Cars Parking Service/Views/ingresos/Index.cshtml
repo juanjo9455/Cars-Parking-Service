@@ -1,0 +1,107 @@
+﻿@model IEnumerable<Cars_Parking_Service.Models.ingresos>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.placa)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.fecha_ingreso)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.fecha_salida)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.estado_pago)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.estado_servicio)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Valet)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Banco)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.id_parqueadero)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Ubicacion)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.notas)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.firma)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.valor_servicio)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.valor_propina)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.placa)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.fecha_ingreso)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.fecha_salida)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.estado_pago)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.estado_servicio)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Valet.id_usuario)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Banco.id_usuario)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.id_parqueadero)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Ubicacion.id_ubicacion)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.notas)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.firma)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.valor_servicio)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.valor_propina)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.id_ingreso">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.id_ingreso">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.id_ingreso">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

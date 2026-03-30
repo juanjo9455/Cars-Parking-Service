@@ -1,0 +1,43 @@
+﻿@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="login-container">
+    <div class="logo-section">
+        <div class="car-logo">
+            <img src="~/img/logo cars parking.png" alt="Cars Parking Logo" class="logo-img">
+        </div>
+    </div>
+
+    <h1 class="login-title">Iniciar Sesión</h1>
+
+    <form method="post" id="loginForm">
+        @if (TempData["Mensaje"] != null)
+        {
+            <div class="success-message">@TempData["Mensaje"]</div>
+        }
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="error-credenciales">
+                <span class="error-text">⚠️ @ViewBag.Error</span>
+            </div>
+        }
+
+        <div class="input-group">
+            <input type="text" id="dniLogin" placeholder="Usuario" name="dni">
+            <div class="error-message" id="errorDNI">⚠️ Ingresa un DNI válido</div>
+        </div>
+
+        <div class="input-group">
+            <input type="password" id="passwordLogin" placeholder="Contraseña" name="contraseña">
+            <div class="error-message" id="errorPassword">⚠️ La contraseña es obligatoria</div>
+        </div>
+
+        <button type="submit" class="login-btn" id="acceder">Ingresar</button>
+    </form>
+
+    <div class="forgot-password">
+        <a asp-controller="Auth" asp-action="ForgotPassword">¿Olvidaste tu contraseña?</a>
+    </div>
+</div>

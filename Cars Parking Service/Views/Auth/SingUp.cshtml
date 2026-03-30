@@ -1,0 +1,87 @@
+﻿@{
+    ViewData["Title"] = "SingUp";
+}
+
+<div class="login-container">
+    <div class="logo-section">
+        <div class="car-logo">
+            <img src="~/img/logo cars parking.png" alt="Cars Parking Logo" class="logo-img">
+        </div>
+    </div>
+
+    <h1 class="login-title">Resgistro</h1>
+
+    @if (ViewBag.ErrorDni != null)
+    {
+        <div class="error-credenciales">
+            <span class="error-text">⚠️ @ViewBag.ErrorDni</span>
+        </div>
+    }
+    @if (ViewBag.ErrorCorreo != null)
+    {
+        <div class="error-credenciales">
+            <span class="error-text">⚠️ @ViewBag.ErrorCorreo</span>
+        </div>
+    }
+
+    <form method="post" id="signUpForm">
+        <div class="input-group">
+            <input type="text" id="nombre" placeholder="Nombres" name="nombres">
+            <div class="error-message" id="errorNombre">⚠️ El nombre es obligatorio</div>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="apellido" placeholder="Apellidos" name="apellidos">
+            <div class="error-message" id="errorApellido">⚠️ El apellido es obligatorio</div>
+        </div>
+
+        <div class="input-group">
+            <input type="number"
+                   id="edad"
+                   name="edad"
+                   placeholder="Edad"
+                   min="16"
+                   max="100"
+                   step="1">
+            <div class="error-message" id="errorEdad">⚠️ La edad es obligatoria (16-100 años)</div>
+        </div>
+
+        <div class="input-group">
+            <input type="tel" id="telefono" placeholder="Numero Telefonico" name="telefono">
+            <div class="error-message" id="errorTelefono">⚠️ Ingresa un número telefónico válido</div>
+        </div>
+
+        <div class="input-group">
+            <input type="email" id="correoSignUp" placeholder="Correo Electrónico" name="correo">
+            <div class="error-message" id="errorCorreo">⚠️ Ingresa un correo electrónico válido</div>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="dniSignUp" placeholder="Numero Identificación" name="dni">
+            <div class="error-message" id="errorDNISignUp">⚠️ Ingresa un Numero De Identificación válido</div>
+        </div>
+
+        <div class="input-group">
+            <select class="role-group" id="rolSignUp" name="id_rol" style="color: #333;" required>
+                <option class="role-option" value="">Selecciona un Rol</option>
+                <option class="role-option" value="1">Valet</option>
+                <option class="role-option" value="2">Banco</option>
+                <option class="role-option" value="3">Administrador</option>
+            </select>
+            <div class="error-message" id="errorRolSignUp">⚠️ Debes seleccionar un rol válido</div>
+        </div>
+
+        <div class="input-group">
+            <input type="password" id="passwordSignUp" placeholder="Contraseña" name="contraseña">
+            <div class="error-message" id="errorPassword">⚠️ La contraseña debe tener al menos 6 caracteres</div>
+        </div>
+
+        <button type="submit" class="login-btn" id="acceder">Resgitrarse</button>
+    </form>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <a asp-controller="Home" asp-action="Administrador" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Regresar al Menú de Admin
+            </a>
+        </div>
+</div>

@@ -1,0 +1,53 @@
+﻿@model IEnumerable<Cars_Parking_Service.Models.ubicacion_servicios>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.nombre_ubicacion)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.direccion)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ciudad)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.valor_servicio)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.nombre_ubicacion)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.direccion)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ciudad)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.valor_servicio)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.id_ubicacion">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.id_ubicacion">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.id_ubicacion">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

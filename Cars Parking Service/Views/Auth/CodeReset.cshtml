@@ -1,0 +1,78 @@
+﻿@{
+    ViewData["Title"] = "Validar código";
+}
+<div class="forgot-password-container">
+    <div class="forgot-card">
+        <div class="logo-section">
+            <img src="~/img/logo cars parking.png" alt="Cars Parking Logo" class="logo-img">
+        </div>
+
+        <div class="forgot-header">
+            <h1 class="forgot-title">Código de Verificación</h1>
+            <p class="forgot-subtitle">Digita el código de 6 dígitos que te enviamos al correo</p>
+            @if (ViewBag.RecoveryEmail != null)
+            {
+                <p class="forgot-subtitle">Correo: <strong>@ViewBag.RecoveryEmail</strong></p>
+            }
+        </div>
+
+        @if (ViewBag.Error != null || TempData["Error"] != null)
+        {
+            <div class="error-credenciales">
+                <span class="error-text">⚠️ @(ViewBag.Error ?? TempData["Error"])</span>
+            </div>
+        }
+
+        @if (TempData["Mensaje"] != null)
+        {
+            <div class="success-message">
+                @TempData["Mensaje"]
+            </div>
+        }
+
+        <form method="post" asp-controller="Auth" asp-action="CodeReset" id="recoveryCodeForm" novalidate>
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="fullCode" name="code" />
+
+            <div class="input-group">
+                <div class="code-inputs">
+                    <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" id="code1" autocomplete="off">
+                    <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" id="code2" autocomplete="off">
+                    <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" id="code3" autocomplete="off">
+                    <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" id="code4" autocomplete="off">
+                    <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" id="code5" autocomplete="off">
+                    <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" id="code6" autocomplete="off">
+                </div>
+                <div class="error-message" id="errorCode">⚠️ Por favor ingresa el código completo</div>
+            </div>
+
+            <div class="resend-section">
+                <p class="timer-text">
+                    <span id="timerDisplay">El código expira en <strong>05:00</strong></span>
+                </p>
+                <button type="button"
+                        class="resend-btn"
+                        id="resendBtn"
+                        data-url="@Url.Action("ReenviarCodigo", "Auth")"
+                        disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                    Reenviar código
+                </button>
+            </div>
+
+            <button type="submit" class="submit-btn">Validar Código</button>
+
+            <div class="back-to-login">
+                <a asp-controller="Auth" asp-action="Login" class="back-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                    Volver al inicio de sesión
+                </a>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,30 @@
+﻿@model Cars_Parking_Service.Models.imagenes
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>imagenes</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.dato_imagen)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.dato_imagen)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.ingreso)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.ingreso.id_ingreso)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.id_imagen">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>

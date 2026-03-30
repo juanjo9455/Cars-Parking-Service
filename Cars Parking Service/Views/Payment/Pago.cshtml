@@ -1,0 +1,27 @@
+﻿@{
+    ViewData["Title"] = "Pago";
+}
+
+<div class="main-container">
+    <section class="pago-section">
+        <div class="header">
+            <div class="logo-container">
+                <img src="~/img/logo cars parking.png" class="logo-image" alt="Logo Cars Parking" />
+            </div>
+        </div>
+        <div class="valor-pago">
+            <h1>Valor a Pagar</h1>
+            <p>$30.000</p>
+        </div>
+        <div class="metodo-pago">
+            <h1>Método de Pago</h1>
+            <ul>
+                <li><a id="efectivo" asp-controller="Payment" asp-action="Estado_Servicio"><span>Efectivo</span></a></li>
+                <li><a id="QR" asp-controller="Payment" asp-action="Estado_Servicio"><span>Codigo QR</span></a></li>
+                <li>
+                    <a id="nequi" asp-controller="Payment" asp-action="Estado_Servicio"><img src="~/img/nequi.ico" alt="Nequi" class="nequi-logo"></a>
+                </li>
+            </ul>
+        </div>
+    </section>
+</div>

@@ -1,0 +1,63 @@
+﻿@using Microsoft.AspNetCore.Http
+@{
+    var idRol = Context.Session.GetInt32("id_rol");
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="manifest" href="~/manifest.webmanifest" />
+    <meta name="theme-color" content="#b71c1c" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="CarsParking" />
+    <link rel="apple-touch-icon" href="~/icons/icon-180.png" />
+    <title>@ViewData["Title"] - Cars_Parking_Service</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/ui.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/ingreso.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div class="page-wrapper">
+        <aside class="menu-lateral-container" id="menu-lateral">
+            <div class="div-cerrar-menu">
+                <i class="fa-solid fa-x" id="cerrar-menu-lateral"></i>
+            </div>
+            <div class="usuario">
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <div class="menu-lateral">
+                <ol>
+                    <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house"></i>Inicio</a></li>
+                    <li><a asp-controller="Home" asp-action="Tabla_Vehiculos"><i class="fa-solid fa-table-list"></i>Tabla Ingresos</a></li>
+                    <li><a asp-controller="Home" asp-action="Ingreso_Vehiculos"><i class="fa-solid fa-car-side"></i>Nuevo Ingreso</a></li>
+                    <!--<li><a asp-controller="Payment" asp-action="Pago">Pago</a></li>-->
+                    <!--<li><a asp-controller="Payment" asp-action="Estado_Servicio">Estado Del Servicio</a></li>-->
+                    <!-- Poner "CerrarSesion" en el asp-action -->
+                    @if (idRol == 3)
+                    {
+                        <li><a asp-controller="Home" asp-action="Administrador"><i class="fa-solid fa-gear"></i>Configuraciones Admin</a></li>
+                    }
+                    <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
+                </ol>
+            </div>
+        </aside>
+        <div class="div-abrir-menu" id="div-abrir-menu">
+            <i class="fa-solid fa-bars" id="abrir-menu-lateral"></i>
+        </div>
+
+        @RenderBody()
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/pwa-register.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

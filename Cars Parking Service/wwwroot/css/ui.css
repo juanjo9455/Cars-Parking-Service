@@ -1,0 +1,106 @@
+:root {
+    --ui-input-border: #ddd;
+    --ui-input-border-focus: #2196F3;
+    --ui-input-focus-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    --ui-input-text: #333;
+    --ui-input-placeholder: #999;
+
+    --ui-radius-sm: 8px;
+    --ui-radius-md: 10px;
+
+    --ui-error: #d32f2f;
+    --ui-success: #2e7d32;
+
+    --ui-primary: #d32f2f;
+    --ui-primary-hover: #b71c1c;
+}
+
+.input-group input,
+.input-group select,
+.input-group textarea,
+.form-group input,
+.form-group select,
+.form-group textarea {
+    border: 1px solid var(--ui-input-border);
+    border-radius: var(--ui-radius-sm);
+    color: var(--ui-input-text);
+    transition: all 0.3s ease;
+}
+
+.input-group input::placeholder,
+.input-group textarea::placeholder,
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: var(--ui-input-placeholder);
+}
+
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus,
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--ui-input-border-focus);
+    box-shadow: var(--ui-input-focus-shadow);
+}
+
+.input-group input.input-error,
+.input-group select.input-error,
+.input-group textarea.input-error {
+    border-color: var(--ui-error);
+}
+
+.input-group input.input-success,
+.input-group select.input-success,
+.input-group textarea.input-success {
+    border-color: var(--ui-success);
+}
+
+.error-message {
+    color: var(--ui-error);
+}
+
+.error-credenciales {
+    border-color: var(--ui-error);
+}
+
+.login-btn,
+.ingreso-btn {
+    border-radius: var(--ui-radius-sm);
+}
+
+/* ===================== Custom Select Arrow ===================== */
+select, .form-group select, .input-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #fff;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%23d32f2f" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 1.1em center;
+    background-size: 1.2em 1.2em;
+    padding: 12px 2.5em 12px 15px;
+    border: 1px solid var(--ui-input-border);
+    border-radius: var(--ui-radius-sm);
+    color: var(--ui-input-text);
+    font-size: 14px;
+    font-family: inherit;
+    min-height: 44px;
+    min-width: 60px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+select:focus, .form-group select:focus, .input-group select:focus {
+    border-color: var(--ui-input-border-focus);
+    box-shadow: var(--ui-input-focus-shadow);
+    outline: none;
+}
+
+select:disabled, .form-group select:disabled, .input-group select:disabled {
+    background-color: #f5f5f5;
+    color: #aaa;
+    cursor: not-allowed;
+}

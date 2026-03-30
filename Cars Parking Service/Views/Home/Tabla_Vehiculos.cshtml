@@ -1,0 +1,179 @@
+﻿@model List<Cars_Parking_Service.Models.ingresos>
+@{
+    ViewData["Title"] = "Tabla Vehiculos";
+}
+
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div class="header-info">
+            <h2>Ingresos - Valet Parking</h2>
+            <p>Registro de entradas y salidas del estacionamiento</p>
+        </div>
+        <a asp-controller="Home" asp-action="Ingreso_Vehiculos" class="btn btn-nuevo">+ Nuevo Ingreso</a>
+    </div>
+
+    <!-- Search Section -->
+    <p style="color: #857D7B;">Consultar Ingresos</p>
+    <div class="filters-wrapper" id="filtersWrapper">
+        <button type="button" class="filters-toggle" id="filtersToggle" aria-expanded="false" aria-controls="filtersPanel">
+            <span><i class="fa-solid fa-filter"></i> Filtros</span>
+            <i class="fa-solid fa-chevron-down filters-chevron"></i>
+        </button>
+
+        <div class="search-section filters-panel" id="filtersPanel">
+            <form method="get" asp-action="Tabla_Vehiculos" class="row">
+                <div class="form-group col-md-2 mb-3">
+                    <label>Placa</label>
+                    <input type="text" name="placa" value="@ViewData["FiltroPlaca"]" placeholder="Buscar por placa" class="form-control">
+                </div>
+
+                <div class="form-group col-md-3 mb-3">
+                    <label>Lugar</label>
+                    <select name="lugar" style="width:100%;">
+                        <option value="">Todos</option>
+                        @if (ViewBag.Ubicaciones != null)
+                        {
+                            foreach (var u in ViewBag.Ubicaciones)
+                            {
+                                if (ViewData["FiltroLugar"]?.ToString() == u.id_ubicacion.ToString())
+                                {
+                                    <option value="@u.id_ubicacion" selected>@u.nombre_ubicacion</option>
+                                }
+                                else
+                                {
+                                    <option value="@u.id_ubicacion">@u.nombre_ubicacion</option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group col-md-4 mb-3 ms-md-3" style="min-width:220px;">
+                    <label>Estado</label>
+                    <select name="estado_servicio" style="width:100%;">
+                        <option value="">Todos</option>
+                        <option value="activo" selected="@(ViewData["FiltroEstado"]?.ToString() == "activo")">Activo</option>
+                        <option value="finalizado" selected="@(ViewData["FiltroEstado"]?.ToString() == "finalizado")">Finalizado</option>
+                        <option value="cancelado" selected="@(ViewData["FiltroEstado"]?.ToString() == "finalizado")">Cancelado</option>
+                    </select>
+                </div>
+
+                <div class="form-group col-md-2 mb-3">
+                    <label>Fecha Ingreso</label>
+                    <input type="date" name="fechaIngreso" value="@(((DateTime?)ViewData["FiltroFechaIn"])?.ToString("yyyy-MM-dd"))" class="form-control">
+                </div>
+
+                <div class="form-group col-md-3 mb-3">
+                    <label>Fecha Salida</label>
+                    <input type="date" name="fechaSalida" value="@(((DateTime?)ViewData["FiltroFechaOut"])?.ToString("yyyy-MM-dd"))" class="form-control">
+                </div>
+
+                <div class="col-12 mt-2 d-flex justify-content-end gap-2">
+                    <button type="submit" class="btn btn-primary px-4">Buscar</button>
+                    <a asp-action="Tabla_Vehiculos" class="btn btn-secondary px-4">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Error en las actualizaciones -->
+    @if (TempData["Error"] != null)
+    {
+        <div id="error-alert" class="alert alert-danger" style="margin-bottom:18px; position:relative;">
+            <span>@TempData["Error"]</span>
+            <button type="button" onclick="document.getElementById('error-alert').style.display='none';" style="position:absolute;top:6px;right:12px;background:none;border:none;font-size:20px;line-height:1;color:#a94442;cursor:pointer;">&times;</button>
+        </div>
+    }
+
+    <!-- Table -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Placa</th>
+                    <th>Lugar</th>
+                    <th>Hora Ingreso</th>
+                    <th>Hora Salida</th>
+                    <th>Estado Pago</th>
+                    <th>Estado Servicio</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var ingresos in Model)
+            {
+                <tr>
+                    <td data-label="Placa">@ingresos.placa</td>
+                    <td data-label="Lugar">@ingresos.id_ubicacion</td>
+                    <td data-label="Hora Ingreso">@ingresos.fecha_ingreso</td>
+                    <td data-label="Hora Salida">@ingresos.fecha_salida</td>
+                    @if(@ingresos.estado_pago == "pendiente"){
+                        <td data-label="Estado Pago"><span class="status-badge status-pendiente">Pendiente</span></td>
+
+                        }
+                        else
+                        {
+                            <td data-label="Estado Pago"><span class="status-badge status-pagado">Pagado</span></td>
+                        }
+                    <td data-label="Estado Servicio">@ingresos.estado_servicio</td>
+                    <td data-label="Acción" class="cell-action"><i class="fa-solid fa-pen-to-square btn-action" onclick="abrirModal('modal-@ingresos.id_ingreso')" style="cursor: pointer;"></i></td>
+                </tr>
+                <form class="ActualizarEstados" asp-action="ActualizarEstadosIngreso" asp-controller="Home" method="post">
+                    <input type="hidden" name="id_ingreso" value="@ingresos.id_ingreso"/>
+                    <div id="modal-@ingresos.id_ingreso" class="Editar-Ingreso" style="display:none;">
+                        <div class="modal-overlay" onclick="cerrarModal('modal-@ingresos.id_ingreso')"></div>
+                        <div class="Card-Ingreso">
+                            <span class="close-btn" onclick="cerrarModal('modal-@ingresos.id_ingreso')">&times;</span>
+                            <h3>Actualizar Vehículo</h3>
+
+                            <div class="info-auto">
+                                <p><strong>Placa:</strong> @ingresos.placa</p>
+                                <p><strong>Identificacion Cliente:</strong> @ingresos.dni</p>
+                                <p><strong>Teléfono:</strong> @ingresos.telefono</p>
+                            </div>
+
+                            <div class="form-group-modal">
+                                <label for="estado-pago-@ingresos.id_ingreso">Estado de Pago:</label>
+                                <select id="estado-pago-@ingresos.id_ingreso" name="estado_pago" class="modal-select">
+                                    <option value="pendiente" selected="@(ingresos.estado_pago == "pendiente" ? "selected" : null)">Pendiente</option>
+                                    <option value="pagado" selected="@((ingresos.estado_pago == "pagado" || ingresos.estado_pago == "cancelado") ? "selected" : null)">Pagado</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group-modal">
+                                <label for="estado-servicio-@ingresos.id_ingreso">Estado de Servicio:</label>
+                                <select id="estado-servicio-@ingresos.id_ingreso" name="estado_servicio" class="modal-select">
+                                    <option value="activo" selected="@(ingresos.estado_servicio == "activo" ? "selected" : null)">Activo</option>
+                                    <option value="finalizado" selected="@(ingresos.estado_servicio == "finalizado" ? "selected" : null)">Finalizado</option>
+                                    <option value="cancelado" selected="@(ingresos.estado_servicio == "cancelado" ? "selected" : null)">Cancelado</option>
+                                </select>
+                            </div>
+
+                            <div class="modal-actions">
+                                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const filtersWrapper = document.getElementById('filtersWrapper');
+            const filtersToggle = document.getElementById('filtersToggle');
+
+            if (!filtersWrapper || !filtersToggle) return;
+
+            filtersToggle.addEventListener('click', function () {
+                const isOpen = filtersWrapper.classList.toggle('open');
+                filtersToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            });
+        });
+    </script>
+}
