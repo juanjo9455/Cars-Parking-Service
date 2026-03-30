@@ -146,8 +146,8 @@
 
             <!-- Input oculto para invocar la cámara nativa del dispositivo SOLO para fotos -->
             <input type="file" id="cameraInput" accept="image/*" capture style="display:none;">
-            <!-- Input oculto para grabar video (no se usa para seleccionar, solo para compatibilidad) -->
-            <input type="file" id="videoInput" accept="video/*" capture style="display:none;">
+            <!-- Input oculto para grabar video (sin capture para máxima compatibilidad móvil) -->
+            <input type="file" id="videoInput" accept="video/*" style="display:none;">
 
             <!-- Inputs ocultos para enviar los archivos como base64 -->
             <div id="fotosBase64Container"></div>
@@ -171,6 +171,36 @@
         </div>
         <button type="submit" class="ingreso-btn" id="acceder">Ingresar</button>
     </form>
+</div>
+
+<!-- Modal de grabación de video (minimalista, cámara trasera, controles sobre el video) -->
+<div id="videoModal" style="display:none;position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:#000;justify-content:center;align-items:center;flex-direction:column;">
+    <div style="position:relative;width:100vw;height:100vh;overflow:hidden;">
+        <video id="liveVideo" autoplay playsinline style="width:100vw;height:100vh;object-fit:cover;background:#000;"></video>
+        <!-- Controles sobre el video -->
+        <div style="position:absolute;top:0;left:0;width:100vw;z-index:2;display:flex;flex-direction:row;align-items:center;justify-content:space-between;pointer-events:none;">
+            <div style="width:80vw;height:7px;background:#222;border-radius:4px;overflow:hidden;margin:18px 0 0 18px;">
+                <div id="recordProgressBar" style="height:100%;width:0%;background:#e53935;transition:width 0.2s;"></div>
+            </div>
+            <span id="recordTimer" style="color:#fff;font-size:1.2em;margin:18px 18px 0 12px;letter-spacing:1px;pointer-events:auto;">00:00</span>
+        </div>
+        <button id="startRecordingBtn" style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:#e53935;border:none;box-shadow:0 2px 8px #0006;z-index:3;display:flex;align-items:center;justify-content:center;pointer-events:auto;">
+            <span style="display:inline-block;width:32px;height:32px;background:#fff;border-radius:50%;margin:10px auto;"></span>
+        </button>
+        <button id="stopRecordingBtn" style="display:none;position:absolute;bottom:40px;left:50%;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:#e53935;border:none;box-shadow:0 2px 8px #0006;z-index:3;align-items:center;justify-content:center;pointer-events:auto;">
+            <span style="display:inline-block;width:32px;height:32px;background:#fff;border-radius:8px;margin:10px auto;"></span>
+        </button>
+        <button id="closeVideoModalBtn" style="position:absolute;top:18px;right:18px;font-size:2.2em;color:#fff;background:none;border:none;z-index:4;pointer-events:auto; margin-top: 15px;">&times;</button>
+        <div id="videoReviewSection" style="display:none;position:absolute;top:0;left:0;width:100vw;height:100vh;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.92);z-index:10;">
+            <video id="recordedVideo" controls style="width:100vw;height:100vh;object-fit:cover;background:#000;"></video>
+            <button id="acceptVideoBtn" style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:transparent;border:none;box-shadow:none;display:flex;align-items:center;justify-content:center;pointer-events:auto;">
+                <i class="fa-solid fa-check" style="font-size:2em;color:#fff;"></i>
+            </button>
+            <button id="deleteVideoBtn" class="delete-photo" style="position:absolute;top:30px;right:30px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.7);border:none;box-shadow:0 2px 8px #0006;display:flex;align-items:center;justify-content:center;pointer-events:auto;z-index:11;">
+                <span style="font-size:1.5em;color:#fff;">&times;</span>
+            </button>
+        </div>
+    </div>
 </div>
 
 @section Scripts {

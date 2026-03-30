@@ -1343,3 +1343,28 @@ tbody td:last-child {
     pointer-events: none;
     box-shadow: none;
 }
+
+#videoPreviewContainer {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#videoPreviewContainer .delete-photo {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 2;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e53935;
+    color: #fff;
+    border: none;
+    font-size: 1.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px #0006;
+    cursor: pointer;
+}
