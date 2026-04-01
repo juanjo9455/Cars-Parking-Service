@@ -1,6 +1,8 @@
 ﻿@model List<Cars_Parking_Service.Models.ingresos>
 @{
     ViewData["Title"] = "Tabla Vehiculos";
+    var modalError = TempData["Error"] as string;
+    var modalErrorIngresoId = TempData["ErrorIngresoId"]?.ToString();
 }
 
 <div class="container">
@@ -77,15 +79,6 @@
         </div>
     </div>
 
-    <!-- Error en las actualizaciones -->
-    @if (TempData["Error"] != null)
-    {
-        <div id="error-alert" class="alert alert-danger" style="margin-bottom:18px; position:relative;">
-            <span>@TempData["Error"]</span>
-            <button type="button" onclick="document.getElementById('error-alert').style.display='none';" style="position:absolute;top:6px;right:12px;background:none;border:none;font-size:20px;line-height:1;color:#a94442;cursor:pointer;">&times;</button>
-        </div>
-    }
-
     <!-- Table -->
     <div class="table-container">
         <table>
@@ -126,6 +119,14 @@
                         <div class="Card-Ingreso">
                             <span class="close-btn" onclick="cerrarModal('modal-@ingresos.id_ingreso')">&times;</span>
                             <h3>Actualizar Vehículo</h3>
+
+                            @if (!string.IsNullOrEmpty(modalError) && modalErrorIngresoId == ingresos.id_ingreso.ToString())
+                            {
+                                <div class="alert alert-danger" style="margin-bottom:12px; position:relative; text-align:left;">
+                                    <span>@modalError</span>
+                                    <button type="button" onclick="this.parentElement.style.display='none';" style="position:absolute;top:4px;right:10px;background:none;border:none;font-size:20px;line-height:1;color:#a94442;cursor:pointer;">&times;</button>
+                                </div>
+                            }
 
                             <div class="info-auto">
                                 <p><strong>Placa:</strong> @ingresos.placa</p>
@@ -168,12 +169,20 @@
             const filtersWrapper = document.getElementById('filtersWrapper');
             const filtersToggle = document.getElementById('filtersToggle');
 
-            if (!filtersWrapper || !filtersToggle) return;
+            if (filtersWrapper && filtersToggle) {
+                filtersToggle.addEventListener('click', function () {
+                    const isOpen = filtersWrapper.classList.toggle('open');
+                    filtersToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                });
+            }
 
-            filtersToggle.addEventListener('click', function () {
-                const isOpen = filtersWrapper.classList.toggle('open');
-                filtersToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-            });
+            const modalErrorIngresoId = '@(modalErrorIngresoId ?? string.Empty)';
+            if (modalErrorIngresoId) {
+                const modal = document.getElementById(`modal-${modalErrorIngresoId}`);
+                if (modal) {
+                    modal.style.display = 'flex';
+                }
+            }
         });
     </script>
 }

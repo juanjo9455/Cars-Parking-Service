@@ -79,7 +79,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    cameraInput.addEventListener('change', (e) => {
+    function fileToDataUrl(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = ev => resolve(ev.target.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function compressImageToBase64(file) {
+        const originalBase64 = await fileToDataUrl(file);
+
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                const maxDimension = 1600;
+                let { width, height } = img;
+
+                if (width > height && width > maxDimension) {
+                    height = Math.round((height * maxDimension) / width);
+                    width = maxDimension;
+                } else if (height >= width && height > maxDimension) {
+                    width = Math.round((width * maxDimension) / height);
+                    height = maxDimension;
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    resolve(originalBase64);
+                    return;
+                }
+
+                ctx.drawImage(img, 0, 0, width, height);
+                const compressed = canvas.toDataURL('image/jpeg', 0.75);
+                resolve(compressed || originalBase64);
+            };
+
+            img.onerror = () => resolve(originalBase64);
+            img.src = originalBase64;
+        });
+    }
+
+    cameraInput.addEventListener('change', async (e) => {
         cameraInputClicking = false;
         const files = Array.from(e.target.files);
         const total = archivosCapturados.length + (videoGrabado ? 1 : 0);
@@ -91,20 +136,22 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             errorMedia.style.display = 'none';
         }
-        files.slice(0, MAX_TOTAL - total).forEach(file => {
-            if (!file.type.startsWith('image/')) return;
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                archivosCapturados.push({
-                    base64: ev.target.result,
-                    type: file.type
-                });
-                renderPreview();
-                actualizarContador();
-                sincronizarInputsOcultos();
-            };
-            reader.readAsDataURL(file);
-        });
+
+        const filesToProcess = files.slice(0, MAX_TOTAL - total);
+
+        for (const file of filesToProcess) {
+            if (!file.type.startsWith('image/')) continue;
+
+            const compressedBase64 = await compressImageToBase64(file);
+            archivosCapturados.push({
+                base64: compressedBase64,
+                type: 'image/jpeg'
+            });
+
+            renderPreview();
+            actualizarContador();
+            sincronizarInputsOcultos();
+        }
     });
 
     tomarFotoBtn.addEventListener('click', function(e) {
@@ -137,37 +184,43 @@ document.addEventListener('DOMContentLoaded', () => {
         actualizarContador();
     }
 
+    function getPreviewWrapperWidth() {
+        return window.matchMedia('(max-width: 768px)').matches ? '100%' : '98%';
+    }
+
     function showVideoPreview(blob) {
         videoPreviewContainer.innerHTML = '';
         const video = document.createElement('video');
         video.controls = true;
-        video.style.width = '80%';
+        video.style.width = '100%';
         video.style.maxWidth = '100%';
         video.style.maxHeight = '220px';
         video.style.borderRadius = '10px';
         video.style.display = 'block';
         video.style.margin = '0 auto';
+
         video.src = URL.createObjectURL(blob);
-        // Contenedor para centrar y posicionar el botón
+
         const wrapper = document.createElement('div');
         wrapper.style.position = 'relative';
         wrapper.style.display = 'flex';
         wrapper.style.justifyContent = 'center';
         wrapper.style.alignItems = 'center';
-        wrapper.style.width = '100%';
+        wrapper.style.width = getPreviewWrapperWidth();
         wrapper.appendChild(video);
-        // Botón para eliminar video
+
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
         removeBtn.className = 'delete-photo';
         removeBtn.textContent = '✕';
         removeBtn.style.position = 'absolute';
-        removeBtn.style.top = '12px';
-        removeBtn.style.right = '12px';
+        removeBtn.style.top = '8px';
+        removeBtn.style.right = '8px';
         removeBtn.style.zIndex = '2';
         removeBtn.addEventListener('click', () => {
             resetVideoPreview();
         });
+
         wrapper.appendChild(removeBtn);
         videoPreviewContainer.appendChild(wrapper);
         videoGrabado = true;
@@ -328,20 +381,33 @@ document.addEventListener('DOMContentLoaded', () => {
         videoGrabado = true;
         acceptVideoBtn.onclick = function() {
             videoPreviewContainer.innerHTML = '';
+
             const preview = document.createElement('video');
             preview.controls = true;
-            preview.style.width = '80%';
+            preview.style.width = '100%';
             preview.style.maxWidth = '100%';
             preview.style.maxHeight = '220px';
             preview.style.borderRadius = '10px';
             preview.style.display = 'block';
             preview.style.margin = '0 auto';
             preview.src = url;
-            // Botón eliminar video en preview principal
+
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            wrapper.style.display = 'flex';
+            wrapper.style.justifyContent = 'center';
+            wrapper.style.alignItems = 'center';
+            wrapper.style.width = getPreviewWrapperWidth();
+            wrapper.appendChild(preview);
+
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
             removeBtn.className = 'delete-photo';
             removeBtn.textContent = '✕';
+            removeBtn.style.position = 'absolute';
+            removeBtn.style.top = '8px';
+            removeBtn.style.right = '8px';
+            removeBtn.style.zIndex = '2';
             removeBtn.onclick = function() {
                 videoPreviewContainer.innerHTML = '';
                 videoBase64Input.value = '';
@@ -349,14 +415,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 grabarVideoBtn.disabled = false;
                 videoGrabado = false;
             };
-            preview.style.position = 'relative';
-            videoPreviewContainer.appendChild(preview);
-            videoPreviewContainer.appendChild(removeBtn);
+
+            wrapper.appendChild(removeBtn);
+            videoPreviewContainer.appendChild(wrapper);
+
             const reader = new FileReader();
             reader.onload = function(ev) {
                 videoBase64Input.value = ev.target.result;
             };
             reader.readAsDataURL(blob);
+
             videoModal.style.display = 'none';
             recordedVideo.src = '';
             liveVideo.srcObject = null;

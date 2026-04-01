@@ -1,7 +1,20 @@
 using Microsoft.EntityFrameworkCore;
 using Cars_Parking_Service.Data;
+using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Aumenta el límite de tamaño de carga para Kestrel (200 MB, ajustable)
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.Limits.MaxRequestBodySize = 209_715_200; // 200 MB
+});
+
+// Aumenta el límite de tamaño de carga para formularios multipart (200 MB)
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 209_715_200; // 200 MB
+});
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))

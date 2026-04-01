@@ -355,6 +355,7 @@ namespace Cars_Parking_Service.Controllers
             if (estado_servicio == "finalizado" && estado_pago != "pagado")
             {
                 TempData["Error"] = $"El servicio del vehículo con placa {ingreso.placa} aun no esta pago";
+                TempData["ErrorIngresoId"] = id_ingreso;
                 return RedirectToAction("Tabla_Vehiculos");
             }
 
@@ -362,6 +363,7 @@ namespace Cars_Parking_Service.Controllers
             if (estado_servicio == "cancelado" && estado_pago == "pagado")
             {
                 TempData["Error"] = "No se puede cancelar un servicio que ya está pagado.";
+                TempData["ErrorIngresoId"] = id_ingreso;
                 return RedirectToAction("Tabla_Vehiculos");
             }
 

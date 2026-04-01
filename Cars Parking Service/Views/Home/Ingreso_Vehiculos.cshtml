@@ -138,11 +138,14 @@
 
             <p class="photo-counter" id="photoCounter">0 fotos seleccionadas (max. 10)</p>
 
-            <!-- Contenedor para preview de fotos -->
-            <div class="photos-preview" id="photosPreview"></div>
+            <!-- Contenedor padre para fotos y el video -->
+            <div class="Media-Preview">
+                <!-- Contenedor para preview de fotos -->
+                <div class="photos-preview" id="photosPreview"></div>
 
-            <!-- Contenedor para preview de video -->
-            <div id="videoPreviewContainer" style="margin-top: 12px;"></div>
+                <!-- Contenedor para preview de video -->
+                <div id="videoPreviewContainer" style="margin-top: 12px;"></div>
+            </div>
 
             <!-- Input oculto para invocar la cámara nativa del dispositivo SOLO para fotos -->
             <input type="file" id="cameraInput" accept="image/*" capture style="display:none;">
