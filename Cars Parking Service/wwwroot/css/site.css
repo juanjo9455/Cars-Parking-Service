@@ -694,6 +694,20 @@ tbody td:last-child {
     text-align: center;
 }
 
+.usuario-inactivo > td {
+    background-color: #f2f2f2;
+    color: #666;
+}
+
+.usuario-inactivo:hover > td {
+    background-color: #e8e8e8;
+}
+
+.usuario-inactivo .status-badge {
+    background: #9e9e9e !important;
+    color: white !important;
+}
+
 .status-pagado {
     background: #4CAF50;
     color: white;

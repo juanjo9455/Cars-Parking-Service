@@ -59,7 +59,7 @@
 
             <!-- Contenedor de Tarjetas -->
             <div class="admin-cards-container">
-                <!-- Card Usuarios (Redirige a SignUp) -->
+                <!-- Card Usuarios -->
                 <div class="admin-card" id="CardUsuarios">
                     <div class="admin-card-icon">
                         <i class="fa-solid fa-user-plus"></i>
@@ -68,7 +68,7 @@
                         <h3>Gestión de Usuarios</h3>
                         <p>Registrar y administrar cuentas de Valets, Bancos y Administradores del sistema.</p>
                     </div>
-                    <span class="admin-card-btn">Ir a registro <i class="fa-solid fa-arrow-right"></i></span>
+                    <span class="admin-card-btn">Ir a opciones <i class="fa-solid fa-arrow-right"></i></span>
                 </div>
 
                 <!-- Card Ubicaciones -->
@@ -151,6 +151,7 @@
                                 <th>Edad</th>
                                 <th>Correo</th> <!-- NUEVO -->
                                 <th>Rol</th>
+                                <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -159,7 +160,7 @@
                             {
                                 foreach (var user in ViewBag.Usuarios)
                                 {
-                                    <tr>
+                                    <tr class="@(user.estado ? "usuario-activo" : "usuario-inactivo")">
                                         <td>@user.dni</td>
                                         <td>@user.nombres</td>
                                         <td>@user.apellidos</td>
@@ -184,12 +185,19 @@
                                                 <span class="status-badge" style="background: #999; color: white;">Desconocido</span>
                                             }
                                         </td>
+                                        <td class="text-center">
+                                            @if (user.estado)
+                                            {
+                                                <span class="status-badge" style="background: #4CAF50; color: white;"><i class="fa-solid fa-check"></i> Activo</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge" style="background: #f44336; color: white;"><i class="fa-solid fa-x"></i> Inactivo</span>
+                                            }
+                                        </td>
                                         <td>
-                                            <button class="btn-action" title="Editar" onclick="abrirModalEditarUsuario('@user.id_usuario', '@user.dni', '@user.nombres', '@user.apellidos', '@user.telefono', '@user.edad', '@user.id_rol', '@user.correo', '@(string.IsNullOrEmpty(user.imagen_usuario) ? "" : user.imagen_usuario)')">
+                                            <button class="btn-action" title="Editar" onclick="abrirModalEditarUsuario('@user.id_usuario', '@user.dni', '@user.nombres', '@user.apellidos', '@user.telefono', '@user.edad', '@user.id_rol', '@user.correo', '@user.estado.ToString().ToLower()', '@(string.IsNullOrEmpty(user.imagen_usuario) ? "" : user.imagen_usuario)')">
                                                 <i class="fa-solid fa-pen-to-square" style="color: #2196F3;"></i>
-                                            </button>
-                                            <button class="btn-action" title="Eliminar">
-                                                <i class="fa-solid fa-trash" style="color: #d32f2f;" onclick="confirmarEliminarUsuario('@user.id_usuario')"></i>
                                             </button>
                                         </td>
                                     </tr>
@@ -214,6 +222,7 @@
                         <form id="formEditarUsuario" method="post" action="/Home/EditarUsuario">
                             <input type="hidden" id="edit_id_usuario" name="id_usuario" />
                             <input type="hidden" id="edit_avatar_base64" name="avatarBase64" />
+                            <input type="hidden" id="edit_estado" name="estado" value="true" />
 
                             <div class="edit-usuario-layout">
                                 <div class="edit-usuario-form-col">
@@ -243,7 +252,7 @@
                                     </div>
                                     <div class="form-group-modal">
                                         <label>Rol</label>
-                                        <select id="edit_rol" name="id_rol" class="modal-select" required>
+                                        <select id="edit_rol" name="id_rol" required style="width: 100%;">
                                             <option value="">Seleccione un rol...</option>
                                             <option value="1">Valet</option>
                                             <option value="2">Banco</option>
@@ -261,6 +270,14 @@
                                     <button type="button" class="btn btn-secondary" id="btnTomarFotoAvatar">
                                         <i class="fa-solid fa-camera"></i> Tomar foto
                                     </button>
+
+                                    <div class="form-group-modal" style="margin-top: 15px; width: 100%;">
+                                        <label>Estado</label>
+                                        <select id="edit_estado_select" required style="width: 100%;" onchange="document.getElementById('edit_estado').value = this.value;">
+                                            <option value="true">Activo</option>
+                                            <option value="false">Inactivo</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
@@ -742,7 +759,7 @@
             }
 
             // Funciones para abrir modales de edición
-            function abrirModalEditarUsuario(id, dni, nombres, apellidos, telefono, edad, id_rol, correo, avatar) {
+            function abrirModalEditarUsuario(id, dni, nombres, apellidos, telefono, edad, id_rol, correo, estado, avatar) {
                 // Asignar valores a los campos del formulario de edición
                 document.getElementById('edit_id_usuario').value = id;
                 document.getElementById('edit_dni').value = dni;
@@ -752,6 +769,10 @@
                 document.getElementById('edit_edad').value = edad;
                 document.getElementById('edit_correo').value = correo;
                 document.getElementById('edit_rol').value = id_rol;
+
+                // Manejo del estado (activo/inactivo)
+                document.getElementById('edit_estado').value = (estado === 'true') ? 'true' : 'false';
+                document.getElementById('edit_estado_select').value = (estado === 'true') ? 'true' : 'false';
 
                 // Mostrar el avatar si existe
                 var avatarPreview = document.getElementById('editAvatarPreview');
@@ -808,7 +829,7 @@
 
             // Funciones para confirmar eliminación de usuario, ubicación o parqueadero
             function confirmarEliminarUsuario(id) {
-                if (confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
+                if (confirm('¿Estás seguro de que deseas desactivar este usuario?')) {
                     // Asignar el ID del usuario a eliminar al campo oculto del formulario
                     document.getElementById('delete_id_usuario').value = id;
 

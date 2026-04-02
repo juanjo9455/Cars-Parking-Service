@@ -7,6 +7,8 @@ using Cars_Parking_Service.Models;
 using Microsoft.AspNetCore.Mvc;
 using Cars_Parking_Service.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.JSInterop.Infrastructure;
+using AspNetCoreGeneratedDocument;
 
 namespace Cars_Parking_Service.Controllers
 {
@@ -63,7 +65,7 @@ namespace Cars_Parking_Service.Controllers
 
             var normalizedEmail = email.Trim().ToLowerInvariant();
             var user = await _context.usuarios
-                .FirstOrDefaultAsync(u => u.correo != null && u.correo.Trim().ToLower() == normalizedEmail);
+                .FirstOrDefaultAsync(u => u.correo != null && u.correo.Trim().ToLower() == normalizedEmail && u.estado == true);
 
             var recoveryCode = RandomNumberGenerator.GetInt32(0, 1000000).ToString("D6");
             var expirationUtc = DateTime.UtcNow.AddMinutes(5);
@@ -191,7 +193,7 @@ namespace Cars_Parking_Service.Controllers
             }
 
             var user = _context.usuarios
-                .FirstOrDefault(u => u.correo != null && u.correo.Trim().ToLower() == recoveryEmail);
+                .FirstOrDefault(u => u.correo != null && u.correo.Trim().ToLower() == recoveryEmail && u.estado == true);
 
             if (user == null)
             {
@@ -227,7 +229,7 @@ namespace Cars_Parking_Service.Controllers
             try
             {
                 var user = await _context.usuarios
-                    .FirstOrDefaultAsync(u => u.correo != null && u.correo.Trim().ToLower() == recoveryEmail);
+                    .FirstOrDefaultAsync(u => u.correo != null && u.correo.Trim().ToLower() == recoveryEmail && u.estado == true);
 
                 if (user != null)
                 {
@@ -251,8 +253,8 @@ namespace Cars_Parking_Service.Controllers
         [HttpPost]
         public IActionResult SingUp(usuarios nuevoUsuario)
         {
-            bool existeDni = _context.usuarios.Any(u => u.dni == nuevoUsuario.dni);
-            bool existeCorreo = _context.usuarios.Any(u => u.correo.Trim().ToLower() == nuevoUsuario.correo.Trim().ToLower());
+            bool existeDni = _context.usuarios.Any(u => u.dni == nuevoUsuario.dni && u.estado == true);
+            bool existeCorreo = _context.usuarios.Any(u => u.correo.Trim().ToLower() == nuevoUsuario.correo.Trim().ToLower() && u.estado == true);
 
             if (existeDni || existeCorreo)
             {
@@ -263,6 +265,7 @@ namespace Cars_Parking_Service.Controllers
                 return View(nuevoUsuario);
             }
 
+            nuevoUsuario.estado = true;
             _context.usuarios.Add(nuevoUsuario);
             _context.SaveChanges();
 
@@ -270,13 +273,19 @@ namespace Cars_Parking_Service.Controllers
         }
 
         [HttpPost]
-        public IActionResult Login(string dni, string contraseña)
+        public IActionResult Login(string dni, [FromForm(Name = "contraseña")] string contrasena)
         {
             var user = _context.usuarios
-                .FirstOrDefault(u => u.dni == dni && u.contraseña == contraseña);
+                .FirstOrDefault(u => u.dni == dni && u.contraseña == contrasena);
 
             if (user != null)
             {
+                if (!user.estado)
+                {
+                    ViewBag.Error = "Usuario Inacivo";
+                    return View();
+                }
+
                 HttpContext.Session.SetInt32("id", user.id_usuario);
                 HttpContext.Session.SetString("dni", user.dni);
                 HttpContext.Session.SetString("nombre", user.nombres);

@@ -471,7 +471,7 @@
 
 // Modal para editar en tabla usuarios
 // Abrir modal y cargar datos del usuario en los inputs
-function abrirModalEditarUsuario(id, dni, nombre, apellido, telefono, edad, rol, correo, imagenUrl) {
+function abrirModalEditarUsuario(id, dni, nombre, apellido, telefono, edad, rol, correo, estadoOrImagenUrl, imagenUrlMaybe) {
     document.getElementById('edit_id_usuario').value = id;
     document.getElementById('edit_dni').value = dni;
     document.getElementById('edit_nombre').value = nombre;
@@ -483,6 +483,20 @@ function abrirModalEditarUsuario(id, dni, nombre, apellido, telefono, edad, rol,
     const selectRol = document.getElementById('edit_rol');
     if (selectRol) {
         selectRol.value = rol.toString();
+    }
+
+    const estadoRaw = estadoOrImagenUrl?.toString().toLowerCase();
+    const hasEstadoParam = estadoRaw === 'true' || estadoRaw === 'false';
+    const estadoValue = hasEstadoParam ? estadoRaw : 'true';
+    const imagenUrl = hasEstadoParam ? imagenUrlMaybe : estadoOrImagenUrl;
+
+    const estadoInput = document.getElementById('edit_estado');
+    const estadoSelect = document.getElementById('edit_estado_select');
+    if (estadoInput) {
+        estadoInput.value = estadoValue;
+    }
+    if (estadoSelect) {
+        estadoSelect.value = estadoValue;
     }
 
     const avatarPreview = document.getElementById('editAvatarPreview');
@@ -497,7 +511,7 @@ function abrirModalEditarUsuario(id, dni, nombre, apellido, telefono, edad, rol,
             avatarBase64Input.value = '';
         } else {
             avatarPreview.style.display = 'none';
-            avatarPreview.src = '';
+            avatarPreview.src = ''; 
             avatarIcon.style.display = 'block';
             avatarBase64Input.value = '';
         }
@@ -524,16 +538,6 @@ function confirmarGuardarUsuario() {
         
         // Enviar al formulario si el administrador acepta
         document.getElementById("formEditarUsuario").submit();
-    }
-}
-
-// Alerta de confirmacion para eliminar usuario
-function confirmarEliminarUsuario(id) {
-    const confirmacion = confirm("⚠️ ADVERTENCIA: ¿Estás seguro de que deseas eliminar permanentemente a este usuario del sistema? Esta acción no se puede deshacer.");
-    if (confirmacion) {
-        // Pasar el Id al form oculto enviar 
-        document.getElementById('delete_id_usuario').value = id;
-        document.getElementById('formEliminarUsuario').submit();
     }
 }
 

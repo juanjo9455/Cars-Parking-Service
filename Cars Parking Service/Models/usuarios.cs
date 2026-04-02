@@ -25,5 +25,7 @@ namespace Cars_Parking_Service.Models
         public string correo { get; set; }
 
         public string? imagen_usuario { get; set; }
+
+        public bool estado { get; set; }
     }
 }

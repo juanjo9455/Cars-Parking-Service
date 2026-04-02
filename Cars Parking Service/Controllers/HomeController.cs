@@ -30,8 +30,11 @@ namespace Cars_Parking_Service.Controllers
         public IActionResult Administrador()
         {
 
-            // Consultamos los usuarios del sistema
-            ViewBag.Usuarios = _context.usuarios.ToList();
+            // Consultamos todos los usuarios del sistema, dejando los activos arriba y los inactivos al final
+            ViewBag.Usuarios = _context.usuarios
+                .OrderByDescending(u => u.estado)
+                .ThenBy(u => u.nombres)
+                .ToList();
 
             // Consultamos las ubicaciones del sistema
             ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
@@ -302,8 +305,8 @@ namespace Cars_Parking_Service.Controllers
 
         private void CargarDatosFormulario()
         {
-            ViewBag.Valets = _context.usuarios.Where(u => u.id_rol == 1).ToList();
-            ViewBag.Bancos = _context.usuarios.Where(u => u.id_rol == 2).ToList();
+            ViewBag.Valets = _context.usuarios.Where(u => u.id_rol == 1 && u.estado == true).ToList();
+            ViewBag.Bancos = _context.usuarios.Where(u => u.id_rol == 2 && u.estado == true).ToList();
             ViewBag.Parqueaderos = _context.parqueaderos.ToList();
             ViewBag.UbicacionesS = _context.ubicacion_servicios.ToList();
 
@@ -400,15 +403,15 @@ namespace Cars_Parking_Service.Controllers
 
         // Acción para editar el usuario desde el panel del admin
         [HttpPost]
-        public IActionResult EditarUsuario(int id_usuario, string dni, string nombre, string apellido, string telefono, int edad, int id_rol, string correo, string avatarBase64 = null)
+        public IActionResult EditarUsuario(int id_usuario, string dni, string nombre, string apellido, string telefono, int edad, int id_rol, string correo, bool estado, string avatarBase64 = null)
         {
             // Validar si el nuevo DNI ya le pertenece a OTRO usuario
             bool existeDni = _context.usuarios
-                .Any(u => u.dni == dni && u.id_usuario != id_usuario);
+                .Any(u => u.dni == dni && u.id_usuario != id_usuario && u.estado == true);
 
             // Validar si el correo ya le pertenece a OTRO usuario
             bool existeCorreo = _context.usuarios
-                .Any(u => u.correo.Trim().ToLower() == correo.Trim().ToLower() && u.id_usuario != id_usuario);
+                .Any(u => u.correo.Trim().ToLower() == correo.Trim().ToLower() && u.id_usuario != id_usuario && u.estado == true);
 
             if (existeDni)
             {
@@ -431,6 +434,7 @@ namespace Cars_Parking_Service.Controllers
                 usuario.edad = edad;
                 usuario.id_rol = id_rol;
                 usuario.correo = correo;
+                usuario.estado = estado;
 
                 // Procesar imagen si viene en base64
                 if (!string.IsNullOrWhiteSpace(avatarBase64))
@@ -475,21 +479,6 @@ namespace Cars_Parking_Service.Controllers
             }
             return RedirectToAction("Administrador");
         }
-
-        // Acción para eliminar un usuario desde el panel del admin
-        [HttpPost]
-        public IActionResult EliminarUsuario(int id_usuario)
-        {
-            var usuario = _context.usuarios.FirstOrDefault(u => u.id_usuario == id_usuario);
-            if (usuario != null)
-            {
-                _context.usuarios.Remove(usuario);
-                _context.SaveChanges();
-                TempData["Mensaje"] = "El usuario fue eliminado del sistema exitosamente.";
-            }
-            return RedirectToAction("Administrador");
-        }
-
 
         // =========================== Ubicacion =========================== \\
 
