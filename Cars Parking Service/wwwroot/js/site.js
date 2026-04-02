@@ -471,18 +471,36 @@
 
 // Modal para editar en tabla usuarios
 // Abrir modal y cargar datos del usuario en los inputs
-function abrirModalEditarUsuario(id, dni, nombre, apellido, telefono, edad, rol, correo) {
+function abrirModalEditarUsuario(id, dni, nombre, apellido, telefono, edad, rol, correo, imagenUrl) {
     document.getElementById('edit_id_usuario').value = id;
     document.getElementById('edit_dni').value = dni;
     document.getElementById('edit_nombre').value = nombre;
     document.getElementById('edit_apellido').value = apellido;
     document.getElementById('edit_telefono').value = telefono;
-    document.getElementById('edit_edad').value = edad; // NUEVO
+    document.getElementById('edit_edad').value = edad;
     document.getElementById('edit_correo').value = correo;
 
     const selectRol = document.getElementById('edit_rol');
     if (selectRol) {
         selectRol.value = rol.toString();
+    }
+
+    const avatarPreview = document.getElementById('editAvatarPreview');
+    const avatarIcon = document.getElementById('editAvatarIcon');
+    const avatarBase64Input = document.getElementById('edit_avatar_base64');
+    if (avatarPreview && avatarIcon && avatarBase64Input) {
+        if (imagenUrl) {
+            avatarPreview.src = imagenUrl;
+            avatarPreview.style.display = 'block';
+            avatarPreview.style.transform = 'scaleX(-1)'; // Aplicar flip para evitar espejo
+            avatarIcon.style.display = 'none';
+            avatarBase64Input.value = '';
+        } else {
+            avatarPreview.style.display = 'none';
+            avatarPreview.src = '';
+            avatarIcon.style.display = 'block';
+            avatarBase64Input.value = '';
+        }
     }
 
     document.getElementById('ModalEditarUsuario').style.display = 'flex';
@@ -496,7 +514,15 @@ function cerrarModalEditarUsuario() {
 function confirmarGuardarUsuario() {
     const confirmacion = confirm("¿Estás seguro de que deseas guardar los cambios realizados en este usuario?");
     if (confirmacion) {
-        // Enviar al formulario si el admnistrador acepta
+        // Obtener el botón y mostrar spinner
+        const btnGuardar = event.target;
+        const originalHTML = btnGuardar.innerHTML;
+        
+        // Mostrar spinner
+        btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Guardando...';
+        btnGuardar.disabled = true;
+        
+        // Enviar al formulario si el administrador acepta
         document.getElementById("formEditarUsuario").submit();
     }
 }
@@ -547,3 +573,36 @@ function confirmarEliminarUbicacion(id) {
         document.getElementById('formEliminarUbicacion').submit();
     }
 }
+
+// =========================== Script para tomar foto de avatar =========================== \\
+
+document.addEventListener('DOMContentLoaded', function () {
+    const avatarInput = document.getElementById('editAvatarInput');
+    const avatarBtn = document.getElementById('btnTomarFotoAvatar');
+    const avatarPreview = document.getElementById('editAvatarPreview');
+    const avatarIcon = document.getElementById('editAvatarIcon');
+    const avatarBase64 = document.getElementById('edit_avatar_base64');
+
+    if (!avatarInput || !avatarBtn || !avatarPreview || !avatarIcon || !avatarBase64) return;
+
+    avatarBtn.addEventListener('click', function () {
+        avatarInput.value = '';
+        avatarInput.click();
+    });
+
+    avatarInput.addEventListener('change', function (e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+            const base64 = ev.target.result;
+            avatarPreview.src = base64;
+            avatarPreview.style.display = 'block';
+            avatarPreview.style.transform = 'scaleX(-1)'; // Aplicar flip para evitar espejo
+            avatarIcon.style.display = 'none';
+            avatarBase64.value = base64;
+        };
+        reader.readAsDataURL(file);
+    });
+});

@@ -283,6 +283,12 @@ namespace Cars_Parking_Service.Controllers
                 HttpContext.Session.SetString("apellido", user.apellidos);
                 HttpContext.Session.SetInt32("id_rol", user.id_rol);
                 HttpContext.Session.SetString("correo", user.correo);
+                
+                // Guardar la imagen de usuario en la sesión si existe
+                if (!string.IsNullOrEmpty(user.imagen_usuario))
+                {
+                    HttpContext.Session.SetString("imagen_usuario_url", user.imagen_usuario);
+                }
 
                 return RedirectToAction("Index", "Home");
             }

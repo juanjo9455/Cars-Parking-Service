@@ -400,7 +400,7 @@ namespace Cars_Parking_Service.Controllers
 
         // Acción para editar el usuario desde el panel del admin
         [HttpPost]
-        public IActionResult EditarUsuario(int id_usuario, string dni, string nombre, string apellido, string telefono, int edad, int id_rol, string correo)
+        public IActionResult EditarUsuario(int id_usuario, string dni, string nombre, string apellido, string telefono, int edad, int id_rol, string correo, string avatarBase64 = null)
         {
             // Validar si el nuevo DNI ya le pertenece a OTRO usuario
             bool existeDni = _context.usuarios
@@ -428,11 +428,49 @@ namespace Cars_Parking_Service.Controllers
                 usuario.nombres = nombre;
                 usuario.apellidos = apellido;
                 usuario.telefono = telefono;
-                usuario.edad = edad; // NUEVO
+                usuario.edad = edad;
                 usuario.id_rol = id_rol;
                 usuario.correo = correo;
 
+                // Procesar imagen si viene en base64
+                if (!string.IsNullOrWhiteSpace(avatarBase64))
+                {
+                    try
+                    {
+                        // Crear directorio si no existe
+                        string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "usuarios");
+                        if (!Directory.Exists(uploadsFolder))
+                        {
+                            Directory.CreateDirectory(uploadsFolder);
+                        }
+
+                        // Generar nombre único para la imagen
+                        string fileName = $"usuario_{id_usuario}_{DateTime.Now:yyyyMMddHHmmss}.jpg";
+                        string filePath = Path.Combine(uploadsFolder, fileName);
+
+                        // Convertir base64 a bytes y guardar
+                        var base64Data = avatarBase64.Contains(",") ? avatarBase64.Split(',')[1] : avatarBase64;
+                        byte[] imageBytes = Convert.FromBase64String(base64Data);
+
+                        System.IO.File.WriteAllBytes(filePath, imageBytes);
+
+                        // Guardar la URL relativa en la BD
+                        usuario.imagen_usuario = $"/uploads/usuarios/{fileName}";
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error al guardar imagen: {ex.Message}");
+                    }
+                }
+
                 _context.SaveChanges();
+                
+                // Guardar la URL de imagen en la sesión (siempre, sea nueva o existente)
+                if (!string.IsNullOrEmpty(usuario.imagen_usuario))
+                {
+                    HttpContext.Session.SetString("imagen_usuario_url", usuario.imagen_usuario);
+                }
+                
                 TempData["Mensaje"] = "Los datos del usuario se actualizaron correctamente.";
             }
             return RedirectToAction("Administrador");
