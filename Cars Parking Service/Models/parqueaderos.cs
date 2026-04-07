@@ -11,6 +11,6 @@ namespace Cars_Parking_Service.Models
         public string direccion { get; set; }
         public string ciudad { get; set; }
         public string nombre_parqueadero { get; set; }
-        public decimal tarifa { get; set; } // Cambiar de double a decimal
+        public decimal tarifa { get; set; } 
     }
 }

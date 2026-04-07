@@ -1,10 +1,11 @@
-using System.Diagnostics;
+ï»¿using AspNetCoreGeneratedDocument;
+using Cars_Parking_Service.Data;
 using Cars_Parking_Service.Models;
 using Microsoft.AspNetCore.Mvc;
-using Cars_Parking_Service.Data;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop.Infrastructure;
-using AspNetCoreGeneratedDocument;
+using System.Diagnostics;
 
 namespace Cars_Parking_Service.Controllers
 {
@@ -45,65 +46,67 @@ namespace Cars_Parking_Service.Controllers
             return View();
         }
 
-        public IActionResult Tabla_Vehiculos(string placa, int? lugar, string estado_servicio, DateTime? fechaIngreso, DateTime? fechaSalida)
+        public IActionResult Tabla_Vehiculos(string placa, string? lugar, string estado_servicio, string estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
         {
             var idUsuarioSesion = HttpContext.Session.GetInt32("id");
+            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+
             if (!idUsuarioSesion.HasValue)
             {
                 return RedirectToAction("Login", "Auth");
             }
 
-            // Consultar ingresos base, limitando al usuario autenticado (banco o valet)
-            var query = _context.ingresos
-                .Where(i => i.id_valet == idUsuarioSesion.Value || i.id_banco == idUsuarioSesion.Value)
-                .AsQueryable();
+            int? idBanco = null;
+            int? idValet = null;
 
-            // =============== 1. Aplicar Filtros ===============
-
-            // Filtro por Placa
-            if (!string.IsNullOrWhiteSpace(placa))
+            if (rolUsuario == 1)
             {
-                query = query.Where(i => i.placa.Contains(placa));
+                idValet = idUsuarioSesion;
+            }
+            else if (rolUsuario == 2)
+            {
+                idBanco = idUsuarioSesion;
             }
 
-            // Filtro por Lugar (id_ubicacion)
-            if (lugar.HasValue)
-            {
-                query = query.Where(i => i.id_ubicacion == lugar.Value);
+            // Convertir placa a mayÃºsculas
+            string? placaUpper = !string.IsNullOrEmpty(placa) ? placa.Trim().ToUpper() : placa;
+
+            string? nombreUbicacion = null;
+            if (!string.IsNullOrEmpty(lugar)) {
+                nombreUbicacion = lugar;
             }
 
-            // Filtro por Estado (por default filtramos por estado_servicio, podria ser pago)
-            if (!string.IsNullOrWhiteSpace(estado_servicio))
-            {
-                query = query.Where(i => i.estado_servicio == estado_servicio);
+            string? nombreParqueadero = null;
+            if (!string.IsNullOrEmpty(parqueadero)) { 
+                nombreParqueadero = parqueadero;
             }
 
-            // Filtro por Fecha Ingreso (solo la fecha, ignorando la hora)
-            if (fechaIngreso.HasValue)
-            {
-                query = query.Where(i => i.fecha_ingreso != null && i.fecha_ingreso.Value.Date == fechaIngreso.Value.Date);
-            }
+            var parametros = new[] {
+                new SqlParameter("@placa", placaUpper ?? (object) DBNull.Value),
+                new SqlParameter("@lugar", nombreUbicacion ?? (object) DBNull.Value),
+                new SqlParameter("@estado_servicio", estado_servicio ?? (object) DBNull.Value),
+                new SqlParameter("@estado_pago", estado_pago ??(object) DBNull.Value),
+                new SqlParameter("@id_banco", idBanco ??(object) DBNull.Value),
+                new SqlParameter ("@id_valet", idValet ?? (object) DBNull.Value),
+                new SqlParameter("@parqueadero", nombreParqueadero ??(object) DBNull.Value),
+                new SqlParameter("@fecha_inicio", fechaInicio.HasValue ? (object)fechaInicio.Value : DBNull.Value),
+                new SqlParameter("@fecha_fin", fechaFin.HasValue ? (object)fechaFin.Value : DBNull.Value)
+            };
 
-            // Filtro por Fecha Salida
-            if (fechaSalida.HasValue)
-            {
-                query = query.Where(i => i.fecha_salida != null && i.fecha_salida.Value.Date == fechaSalida.Value.Date);
-            }
+            var ingresos = _context.ingresos.FromSqlRaw("EXEC sp_consultarRegistros @placa, @lugar, @estado_servicio, @estado_pago, @id_banco, @id_valet, @parqueadero, @fecha_inicio, @fecha_fin",
+                parametros)
+                .ToList();
 
-            // Ordenar para mostrar los más recientes primero
-            var ingresos = query.OrderByDescending(i => i.fecha_ingreso).ToList();
-
-            // =============== 2. Pasar Filtros y Datos a View ===============
-            
-            // Pasar ubicaciones para el dropdown de "Lugar"
             ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
+            ViewBag.Parqueaderos = _context.parqueaderos.ToList();
 
-            // Mantener el estado de los filtros en la vista
             ViewData["FiltroPlaca"] = placa;
             ViewData["FiltroLugar"] = lugar;
-            ViewData["FiltroEstado"] = estado_servicio;
-            ViewData["FiltroFechaIn"] = fechaIngreso;
-            ViewData["FiltroFechaOut"] = fechaSalida;
+            ViewData["FiltroEstadoServicio"] = estado_servicio;
+            ViewData["FiltroEstadoPago"] = estado_pago;
+            ViewData["FiltroParqueadero"] = parqueadero;
+            ViewData["FiltroFechaInicio"] = fechaInicio;
+            ViewData["FiltroFechaFin"] = fechaFin;
 
             return View(ingresos);
         }
@@ -125,24 +128,24 @@ namespace Cars_Parking_Service.Controllers
 
         //Evento para ingresar a un nuevo vehiculo
 
-        // Este atributo indica que este método responde a peticiones HTTP POST
-        // Es decir, cuando el formulario de registro se envía (method="post")
+        // Este atributo indica que este mÃ©todo responde a peticiones HTTP POST
+        // Es decir, cuando el formulario de registro se envÃ­a (method="post")
         [HttpPost]
         public IActionResult IngresoVehiculos(ingresos obj_ingreso, string firmaBase64, bool sin_objetos_valor = false, List<string> fotos = null, string videoBase64 = null)
         {
             CargarDatosFormulario();
 
-            // Validar que el modelo no sea nulo en caso de interrupción en la subida del formulario
+            // Validar que el modelo no sea nulo en caso de interrupciÃ³n en la subida del formulario
             if (obj_ingreso == null)
             {
-                ViewBag.Error = "Error al recibir los datos del formulario. Es posible que la conexión se haya interrumpido o las imágenes sean demasiado pesadas. Por favor, intenta de nuevo.";
+                ViewBag.Error = "Error al recibir los datos del formulario. Es posible que la conexiÃ³n se haya interrumpido o las imÃ¡genes sean demasiado pesadas. Por favor, intenta de nuevo.";
                 return View("Ingreso_Vehiculos");
             }
 
             // **DEBUG: Verificar si llega la firma**
             System.Diagnostics.Debug.WriteLine($"=== DEBUG FIRMA ===");
             System.Diagnostics.Debug.WriteLine($"firmaBase64 es null: {firmaBase64 == null}");
-            System.Diagnostics.Debug.WriteLine($"firmaBase64 está vacío: {string.IsNullOrEmpty(firmaBase64)}");
+            System.Diagnostics.Debug.WriteLine($"firmaBase64 estÃ¡ vacÃ­o: {string.IsNullOrEmpty(firmaBase64)}");
             System.Diagnostics.Debug.WriteLine($"Longitud firmaBase64: {firmaBase64?.Length ?? 0}");
             if (!string.IsNullOrEmpty(firmaBase64))
             {
@@ -193,7 +196,7 @@ namespace Cars_Parking_Service.Controllers
                     }
                 }
                 
-                // Consultar la propina general desde la configuración de la BD
+                // Consultar la propina general desde la configuraciÃ³n de la BD
                 var configPropina = _context.configuraciones.FirstOrDefault(c => c.clave == "PropinaGeneral");
                 decimal valorPropinaCalculado = 0;
                 if (configPropina != null && decimal.TryParse(configPropina.valor, out decimal propinaBd))
@@ -201,13 +204,13 @@ namespace Cars_Parking_Service.Controllers
                     valorPropinaCalculado = propinaBd;
                 }
 
-                // Configurar valores automáticos del ingreso
+                // Configurar valores automÃ¡ticos del ingreso
                 obj_ingreso.fecha_ingreso = DateTime.Now;
                 obj_ingreso.fecha_salida = null; 
                 obj_ingreso.estado_pago = "pendiente";
                 obj_ingreso.estado_servicio = "activo";
                 
-                // Si la ubicación tiene un valor fijo inicial, pudieras ponerlo aquí (opcional)
+                // Si la ubicaciÃ³n tiene un valor fijo inicial, pudieras ponerlo aquÃ­ (opcional)
                 obj_ingreso.valor_servicio = 0; 
                 
                 // ASIGNAMOS LA PROPINA GLOBAL QUE CREAMOS HOY:
@@ -224,7 +227,7 @@ namespace Cars_Parking_Service.Controllers
                             : firmaBase64;
 
                         obj_ingreso.firma = Convert.FromBase64String(base64Data);
-                        System.Diagnostics.Debug.WriteLine($"Firma convertida exitosamente. Tamaño: {obj_ingreso.firma.Length} bytes");
+                        System.Diagnostics.Debug.WriteLine($"Firma convertida exitosamente. TamaÃ±o: {obj_ingreso.firma.Length} bytes");
                     }
                     catch (Exception exFirma)
                     {
@@ -235,7 +238,7 @@ namespace Cars_Parking_Service.Controllers
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("ADVERTENCIA: La firma está vacía o es null");
+                    System.Diagnostics.Debug.WriteLine("ADVERTENCIA: La firma estÃ¡ vacÃ­a o es null");
                     // Opcional: Puedes hacer que sea obligatoria
                     // ViewBag.Error = "La firma del cliente es obligatoria";
                     // return View("Ingreso_Vehiculos");
@@ -354,18 +357,18 @@ namespace Cars_Parking_Service.Controllers
                 return NotFound();
             }
 
-            // Validación 1: No permitir finalizar si no está pagado
+            // ValidaciÃ³n 1: No permitir finalizar si no estÃ¡ pagado
             if (estado_servicio == "finalizado" && estado_pago != "pagado")
             {
-                TempData["Error"] = $"El servicio del vehículo con placa {ingreso.placa} aun no esta pago";
+                TempData["Error"] = $"El servicio del vehÃ­culo con placa {ingreso.placa} aun no esta pago";
                 TempData["ErrorIngresoId"] = id_ingreso;
                 return RedirectToAction("Tabla_Vehiculos");
             }
 
-            // Validación 2: No permitir cancelar si ya está pagado
+            // ValidaciÃ³n 2: No permitir cancelar si ya estÃ¡ pagado
             if (estado_servicio == "cancelado" && estado_pago == "pagado")
             {
-                TempData["Error"] = "No se puede cancelar un servicio que ya está pagado.";
+                TempData["Error"] = "No se puede cancelar un servicio que ya estÃ¡ pagado.";
                 TempData["ErrorIngresoId"] = id_ingreso;
                 return RedirectToAction("Tabla_Vehiculos");
             }
@@ -384,14 +387,14 @@ namespace Cars_Parking_Service.Controllers
 
         public override void OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext context)
         {
-            // Verifica primero si el usuario tiene sesión, si no, lo manda a login inmediatamente
+            // Verifica primero si el usuario tiene sesiÃ³n, si no, lo manda a login inmediatamente
             if (string.IsNullOrEmpty(HttpContext.Session.GetString("dni")))
             {
                 context.Result = new RedirectToActionResult("Login", "Auth", null);
                 return;
             }
 
-            // Cabeceras mágicas para evitar que el navegador guarde la página
+            // Cabeceras mÃ¡gicas para evitar que el navegador guarde la pÃ¡gina
             HttpContext.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
             HttpContext.Response.Headers["Pragma"] = "no-cache";
             HttpContext.Response.Headers["Expires"] = "-1";
@@ -401,7 +404,7 @@ namespace Cars_Parking_Service.Controllers
 
         // =========================== Usuario =========================== \\
 
-        // Acción para editar el usuario desde el panel del admin
+        // AcciÃ³n para editar el usuario desde el panel del admin
         [HttpPost]
         public IActionResult EditarUsuario(int id_usuario, string dni, string nombre, string apellido, string telefono, int edad, int id_rol, string correo, bool estado, string avatarBase64 = null)
         {
@@ -415,12 +418,12 @@ namespace Cars_Parking_Service.Controllers
 
             if (existeDni)
             {
-                TempData["Error"] = $"El número de identificación (DNI) '{dni}' ya está en uso por otro usuario.";
+                TempData["Error"] = $"El nÃºmero de identificaciÃ³n (DNI) '{dni}' ya estÃ¡ en uso por otro usuario.";
                 return RedirectToAction("Administrador");
             }
             if (existeCorreo)
             {
-                TempData["Error"] = $"El correo '{correo}' ya está en uso por otro usuario.";
+                TempData["Error"] = $"El correo '{correo}' ya estÃ¡ en uso por otro usuario.";
                 return RedirectToAction("Administrador");
             }
 
@@ -448,7 +451,7 @@ namespace Cars_Parking_Service.Controllers
                             Directory.CreateDirectory(uploadsFolder);
                         }
 
-                        // Generar nombre único para la imagen
+                        // Generar nombre Ãºnico para la imagen
                         string fileName = $"usuario_{id_usuario}_{DateTime.Now:yyyyMMddHHmmss}.jpg";
                         string filePath = Path.Combine(uploadsFolder, fileName);
 
@@ -469,7 +472,7 @@ namespace Cars_Parking_Service.Controllers
 
                 _context.SaveChanges();
                 
-                // Guardar la URL de imagen en la sesión (siempre, sea nueva o existente)
+                // Guardar la URL de imagen en la sesiÃ³n (siempre, sea nueva o existente)
                 if (!string.IsNullOrEmpty(usuario.imagen_usuario))
                 {
                     HttpContext.Session.SetString("imagen_usuario_url", usuario.imagen_usuario);
@@ -482,28 +485,28 @@ namespace Cars_Parking_Service.Controllers
 
         // =========================== Ubicacion =========================== \\
 
-        // Acción para registrar una nueva ubicación
+        // AcciÃ³n para registrar una nueva ubicaciÃ³n
         [HttpPost]
         public IActionResult RegistrarUbicacion(string nombre_ubicacion, string direccion, string ciudad, decimal valor_servicio)
         {
             try
             {
-                // Validar si la ubicación ya existe por nombre
+                // Validar si la ubicaciÃ³n ya existe por nombre
                 bool existeUbicacion = _context.ubicacion_servicios
                     .Any(u => u.nombre_ubicacion.Trim().ToLower() == nombre_ubicacion.Trim().ToLower());
 
-                // Validar si la dirección ya existe
+                // Validar si la direcciÃ³n ya existe
                 bool existeDireccion = _context.ubicacion_servicios
                     .Any(u => u.direccion.Trim().ToLower() == direccion.Trim().ToLower());
 
                 if (existeUbicacion)
                 {
-                    TempData["Error"] = $"La ubicación con el nombre '{nombre_ubicacion}' ya se encuentra registrada en el sistema.";
+                    TempData["Error"] = $"La ubicaciÃ³n con el nombre '{nombre_ubicacion}' ya se encuentra registrada en el sistema.";
                     return RedirectToAction("Administrador");
                 }
                 if (existeDireccion)
                 {
-                    TempData["Error"] = $"Ya existe una ubicación registrada con la dirección '{direccion}'.";
+                    TempData["Error"] = $"Ya existe una ubicaciÃ³n registrada con la direcciÃ³n '{direccion}'.";
                     return RedirectToAction("Administrador");
                 }
 
@@ -518,17 +521,17 @@ namespace Cars_Parking_Service.Controllers
                 _context.ubicacion_servicios.Add(nuevaUbicacion);
                 _context.SaveChanges();
 
-                TempData["Mensaje"] = "¡La ubicación se ha registrado exitosamente en el sistema!";
+                TempData["Mensaje"] = "Â¡La ubicaciÃ³n se ha registrado exitosamente en el sistema!";
             }
             catch (Exception)
             {
-                TempData["Error"] = "Ocurrió un error al registrar la ubicación. Por favor, intenta de nuevo.";
+                TempData["Error"] = "OcurriÃ³ un error al registrar la ubicaciÃ³n. Por favor, intenta de nuevo.";
             }
 
             return RedirectToAction("Administrador");
         }
 
-        // Acción para editar una ubicación desde el panel de admin
+        // AcciÃ³n para editar una ubicaciÃ³n desde el panel de admin
         [HttpPost]
         public IActionResult EditarUbicacion(int id_ubicacion, string nombre_ubicacion, string direccion, string ciudad, decimal valor_servicio)
         {
@@ -536,18 +539,18 @@ namespace Cars_Parking_Service.Controllers
             bool existeNombre = _context.ubicacion_servicios
                 .Any(u => u.nombre_ubicacion.Trim().ToLower() == nombre_ubicacion.Trim().ToLower() && u.id_ubicacion != id_ubicacion);
 
-            // Validar dirección duplicada (excluyendo el actual)
+            // Validar direcciÃ³n duplicada (excluyendo el actual)
             bool existeDireccion = _context.ubicacion_servicios
                 .Any(u => u.direccion.Trim().ToLower() == direccion.Trim().ToLower() && u.id_ubicacion != id_ubicacion);
 
             if (existeNombre)
             {
-                TempData["Error"] = $"Ya existe una ubicación con el nombre '{nombre_ubicacion}'.";
+                TempData["Error"] = $"Ya existe una ubicaciÃ³n con el nombre '{nombre_ubicacion}'.";
                 return RedirectToAction("Administrador");
             }
             if (existeDireccion)
             {
-                TempData["Error"] = $"Ya existe una ubicación con la dirección '{direccion}'.";
+                TempData["Error"] = $"Ya existe una ubicaciÃ³n con la direcciÃ³n '{direccion}'.";
                 return RedirectToAction("Administrador");
             }
 
@@ -559,18 +562,18 @@ namespace Cars_Parking_Service.Controllers
                 ubicacion.ciudad = ciudad;
                 ubicacion.valor_servicio = valor_servicio;
                 _context.SaveChanges();
-                TempData["Mensaje"] = "La ubicación se actualizó correctamente.";
+                TempData["Mensaje"] = "La ubicaciÃ³n se actualizÃ³ correctamente.";
             }
             else
             {
-                TempData["Error"] = "No se encontró la ubicación a editar.";
+                TempData["Error"] = "No se encontrÃ³ la ubicaciÃ³n a editar.";
             }
             return RedirectToAction("Administrador");
         }
 
         // =========================== Parqueadero =========================== \\
 
-        // Acción para registrar un nuevo parqueadero
+        // AcciÃ³n para registrar un nuevo parqueadero
         [HttpPost]
         public IActionResult RegistrarParqueadero(string nombre_parqueadero, string direccion, string ciudad, decimal tarifa)
         {
@@ -580,7 +583,7 @@ namespace Cars_Parking_Service.Controllers
                 bool existeParqueadero = _context.parqueaderos
                     .Any(p => p.nombre_parqueadero.Trim().ToLower() == nombre_parqueadero.Trim().ToLower());
 
-                // Validar si la dirección ya existe
+                // Validar si la direcciÃ³n ya existe
                 bool existeDireccion = _context.parqueaderos
                     .Any(p => p.direccion.Trim().ToLower() == direccion.Trim().ToLower());
 
@@ -591,7 +594,7 @@ namespace Cars_Parking_Service.Controllers
                 }
                 if (existeDireccion)
                 {
-                    TempData["Error"] = $"Ya existe un parqueadero registrado con la dirección '{direccion}'.";
+                    TempData["Error"] = $"Ya existe un parqueadero registrado con la direcciÃ³n '{direccion}'.";
                     return RedirectToAction("Administrador");
                 }
 
@@ -606,18 +609,18 @@ namespace Cars_Parking_Service.Controllers
                 _context.parqueaderos.Add(nuevoParqueadero);
                 _context.SaveChanges();
 
-                TempData["Mensaje"] = "¡El parqueadero se ha registrado exitosamente en el sistema!";
+                TempData["Mensaje"] = "Â¡El parqueadero se ha registrado exitosamente en el sistema!";
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error Parqueadero: {ex.Message}");
-                TempData["Error"] = "Ocurrió un error al registrar el parqueadero. Por favor, intenta de nuevo.";
+                TempData["Error"] = "OcurriÃ³ un error al registrar el parqueadero. Por favor, intenta de nuevo.";
             }
 
             return RedirectToAction("Administrador");
         }
 
-        // Acción para editar un parqueadero desde el panel de admin
+        // AcciÃ³n para editar un parqueadero desde el panel de admin
         [HttpPost]
         public IActionResult EditarParqueadero(int id_parqueadero, string nombre_parqueadero, string direccion, string ciudad, decimal tarifa)
         {
@@ -625,7 +628,7 @@ namespace Cars_Parking_Service.Controllers
             bool existeNombre = _context.parqueaderos
                 .Any(p => p.nombre_parqueadero.Trim().ToLower() == nombre_parqueadero.Trim().ToLower() && p.id_parqueadero != id_parqueadero);
 
-            // Validar dirección duplicada (excluyendo el actual)
+            // Validar direcciÃ³n duplicada (excluyendo el actual)
             bool existeDireccion = _context.parqueaderos
                 .Any(p => p.direccion.Trim().ToLower() == direccion.Trim().ToLower() && p.id_parqueadero != id_parqueadero);
 
@@ -636,7 +639,7 @@ namespace Cars_Parking_Service.Controllers
             }
             if (existeDireccion)
             {
-                TempData["Error"] = $"Ya existe un parqueadero con la dirección '{direccion}'.";
+                TempData["Error"] = $"Ya existe un parqueadero con la direcciÃ³n '{direccion}'.";
                 return RedirectToAction("Administrador");
             }
 
@@ -652,12 +655,12 @@ namespace Cars_Parking_Service.Controllers
             }
             else
             {
-                TempData["Error"] = "No se encontró el parqueadero a editar.";
+                TempData["Error"] = "No se encontrÃ³ el parqueadero a editar.";
             }
             return RedirectToAction("Administrador");
         }
 
-        // Acción para eliminar una ubicación desde el panel del admin
+        // AcciÃ³n para eliminar una ubicaciÃ³n desde el panel del admin
         [HttpPost]
         public IActionResult EliminarUbicacion(int id_ubicacion)
         {
@@ -666,16 +669,16 @@ namespace Cars_Parking_Service.Controllers
             {
                 _context.ubicacion_servicios.Remove(ubicacion);
                 _context.SaveChanges();
-                TempData["Mensaje"] = "La ubicación fue eliminada exitosamente.";
+                TempData["Mensaje"] = "La ubicaciÃ³n fue eliminada exitosamente.";
             }
             else
             {
-                TempData["Error"] = "No se encontró la ubicación a eliminar.";
+                TempData["Error"] = "No se encontrÃ³ la ubicaciÃ³n a eliminar.";
             }
             return RedirectToAction("Administrador");
         }
 
-        // Acción para eliminar un parqueadero desde el panel del admin
+        // AcciÃ³n para eliminar un parqueadero desde el panel del admin
         [HttpPost]
         public IActionResult EliminarParqueadero(int id_parqueadero)
         {
@@ -688,7 +691,7 @@ namespace Cars_Parking_Service.Controllers
             }
             else
             {
-                TempData["Error"] = "No se encontró el parqueadero a eliminar.";
+                TempData["Error"] = "No se encontrÃ³ el parqueadero a eliminar.";
             }
             return RedirectToAction("Administrador");
         }

@@ -26,7 +26,7 @@
         <a asp-controller="Home" asp-action="Ingreso_Vehiculos" class="btn btn-nuevo">+ Nuevo Ingreso</a>
     </div>
 
-    <!-- Search Section -->
+    <!-- Filtro -->
     <p style="color: #857D7B;">Consultar Ingresos</p>
     <div class="filters-wrapper" id="filtersWrapper">
         <button type="button" class="filters-toggle" id="filtersToggle" aria-expanded="false" aria-controls="filtersPanel">
@@ -49,14 +49,10 @@
                         {
                             foreach (var u in ViewBag.Ubicaciones)
                             {
-                                if (ViewData["FiltroLugar"]?.ToString() == u.id_ubicacion.ToString())
-                                {
-                                    <option value="@u.id_ubicacion" selected>@u.nombre_ubicacion</option>
-                                }
-                                else
-                                {
-                                    <option value="@u.id_ubicacion">@u.nombre_ubicacion</option>
-                                }
+                                <option value="@u.nombre_ubicacion" 
+                                    selected="@(ViewData["FiltroLugar"]?.ToString() == u.nombre_ubicacion ? "selected" : null)">
+                                    @u.nombre_ubicacion
+                                </option>
                             }
                         }
                     </select>
@@ -66,20 +62,46 @@
                     <label>Estado</label>
                     <select name="estado_servicio" style="width:100%;">
                         <option value="">Todos</option>
-                        <option value="activo" selected="@(ViewData["FiltroEstado"]?.ToString() == "activo")">Activo</option>
-                        <option value="finalizado" selected="@(ViewData["FiltroEstado"]?.ToString() == "finalizado")">Finalizado</option>
-                        <option value="cancelado" selected="@(ViewData["FiltroEstado"]?.ToString() == "finalizado")">Cancelado</option>
+                        <option value="activo" selected="@(ViewData["FiltroEstadoServicio"]?.ToString() == "activo")">Activo</option>
+                        <option value="finalizado" selected="@(ViewData["FiltroEstadoServicio"]?.ToString() == "finalizado")">Finalizado</option>
+                        <option value="cancelado" selected="@(ViewData["FiltroEstadoServicio"]?.ToString() == "cancelado")">Cancelado</option>
+                    </select>
+                </div>
+
+                <div class="form-group col-md-4 mb-3 ms-md-3" style="min-width:220px;">
+                    <label>Estado de Pago</label>
+                    <select name="estado_pago" style="width:100%;">
+                        <option value="">Todos</option>
+                        <option value="pendiente" selected="@(ViewData["FiltroEstadoPago"]?.ToString() == "pendiente" ? "selected" : null)">Pendiente</option>
+                        <option value="pagado" selected="@(ViewData["FiltroEstadoPago"]?.ToString() == "pagado" ? "selected" : null)">Pagado</option>
+                    </select>
+                </div>
+
+                <div class="form-group col-md-3 mb-3">
+                    <label>Parqueadero</label>
+                    <select name="parqueadero" style="width:100%;">
+                        <option value="">Todos</option>
+                        @if (ViewBag.Parqueaderos != null)
+                        {
+                            foreach (var u in ViewBag.Parqueaderos)
+                            {
+                                <option value="@u.nombre_parqueadero" 
+                                    selected="@(ViewData["FiltroParqueadero"]?.ToString() == u.nombre_parqueadero ? "selected" : null)">
+                                    @u.nombre_parqueadero
+                                </option>
+                            }
+                        }
                     </select>
                 </div>
 
                 <div class="form-group col-md-2 mb-3">
                     <label>Fecha Ingreso</label>
-                    <input type="date" name="fechaIngreso" value="@(((DateTime?)ViewData["FiltroFechaIn"])?.ToString("yyyy-MM-dd"))" class="form-control">
+                    <input type="date" id="fechaInicio" name="fechaInicio" value="@(((DateTime?)ViewData["FiltroFechaInicio"])?.ToString("yyyy-MM-dd"))" class="form-control">
                 </div>
 
                 <div class="form-group col-md-3 mb-3">
                     <label>Fecha Salida</label>
-                    <input type="date" name="fechaSalida" value="@(((DateTime?)ViewData["FiltroFechaOut"])?.ToString("yyyy-MM-dd"))" class="form-control">
+                    <input type="date" id="fechaFin" name="fechaFin" value="@(((DateTime?)ViewData["FiltroFechaFin"])?.ToString("yyyy-MM-dd"))" class="form-control">
                 </div>
 
                 <div class="col-12 mt-2 d-flex justify-content-end gap-2">
@@ -109,7 +131,7 @@
             {
                 <tr>
                     <td data-label="Placa">@ingresos.placa</td>
-                    <td data-label="Lugar">@ingresos.id_ubicacion</td>
+                    <td data-label="Lugar">@ingresos.Ubicacion?.nombre_ubicacion</td>
                     <td data-label="Hora Ingreso">@ingresos.fecha_ingreso</td>
                     <td data-label="Hora Salida">@ingresos.fecha_salida</td>
                     @if(@ingresos.estado_pago == "pendiente"){
@@ -177,6 +199,21 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const fechaInicio = document.getElementById('fechaInicio');
+            const fechaFin = document.getElementById('fechaFin');
+
+            // Si ambas están vacías, poner la fecha de hoy
+            if (!fechaInicio.value) {
+                const hoy = new Date().toISOString().split('T')[0];
+                fechaInicio.value = hoy;
+                fechaFin.value = hoy;
+            }
+
+            // Cuando se cambia la fecha inicio, la fecha fin se actualiza
+            fechaInicio.addEventListener('change', function () {
+                fechaFin.value = this.value;
+            });
+
             const filtersWrapper = document.getElementById('filtersWrapper');
             const filtersToggle = document.getElementById('filtersToggle');
 
