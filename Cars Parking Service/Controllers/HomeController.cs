@@ -28,20 +28,47 @@ namespace Cars_Parking_Service.Controllers
             return View();
         }
 
-        public IActionResult Administrador()
+        public IActionResult Administrador(string? nombre, string? apellido, string? documento, int? edad, int? rol, string? estado)
         {
+            var parametros = new[] {
+                new SqlParameter("@nombre", nombre ?? (object) DBNull.Value),
+                new SqlParameter("@apellido", apellido ?? (object) DBNull.Value),
+                new SqlParameter("@documento", documento ?? (object) DBNull.Value),
+                new SqlParameter("@edad", edad ?? (object) DBNull.Value),
+                new SqlParameter("@rol", rol ?? (object) DBNull.Value),
+                new SqlParameter("@estado", estado ?? (object) DBNull.Value)
+            };
 
-            // Consultamos todos los usuarios del sistema, dejando los activos arriba y los inactivos al final
-            ViewBag.Usuarios = _context.usuarios
+            ViewBag.Usuarios = _context.usuarios.FromSqlRaw("EXEC sp_consultarUsuarios @nombre, @apellido, @documento, @edad, @rol, @estado", parametros)
+                .AsEnumerable()
                 .OrderByDescending(u => u.estado)
                 .ThenBy(u => u.nombres)
                 .ToList();
+
+            // Consultamos todos los usuarios del sistema, dejando los activos arriba y los inactivos al final
+            /*ViewBag.Usuarios = _context.usuarios
+                .OrderByDescending(u => u.estado)
+                .ThenBy(u => u.nombres)
+                .ToList();*/
 
             // Consultamos las ubicaciones del sistema
             ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
 
             // Consultamos los parqueaderos del sistema
             ViewBag.Parqueaderos = _context.parqueaderos.ToList();
+
+            // Detectar si hay filtros activos de usuarios
+            bool tieneFiltrosUsuarios = !string.IsNullOrEmpty(nombre) || !string.IsNullOrEmpty(apellido) || 
+                                       !string.IsNullOrEmpty(documento) || edad.HasValue || rol.HasValue || 
+                                       !string.IsNullOrEmpty(estado);
+
+            ViewData["FiltroNombre"] = nombre;
+            ViewData["FiltroApellido"] = apellido;
+            ViewData["FiltroIdentificacion"] = documento;
+            ViewData["FiltroEdad"] = edad;
+            ViewData["FiltroRol"] = rol;
+            ViewData["FiltroEstadoUsuario"] = estado;
+            ViewData["TieneFiltrosUsuarios"] = tieneFiltrosUsuarios;
 
             return View();
         }
@@ -69,32 +96,39 @@ namespace Cars_Parking_Service.Controllers
             }
 
             // Convertir placa a mayúsculas
-            string? placaUpper = !string.IsNullOrEmpty(placa) ? placa.Trim().ToUpper() : placa;
+            string? placaUpper = !string.IsNullOrEmpty(placa) ? placa.Trim().ToUpper() : null;
+            string? nombreUbicacion = !string.IsNullOrEmpty(lugar) ? lugar : null;
+            string? estadoServicio = !string.IsNullOrEmpty(estado_servicio) ? estado_servicio : null;
+            string? estadoPago = !string.IsNullOrEmpty(estado_pago) ? estado_pago : null;
+            string? nombreParqueadero = !string.IsNullOrEmpty(parqueadero) ? parqueadero : null;
 
-            string? nombreUbicacion = null;
-            if (!string.IsNullOrEmpty(lugar)) {
-                nombreUbicacion = lugar;
-            }
-
-            string? nombreParqueadero = null;
-            if (!string.IsNullOrEmpty(parqueadero)) { 
-                nombreParqueadero = parqueadero;
-            }
+            // 🔹 DEBUG: Ver qué parámetros se envían
+            System.Diagnostics.Debug.WriteLine("=== PARÁMETROS SP ===");
+            System.Diagnostics.Debug.WriteLine($"Placa: {placaUpper ?? "NULL"}");
+            System.Diagnostics.Debug.WriteLine($"Lugar: {nombreUbicacion ?? "NULL"}");
+            System.Diagnostics.Debug.WriteLine($"Estado Servicio: {estadoServicio ?? "NULL"}");
+            System.Diagnostics.Debug.WriteLine($"Estado Pago: {estadoPago ?? "NULL"}");
+            System.Diagnostics.Debug.WriteLine($"Parqueadero: {nombreParqueadero ?? "NULL"}");
+            System.Diagnostics.Debug.WriteLine($"Fecha Inicio: {fechaInicio?.ToString("yyyy-MM-dd") ?? "NULL"}");
+            System.Diagnostics.Debug.WriteLine($"Fecha Fin: {fechaFin?.ToString("yyyy-MM-dd") ?? "NULL"}");
 
             var parametros = new[] {
-                new SqlParameter("@placa", placaUpper ?? (object) DBNull.Value),
-                new SqlParameter("@lugar", nombreUbicacion ?? (object) DBNull.Value),
-                new SqlParameter("@estado_servicio", estado_servicio ?? (object) DBNull.Value),
-                new SqlParameter("@estado_pago", estado_pago ??(object) DBNull.Value),
-                new SqlParameter("@id_banco", idBanco ??(object) DBNull.Value),
-                new SqlParameter ("@id_valet", idValet ?? (object) DBNull.Value),
-                new SqlParameter("@parqueadero", nombreParqueadero ??(object) DBNull.Value),
-                new SqlParameter("@fecha_inicio", fechaInicio.HasValue ? (object)fechaInicio.Value : DBNull.Value),
-                new SqlParameter("@fecha_fin", fechaFin.HasValue ? (object)fechaFin.Value : DBNull.Value)
+                new SqlParameter("@placa", placaUpper ?? (object)DBNull.Value),
+                new SqlParameter("@lugar", nombreUbicacion ?? (object)DBNull.Value),
+                new SqlParameter("@estado_servicio", estadoServicio ?? (object)DBNull.Value),
+                new SqlParameter("@estado_pago", estadoPago ?? (object)DBNull.Value),
+                new SqlParameter("@id_banco", idBanco ?? (object)DBNull.Value),
+                new SqlParameter("@id_valet", idValet ?? (object)DBNull.Value),
+                new SqlParameter("@parqueadero", nombreParqueadero ?? (object)DBNull.Value),
+                new SqlParameter("@fecha_inicio", fechaInicio.HasValue ? (object)fechaInicio.Value.Date : DBNull.Value),
+                new SqlParameter("@fecha_fin", fechaFin.HasValue ? (object)fechaFin.Value.Date : DBNull.Value)
             };
 
             var ingresos = _context.ingresos.FromSqlRaw("EXEC sp_consultarRegistros @placa, @lugar, @estado_servicio, @estado_pago, @id_banco, @id_valet, @parqueadero, @fecha_inicio, @fecha_fin",
                 parametros)
+                .AsEnumerable()
+                .OrderByDescending(u => u.fecha_ingreso)
+                .ThenBy(u => u.estado_pago)
                 .ToList();
 
             ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
@@ -329,7 +363,7 @@ namespace Cars_Parking_Service.Controllers
         }
 
         // Consultamos la tabla de ingresos
-        public IActionResult Tabla_Ingresos() {
+        /*public IActionResult Tabla_Ingresos() {
             var ingresos = _context.ingresos
                 .Include(i => i.placa)
                 .Include(i => i.fecha_ingreso)
@@ -348,7 +382,7 @@ namespace Cars_Parking_Service.Controllers
                 .Include(i => i.telefono)
                 .ToList();
             return View(ingresos);
-        }
+        }*/
 
         public IActionResult ActualizarEstadosIngreso(int id_ingreso, string estado_pago, string estado_servicio) {
             var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);

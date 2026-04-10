@@ -131,6 +131,102 @@
                 </button>
             </div>
 
+            <!-- Contenedor Único de Filtros (se muestra/oculta según la sección activa) -->
+            <div id="filtroAdmin" style="display: none;">
+                <p style="color: #857D7B;">Filtros</p>
+                <div class="filters-wrapper" id="filtersAdminWrapper">
+                    <button type="button" class="filters-toggle" id="filtersAdminToggle" aria-expanded="false" aria-controls="filtersAdminPanel">
+                        <span><i class="fa-solid fa-filter"></i> Filtros</span>
+                        <i class="fa-solid fa-chevron-down filters-chevron"></i>
+                    </button>
+
+                    <div class="search-section filters-panel" id="filtersAdminPanel">
+
+                        <!-- FILTROS USUARIOS -->
+                        <form id="formFiltrosUsuarios" method="get" asp-action="Administrador" class="row" style="display: none;">
+                            <div class="form-group col-md-3 mb-3">
+                                <label>Nombre</label>
+                                <input type="text" name="nombre" value="@ViewData["FiltroNombre"]" placeholder="Buscar por nombre" class="form-control">
+                            </div>
+                            <div class="form-group col-md-3 mb-3">
+                                <label>Apellido</label>
+                                <input type="text" name="apellido" value="@ViewData["FiltroApellido"]" placeholder="Buscar por apellido" class="form-control">
+                            </div>
+                            <div class="form-group col-md-3 mb-3">
+                                <label>Documento Identificación</label>
+                                <input type="text" name="identificacion" value="@ViewData["FiltroIdentificacion"]" placeholder="Buscar por Documento" class="form-control">
+                            </div>
+                            <div class="form-group col-md-3 mb-3">
+                                <label>Edad</label>
+                                <input type="number" name="edad" value="@ViewData["FiltroEdad"]" placeholder="Buscar por edad" class="form-control">
+                            </div>
+                            <div class="form-group col-md-3 mb-3">
+                                <label>Rol</label>
+                                <select name="rol" style="width:100%;">
+                                    <option value="">Todos</option>
+                                    <option value="1" selected="@(ViewData["FiltroRol"]?.ToString() == "1")">Valet</option>
+                                    <option value="2" selected="@(ViewData["FiltroRol"]?.ToString() == "2")">Banco</option>
+                                    <option value="3" selected="@(ViewData["FiltroRol"]?.ToString() == "3")">Administrador</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3 mb-3">
+                                <label>Estado</label>
+                                <select name="estado_usuario" style="width:100%;">
+                                    <option value="">Todos</option>
+                                    <option value="activo" selected="@(ViewData["FiltroEstadoUsuario"]?.ToString() == "activo")">Activo</option>
+                                    <option value="inactivo" selected="@(ViewData["FiltroEstadoUsuario"]?.ToString() == "inactivo")">Inactivo</option>
+                                </select>
+                            </div>
+                            <div class="col-12 mt-2 d-flex justify-content-end gap-2">
+                                <button type="submit" class="btn btn-primary px-4">Buscar</button>
+                                <button type="reset" class="btn btn-secondary px-4">Limpiar</button>
+                            </div>
+                        </form>
+
+                        <!-- FILTROS UBICACIONES -->
+                        <!--<form id="formFiltrosUbicaciones" method="get" asp-action="Administrador" class="row" style="display: none;">
+                            <div class="form-group col-md-4 mb-3">
+                                <label>Nombre Ubicación</label>
+                                <input type="text" name="nombre_ubicacion" placeholder="Buscar por nombre" class="form-control">
+                            </div>
+                            <div class="form-group col-md-4 mb-3">
+                                <label>Dirección</label>
+                                <input type="text" name="direccion" placeholder="Buscar por dirección" class="form-control">
+                            </div>
+                            <div class="form-group col-md-4 mb-3">
+                                <label>Ciudad</label>
+                                <input type="text" name="ciudad" placeholder="Buscar por ciudad" class="form-control">
+                            </div>
+                            <div class="col-12 mt-2 d-flex justify-content-end gap-2">
+                                <button type="submit" class="btn btn-primary px-4">Buscar</button>
+                                <button type="reset" class="btn btn-secondary px-4">Limpiar</button>
+                            </div>
+                        </form>-->
+
+                        <!-- FILTROS PARQUEADEROS -->
+                        <!--<form id="formFiltrosParqueaderos" method="get" asp-action="Administrador" class="row" style="display: none;">
+                            <div class="form-group col-md-4 mb-3">
+                                <label>Nombre Parqueadero</label>
+                                <input type="text" name="nombre_parqueadero" placeholder="Buscar por nombre" class="form-control">
+                            </div>
+                            <div class="form-group col-md-4 mb-3">
+                                <label>Dirección</label>
+                                <input type="text" name="direccion_parq" placeholder="Buscar por dirección" class="form-control">
+                            </div>
+                            <div class="form-group col-md-4 mb-3">
+                                <label>Ciudad</label>
+                                <input type="text" name="ciudad_parq" placeholder="Buscar por ciudad" class="form-control">
+                            </div>
+                            <div class="col-12 mt-2 d-flex justify-content-end gap-2">
+                                <button type="submit" class="btn btn-primary px-4">Buscar</button>
+                                <button type="reset" class="btn btn-secondary px-4">Limpiar</button>
+                            </div>
+                        </form>-->
+
+                    </div>
+                </div>
+            </div>
+
             <!-- Tabla para mostrar todos los usuarios del sistema -->
             <div id="TablaUsuariosContainer" style="display:none; margin-top: 30px;">
                 <div class="header" style="margin-bottom: 20px;">
@@ -557,6 +653,72 @@
 
         <!-- =========================== Formularios de Registro (Nuevos) =========================== -->
 
+        <!-- Formulario para Registrar Nuevo Usuario (Oculto por defecto) -->
+        <div id="ContainerRegistroUsuarios" style="display:none; margin-top: 30px;">
+            <div class="ingreso-container" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <h2 class="ingreso-title"><i class="fa-solid fa-user-plus" style="color: #d32f2f;"></i> Registrar Usuarios</h2>
+                <p class="ingreso-subtitle">Complete el siguiente formulario para registrar un nuevo usuario.</p>
+                <form method="post" id="signUpForm" action="/Auth/SingUp">
+                    <div class="input-group">
+                        <input type="text" id="nombre" placeholder="Nombres" name="nombres">
+                        <div class="error-message" id="errorNombre">⚠️ El nombre es obligatorio</div>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="text" id="apellido" placeholder="Apellidos" name="apellidos">
+                        <div class="error-message" id="errorApellido">⚠️ El apellido es obligatorio</div>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="number"
+                               id="edad"
+                               name="edad"
+                               placeholder="Edad"
+                               min="16"
+                               max="100"
+                               step="1">
+                        <div class="error-message" id="errorEdad">⚠️ La edad es obligatoria (16-100 años)</div>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="tel" id="telefono" placeholder="Numero Telefonico" name="telefono">
+                        <div class="error-message" id="errorTelefono">⚠️ Ingresa un número telefónico válido</div>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="email" id="correoSignUp" placeholder="Correo Electrónico" name="correo">
+                        <div class="error-message" id="errorCorreo">⚠️ Ingresa un correo electrónico válido</div>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="text" id="dniSignUp" placeholder="Numero Identificación" name="dni">
+                        <div class="error-message" id="errorDNISignUp">⚠️ Ingresa un Numero De Identificación válido</div>
+                    </div>
+
+                    <div class="input-group">
+                        <select class="role-group" id="rolSignUp" name="id_rol" style="color: #333;" required>
+                            <option class="role-option" value="">Selecciona un Rol</option>
+                            <option class="role-option" value="1">Valet</option>
+                            <option class="role-option" value="2">Banco</option>
+                            <option class="role-option" value="3">Administrador</option>
+                        </select>
+                        <div class="error-message" id="errorRolSignUp">⚠️ Debes seleccionar un rol válido</div>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="password" id="passwordSignUp" placeholder="Contraseña" name="contraseña">
+                        <div class="error-message" id="errorPassword">⚠️ La contraseña debe tener al menos 6 caracteres</div>
+                    </div>
+
+                    <div class="form-group" style="text-align: right;">
+                        <button class="btn btn-primary login-btn" type="submit" id="acceder">
+                            <i class="fa-solid fa-user-plus"></i> Registrarse
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Formulario para Registrar Nueva Ubicación (Oculto por defecto) -->
         <div id="ContainerRegistroUbicacion" style="display:none; margin-top: 30px;">
             <div class="ingreso-container" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
@@ -612,7 +774,7 @@
                         <input type="number" step="any" id="tarifa_parqueadero" name="tarifa_parqueadero" class="form-control" required />
                     </div>
                     <div class="form-group" style="text-align: right;">
-                        <button type="button" class="btn btn-secondary" onclick="ocultarFormularioParqueadero()">Cancelar</button>
+                        <button type="button" class="btn btn-secondary" onclick="ocultarFormularioParqueadero()">Volver al Menú Principal</button>
                         <button class="btn btn-primary" type="submit">
                             <i class="fa-solid fa-square-parking"></i> Registrar Parqueadero
                         </button>
@@ -628,6 +790,7 @@
             // Inicialmente ocultamos todas las secciones que no son el panel principal
             document.getElementById('SubCardsUsuarios').style.display = 'none';
             document.getElementById('TablaUsuariosContainer').style.display = 'none';
+            document.getElementById('ContainerRegistroUsuarios').style.display = 'none';
             document.getElementById('SubCardsUbicaciones').style.display = 'none';
             document.getElementById('TablaUbicacionesContainer').style.display = 'none';
             document.getElementById('SubCardsParqueaderos').style.display = 'none';
@@ -664,15 +827,37 @@
                 document.getElementById('ContainerRegistroUbicacion').style.display = 'none';
                 document.getElementById('ContainerRegistroParqueadero').style.display = 'none';
 
-                var formRegistro = document.getElementById('formRegistroUsuario');
+                var formRegistro = document.getElementById('signUpForm');
                 if (formRegistro) {
                     formRegistro.reset(); // Reiniciamos el formulario
-                    formRegistro.style.display = 'block';
                 }
+
+                document.getElementById('ContainerRegistroUsuarios').style.display = 'block';
 
                 // Mostramos el título correspondiente
                 document.getElementById('titulo-principal').style.display = 'none';
                 document.getElementById('titulo-usuarios').style.display = 'block';
+            }
+
+            // Función para ocultar el formulario de registro de usuarios
+            function ocultarFormularioUsuarios() {
+                document.getElementById('ContainerRegistroUsuarios').style.display = 'none';
+                document.getElementById('titulo-principal').style.display = 'block';
+                document.getElementById('titulo-usuarios').style.display = 'none';
+            }
+
+            // Función para ocultar el formulario de registro de ubicaciones
+            function ocultarFormularioUbicacion() {
+                document.getElementById('ContainerRegistroUbicacion').style.display = 'none';
+                document.getElementById('titulo-principal').style.display = 'block';
+                document.getElementById('titulo-ubicaciones').style.display = 'none';
+            }
+
+            // Función para ocultar el formulario de registro de parqueaderos
+            function ocultarFormularioParqueadero() {
+                document.getElementById('ContainerRegistroParqueadero').style.display = 'none';
+                document.getElementById('titulo-principal').style.display = 'block';
+                document.getElementById('titulo-parqueaderos').style.display = 'none';
             }
 
             // Función para mostrar/ocultar SubCards de Ubicaciones
@@ -684,6 +869,7 @@
                 // Ocultamos todas las subtarjetas y tablas
                 document.getElementById('SubCardsUsuarios').style.display = 'none';
                 document.getElementById('TablaUsuariosContainer').style.display = 'none';
+                document.getElementById('ContainerRegistroUsuarios').style.display = 'none';
                 document.getElementById('SubCardsParqueaderos').style.display = 'none';
                 document.getElementById('TablaParqueaderosContainer').style.display = 'none';
 
@@ -703,6 +889,7 @@
             document.getElementById('CardUb1').onclick = function() {
                 document.getElementById('SubCardsUbicaciones').style.display = 'none';
                 document.getElementById('TablaUbicacionesContainer').style.display = 'none';
+                document.getElementById('ContainerRegistroUsuarios').style.display = 'none';
                 document.getElementById('ContainerRegistroParqueadero').style.display = 'none';
 
                 var formRegistroUbicacion = document.getElementById('formRegistroUbicacion');
@@ -725,6 +912,7 @@
                 // Ocultamos todas las subtarjetas y tablas
                 document.getElementById('SubCardsUsuarios').style.display = 'none';
                 document.getElementById('TablaUsuariosContainer').style.display = 'none';
+                document.getElementById('ContainerRegistroUsuarios').style.display = 'none';
                 document.getElementById('SubCardsUbicaciones').style.display = 'none';
                 document.getElementById('TablaUbicacionesContainer').style.display = 'none';
 
@@ -745,6 +933,7 @@
             document.getElementById('CardP1').onclick = function() {
                 document.getElementById('SubCardsParqueaderos').style.display = 'none';
                 document.getElementById('TablaParqueaderosContainer').style.display = 'none';
+                document.getElementById('ContainerRegistroUsuarios').style.display = 'none';
                 document.getElementById('ContainerRegistroUbicacion').style.display = 'none';
 
                 var formRegistroParqueadero = document.getElementById('formRegistroParqueadero');
@@ -1041,10 +1230,64 @@
                         return 'Administrador';
                     default:
                         return 'Desconocido';
-                }
-            }
+                                 }
+                            }
 
-            <!-- Script ya no es necesario, DataTables será agregado si se necesita later-->
-        </script>
-    </div>
-</div>
+                                <!-- Script ya no es necesario, DataTables será agregado si se necesita later-->
+                            </script>
+
+                            <!-- Script para mostrar automáticamente la tabla de usuarios si hay filtros activos -->
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    // Verificar si hay filtros activos de usuarios
+                                    const tieneFiltrosUsuarios = @(ViewData["TieneFiltrosUsuarios"]?.ToString().ToLower() ?? "false");
+
+                                    if (tieneFiltrosUsuarios) {
+                                        // Ocultar todas las secciones primero
+                                        document.getElementById('SubCardsUsuarios').style.display = 'none';
+                                        document.getElementById('TablaUsuariosContainer').style.display = 'none';
+                                        document.getElementById('SubCardsUbicaciones').style.display = 'none';
+                                        document.getElementById('TablaUbicacionesContainer').style.display = 'none';
+                                        document.getElementById('SubCardsParqueaderos').style.display = 'none';
+                                        document.getElementById('TablaParqueaderosContainer').style.display = 'none';
+
+                                        // Mostrar la tabla de usuarios con los filtros
+                                        document.getElementById('TablaUsuariosContainer').style.display = 'block';
+
+                                        // Mostrar el contenedor de filtros
+                                        document.getElementById('filtroAdmin').style.display = 'block';
+
+                                        // Actualizar títulos
+                                        document.getElementById('titulo-principal').style.display = 'none';
+                                        document.getElementById('titulo-usuarios').style.display = 'block';
+
+                                        // Abrir panel de filtros y mostrar formulario (usando clases CSS, no inline styles)
+                                        const filtersAdminWrapper = document.getElementById('filtersAdminWrapper');
+                                        const filtersAdminPanel = document.getElementById('filtersAdminPanel');
+                                        const filtersAdminToggle = document.getElementById('filtersAdminToggle');
+                                        const formFiltrosUsuarios = document.getElementById('formFiltrosUsuarios');
+
+                                        // Agregar clase 'open' para que esté desplegado
+                                        if (filtersAdminWrapper) {
+                                            filtersAdminWrapper.classList.add('open');
+                                        }
+
+                                        // Permitir toggle pero mantener visible el panel
+                                        if (filtersAdminToggle) {
+                                            filtersAdminToggle.setAttribute('aria-expanded', 'true');
+                                        }
+
+                                        // Mostrar el panel de filtros
+                                        if (filtersAdminPanel) {
+                                            filtersAdminPanel.style.display = 'block';
+                                        }
+
+                                        // Mostrar formulario de usuarios
+                                        if (formFiltrosUsuarios) {
+                                            formFiltrosUsuarios.style.display = 'flex';
+                                        }
+                                    }
+                                });
+                            </script>
+                    </div>
+                </div>

@@ -279,6 +279,9 @@
                 CardsUb.style.display = "none";
                 if (btnRegresarSubUbicaciones) btnRegresarSubUbicaciones.style.display = "none"; // Ocultar el boton
 
+                // Mostrar filtros específicos para ubicaciones
+                window.mostrarFiltrosAdmin('ubicaciones');
+
                 if (tblUbicaciones) {
                     tblUbicaciones.style.display = "block";
                 }
@@ -352,6 +355,9 @@
                 CardsU.style.display = "none";
                 if (btnRegresarSubUsuarios) btnRegresarSubUsuarios.style.display = "none"; // Ocultar el boton
 
+                // Mostrar filtros específicos para usuarios
+                window.mostrarFiltrosAdmin('usuarios');
+
                 if (tblUsuarios) {
                     tblUsuarios.style.display = "block";
                 }
@@ -392,6 +398,9 @@
                 //CardP2.style.display = "none";
                 CardsP.style.display = "none";
                 if (btnRegresarSubParqueaderos) btnRegresarSubParqueaderos.style.display = "none"; // Ocultar el boton
+
+                // Mostrar filtros específicos para parqueaderos
+                window.mostrarFiltrosAdmin('parqueaderos');
 
                 if (tblParqueaderos) {
                     tblParqueaderos.style.display = "block";
@@ -464,6 +473,112 @@
     // Exponer funciones globalmente para usarlas desde HTML onclick
     window.abrirModal = abrirModal;
     window.cerrarModal = cerrarModal;
+
+    // =========================== Filtros Admin (Dinámicos) =========================== \\
+
+    // Mostrar filtros específicos según el tipo de entidad
+    window.mostrarFiltrosAdmin = function(tipoFiltro) {
+        const filtroAdmin = document.getElementById('filtroAdmin');
+        const formUsuarios = document.getElementById('formFiltrosUsuarios');
+        const formUbicaciones = document.getElementById('formFiltrosUbicaciones');
+        const formParqueaderos = document.getElementById('formFiltrosParqueaderos');
+
+        // Ocultar todos los formularios
+        if (formUsuarios) formUsuarios.style.display = 'none';
+        if (formUbicaciones) formUbicaciones.style.display = 'none';
+        if (formParqueaderos) formParqueaderos.style.display = 'none';
+
+        // Mostrar contenedor de filtros
+        if (filtroAdmin) filtroAdmin.style.display = 'block';
+
+        // Mostrar el formulario correspondiente
+        switch(tipoFiltro) {
+            case 'usuarios':
+                if (formUsuarios) formUsuarios.style.display = 'flex';
+                break;
+            case 'ubicaciones':
+                if (formUbicaciones) formUbicaciones.style.display = 'flex';
+                break;
+            case 'parqueaderos':
+                if (formParqueaderos) formParqueaderos.style.display = 'flex';
+                break;
+        }
+
+        // Resetear toggle a estado cerrado
+        const filtersAdminWrapper = document.getElementById('filtersAdminWrapper');
+        if (filtersAdminWrapper) {
+            filtersAdminWrapper.classList.remove('open');
+            const filtersAdminToggle = document.getElementById('filtersAdminToggle');
+            if (filtersAdminToggle) {
+                filtersAdminToggle.setAttribute('aria-expanded', 'false');
+            }
+        }
+    };
+
+    // Ocultar filtros cuando se muestra la tabla
+    window.ocultarFiltrosAdmin = function() {
+        const filtroAdmin = document.getElementById('filtroAdmin');
+        if (filtroAdmin) filtroAdmin.style.display = 'none';
+    };
+
+    // Event listener para toggle de filtros (mobile/desktop)
+    const filtersAdminToggle = document.getElementById('filtersAdminToggle');
+    if (filtersAdminToggle) {
+        filtersAdminToggle.addEventListener('click', function() {
+            const filtersAdminWrapper = document.getElementById('filtersAdminWrapper');
+            if (filtersAdminWrapper) {
+                filtersAdminWrapper.classList.toggle('open');
+                const isOpen = filtersAdminWrapper.classList.contains('open');
+                this.setAttribute('aria-expanded', isOpen);
+            }
+        });
+    }
+
+    // =========================== Spinner Loading para Botones de Filtros =========================== \\
+
+    // Spinner para botón Buscar
+    const btnBuscar = document.getElementById('btnBuscar');
+    const formularioFiltros = document.querySelector('form[asp-action="Tabla_Vehiculos"]');
+
+    if (btnBuscar && formularioFiltros) {
+        formularioFiltros.addEventListener('submit', function(e) {
+            if (!btnBuscar.classList.contains('loading')) {
+                e.preventDefault();
+                btnBuscar.classList.add('loading');
+                btnBuscar.innerHTML = `
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span class="btn-text">Buscando...</span>
+                `;
+                btnBuscar.disabled = true;
+
+                setTimeout(() => {
+                    formularioFiltros.submit();
+                }, 100);
+            }
+        });
+    }
+
+    // Spinner para botón Limpiar
+    const btnLimpiar = document.getElementById('btnLimpiar');
+
+    if (btnLimpiar) {
+        btnLimpiar.addEventListener('click', function(e) {
+            if (!btnLimpiar.classList.contains('loading')) {
+                btnLimpiar.classList.add('loading');
+                btnLimpiar.innerHTML = `
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span class="btn-text">Limpiando...</span>
+                `;
+                btnLimpiar.style.pointerEvents = 'none';
+
+                setTimeout(() => {
+                    window.location.href = btnLimpiar.getAttribute('href') || '/Home/Tabla_Vehiculos';
+                }, 100);
+
+                e.preventDefault();
+            }
+        });
+    }
 
 });  // ← Cierre del DOMContentLoaded
 

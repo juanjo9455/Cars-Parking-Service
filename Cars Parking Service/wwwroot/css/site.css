@@ -734,6 +734,32 @@ tbody td:last-child {
     transform: scale(1.1);
 }
 
+/* Spinner Loading State para Botones */
+.btn.loading {
+    pointer-events: none;
+    opacity: 0.85;
+}
+
+.btn.loading .spinner-border-sm {
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: middle;
+    animation: spin 0.75s linear infinite;
+}
+
+.btn.loading .btn-text {
+    opacity: 0.8;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .container {
@@ -962,6 +988,83 @@ tbody td:last-child {
     justify-content: flex-end;
     gap: 10px;
     margin-top: 25px;
+}
+
+.card-ingreso-vehiculos {
+    width: 90%;
+    max-width: 600px;
+}
+
+.card-ingreso-vehiculos .form-group-modal {
+    width: 100%;
+}
+
+/* Media queries responsivas para modal de ingreso */
+@media (max-width: 768px) {
+    .card-ingreso-vehiculos {
+        width: 95% !important;
+        max-width: 100% !important;
+        padding: 20px !important;
+    }
+
+    .card-ingreso-vehiculos .form-group-modal {
+        width: 100% !important;
+    }
+
+    .Card-Ingreso h3 {
+        font-size: 18px;
+        margin-bottom: 15px;
+    }
+
+    .info-auto {
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .modal-actions .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .Card-Ingreso {
+        padding: 15px !important;
+        border-radius: 8px;
+    }
+
+    .card-ingreso-vehiculos {
+        width: 98% !important;
+        max-width: 100% !important;
+    }
+
+    .close-btn {
+        font-size: 20px;
+        top: 10px;
+        right: 12px;
+    }
+
+    .Card-Ingreso h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .form-group-modal label {
+        font-size: 12px;
+    }
+
+    .form-group-modal .modal-select {
+        padding: 8px;
+        font-size: 13px;
+    }
+
+    .info-auto p {
+        font-size: 12px;
+    }
 }
 
 .edit-usuario-layout {

@@ -38,7 +38,7 @@
             <form method="get" asp-action="Tabla_Vehiculos" class="row">
                 <div class="form-group col-md-2 mb-3">
                     <label>Placa</label>
-                    <input type="text" name="placa" value="@ViewData["FiltroPlaca"]" placeholder="Buscar por placa" class="form-control">
+                    <input type="text" name="placa" value="@ViewData["FiltroPlaca"]" placeholder="Buscar por placa" class="form-control" style="text-transform: uppercase;">
                 </div>
 
                 <div class="form-group col-md-3 mb-3">
@@ -105,8 +105,12 @@
                 </div>
 
                 <div class="col-12 mt-2 d-flex justify-content-end gap-2">
-                    <button type="submit" class="btn btn-primary px-4">Buscar</button>
-                    <a asp-action="Tabla_Vehiculos" class="btn btn-secondary px-4">Limpiar</a>
+                    <button type="submit" id="btnBuscar" class="btn btn-primary px-4">
+                        <span class="btn-text">Buscar</span>
+                    </button>
+                    <a id="btnLimpiar" asp-action="Tabla_Vehiculos" class="btn btn-secondary px-4">
+                        <span class="btn-text">Limpiar</span>
+                    </a>
                 </div>
             </form>
         </div>
@@ -201,9 +205,13 @@
         document.addEventListener('DOMContentLoaded', function () {
             const fechaInicio = document.getElementById('fechaInicio');
             const fechaFin = document.getElementById('fechaFin');
+            const urlParams = new URLSearchParams(window.location.search);
 
-            // Si ambas están vacías, poner la fecha de hoy
-            if (!fechaInicio.value) {
+            // Solo asignar la fecha de hoy si NO hay parámetros de filtro en la URL
+            // Esto permite que los usuarios busquen sin restricción de fecha
+            if (!fechaInicio.value && !urlParams.has('placa') && !urlParams.has('lugar') && 
+                !urlParams.has('estado_servicio') && !urlParams.has('estado_pago') && 
+                !urlParams.has('parqueadero')) {
                 const hoy = new Date().toISOString().split('T')[0];
                 fechaInicio.value = hoy;
                 fechaFin.value = hoy;
