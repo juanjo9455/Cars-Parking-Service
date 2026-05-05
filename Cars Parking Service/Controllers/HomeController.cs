@@ -4,8 +4,11 @@ using Cars_Parking_Service.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.JSInterop.Infrastructure;
+using NuGet.Common;
 using System.Diagnostics;
+using System.Text;
 
 namespace Cars_Parking_Service.Controllers
 {
@@ -171,7 +174,7 @@ namespace Cars_Parking_Service.Controllers
         // Este atributo indica que este método responde a peticiones HTTP POST
         // Es decir, cuando el formulario de registro se envía (method="post")
         [HttpPost]
-        public IActionResult IngresoVehiculos(ingresos obj_ingreso, int id_valet, int id_banco, string firmaBase64, bool sin_objetos_valor = false, List<string> fotos = null, string videoBase64 = null)
+        public async Task<IActionResult> IngresoVehiculos(ingresos obj_ingreso, int id_valet, int id_banco, string firmaBase64, bool sin_objetos_valor = false, List<string> fotos = null, string videoBase64 = null)
         {
             CargarDatosFormulario();
 
@@ -312,6 +315,27 @@ namespace Cars_Parking_Service.Controllers
                 _context.ingresos.Add(obj_ingreso);
                 _context.SaveChanges();
 
+                // Llamamos metodo para mandar mansaje de Whatsapp
+                try
+                {
+
+                    String nombreCliente = "Cliente";
+                    String telefonoCliente = obj_ingreso.telefono;
+
+                    if (!string.IsNullOrEmpty(telefonoCliente))
+                    {
+
+                        await EnviarWhatsAppIngreso(nombreCliente, telefonoCliente, obj_ingreso.id_ingreso);
+
+                    }
+
+                }
+                catch (Exception ex) {
+
+                    System.Diagnostics.Debug.WriteLine($"Error enviado Whatsapp: {ex.Message}");
+                
+                }
+
                 // Guardamos las fotos en la tabla imagenes
                 if (fotos != null && fotos.Any()) {
                     foreach (var fotoBase64 in fotos.Take(10)){
@@ -359,6 +383,50 @@ namespace Cars_Parking_Service.Controllers
                 System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
                 ViewBag.Error = "Ocurrio un error inesperado. Por favor, intenta nuevamente.";
                 return View("Ingreso_Vehiculos");
+            }
+        }
+
+        // Metodo para enviar mensaje al whatsapp para solicitar vehiculo y pagar servicio
+        private async Task EnviarWhatsAppIngreso(string nombre, string telefono, int idIngreso)
+        {
+            var token = "INGRESO_TOKEN";
+            var url = "https://graph.facebook.com/v22.0/625779610608874/messages";
+            string linkPago = $"https://carsParkingServices.com/Payment/Estado_Servicio?idIngreso={idIngreso}";
+
+            var payload = new
+            {
+                messaging_product = "whatsapp",
+                to = telefono,
+                type = "template",
+                template = new
+                {
+                    name = "mensaje_ingreso_cars",
+                    language = new { code = "en_US" },
+                    components = new object[]
+                    {
+                new {
+                    type = "body",
+                    parameters = new object[]
+                    {
+                        new { type = "text", text = nombre },
+                        new { type = "text", text = linkPago }
+                    }
+                }
+                    }
+                }
+            };
+
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+
+                var json = System.Text.Json.JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync(url, content);
+                var result = await response.Content.ReadAsStringAsync();
+
+                System.Diagnostics.Debug.WriteLine($"WhatsApp response: {result}");
             }
         }
 
