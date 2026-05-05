@@ -2,7 +2,8 @@
     ViewData["Title"] = "Estado del Servicio";
 }
 
-<section class="servicio-section">
+<div class="page-wrapper">
+    <section class="servicio-section">
     <!-- Panel izquierdo: logo -->
     <div class="servicio-header">
         <div class="logo-container">
@@ -54,37 +55,21 @@
 
 <!-- ======= Modal Pedir viculo y Pagar ======= -->
 
-<div class="modal-pagar" id="modal-pagar">
+<div class="modal-pagar oculto" id="modal-pagar">
     <div class="informacion" id="informacion_1">
 
-        <!-- HEADER: Tiempo de llegada -->
-        <div class="header-tiempo">
-            <div class="etiqueta-llegada">⏱ Tu vehículo llega en :
-            <!--espcio para variable de tiempo-->
-            <!--EJ:-->
-            8 min
-            </div>
-            <div class="distancia-tag">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
-                1.4 km de distancia
-            </div>
-
-            <div class="barra-track">
-                <div class="barra-fill"></div>
-            </div>
-
-            <div class="carro-container">
-                <span class="carro-icono">🚗</span>
-                <div class="ruta-puntitos">
-                    <span></span><span></span><span></span><span></span><span></span>
-                    <span></span><span></span><span></span><span></span><span></span>
-                </div>
-                <span class="destino-icono">📍</span>
+        <!-- LOGO PROMINENTE -->
+        <div class="logo-modal-principal" style="margin-top: 20px;">
+            <img src="~/img/logo cars parking.png" class="logo-image-principal" alt="Logo Cars Parking"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
+            <div style="display:none; flex-direction:column; align-items:center; color:#d32f2f; font-size:24px;">
+                🚗
             </div>
         </div>
 
-        <!-- INFO DEL CONDUCTOR -->
-        <div class="conductor-section">
+        <!-- HEADER: Información de conductor -->
+        <div class="header-tiempo">
+            <div class="conductor-section">
             <div class="conductor-avatar">👨‍✈️</div>
             <div class="conductor-info">
                 <div class="conductor-nombre">Carlos Mendoza</div>
@@ -98,23 +83,23 @@
         </div>
 
         <!-- RESUMEN DEL VIAJE -->
-        <div class="resumen-section">
             <div class="resumen-titulo">Resumen del viaje</div>
             <div class="resumen-fila">
                 <span>Tarifa base</span>
-                <span class="resumen-valor">$3.500</span>
+                <span class="resumen-valor" id="tarifa-base">$30.000</span>
             </div>
-            <div class="resumen-fila">
-                <span>Distancia (4.2 km)</span>
-                <span class="resumen-valor">$6.300</span>
-            </div>
-            <div class="resumen-fila">
-                <span>Cargo por servicio</span>
-                <span class="resumen-valor">$700</span>
+            <div class="resumen-fila propina-fila">
+                <div class="propina-label-container">
+                    <span>Propina</span>
+                    <button class="btn-agregar-propina" id="btn-propina" type="button" title="Agregar $100 a la propina">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+                <span class="resumen-valor" id="propina-value">$0.00</span>
             </div>
             <div class="resumen-total-fila">
                 <span class="total-label">Total a pagar</span>
-                <span class="total-valor">$10.500</span>
+                <span class="total-valor" id="total-value">$30.000</span>
             </div>
         </div>
 
@@ -148,6 +133,27 @@
                 <p class="confirmacion-sub">Tu vehículo está en camino</p>
             </div>
 
+            <div class="header-tiempo-confirmacion">
+                <div class="etiqueta-llegada-confirmacion">⏱ Tu vehículo llega en: <strong id="timer-display">08:00</strong></div>
+                <div class="distancia-tag-confirmacion">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
+                    1.4 km de distancia
+                </div>
+
+                <div class="barra-track-confirmacion">
+                    <div class="barra-fill-confirmacion"></div>
+                </div>
+
+                <div class="carro-container-confirmacion">
+                    <span class="carro-icono">🚗</span>
+                    <div class="ruta-puntitos">
+                        <span></span><span></span><span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                    <span class="destino-icono">📍</span>
+                </div>
+            </div>
+
             <div class="confirmacion-body">
 
                 <!-- Instrucción principal -->
@@ -157,21 +163,11 @@
                         Acérquese al <strong>Valet Parking</strong><br>para realizar el pago
                     </p>
                 </div>
-
-                <!-- Tiempo estimado -->
-                <div class="tiempo-card">
-                    <div class="tiempo-icono-wrap">
-                        <span class="carro-anim">🚗</span>
-                    </div>
-                    <div class="tiempo-info">
-                        <div class="tiempo-label">Tu vehículo llega en</div>
-                        <div class="tiempo-valor">
-                            <span id="confirmacion-minutos">8</span>
-                            <span class="tiempo-unidad">minutos</span>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/estado-servicio.js" asp-append-version="true"></script>
+}

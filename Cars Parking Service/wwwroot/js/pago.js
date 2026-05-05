@@ -7,7 +7,8 @@
 
     let selectedMethod = null;
 
-    // ========== Seleccionar Método de Pago ==========
+    // ========== Seleccionar Método de Pago ========== //
+
     methodCards.forEach((card, index) => {
         card.addEventListener('click', function () {
             // Remover clase activo de todos

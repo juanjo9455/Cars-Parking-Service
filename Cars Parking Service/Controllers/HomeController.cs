@@ -171,7 +171,7 @@ namespace Cars_Parking_Service.Controllers
         // Este atributo indica que este método responde a peticiones HTTP POST
         // Es decir, cuando el formulario de registro se envía (method="post")
         [HttpPost]
-        public IActionResult IngresoVehiculos(ingresos obj_ingreso, string firmaBase64, bool sin_objetos_valor = false, List<string> fotos = null, string videoBase64 = null)
+        public IActionResult IngresoVehiculos(ingresos obj_ingreso, int id_valet, int id_banco, string firmaBase64, bool sin_objetos_valor = false, List<string> fotos = null, string videoBase64 = null)
         {
             CargarDatosFormulario();
 
@@ -179,6 +179,20 @@ namespace Cars_Parking_Service.Controllers
             if (obj_ingreso == null)
             {
                 ViewBag.Error = "Error al recibir los datos del formulario. Es posible que la conexión se haya interrumpido o las imágenes sean demasiado pesadas. Por favor, intenta de nuevo.";
+                return View("Ingreso_Vehiculos");
+            }
+
+            // Validar que se haya seleccionado un valet
+            if (id_valet <= 0)
+            {
+                ViewBag.Error = "Debe seleccionar un valet para el ingreso del vehículo.";
+                return View("Ingreso_Vehiculos");
+            }
+
+            // Validar que se haya seleccionado un banco
+            if (id_banco <= 0)
+            {
+                ViewBag.Error = "Debe seleccionar un banco para el ingreso del vehículo.";
                 return View("Ingreso_Vehiculos");
             }
 
@@ -249,9 +263,11 @@ namespace Cars_Parking_Service.Controllers
                 obj_ingreso.fecha_salida = null; 
                 obj_ingreso.estado_pago = "pendiente";
                 obj_ingreso.estado_servicio = "activo";
-                
+                obj_ingreso.id_valet = id_valet;
+                obj_ingreso.id_banco = id_banco;
+
                 // Si la ubicación tiene un valor fijo inicial, pudieras ponerlo aquí (opcional)
-                obj_ingreso.valor_servicio = 0; 
+                obj_ingreso.valor_servicio = 0;
                 
                 // ASIGNAMOS LA PROPINA GLOBAL QUE CREAMOS HOY:
                 obj_ingreso.valor_propina = valorPropinaCalculado;
