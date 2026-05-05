@@ -1,27 +1,156 @@
 ﻿@{
-    ViewData["Title"] = "Pago";
+    ViewData["Title"] = "Pago del Servicio";
 }
 
-<div class="main-container">
-    <section class="pago-section">
-        <div class="header">
-            <div class="logo-container">
-                <img src="~/img/logo cars parking.png" class="logo-image" alt="Logo Cars Parking" />
+<div class="pago-container">
+    <!-- Header profesional -->
+    <div class="pago-header">
+        <div class="pago-header-content">
+            <div class="pago-logo-wrap">
+                <img src="~/img/logo cars parking.png" alt="Logo Cars Parking" class="pago-logo" />
+            </div>
+            <div class="pago-header-text">
+                <h1 class="pago-title">Confirma tu Pago</h1>
+                <p class="pago-subtitle">Selecciona tu método de pago preferido para completar la transacción</p>
             </div>
         </div>
-        <div class="valor-pago">
-            <h1>Valor a Pagar</h1>
-            <p>$30.000</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="pago-main">
+        <!-- Card de Resumen de Pago -->
+        <div class="pago-summary-card">
+            <div class="pago-summary-header">
+                <span class="pago-summary-label">Monto a Pagar</span>
+                <div class="pago-amount-badge">Servicio de Estacionamiento</div>
+            </div>
+            <div class="pago-amount-display">
+                <span class="pago-currency">$</span>
+                <span class="pago-amount" id="montoPago">30.000</span>
+            </div>
+            <div class="pago-summary-divider"></div>
+            <div class="pago-summary-details">
+                <div class="detail-item">
+                    <span class="detail-label">Duración</span>
+                    <span class="detail-value">2 horas</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Estado</span>
+                    <span class="detail-value status-activo">Pendiente de Pago</span>
+                </div>
+            </div>
         </div>
-        <div class="metodo-pago">
-            <h1>Método de Pago</h1>
-            <ul>
-                <li><a id="efectivo" asp-controller="Payment" asp-action="Estado_Servicio"><span>Efectivo</span></a></li>
-                <li><a id="QR" asp-controller="Payment" asp-action="Estado_Servicio"><span>Codigo QR</span></a></li>
-                <li>
-                    <a id="nequi" asp-controller="Payment" asp-action="Estado_Servicio"><img src="~/img/nequi.ico" alt="Nequi" class="nequi-logo"></a>
-                </li>
-            </ul>
+
+        <!-- Métodos de Pago -->
+        <div class="pago-methods-section">
+            <h2 class="pago-methods-title">Métodos de Pago</h2>
+
+            <div class="pago-methods-grid">
+                <!-- Efectivo -->
+                <button class="pago-method-card" id="efectivo-btn" onclick="seleccionarMetodo('efectivo')">
+                    <div class="pago-method-icon">
+                        <i class="fa-solid fa-money-bill-1"></i>
+                    </div>
+                    <div class="pago-method-info">
+                        <h3>Efectivo</h3>
+                        <p>Paga en efectivo en el punto de servicio</p>
+                    </div>
+                    <div class="pago-method-radio">
+                        <div class="radio-circle"></div>
+                    </div>
+                </button>
+
+                <!-- Código QR -->
+                <button class="pago-method-card" id="qr-btn" onclick="seleccionarMetodo('qr')">
+                    <div class="pago-method-icon">
+                        <i class="fa-solid fa-qrcode"></i>
+                    </div>
+                    <div class="pago-method-info">
+                        <h3>Código QR</h3>
+                        <p>Escanea y paga desde tu billetera digital</p>
+                    </div>
+                    <div class="pago-method-radio">
+                        <div class="radio-circle"></div>
+                    </div>
+                </button>
+
+                <!-- Nequi -->
+                <button class="pago-method-card" id="nequi-btn" onclick="seleccionarMetodo('nequi')">
+                    <div class="pago-method-icon nequi-icon">
+                        <img src="~/img/nequi.ico" alt="Nequi" />
+                    </div>
+                    <div class="pago-method-info">
+                        <h3>Nequi</h3>
+                        <p>Paga desde tu app de Nequi</p>
+                    </div>
+                    <div class="pago-method-radio">
+                        <div class="radio-circle"></div>
+                    </div>
+                </button>
+            </div>
         </div>
-    </section>
+
+        <!-- Información Adicional -->
+        <div class="pago-info-box">
+            <div class="pago-info-icon">
+                <i class="fa-solid fa-shield-check"></i>
+            </div>
+            <div class="pago-info-content">
+                <h4>Transacción Segura</h4>
+                <p>Todos los pagos están cifrados y asegurados. Tu información de pago es completamente confidencial.</p>
+            </div>
+        </div>
+
+        <!-- Botón de Confirmación -->
+        <div class="pago-actions">
+            <button id="btn-confirmar-pago" class="pago-btn-primary" onclick="confirmarPago()">
+                <span class="btn-icon"><i class="fa-solid fa-check-circle"></i></span>
+                <span class="btn-text">Confirmar Pago</span>
+            </button>
+            <a href="/" class="pago-btn-secondary">
+                <span class="btn-icon"><i class="fa-solid fa-arrow-left"></i></span>
+                <span class="btn-text">Volver Atrás</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación -->
+<div id="modal-confirmacion-pago" class="pago-modal oculto">
+    <div class="pago-modal-overlay" onclick="cerrarModalConfirmacion()"></div>
+    <div class="pago-modal-content">
+        <!-- Modal Header con Check -->
+        <div class="pago-modal-header">
+            <div class="pago-check-icon">✓</div>
+            <h2 class="pago-modal-title" id="modal-titulo">¡Pago por Confirmar!</h2>
+            <p class="pago-modal-subtitle" id="modal-subtitulo">Dirigete al valet o banco para realizar el pago</p>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="pago-modal-body">
+            <div class="pago-confirmation-item">
+                <div class="pago-confirmation-label">Monto a Pagar</div>
+                <div class="pago-confirmation-value amount">$<span id="montoPagoModal">30.000</span></div>
+            </div>
+
+            <div class="pago-confirmation-item">
+                <div class="pago-confirmation-label">Método de Pago</div>
+                <div class="pago-confirmation-value" id="modal-metodo-pago">Efectivo</div>
+            </div>
+
+            <div class="pago-confirmation-item">
+                <div class="pago-confirmation-label">Instrucciones</div>
+                <div class="pago-confirmation-value" id="modal-instrucciones" style="font-size: 14px; line-height: 1.6; color: #666;">
+                    Dirígete al valet para realizar el pago
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="pago-modal-footer">
+            <a href="/Payment/Estado_Servicio" class="pago-btn-primary" style="width: 100%; text-align: center; margin: 0; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-arrow-right"></i> Ver Estado del Servicio
+            </a>
+        </div>
+    </div>
 </div>

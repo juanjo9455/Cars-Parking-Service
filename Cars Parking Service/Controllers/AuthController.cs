@@ -81,9 +81,11 @@ namespace Cars_Parking_Service.Controllers
                 {
                     await EnviarCodigoRecuperacionAsync(normalizedEmail, recoveryCode, expirationUtc);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    ViewBag.Error = "No fue posible enviar el correo de recuperación. Intenta nuevamente.";
+                    System.Diagnostics.Debug.WriteLine($"Error enviando correo: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                    ViewBag.Error = $"No fue posible enviar el correo de recuperación. Error: {ex.Message}";
                     return View();
                 }
             }

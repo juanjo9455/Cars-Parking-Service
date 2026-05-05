@@ -51,11 +51,17 @@ namespace Cars_Parking_Service.Controllers
                 .ThenBy(u => u.nombres)
                 .ToList();*/
 
-            // Consultamos las ubicaciones del sistema
-            ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
+            // Consultamos todas las ubicaciones del sistema, dejando los activos arriba y los inactivos al final
+            ViewBag.Ubicaciones = _context.ubicacion_servicios
+                .OrderByDescending(u => u.estado)
+                .ThenBy(u => u.nombre_ubicacion)
+                .ToList();
 
-            // Consultamos los parqueaderos del sistema
-            ViewBag.Parqueaderos = _context.parqueaderos.ToList();
+            // Consultamos todos los parqueaderos del sistema, dejando los activos arriba y los inactivos al final
+            ViewBag.Parqueaderos = _context.parqueaderos
+                .OrderByDescending(p => p.estado)
+                .ThenBy(p => p.nombre_parqueadero)
+                .ToList();
 
             // Detectar si hay filtros activos de usuarios
             bool tieneFiltrosUsuarios = !string.IsNullOrEmpty(nombre) || !string.IsNullOrEmpty(apellido) || 
@@ -694,38 +700,38 @@ namespace Cars_Parking_Service.Controllers
             return RedirectToAction("Administrador");
         }
 
-        // Acción para eliminar una ubicación desde el panel del admin
+        // Acción para deshabilitar una ubicación desde el panel del admin
         [HttpPost]
-        public IActionResult EliminarUbicacion(int id_ubicacion)
+        public IActionResult DeshabilitarUbicacion(int id_ubicacion)
         {
             var ubicacion = _context.ubicacion_servicios.FirstOrDefault(u => u.id_ubicacion == id_ubicacion);
             if (ubicacion != null)
             {
-                _context.ubicacion_servicios.Remove(ubicacion);
+                ubicacion.estado = "inactivo";
                 _context.SaveChanges();
-                TempData["Mensaje"] = "La ubicación fue eliminada exitosamente.";
+                TempData["Mensaje"] = "La ubicación fue deshabilitada exitosamente.";
             }
             else
             {
-                TempData["Error"] = "No se encontró la ubicación a eliminar.";
+                TempData["Error"] = "No se encontró la ubicación a deshabilitar.";
             }
             return RedirectToAction("Administrador");
         }
 
-        // Acción para eliminar un parqueadero desde el panel del admin
+        // Acción para deshabilitar un parqueadero desde el panel del admin
         [HttpPost]
-        public IActionResult EliminarParqueadero(int id_parqueadero)
+        public IActionResult DeshabilitarParqueadero(int id_parqueadero)
         {
             var parqueadero = _context.parqueaderos.FirstOrDefault(p => p.id_parqueadero == id_parqueadero);
             if (parqueadero != null)
             {
-                _context.parqueaderos.Remove(parqueadero);
+                parqueadero.estado = "inactivo";
                 _context.SaveChanges();
-                TempData["Mensaje"] = "El parqueadero fue eliminado exitosamente.";
+                TempData["Mensaje"] = "El parqueadero fue deshabilitado exitosamente.";
             }
             else
             {
-                TempData["Error"] = "No se encontró el parqueadero a eliminar.";
+                TempData["Error"] = "No se encontró el parqueadero a deshabilitar.";
             }
             return RedirectToAction("Administrador");
         }

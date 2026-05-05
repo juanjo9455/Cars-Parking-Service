@@ -12,6 +12,6 @@ namespace Cars_Parking_Service.Models
         public string direccion { get; set; }
         public string ciudad { get; set; }
         public decimal valor_servicio { get; set; }
-
+        public string estado { get; set; } = "activo";
     }
 }

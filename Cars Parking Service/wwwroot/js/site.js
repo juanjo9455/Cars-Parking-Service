@@ -243,6 +243,7 @@
     const ubicacionesCard = document.getElementById("CardUbicaciones");
     const parqueaderosCard = document.getElementById("CardParqueaderos");
     const tituloAccionesPrincipales = document.getElementById("acciones-principales-titulo");
+    const volverMenuGeneral = document.getElementById("volverMenuGeneral");
 
     // =========================== Ubicacion =========================== \\
 
@@ -259,6 +260,9 @@
             ubicacionesCard.style.display = "none";
             if (usuariosCard) usuariosCard.style.display = "none";
             if (parqueaderosCard) parqueaderosCard.style.display = "none";
+
+            // Mostrar botón de regreso
+            if (volverMenuGeneral) volverMenuGeneral.style.display = "flex";
 
             // Cambiamos el titulo
             document.getElementById("titulo-principal").style.display = "none";
@@ -336,6 +340,9 @@
             if (ubicacionesCard) ubicacionesCard.style.display = "none";
             if (parqueaderosCard) parqueaderosCard.style.display = "none";
 
+            // Mostrar botón de regreso
+            if (volverMenuGeneral) volverMenuGeneral.style.display = "flex";
+
             // Cambiamos el titulo
             document.getElementById("titulo-principal").style.display = "none";
             document.getElementById("titulo-usuarios").style.display = "block";
@@ -379,6 +386,9 @@
             parqueaderosCard.style.display = "none";
             if (usuariosCard) usuariosCard.style.display = "none";
             if (ubicacionesCard) ubicacionesCard.style.display = "none";
+
+            // Mostrar botón de regreso
+            if (volverMenuGeneral) volverMenuGeneral.style.display = "flex";
 
             // Cambiamos el titulo
             document.getElementById("titulo-principal").style.display = "none";
@@ -470,9 +480,56 @@
         }
     }
 
-    // Exponer funciones globalmente para usarlas desde HTML onclick
+     // Exponer funciones globalmente para usarlas desde HTML onclick
     window.abrirModal = abrirModal;
     window.cerrarModal = cerrarModal;
+
+    // Función para regresar al menú principal del admin
+    window.regresarAlMenuAdmin = function() {
+        // Mostrar cards principales
+        const adminCardsContainer = document.querySelector('.admin-cards-container');
+        if (adminCardsContainer) {
+            adminCardsContainer.style.display = 'grid';
+        }
+
+        // Ocultar todas las subtarjetas y tablas
+        const SubCardsUsuarios = document.getElementById('SubCardsUsuarios');
+        const TablaUsuariosContainer = document.getElementById('TablaUsuariosContainer');
+        const ContainerRegistroUsuarios = document.getElementById('ContainerRegistroUsuarios');
+        const SubCardsUbicaciones = document.getElementById('SubCardsUbicaciones');
+        const TablaUbicacionesContainer = document.getElementById('TablaUbicacionesContainer');
+        const ContainerRegistroUbicacion = document.getElementById('ContainerRegistroUbicacion');
+        const SubCardsParqueaderos = document.getElementById('SubCardsParqueaderos');
+        const TablaParqueaderosContainer = document.getElementById('TablaParqueaderosContainer');
+        const ContainerRegistroParqueadero = document.getElementById('ContainerRegistroParqueadero');
+
+        if (SubCardsUsuarios) SubCardsUsuarios.style.display = 'none';
+        if (TablaUsuariosContainer) TablaUsuariosContainer.style.display = 'none';
+        if (ContainerRegistroUsuarios) ContainerRegistroUsuarios.style.display = 'none';
+        if (SubCardsUbicaciones) SubCardsUbicaciones.style.display = 'none';
+        if (TablaUbicacionesContainer) TablaUbicacionesContainer.style.display = 'none';
+        if (ContainerRegistroUbicacion) ContainerRegistroUbicacion.style.display = 'none';
+        if (SubCardsParqueaderos) SubCardsParqueaderos.style.display = 'none';
+        if (TablaParqueaderosContainer) TablaParqueaderosContainer.style.display = 'none';
+        if (ContainerRegistroParqueadero) ContainerRegistroParqueadero.style.display = 'none';
+
+        // Restaurar títulos
+        if (usuariosCard) usuariosCard.style.display = 'flex';
+        if (ubicacionesCard) ubicacionesCard.style.display = 'flex';
+        if (parqueaderosCard) parqueaderosCard.style.display = 'flex';
+
+        document.getElementById("titulo-principal").style.display = "block";
+        document.getElementById("titulo-usuarios").style.display = "none";
+        document.getElementById("titulo-ubicaciones").style.display = "none";
+        document.getElementById("titulo-parqueaderos").style.display = "none";
+
+        // Ocultar filtros
+        const filtroAdmin = document.getElementById('filtroAdmin');
+        if (filtroAdmin) filtroAdmin.style.display = 'none';
+
+        // Ocultar botón de regreso
+        if (volverMenuGeneral) volverMenuGeneral.style.display = 'none';
+    };
 
     // =========================== Filtros Admin (Dinámicos) =========================== \\
 
