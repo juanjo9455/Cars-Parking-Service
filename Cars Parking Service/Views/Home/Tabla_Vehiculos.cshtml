@@ -183,6 +183,7 @@
                                 <label for="estado-servicio-@ingresos.id_ingreso">Estado de Servicio:</label>
                                 <select id="estado-servicio-@ingresos.id_ingreso" name="estado_servicio" style="width:100%;">
                                     <option value="activo" selected="@(ingresos.estado_servicio == "activo" ? "selected" : null)">Activo</option>
+                                    <option value="cancelado" selected="@(ingresos.estado_servicio == "solicitado" ? "selected" : null)">Solicitado</option>
                                     <option value="finalizado" selected="@(ingresos.estado_servicio == "finalizado" ? "selected" : null)">Finalizado</option>
                                     <option value="cancelado" selected="@(ingresos.estado_servicio == "cancelado" ? "selected" : null)">Cancelado</option>
                                 </select>

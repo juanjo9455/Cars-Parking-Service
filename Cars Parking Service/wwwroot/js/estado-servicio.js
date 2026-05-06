@@ -1,24 +1,3 @@
-/**
- * ============================================================
- * ESTADO DE SERVICIO - SCRIPT PRINCIPAL
- * ============================================================
- * 
- * Este archivo controla la lógica del modal de solicitud de vehículo
- * y la gestión del tiempo estimado de llegada.
- * 
- * SECCIONES:
- * 1. Configuración de Variables Globales
- * 2. Inicialización del DOM
- * 3. Gestión de Modal
- * 4. Gestión de Métodos de Pago
- * 5. Contador de Tiempo
- * ============================================================
- */
-
-// ============================================================
-// 1. CONFIGURACIÓN DE VARIABLES GLOBALES
-// ============================================================
-
 // Tiempo estimado de llegada en minutos (puede ser dinámico desde BD)
 const TIEMPO_ESTIMADO_MINUTOS = 8;
 
@@ -32,25 +11,112 @@ const TARIFA_BASE = 30000;
 const INCREMENTO_PROPINA = 100;
 
 
-// ============================================================
-// 2. INICIALIZACIÓN DEL DOM
-// ============================================================
-
 document.addEventListener("DOMContentLoaded", function () {
     console.log('📋 Inicializando Estado de Servicio...');
 
     // Obtener referencias a elementos del DOM
-    const btnSolicitar = document.getElementById('btn-solicitar');
     const btnPagar = document.getElementById('btn-pagar');
-    const btnPropina = document.getElementById('btn-propina');
+    const btnConfirmarPago = document.getElementById('btn-confirmar-pago')
+    const Propina = document.getElementById('propina');
     const modal = document.getElementById('modal-pagar');
     const informacion1 = document.getElementById('informacion_1');
     const informacion2 = document.getElementById('informacion_2');
+    const confirmacion = document.getElementById('modal-confirmacion');
+    const btn_confirmacion = document.getElementById('btn-confirmacion');
+    const btnSolicitar = document.getElementById('btn-solicitar');
 
-    // ========== Evento: Solicitar Vehículo ==========
+
+    // ========== Evento: Confirmar Solicitud ========== //
+
     if (btnSolicitar) {
+
         btnSolicitar.addEventListener('click', function () {
+            confirmacion.style.display = "block";
+        });
+
+    }
+
+    if (btn_confirmacion) {
+
+        btn_confirmacion.addEventListener('click', function () {
+            confirmacion.style.display = 'none';
+            btnSolicitar.style.display = 'none';
+            btnPagar.style.display = 'block';
+
+        });
+
+    }
+
+    if (btnPagar) {
+
+        btnPagar.addEventListener('click', function () {
             abrirModalPagar(modal, informacion1, informacion2);
+        });
+
+    }
+
+    // Verificar si el vehiculo se encuentra o no ya solicitado
+
+    if (btnSolicitar) {
+        btnSolicitar.addEventListener('click', function (e) {
+            e.preventDefault(); // 🚫 evita recarga
+
+            if (btnSolicitar.disabled) return; // evita doble click
+
+            btnSolicitar.disabled = true;
+            btnSolicitar.textContent = "⏳ Procesando...";
+
+            solicitarVehiculo();
+        });
+    }
+
+    function solicitarVehiculo() {
+        const idIngreso = document.getElementById('idIngreso').value;
+        const btnSolicitar = document.getElementById('btn-solicitar'); 
+
+        if (btnSolicitar) {
+            btnSolicitar.disabled = true;
+            btnSolicitar.textContent = "⏳ Solicitando...";
+        }
+
+        fetch('/Payment/SolicitarVehiculo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ idIngreso: parseInt(idIngreso) })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            console.log('✅ Estado actualizado');
+
+            // ✅ Ocultar btn-solicitar
+            if (btnSolicitar) btnSolicitar.style.display = 'none';
+
+            // ✅ Crear el btn-pagar dinámicamente si no existe
+            let btnPagar = document.getElementById('btn-pagar');
+            if (!btnPagar) {
+                btnPagar = document.createElement('button');
+                btnPagar.id = 'btn-pagar';
+                btnPagar.className = 'btn-pagar';
+                btnPagar.innerHTML = '<span>🔒</span> Pagar';
+                btnSolicitar.parentNode.appendChild(btnPagar);
+            } else {
+                btnPagar.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error:', error);
+            alert('Error al solicitar vehículo: ' + error.message);
+
+            // ✅ btnSolicitar ahora sí existe en este scope
+            if (btnSolicitar) {
+                btnSolicitar.disabled = false;
+                btnSolicitar.textContent = "🚗 Solicitar Vehículo";
+            }
         });
     }
 
@@ -61,11 +127,21 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    if (btnConfirmarPago) {
+        btnConfirmarPago.addEventListener('click', function () {
+            Pagar(informacion1, informacion2);
+        });
+    }
+
     // ========== Evento: Agregar Propina ==========
-    if (btnPropina) {
-        btnPropina.addEventListener('click', function (e) {
-            e.preventDefault();
-            agregarPropina();
+    const selectPropina = document.getElementById('select-propina');
+
+    if (selectPropina) {
+        selectPropina.addEventListener('change', function () {
+            propinaActual = parseInt(this.value) || 0;
+            actualizarPropinayTotal();
+
+            console.log('💰 Propina seleccionada:', propinaActual);
         });
     }
 
@@ -94,11 +170,11 @@ document.addEventListener("DOMContentLoaded", function () {
 // ============================================================
 
 /**
- * Abre el modal y muestra la primera pantalla (información de pago)
- * @param {HTMLElement} modal - Elemento del modal
- * @param {HTMLElement} informacion1 - Primera pantalla
- * @param {HTMLElement} informacion2 - Segunda pantalla
- */
+    * Abre el modal y muestra la primera pantalla (información de pago)
+    * @param {HTMLElement} modal - Elemento del modal
+    * @param {HTMLElement} informacion1 - Primera pantalla
+    * @param {HTMLElement} informacion2 - Segunda pantalla
+    */
 function abrirModalPagar(modal, informacion1, informacion2) {
     if (!modal) {
         console.error('❌ Modal no encontrado');
@@ -118,8 +194,8 @@ function abrirModalPagar(modal, informacion1, informacion2) {
 }
 
 /**
- * Cierra el modal y detiene el contador
- */
+    * Cierra el modal y detiene el contador
+    */
 function cerrarModalPagar() {
     const modal = document.getElementById('modal-pagar');
     if (modal) {
@@ -135,9 +211,9 @@ function cerrarModalPagar() {
 // ============================================================
 
 /**
- * Selecciona un método de pago
- * @param {HTMLElement} button - Botón del método de pago seleccionado
- */
+    * Selecciona un método de pago
+    * @param {HTMLElement} button - Botón del método de pago seleccionado
+    */
 function seleccionar(button) {
     const metodosBtns = document.querySelectorAll('.metodo-btn');
 
@@ -155,17 +231,8 @@ function seleccionar(button) {
 // ============================================================
 
 /**
- * Aumenta la propina en $100 y actualiza el total
- */
-function agregarPropina() {
-    propinaActual += INCREMENTO_PROPINA;
-    actualizarPropinayTotal();
-    console.log('💰 Propina aumentada a:', formatearMoneda(propinaActual));
-}
-
-/**
- * Actualiza la visualización de propina y total
- */
+    * Actualiza la visualización de propina y total
+    */
 function actualizarPropinayTotal() {
     // Actualizar propina en el DOM
     const propinaElement = document.getElementById('propina-value');
@@ -182,10 +249,10 @@ function actualizarPropinayTotal() {
 }
 
 /**
- * Formatea un número como moneda colombiana
- * @param {number} cantidad - Cantidad a formatear
- * @returns {string} Cantidad formateada como $X.XXX
- */
+    * Formatea un número como moneda colombiana
+    * @param {number} cantidad - Cantidad a formatear
+    * @returns {string} Cantidad formateada como $X.XXX
+    */
 function formatearMoneda(cantidad) {
     return '$' + cantidad.toLocaleString('es-CO', {
         minimumFractionDigits: 0,
@@ -199,17 +266,17 @@ function formatearMoneda(cantidad) {
 // ============================================================
 
 /**
- * Confirma el pago y cambia a la pantalla de confirmación
- * INICIA EL TEMPORIZADOR AQUÍ
- * @param {HTMLElement} informacion1 - Primera pantalla
- * @param {HTMLElement} informacion2 - Segunda pantalla
- */
+    * Confirma el pago y cambia a la pantalla de confirmación
+    * INICIA EL TEMPORIZADOR AQUÍ
+    * @param {HTMLElement} informacion1 - Primera pantalla
+    * @param {HTMLElement} informacion2 - Segunda pantalla
+    */
 function confirmarYPagar(informacion1, informacion2) {
     console.log('🔄 Confirmando pago...');
 
     // Cambiar a pantalla de confirmación
-    if (informacion1) informacion1.style.display = 'none';
-    if (informacion2) informacion2.style.display = 'block';
+    if (informacion1) informacion1.style.display = 'block';
+    if (informacion2) informacion2.style.display = 'none';
 
     // ✅ INICIAR TEMPORIZADOR AL CONFIRMAR PAGO
     tiempoRestante = TIEMPO_ESTIMADO_MINUTOS * 60;
@@ -218,15 +285,25 @@ function confirmarYPagar(informacion1, informacion2) {
     console.log('✅ Pago confirmado - Temporizador iniciado');
 }
 
+function Pagar(informacion1, informacion2) {
+    console.log('🔄 Confirmando pago...');
+
+    if (informacion1) informacion1.style.display = 'none';
+    if (informacion2) informacion2.style.display = 'block';
+
+    // 🚫 NO reiniciar contador aquí
+    console.log('✅ Cambio a pantalla 2 sin reiniciar contador');
+}
+
 
 // ============================================================
 // 6. CONTADOR DE TIEMPO
 // ============================================================
 
 /**
- * Inicia el contador de tiempo regresivo
- * Actualiza cada segundo
- */
+    * Inicia el contador de tiempo regresivo
+    * Actualiza cada segundo
+    */
 function iniciarContador() {
     // Evitar múltiples contadores
     if (intervaloContador !== null) {
@@ -255,8 +332,8 @@ function iniciarContador() {
 }
 
 /**
- * Detiene el contador de tiempo
- */
+    * Detiene el contador de tiempo
+    */
 function detenerContador() {
     if (intervaloContador !== null) {
         clearInterval(intervaloContador);
@@ -266,8 +343,8 @@ function detenerContador() {
 }
 
 /**
- * Actualiza la visualización del tiempo en el DOM
- */
+    * Actualiza la visualización del tiempo en el DOM
+    */
 function actualizarDisplayTiempo() {
     // Convertir segundos a minutos y segundos
     const minutos = Math.floor(tiempoRestante / 60);
@@ -291,11 +368,11 @@ function actualizarDisplayTiempo() {
     }
 
     // ========== Actualizar Contador en Pantalla 2 (Timer Display) ==========
-    const timerDisplay = document.getElementById('timer-display');
-    if (timerDisplay) {
-        timerDisplay.textContent = tiempoFormato;
-    }
+    const timers = document.querySelectorAll('.timer-display');
 
+    timers.forEach(timer => {
+        timer.textContent = tiempoFormato;
+    });
     // ========== Actualizar Barra de Progreso (Pantalla 1) ==========
     const barraFill = document.querySelector('.barra-fill');
     if (barraFill) {
@@ -324,8 +401,8 @@ function actualizarDisplayTiempo() {
 }
 
 /**
- * Maneja cuando el tiempo se agota
- */
+    * Maneja cuando el tiempo se agota
+    */
 function handleTiempoAgotado() {
     console.log('⚠️ ¡Tiempo agotado!');
 

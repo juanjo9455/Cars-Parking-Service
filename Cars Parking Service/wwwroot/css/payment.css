@@ -446,6 +446,21 @@ a {
     display: none;
 }
 
+.informacion-solicitud {
+    background: #fff;
+    border-radius: 15px;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    margin: 0 auto; /* CENTRADO */
+}
+
+.btn-confirmacion {
+    display: block;
+    margin: 20px auto 0 auto; /* centrado horizontal */
+}
+
+.modal-confirmacion,
 .modal-pagar {
     position: fixed;
     top: 0;

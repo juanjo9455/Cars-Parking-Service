@@ -25,10 +25,23 @@ namespace Cars_Parking_Service.Controllers
         }
 
         [AllowAnonymous]
-        public IActionResult Estado_Servicio(int idIngreso)
+        public IActionResult Estado_Servicio(int? idIngreso)
         {
+            if (idIngreso == null)
+            {
+                return View(); // vista vacía o mensaje
+            }
+
             var ingreso = _context.ingresos
                 .FirstOrDefault(i => i.id_ingreso == idIngreso);
+
+            int idValet = ingreso.id_valet;
+
+            var valet = _context.usuarios
+                .FirstOrDefault(i => i.id_usuario == idValet);
+
+            ViewBag.imagenUsuario = valet.imagen_usuario;
+            ViewBag.nombreUsuario = valet.nombres;
 
             if (ingreso == null)
             {
@@ -36,6 +49,29 @@ namespace Cars_Parking_Service.Controllers
             }
 
             return View(ingreso);
+        }
+
+        // Metodo para editar estado de servicio a solicitado
+        [HttpPost]
+        public IActionResult SolicitarVehiculo([FromBody] SolicitudDto data)
+        {
+            var ingreso = _context.ingresos
+                .FirstOrDefault(i => i.id_ingreso == data.idIngreso);
+
+            if (ingreso == null)
+                return NotFound();
+
+            // 🚫 evitar re-ejecución
+            if (ingreso.estado_servicio == "Solicitado")
+            {
+                return Ok(new { mensaje = "Ya estaba solicitado" });
+            }
+
+            ingreso.estado_servicio = "solicitado";
+
+            _context.SaveChanges(); // ⚠️ te faltaba esto
+
+            return Ok(new { mensaje = "Actualizado correctamente" });
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

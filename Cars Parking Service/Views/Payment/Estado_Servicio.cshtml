@@ -2,88 +2,127 @@
     ViewData["Title"] = "Estado del Servicio";
 }
 
+@model ingresos
+
 <div class="page-wrapper">
     <section class="servicio-section">
-    <!-- Panel izquierdo: logo -->
-    <div class="servicio-header">
-        <div class="logo-container">
-            <img src="~/img/logo cars parking.png" class="logo-image" alt="Logo Cars Parking"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
-            <!-- Fallback si no carga la imagen -->
-            <div style="display:none; flex-direction:column; align-items:center; color:#fff;">
-                <div style="font-size:48px;">🚗</div>
-                <div style="font-family:'Syne',sans-serif; font-size:18px; font-weight:800; margin-top:8px;">Cars Parking</div>
-                <div style="font-size:11px; letter-spacing:3px; opacity:0.7; margin-top:2px;">SERVICE</div>
+        <!-- Panel izquierdo: logo -->
+        <div class="servicio-header">
+            <div class="logo-container">
+                <img src="~/img/logo cars parking.png" class="logo-image" alt="Logo Cars Parking"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
+                <!-- Fallback si no carga la imagen -->
+                <div style="display:none; flex-direction:column; align-items:center; color:#fff;">
+                    <div style="font-size:48px;">🚗</div>
+                    <div style="font-family:'Syne',sans-serif; font-size:18px; font-weight:800; margin-top:8px;">Cars Parking</div>
+                    <div style="font-size:11px; letter-spacing:3px; opacity:0.7; margin-top:2px;">SERVICE</div>
+                </div>
             </div>
+            <div class="header-badge">Parking Service</div>
         </div>
-        <div class="header-badge">Parking Service</div>
+
+        <!-- Panel derecho: datos -->
+        <div class="vehiculo">
+            <h1 class="titulo-vehiculo">Mi Vehículo</h1>
+            <p class="titulo-subtexto">Información del servicio activo</p>
+
+            <ol class="descripcion-servicio">
+                <li>
+                    <p class="campo-label">Placa del Vehículo</p>
+                    <h4 class="campo-valor">@Model?.placa</h4>
+                </li>
+                <li>
+                    <p class="campo-label">Número Celular</p>
+                    <h4 class="campo-valor">@Model?.telefono</h4>
+                </li>
+                <li>
+                    <p class="campo-label">Estado</p>
+                    <h4 class="campo-valor" style="color:#e74c3c; display:flex; align-items:center; gap:6px;">
+                        <span style="width:8px;height:8px;background:#e74c3c;border-radius:50%;display:inline-block;box-shadow:0 0 0 3px rgba(231,76,60,0.2)"></span>
+                        @Model?.estado_servicio
+                    </h4>
+                </li>
+            </ol>
+
+            <input type="hidden" id="idIngreso" value="@Model.id_ingreso" />
+
+            @if (Model.estado_servicio == "solicitado")
+            {
+                <button class="btn-pagar" id="btn-pagar">
+                    <span>🔒</span> Pagar
+                </button>
+            }
+            else
+            {
+                <button type="button" class="servicio-btn" id="btn-solicitar">
+                    🚗 Solicitar Vehículo
+                </button>
+            }
+        </div>
+    </section>
+</div>
+<!-- ======= Modal Comfirmar Solicitud ======= -->
+<div class="modal-confirmacion" id="modal-confirmacion" style="display: none;">
+    <div class="informacion-solicitud" id="confirmacion">
+        <div class="confirmacion">
+            <div class="confirmacion-header">
+                <div class="check-circle">✓</div>
+                <h2 class="confirmacion-titulo">¡Solicitud Enviada!</h2>
+                    <p class="confirmacion-sub">
+                        Hemos notificado a nuestro equipo que has solicitado tu vehículo.
+                        En breve, será llevado hasta tu ubicación.
+
+                        Te avisaremos en cuanto esté listo para ti.
+                    </p>
+            </div>
+            <button class="btn-confirmacion btn-pagar" id="btn-confirmacion">
+                Aceptar
+            </button>
+        </div>
     </div>
-
-    <!-- Panel derecho: datos -->
-    <div class="vehiculo">
-        <h1 class="titulo-vehiculo">Mi Vehículo</h1>
-        <p class="titulo-subtexto">Información del servicio activo</p>
-
-        <ol class="descripcion-servicio">
-            <li>
-                <p class="campo-label">Placa del Vehículo</p>
-                <h4 class="campo-valor">ABC123</h4>
-            </li>
-            <li>
-                <p class="campo-label">Nombre del Cliente</p>
-                <h4 class="campo-valor">Juan José Correa</h4>
-            </li>
-            <li>
-                <p class="campo-label">Número Celular</p>
-                <h4 class="campo-valor">3011106690</h4>
-            </li>
-            <li>
-                <p class="campo-label">Estado</p>
-                <h4 class="campo-valor" style="color:#e74c3c; display:flex; align-items:center; gap:6px;">
-                    <span style="width:8px;height:8px;background:#e74c3c;border-radius:50%;display:inline-block;box-shadow:0 0 0 3px rgba(231,76,60,0.2)"></span>
-                    En espera
-                </h4>
-            </li>
-        </ol>
-
-        <button type="submit" class="servicio-btn" id="btn-solicitar">
-            🚗 Solicitar Vehículo
-        </button>
-    </div>
-
-</section>
+</div>
 
 <!-- ======= Modal Pedir viculo y Pagar ======= -->
 
 <div class="modal-pagar oculto" id="modal-pagar">
     <div class="informacion" id="informacion_1">
 
-        <!-- LOGO PROMINENTE -->
-        <div class="logo-modal-principal" style="margin-top: 20px;">
-            <img src="~/img/logo cars parking.png" class="logo-image-principal" alt="Logo Cars Parking"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
-            <div style="display:none; flex-direction:column; align-items:center; color:#d32f2f; font-size:24px;">
-                🚗
+        <!-- Tiempo de espera -->
+        <div class="header-tiempo-confirmacion">
+            <div class="etiqueta-llegada-confirmacion">⏱ Tu vehículo llega en: <strong class="timer-display">08:00</strong></div>
+            <div class="distancia-tag-confirmacion">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
+                1.4 km de distancia
+            </div>
+
+            <div class="barra-track-confirmacion">
+                <div class="barra-fill-confirmacion"></div>
+            </div>
+
+            <div class="carro-container-confirmacion">
+                <span class="carro-icono">🚗</span>
+                <div class="ruta-puntitos">
+                    <span></span><span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <span class="destino-icono">📍</span>
             </div>
         </div>
 
         <!-- HEADER: Información de conductor -->
         <div class="header-tiempo">
             <div class="conductor-section">
-            <div class="conductor-avatar">👨‍✈️</div>
-            <div class="conductor-info">
-                <div class="conductor-nombre">Carlos Mendoza</div>
-                <div class="conductor-detalle">
-                    <span class="estrellas">★★★★★</span>
-                    <span>4.9</span>
-                    <span class="placa-tag">ABC-123</span>
+            <div class="conductor-avatar">👨‍✈</div>
+                <div class="conductor-info">
+                    <div class="conductor-nombre">@ViewBag.nombreUsuario</div>
+                    <div class="conductor-detalle">
+                        <span class="placa-tag">@Model?.placa</span>
+                    </div>
                 </div>
-            </div>
-            <div style="font-size:13px; color:#aaa;">Toyota Corolla<br><span style="color:#555; font-weight:600;">Blanco</span></div>
         </div>
 
         <!-- RESUMEN DEL VIAJE -->
-            <div class="resumen-titulo">Resumen del viaje</div>
+        <div class="resumen-titulo">Resumen del viaje</div>
             <div class="resumen-fila">
                 <span>Tarifa base</span>
                 <span class="resumen-valor" id="tarifa-base">$30.000</span>
@@ -91,11 +130,23 @@
             <div class="resumen-fila propina-fila">
                 <div class="propina-label-container">
                     <span>Propina</span>
-                    <button class="btn-agregar-propina" id="btn-propina" type="button" title="Agregar $100 a la propina">
+                    <!--<button class="btn-agregar-propina" id="btn-propina" type="button" title="Agregar $100 a la propina">
                         <i class="fa-solid fa-plus"></i>
-                    </button>
+                    </button>-->
                 </div>
-                <span class="resumen-valor" id="propina-value">$0.00</span>
+                <span class="resumen-valor">
+                    
+                    <select class="input-group" id="select-propina">
+                        <option value="0">$0.00</option>
+                        <option value="1000">$1.000</option>
+                        <option value="2000">$2.000</option>
+                        <option value="5000">$5.000</option>
+                        <option value="10000">$10.000</option>
+                        <option value="20000">$20.000</option>
+                        <option value="30000">$30.000</option>
+                    </select>    
+                
+                </span>
             </div>
             <div class="resumen-total-fila">
                 <span class="total-label">Total a pagar</span>
@@ -120,21 +171,16 @@
                 </button>
             </div>
 
-            <button class="btn-pagar" id="btn-pagar">
+            <button class="btn-pagar" id="btn-confirmar-pago">
                 <span>🔒</span> Confirmar y Pagar
             </button>
         </div>
     </div>
     <div class="informacion-2" id="informacion_2">
         <div class="resumen-section-2">
-            <div class="confirmacion-header">
-                <div class="check-circle">✓</div>
-                <h2 class="confirmacion-titulo">¡Solicitud Enviada!</h2>
-                <p class="confirmacion-sub">Tu vehículo está en camino</p>
-            </div>
 
             <div class="header-tiempo-confirmacion">
-                <div class="etiqueta-llegada-confirmacion">⏱ Tu vehículo llega en: <strong id="timer-display">08:00</strong></div>
+                <div class="etiqueta-llegada-confirmacion">⏱ Tu vehículo llega en: <strong class="timer-display">08:00</strong></div>
                 <div class="distancia-tag-confirmacion">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
                     1.4 km de distancia

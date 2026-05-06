@@ -319,13 +319,18 @@ namespace Cars_Parking_Service.Controllers
                 try
                 {
 
-                    String nombreCliente = "Cliente";
+                    //buscamos el usuario valet 
+                    var valet = _context.usuarios
+                        .FirstOrDefault(i => i.id_usuario == obj_ingreso.id_valet);
+
+                    String placa = obj_ingreso.placa;
+                    String nombreCliente = valet.nombres;
                     String telefonoCliente = obj_ingreso.telefono;
 
                     if (!string.IsNullOrEmpty(telefonoCliente))
                     {
 
-                        await EnviarWhatsAppIngreso(nombreCliente, telefonoCliente, obj_ingreso.id_ingreso);
+                        await EnviarWhatsAppIngreso(placa, nombreCliente, telefonoCliente, obj_ingreso.id_ingreso);
 
                     }
 
@@ -387,11 +392,13 @@ namespace Cars_Parking_Service.Controllers
         }
 
         // Metodo para enviar mensaje al whatsapp para solicitar vehiculo y pagar servicio
-        private async Task EnviarWhatsAppIngreso(string nombre, string telefono, int idIngreso)
+        private async Task EnviarWhatsAppIngreso(string placa, string nombre, string telefono, int idIngreso)
         {
-            var token = "INGRESO_TOKEN";
+            var token = "EAAN1Ou7KFoABOxsr5ohcvViIX6kLd90FRB4gmnNUNFmyKqlOIfLGWN7XCFuy96Gk6l940v8mxzSU9z9ldvZCYSDhQ9hSlZBzoQsUZBRNEkeHkKqsjIhu7FUQ5i7bSd5tE9fxBZBZC9ar1DgPjGSazftOQjXPanTJDqLhom7aVZBpvcDnrScZCkZAamOTj19Ib7aI4gZDZD";
             var url = "https://graph.facebook.com/v22.0/625779610608874/messages";
-            string linkPago = $"https://carsParkingServices.com/Payment/Estado_Servicio?idIngreso={idIngreso}";
+
+            string baseUrl = "https://62j90cdp-7140.use2.devtunnels.ms/Payment/Estado_Servicio?idIngreso=";
+            string linkPago = $"{baseUrl}{idIngreso}";
 
             var payload = new
             {
@@ -400,18 +407,45 @@ namespace Cars_Parking_Service.Controllers
                 type = "template",
                 template = new
                 {
-                    name = "mensaje_ingreso_cars",
+                    name = "prueba_cars6",
                     language = new { code = "en_US" },
                     components = new object[]
                     {
-                new {
-                    type = "body",
-                    parameters = new object[]
-                    {
-                        new { type = "text", text = nombre },
-                        new { type = "text", text = linkPago }
+            // HEADER
+            new {
+                type = "header",
+                parameters = new object[]
+                {
+                    new {
+                        type = "image",
+                        image = new {
+                            link = "https://archivos.crmgrupoge.com:8085/logo_cars_parking.jpg"
+                        }
                     }
                 }
+            },
+
+            // BODY
+            new {
+                type = "body",
+                parameters = new object[]
+                {
+                    new { type = "text", text = placa },
+                    new { type = "text", text = nombre },
+                    new { type = "text", text = telefono },
+                    new { type = "text", text = linkPago }
+                }
+            },
+
+            new {
+                type = "button",
+                sub_type = "url",
+                index = "0",
+                parameters = new object[]
+                {
+                    new { type = "text", text = idIngreso.ToString() }
+                }
+            }
                     }
                 }
             };
@@ -425,6 +459,18 @@ namespace Cars_Parking_Service.Controllers
 
                 var response = await client.PostAsync(url, content);
                 var result = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ ERROR WHATSAPP:");
+                    System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
+                    System.Diagnostics.Debug.WriteLine(result);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("✅ WhatsApp enviado correctamente");
+                    System.Diagnostics.Debug.WriteLine(result);
+                }
 
                 System.Diagnostics.Debug.WriteLine($"WhatsApp response: {result}");
             }

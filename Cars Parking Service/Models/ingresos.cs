@@ -41,4 +41,9 @@ namespace Cars_Parking_Service.Models
         public decimal? valor_propina { get; set; }
 
     }
+
+    public class SolicitudDto
+    {
+        public int idIngreso { get; set; }
+    }
 }
