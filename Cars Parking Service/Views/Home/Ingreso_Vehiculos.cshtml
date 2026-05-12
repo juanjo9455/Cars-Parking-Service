@@ -2,6 +2,8 @@
     ViewData["Title"] = "Ingresar Vehiculo";
 }
 
+<div id="client-error-container" style="display:none;position:fixed;top:10px;left:10px;right:10px;z-index:9999;background:#fee;border:1px solid #f99;padding:10px;border-radius:6px;color:#600;max-height:40vh;overflow:auto;"></div>
+
 <div class="ingreso-container">
     <div class="logo-section">
         <div class="car-logo">
@@ -10,6 +12,13 @@
     </div>
 
     <h1 class="ingreso-title">Ingresar Vehiculo</h1>
+
+    @if (TempData["ModelStateErrors"] != null)
+    {
+        <div class="error-credenciales">
+            <span class="error-text">⚠️ Errores de validación: @TempData["ModelStateErrors"]</span>
+        </div>
+    }
 
     @if (ViewBag.Error != null) {
         <div class="error-credenciales">
@@ -32,10 +41,11 @@
 
         <div class="input-group">
             <input type="text"
-                   name="dni"
-                   id="dni"
-                   placeholder="Identificacion del Cliente"
-                   maxlength="20">
+                   name="nombre_cliente"
+                   id="nombre_cliente"
+                   placeholder="Nombre del Cliente"
+                   maxlength="100"
+                   required>
         </div>
 
         <div class="input-group">
@@ -71,8 +81,7 @@
                     value="@ViewBag.UsuarioSesion?.nombre @ViewBag.UsuarioSesion?.apellido"
                     placeholder="Banco/Cajero"
                     readonly
-                    style="background-color: #f5f5f5; cursor: not-allowed;"
-                    required>
+                    style="background-color: #f5f5f5; cursor: not-allowed;">
 
             <input type="hidden"
                     name="id_banco"
@@ -209,4 +218,74 @@
 @section Scripts {
     <script src="~/js/ingreso-vehiculos.js" asp-append-version="true" defer></script>
     <script src="~/js/ingreso-vehiculos-camera.js" asp-append-version="true" defer></script>
+    <script>
+        // AJAX submit via fetch but DO NOT redirect or refresh page on success
+        (function() {
+            const form = document.getElementById('ingresoForm');
+            if (!form) return;
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                // client-side HTML5 validation
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                // Ensure signature is sent even if the external JS didn't populate the hidden field
+                const firmaInput = document.getElementById('firmaBase64');
+                const firmaCanvas = document.getElementById('firmaCanvas');
+                if (firmaInput && !firmaInput.value && firmaCanvas && typeof firmaCanvas.toDataURL === 'function') {
+                    firmaInput.value = firmaCanvas.toDataURL('image/png');
+                }
+
+                const formData = new FormData(form);
+                const submitBtn = document.getElementById('acceder');
+                const originalText = submitBtn ? submitBtn.innerHTML : null;
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = 'Ingresando...'; }
+
+                try {
+                    const resp = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+
+                    if (!resp.ok) {
+                        const text = await resp.text();
+                        console.error('Error servidor:', resp.status, text);
+                        alert('Ocurrió un error al ingresar. Revisa la consola para detalles.');
+                        return;
+                    }
+
+                    // Try parse JSON response
+                    let data = null;
+                    const contentType = resp.headers.get('content-type') || '';
+                    if (contentType.indexOf('application/json') !== -1) {
+                        data = await resp.json();
+                    }
+
+                    // Success: do NOT navigate. Show confirmation and reset form (but keep page)
+                    alert('Ingreso registrado correctamente.');
+
+                    // Optional: clear form fields that should be reset
+                    try {
+                        form.reset();
+                        // clear previews if your JS uses them
+                        const photosPreview = document.getElementById('photosPreview'); if (photosPreview) photosPreview.innerHTML = '';
+                        const videoPreview = document.getElementById('videoPreviewContainer'); if (videoPreview) videoPreview.innerHTML = '';
+                        if (firmaInput) firmaInput.value = '';
+                    } catch (ex) { console.warn('No se pudo limpiar el formulario', ex); }
+
+                } catch (err) {
+                    console.error('Error enviando formulario:', err);
+                    alert('Error de red al intentar ingresar. Revisa la consola.');
+                } finally {
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = originalText; }
+                }
+            });
+        })();
+    </script>
 }

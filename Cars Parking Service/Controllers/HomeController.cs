@@ -9,6 +9,7 @@ using Microsoft.JSInterop.Infrastructure;
 using NuGet.Common;
 using System.Diagnostics;
 using System.Text;
+using Microsoft.AspNetCore.Http;
 
 namespace Cars_Parking_Service.Controllers
 {
@@ -174,8 +175,15 @@ namespace Cars_Parking_Service.Controllers
         // Este atributo indica que este método responde a peticiones HTTP POST
         // Es decir, cuando el formulario de registro se envía (method="post")
         [HttpPost]
-        public async Task<IActionResult> IngresoVehiculos(ingresos obj_ingreso, int id_valet, int id_banco, string firmaBase64, bool sin_objetos_valor = false, List<string> fotos = null, string videoBase64 = null)
-        {
+        public async Task<IActionResult> IngresoVehiculos(ingresos obj_ingreso, int id_valet, int id_banco, string firmaBase64, bool sin_objetos_valor = false, List<string>? fotos = null, string? videoBase64 = null){
+            // DEBUG TEMPORAL
+            System.Diagnostics.Debug.WriteLine("=== ENTRÓ AL POST ===");
+            System.Diagnostics.Debug.WriteLine($"placa: {obj_ingreso?.placa}");
+            System.Diagnostics.Debug.WriteLine($"nombre_cliente: {obj_ingreso?.nombre_cliente}");
+            System.Diagnostics.Debug.WriteLine($"id_valet: {id_valet}");
+            System.Diagnostics.Debug.WriteLine($"id_banco: {id_banco}");
+            System.Diagnostics.Debug.WriteLine($"ModelState válido: {ModelState.IsValid}");
+
             CargarDatosFormulario();
 
             // Validar que el modelo no sea nulo en caso de interrupción en la subida del formulario
@@ -252,14 +260,6 @@ namespace Cars_Parking_Service.Controllers
                         return View("Ingreso_Vehiculos");
                     }
                 }
-                
-                // Consultar la propina general desde la configuración de la BD
-                var configPropina = _context.configuraciones.FirstOrDefault(c => c.clave == "PropinaGeneral");
-                decimal valorPropinaCalculado = 0;
-                if (configPropina != null && decimal.TryParse(configPropina.valor, out decimal propinaBd))
-                {
-                    valorPropinaCalculado = propinaBd;
-                }
 
                 // Configurar valores automáticos del ingreso
                 obj_ingreso.fecha_ingreso = DateTime.Now;
@@ -271,9 +271,6 @@ namespace Cars_Parking_Service.Controllers
 
                 // Si la ubicación tiene un valor fijo inicial, pudieras ponerlo aquí (opcional)
                 obj_ingreso.valor_servicio = 0;
-                
-                // ASIGNAMOS LA PROPINA GLOBAL QUE CREAMOS HOY:
-                obj_ingreso.valor_propina = valorPropinaCalculado;
 
                 // Convertir la firma de base64 a byte[]
                 // Verificamos que la firma no llegue vacia
@@ -313,7 +310,17 @@ namespace Cars_Parking_Service.Controllers
                 }
 
                 _context.ingresos.Add(obj_ingreso);
-                _context.SaveChanges();
+
+                // AGREGA ESTO:
+                System.Diagnostics.Debug.WriteLine($"=== ANTES DE GUARDAR ===");
+                System.Diagnostics.Debug.WriteLine($"Placa: {obj_ingreso.placa}");
+                System.Diagnostics.Debug.WriteLine($"id_parqueadero: {obj_ingreso.id_parqueadero}");
+                System.Diagnostics.Debug.WriteLine($"id_ubicacion: {obj_ingreso.id_ubicacion}");
+                System.Diagnostics.Debug.WriteLine($"nombre_cliente: {obj_ingreso.nombre_cliente}");
+
+                int filasAfectadas = _context.SaveChanges();
+
+                System.Diagnostics.Debug.WriteLine($"=== FILAS AFECTADAS: {filasAfectadas} ===");
 
                 // Llamamos metodo para mandar mansaje de Whatsapp
                 try
@@ -373,7 +380,17 @@ namespace Cars_Parking_Service.Controllers
                     _context.SaveChanges();
                 }
 
-                return RedirectToAction("Tabla_Vehiculos", "Home");
+                // If request is AJAX (fetch/XHR) return JSON so client can handle navigation without full refresh
+                if (Request.Headers != null &&
+                    (Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+                     (Request.Headers.ContainsKey("Accept") && Request.Headers["Accept"].ToString().Contains("application/json"))))
+                {
+                    var redirect = Url.Action("Tabla_Vehiculos", "Home");
+                    return Json(new { success = true, redirectUrl = redirect });
+                }
+
+                // For normal form POST, return the same view to keep user on the page (no redirect)
+                return View("Ingreso_Vehiculos");
             }
             catch (DbUpdateException ex)
             {
@@ -499,26 +516,6 @@ namespace Cars_Parking_Service.Controllers
         }
 
         // Consultamos la tabla de ingresos
-        /*public IActionResult Tabla_Ingresos() {
-            var ingresos = _context.ingresos
-                .Include(i => i.placa)
-                .Include(i => i.fecha_ingreso)
-                .Include(i => i.fecha_salida)
-                .Include(i => i.estado_pago)
-                .Include(i => i.estado_servicio)
-                .Include(i => i.id_valet)
-                .Include(i => i.id_banco)
-                .Include(i => i.id_parqueadero)
-                .Include(i => i.id_ubicacion)
-                .Include(i => i.notas)
-                .Include(i => i.firma)
-                .Include(i => i.valor_servicio)
-                .Include(i => i.valor_propina)
-                .Include(i => i.dni)
-                .Include(i => i.telefono)
-                .ToList();
-            return View(ingresos);
-        }*/
 
         public IActionResult ActualizarEstadosIngreso(int id_ingreso, string estado_pago, string estado_servicio) {
             var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);

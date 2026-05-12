@@ -67,7 +67,7 @@ namespace Cars_Parking_Service.Controllers
                 return Ok(new { mensaje = "Ya estaba solicitado" });
             }
 
-            ingreso.estado_servicio = "solicitado";
+            ingreso.estado_servicio = "Solicitado";
 
             _context.SaveChanges(); // ⚠️ te faltaba esto
 
