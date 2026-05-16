@@ -271,6 +271,8 @@ namespace Cars_Parking_Service.Controllers
 
                 // Si la ubicación tiene un valor fijo inicial, pudieras ponerlo aquí (opcional)
                 obj_ingreso.valor_servicio = 0;
+                obj_ingreso.valor_propina = 0;
+
 
                 // Convertir la firma de base64 a byte[]
                 // Verificamos que la firma no llegue vacia
@@ -331,8 +333,8 @@ namespace Cars_Parking_Service.Controllers
                         .FirstOrDefault(i => i.id_usuario == obj_ingreso.id_valet);
 
                     String placa = obj_ingreso.placa;
-                    String nombreCliente = valet.nombres;
-                    String telefonoCliente = obj_ingreso.telefono;
+                    String nombreCliente = valet?.nombres??"Cliente";
+                    String telefonoCliente = obj_ingreso.telefono??string.Empty;
 
                     if (!string.IsNullOrEmpty(telefonoCliente))
                     {
@@ -573,7 +575,7 @@ namespace Cars_Parking_Service.Controllers
 
         // Acción para editar el usuario desde el panel del admin
         [HttpPost]
-        public IActionResult EditarUsuario(int id_usuario, string dni, string nombre, string apellido, string telefono, int edad, int id_rol, string correo, bool estado, string avatarBase64 = null)
+        public IActionResult EditarUsuario(int id_usuario, string dni, string nombre, string apellido, string telefono, int edad, int id_rol, string correo, bool estado, string? avatarBase64 = null)
         {
             // Validar si el nuevo DNI ya le pertenece a OTRO usuario
             bool existeDni = _context.usuarios

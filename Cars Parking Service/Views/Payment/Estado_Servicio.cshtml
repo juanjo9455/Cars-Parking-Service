@@ -24,6 +24,25 @@
         <!-- Panel derecho: datos -->
         <div class="vehiculo">
             <h1 class="titulo-vehiculo">Mi Vehículo</h1>
+
+            <!-- Tiempo de espera -->
+            <div class="header-tiempo-confirmacion" id="tiempoEspera" style="display: none;">
+                <div class="etiqueta-llegada-confirmacion">⏱ Tu vehículo llega en: <strong class="timer-display">08:00</strong></div>
+
+                <div class="barra-track-confirmacion">
+                    <div class="barra-fill-confirmacion"></div>
+                </div>
+
+                <div class="carro-container-confirmacion">
+                    <span class="carro-icono">🚗</span>
+                    <div class="ruta-puntitos">
+                        <span></span><span></span><span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                    <span class="destino-icono">📍</span>
+                </div>
+            </div>
+
             <p class="titulo-subtexto">Información del servicio activo</p>
 
             <ol class="descripcion-servicio">
@@ -44,9 +63,9 @@
                 </li>
             </ol>
 
-            <input type="hidden" id="idIngreso" value="@Model.id_ingreso" />
+            <input type="hidden" id="idIngreso" value="@Model?.id_ingreso" />
 
-            @if (Model.estado_servicio == "solicitado")
+            @if (Model?.estado_servicio == "solicitado")
             {
                 <button class="btn-pagar" id="btn-pagar">
                     <span>🔒</span> Pagar
@@ -68,12 +87,16 @@
             <div class="confirmacion-header">
                 <div class="check-circle">✓</div>
                 <h2 class="confirmacion-titulo">¡Solicitud Enviada!</h2>
-                    <p class="confirmacion-sub">
-                        Hemos notificado a nuestro equipo que has solicitado tu vehículo.
-                        En breve, será llevado hasta tu ubicación.
+                <p class="confirmacion-sub">
+                    Hemos notificado a nuestro equipo que has solicitado tu vehículo.
+                    En breve, será llevado hasta tu ubicación.
 
-                        Te avisaremos en cuanto esté listo para ti.
-                    </p>
+                    Te avisaremos en cuanto esté listo para ti.
+                </p>
+
+                <p class="confirmacion-sub">
+                    Recuerda que el vehiculo llegara en 20 min
+                </p>
             </div>
             <button class="btn-confirmacion btn-pagar" id="btn-confirmacion">
                 Aceptar
@@ -87,34 +110,12 @@
 <div class="modal-pagar oculto" id="modal-pagar">
     <div class="informacion" id="informacion_1">
 
-        <!-- Tiempo de espera -->
-        <div class="header-tiempo-confirmacion">
-            <div class="etiqueta-llegada-confirmacion">⏱ Tu vehículo llega en: <strong class="timer-display">08:00</strong></div>
-            <div class="distancia-tag-confirmacion">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
-                1.4 km de distancia
-            </div>
-
-            <div class="barra-track-confirmacion">
-                <div class="barra-fill-confirmacion"></div>
-            </div>
-
-            <div class="carro-container-confirmacion">
-                <span class="carro-icono">🚗</span>
-                <div class="ruta-puntitos">
-                    <span></span><span></span><span></span><span></span><span></span>
-                    <span></span><span></span><span></span><span></span><span></span>
-                </div>
-                <span class="destino-icono">📍</span>
-            </div>
-        </div>
-
         <!-- HEADER: Información de conductor -->
         <div class="header-tiempo">
             <div class="conductor-section">
             <div class="conductor-avatar">👨‍✈</div>
                 <div class="conductor-info">
-                    <div class="conductor-nombre">@ViewBag.nombreUsuario</div>
+                    <div class="conductor-nombre">@ViewBag.nombreUsuario<   /div>
                     <div class="conductor-detalle">
                         <span class="placa-tag">@Model?.placa</span>
                     </div>

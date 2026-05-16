@@ -1,5 +1,5 @@
 // Tiempo estimado de llegada en minutos (puede ser dinámico desde BD)
-const TIEMPO_ESTIMADO_MINUTOS = 8;
+const TIEMPO_ESTIMADO_MINUTOS = 20;
 
 // Variable para controlar el intervalo del contador
 let intervaloContador = null;
@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const confirmacion = document.getElementById('modal-confirmacion');
     const btn_confirmacion = document.getElementById('btn-confirmacion');
     const btnSolicitar = document.getElementById('btn-solicitar');
+    const tiempoEspera = document.getElementById('tiempoEspera');
 
 
     // ========== Evento: Confirmar Solicitud ========== //
@@ -40,9 +41,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         btn_confirmacion.addEventListener('click', function () {
             confirmacion.style.display = 'none';
-            btnSolicitar.style.display = 'none';
-            btnPagar.style.display = 'block';
-
+            tiempoEspera.style.display = 'block';
+            window.location.reload();
         });
 
     }
@@ -93,20 +93,8 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(data => {
             console.log('✅ Estado actualizado');
 
-            // ✅ Ocultar btn-solicitar
             if (btnSolicitar) btnSolicitar.style.display = 'none';
-
-            // ✅ Crear el btn-pagar dinámicamente si no existe
-            let btnPagar = document.getElementById('btn-pagar');
-            if (!btnPagar) {
-                btnPagar = document.createElement('button');
-                btnPagar.id = 'btn-pagar';
-                btnPagar.className = 'btn-pagar';
-                btnPagar.innerHTML = '<span>🔒</span> Pagar';
-                btnSolicitar.parentNode.appendChild(btnPagar);
-            } else {
-                btnPagar.style.display = 'block';
-            }
+            window.location.reload();
         })
         .catch(error => {
             console.error('❌ Error:', error);
@@ -120,7 +108,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // ========== Evento: Confirmar y Pagar ==========
+    // ========== Evento: Confirmar y Pagar ========== 
     if (btnPagar) {
         btnPagar.addEventListener('click', function () {
             confirmarYPagar(informacion1, informacion2);
@@ -145,7 +133,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // ========== Evento: Cerrar Modal (click en overlay) - SOLO EN PANTALLA 1 ==========
+    // ========== Evento: Cerrar Modal (click en overlay) - SOLO EN PANTALLA 1 ========== 
     if (modal) {
         modal.addEventListener('click', function (e) {
             // Solo cerrar si hace click directamente en el modal (fondo oscuro)

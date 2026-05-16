@@ -35,13 +35,13 @@ namespace Cars_Parking_Service.Controllers
             var ingreso = _context.ingresos
                 .FirstOrDefault(i => i.id_ingreso == idIngreso);
 
-            int idValet = ingreso.id_valet;
+            int idValet = ingreso?.id_valet?? 0;
 
             var valet = _context.usuarios
                 .FirstOrDefault(i => i.id_usuario == idValet);
 
-            ViewBag.imagenUsuario = valet.imagen_usuario;
-            ViewBag.nombreUsuario = valet.nombres;
+            ViewBag.imagenUsuario = valet?.imagen_usuario ?? string.Empty;
+            ViewBag.nombreUsuario = valet?.nombres ?? "Valet";
 
             if (ingreso == null)
             {
@@ -62,12 +62,12 @@ namespace Cars_Parking_Service.Controllers
                 return NotFound();
 
             // 🚫 evitar re-ejecución
-            if (ingreso.estado_servicio == "Solicitado")
+            if (ingreso.estado_servicio == "solicitado")
             {
                 return Ok(new { mensaje = "Ya estaba solicitado" });
             }
 
-            ingreso.estado_servicio = "Solicitado";
+            ingreso.estado_servicio = "solicitado";
 
             _context.SaveChanges(); // ⚠️ te faltaba esto
 
