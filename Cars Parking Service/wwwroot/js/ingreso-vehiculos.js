@@ -114,7 +114,6 @@
         }
 
         const placa = placaNormalizada;
-        const dni = document.getElementById('dni')?.value.trim() || '';
         const telefono = document.getElementById('telefono')?.value.trim() || '';
         const idValet = document.getElementById('id_valet')?.value || '';
         const idBanco = document.querySelector('input[name="id_banco"]')?.value || '';
@@ -123,7 +122,6 @@
 
         console.log('=== VALIDACIÓN DE CAMPOS ===');
         console.log('Placa:', placa);
-        console.log('DNI:', dni);
         console.log('Teléfono:', telefono);
         console.log('ID Valet:', idValet);
         console.log('ID Banco:', idBanco);
@@ -134,12 +132,6 @@
             errores.push('Placa inválida');
             const errorPlaca = document.getElementById('errorPlaca');
             if (errorPlaca) errorPlaca.style.display = 'block';
-        }
-
-        if (!dni) {
-            errores.push('DNI requerido');
-            const errorDNI = document.getElementById('errorDNI');
-            if (errorDNI) errorDNI.style.display = 'block';
         }
 
         if (!telefono) {

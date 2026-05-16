@@ -68,8 +68,8 @@ namespace Cars_Parking_Service.Controllers
                 .ToList();
 
             // Detectar si hay filtros activos de usuarios
-            bool tieneFiltrosUsuarios = !string.IsNullOrEmpty(nombre) || !string.IsNullOrEmpty(apellido) || 
-                                       !string.IsNullOrEmpty(documento) || edad.HasValue || rol.HasValue || 
+            bool tieneFiltrosUsuarios = !string.IsNullOrEmpty(nombre) || !string.IsNullOrEmpty(apellido) ||
+                                       !string.IsNullOrEmpty(documento) || edad.HasValue || rol.HasValue ||
                                        !string.IsNullOrEmpty(estado);
 
             ViewData["FiltroNombre"] = nombre;
@@ -112,7 +112,7 @@ namespace Cars_Parking_Service.Controllers
             string? estadoPago = !string.IsNullOrEmpty(estado_pago) ? estado_pago : null;
             string? nombreParqueadero = !string.IsNullOrEmpty(parqueadero) ? parqueadero : null;
 
-            // 🔹 DEBUG: Ver qué parámetros se envían
+            // ?? DEBUG: Ver qué parámetros se envían
             System.Diagnostics.Debug.WriteLine("=== PARÁMETROS SP ===");
             System.Diagnostics.Debug.WriteLine($"Placa: {placaUpper ?? "NULL"}");
             System.Diagnostics.Debug.WriteLine($"Lugar: {nombreUbicacion ?? "NULL"}");
@@ -175,7 +175,8 @@ namespace Cars_Parking_Service.Controllers
         // Este atributo indica que este método responde a peticiones HTTP POST
         // Es decir, cuando el formulario de registro se envía (method="post")
         [HttpPost]
-        public async Task<IActionResult> IngresoVehiculos(ingresos obj_ingreso, int id_valet, int id_banco, string firmaBase64, bool sin_objetos_valor = false, List<string>? fotos = null, string? videoBase64 = null){
+        public async Task<IActionResult> IngresoVehiculos(ingresos obj_ingreso, int id_valet, int id_banco, string firmaBase64, bool sin_objetos_valor = false, List<string>? fotos = null, string? videoBase64 = null)
+        {
             // DEBUG TEMPORAL
             System.Diagnostics.Debug.WriteLine("=== ENTRÓ AL POST ===");
             System.Diagnostics.Debug.WriteLine($"placa: {obj_ingreso?.placa}");
@@ -263,7 +264,8 @@ namespace Cars_Parking_Service.Controllers
 
                 // Configurar valores automáticos del ingreso
                 obj_ingreso.fecha_ingreso = DateTime.Now;
-                obj_ingreso.fecha_salida = null; 
+                obj_ingreso.fecha_salida = null;
+                obj_ingreso.fecha_fin_servicio = null;
                 obj_ingreso.estado_pago = "pendiente";
                 obj_ingreso.estado_servicio = "activo";
                 obj_ingreso.id_valet = id_valet;
@@ -276,7 +278,8 @@ namespace Cars_Parking_Service.Controllers
 
                 // Convertir la firma de base64 a byte[]
                 // Verificamos que la firma no llegue vacia
-                if (!string.IsNullOrEmpty(firmaBase64)) {
+                if (!string.IsNullOrEmpty(firmaBase64))
+                {
                     try
                     {
                         //remover el prefijo "data:image/png;base64," si existe
@@ -304,7 +307,8 @@ namespace Cars_Parking_Service.Controllers
 
                 // Manejar el checkbox de sin objetos de valor
                 // Verificamos ue llegue true o fue marcado
-                if (sin_objetos_valor) {
+                if (sin_objetos_valor)
+                {
                     // Verificamos si notas ya era vacia
                     obj_ingreso.notas = string.IsNullOrWhiteSpace(obj_ingreso.notas)
                         ? "Sin objetos de valor"
@@ -333,8 +337,8 @@ namespace Cars_Parking_Service.Controllers
                         .FirstOrDefault(i => i.id_usuario == obj_ingreso.id_valet);
 
                     String placa = obj_ingreso.placa;
-                    String nombreCliente = valet?.nombres??"Cliente";
-                    String telefonoCliente = obj_ingreso.telefono??string.Empty;
+                    String nombreCliente = valet?.nombres ?? "Cliente";
+                    String telefonoCliente = obj_ingreso.telefono ?? string.Empty;
 
                     if (!string.IsNullOrEmpty(telefonoCliente))
                     {
@@ -344,16 +348,20 @@ namespace Cars_Parking_Service.Controllers
                     }
 
                 }
-                catch (Exception ex) {
+                catch (Exception ex)
+                {
 
                     System.Diagnostics.Debug.WriteLine($"Error enviado Whatsapp: {ex.Message}");
-                
+
                 }
 
                 // Guardamos las fotos en la tabla imagenes
-                if (fotos != null && fotos.Any()) {
-                    foreach (var fotoBase64 in fotos.Take(10)){
-                        if (!string.IsNullOrEmpty(fotoBase64)) {
+                if (fotos != null && fotos.Any())
+                {
+                    foreach (var fotoBase64 in fotos.Take(10))
+                    {
+                        if (!string.IsNullOrEmpty(fotoBase64))
+                        {
                             var base64Data = fotoBase64.Contains(",")
                                 ? fotoBase64.Split(',')[1]
                                 : fotoBase64;
@@ -478,16 +486,19 @@ namespace Cars_Parking_Service.Controllers
 
                 var response = await client.PostAsync(url, content);
                 var result = await response.Content.ReadAsStringAsync();
+                System.Diagnostics.Debug.WriteLine($"=== WHATSAPP STATUS: {response.StatusCode} ===");
+                System.Diagnostics.Debug.WriteLine($"=== WHATSAPP RESPONSE: {result} ===");
+                //var result = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    System.Diagnostics.Debug.WriteLine("❌ ERROR WHATSAPP:");
+                    System.Diagnostics.Debug.WriteLine("? ERROR WHATSAPP:");
                     System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
                     System.Diagnostics.Debug.WriteLine(result);
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("✅ WhatsApp enviado correctamente");
+                    System.Diagnostics.Debug.WriteLine("? WhatsApp enviado correctamente");
                     System.Diagnostics.Debug.WriteLine(result);
                 }
 
@@ -509,7 +520,8 @@ namespace Cars_Parking_Service.Controllers
             var rol = HttpContext.Session.GetInt32("id_rol");
 
             // Enviamos la sesion a la vista
-            ViewBag.UsuarioSesion = new {
+            ViewBag.UsuarioSesion = new
+            {
                 nombre = nombres,
                 apellido = apellidos,
                 IdUsuario = id,
@@ -519,10 +531,12 @@ namespace Cars_Parking_Service.Controllers
 
         // Consultamos la tabla de ingresos
 
-        public IActionResult ActualizarEstadosIngreso(int id_ingreso, string estado_pago, string estado_servicio) {
+        public IActionResult ActualizarEstadosIngreso(int id_ingreso, string estado_pago, string estado_servicio)
+        {
             var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
 
-            if (ingreso == null) {
+            if (ingreso == null)
+            {
                 return NotFound();
             }
 
@@ -545,7 +559,8 @@ namespace Cars_Parking_Service.Controllers
             ingreso.estado_pago = estado_pago;
             ingreso.estado_servicio = estado_servicio;
 
-            if (estado_servicio == "finalizado") {
+            if (estado_servicio == "finalizado")
+            {
                 ingreso.fecha_salida = DateTime.Now;
             }
 
@@ -567,7 +582,7 @@ namespace Cars_Parking_Service.Controllers
             HttpContext.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
             HttpContext.Response.Headers["Pragma"] = "no-cache";
             HttpContext.Response.Headers["Expires"] = "-1";
-            
+
             base.OnActionExecuting(context);
         }
 
@@ -640,13 +655,13 @@ namespace Cars_Parking_Service.Controllers
                 }
 
                 _context.SaveChanges();
-                
+
                 // Guardar la URL de imagen en la sesión (siempre, sea nueva o existente)
                 if (!string.IsNullOrEmpty(usuario.imagen_usuario))
                 {
                     HttpContext.Session.SetString("imagen_usuario_url", usuario.imagen_usuario);
                 }
-                
+
                 TempData["Mensaje"] = "Los datos del usuario se actualizaron correctamente.";
             }
             return RedirectToAction("Administrador");

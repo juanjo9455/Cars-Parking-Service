@@ -64,6 +64,7 @@
             </ol>
 
             <input type="hidden" id="idIngreso" value="@Model?.id_ingreso" />
+            <input type="hidden" id="fechaFinServicio" value="@Model?.fecha_fin_servicio?.ToString("o")" />
 
             @if (Model?.estado_servicio == "solicitado")
             {
@@ -113,103 +114,81 @@
         <!-- HEADER: Información de conductor -->
         <div class="header-tiempo">
             <div class="conductor-section">
-            <div class="conductor-avatar">👨‍✈</div>
+                <div class="conductor-avatar">👨‍✈</div>
                 <div class="conductor-info">
-                    <div class="conductor-nombre">@ViewBag.nombreUsuario<   /div>
+                    <div class="conductor-nombre">@ViewBag.nombreUsuario</div>
                     <div class="conductor-detalle">
                         <span class="placa-tag">@Model?.placa</span>
                     </div>
                 </div>
+            </div>
         </div>
 
         <!-- RESUMEN DEL VIAJE -->
         <div class="resumen-titulo">Resumen del viaje</div>
-            <div class="resumen-fila">
-                <span>Tarifa base</span>
-                <span class="resumen-valor" id="tarifa-base">$30.000</span>
-            </div>
-            <div class="resumen-fila propina-fila">
-                <div class="propina-label-container">
-                    <span>Propina</span>
-                    <!--<button class="btn-agregar-propina" id="btn-propina" type="button" title="Agregar $100 a la propina">
+        <div class="resumen-fila">
+            <span>Tarifa base</span>
+            <span class="resumen-valor" id="tarifa-base">$30.000</span>
+        </div>
+        <div class="resumen-fila propina-fila">
+            <div class="propina-label-container">
+                <span>Propina</span>
+                <!--<button class="btn-agregar-propina" id="btn-propina" type="button" title="Agregar $100 a la propina">
                         <i class="fa-solid fa-plus"></i>
                     </button>-->
-                </div>
-                <span class="resumen-valor">
+            </div>
+            <span class="resumen-valor">
                     
-                    <select class="input-group" id="select-propina">
-                        <option value="0">$0.00</option>
-                        <option value="1000">$1.000</option>
-                        <option value="2000">$2.000</option>
-                        <option value="5000">$5.000</option>
-                        <option value="10000">$10.000</option>
-                        <option value="20000">$20.000</option>
-                        <option value="30000">$30.000</option>
-                    </select>    
+                <select class="input-group" id="select-propina">
+                    <option value="0">$0.00</option>
+                    <option value="1000">$1.000</option>
+                    <option value="2000">$2.000</option>
+                    <option value="5000">$5.000</option>
+                    <option value="10000">$10.000</option>
+                    <option value="20000">$20.000</option>
+                    <option value="30000">$30.000</option>
+                </select>
                 
-                </span>
-            </div>
-            <div class="resumen-total-fila">
-                <span class="total-label">Total a pagar</span>
-                <span class="total-valor" id="total-value">$30.000</span>
-            </div>
+            </span>
         </div>
-
-        <!-- MÉTODOS DE PAGO -->
-        <div class="pago-section">
-            <div class="pago-titulo">Método de pago</div>
-            <div class="metodos-grid">
-                <button class="metodo-btn activo" onclick="seleccionar(this)">
-                    <span class="ico">💵</span>Efectivo
-                </button>
-                <button class="metodo-btn" onclick="seleccionar(this)">
-                    <span class="ico"><i class="fa-solid fa-qrcode"></i></span>QR
-                </button>
-                <button class="metodo-btn" onclick="seleccionar(this)">
-                    <span class="ico">
-                        <img src="~/img/nequi.ico" styles="width:22px; height:22px; object-fit:contain;" />
-                    </span>Nequi
-                </button>
-            </div>
-
-            <button class="btn-pagar" id="btn-confirmar-pago">
-                <span>🔒</span> Confirmar y Pagar
-            </button>
+        <div class="resumen-total-fila">
+            <span class="total-label">Total a pagar</span>
+            <span class="total-valor" id="total-value">$30.000</span>
         </div>
     </div>
-    <div class="informacion-2" id="informacion_2">
-        <div class="resumen-section-2">
 
-            <div class="header-tiempo-confirmacion">
-                <div class="etiqueta-llegada-confirmacion">⏱ Tu vehículo llega en: <strong class="timer-display">08:00</strong></div>
-                <div class="distancia-tag-confirmacion">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
-                    1.4 km de distancia
-                </div>
+    <!-- MÉTODOS DE PAGO -->
+    <div class="pago-section">
+        <div class="pago-titulo">Método de pago</div>
+        <div class="metodos-grid">
+            <button class="metodo-btn activo" onclick="seleccionar(this)">
+                <span class="ico">💵</span>Efectivo
+            </button>
+            <button class="metodo-btn" onclick="seleccionar(this)">
+                <span class="ico"><i class="fa-solid fa-qrcode"></i></span>QR
+            </button>
+            <button class="metodo-btn" onclick="seleccionar(this)">
+                <span class="ico">
+                    <img src="~/img/nequi.ico" styles="width:22px; height:22px; object-fit:contain;" />
+                </span>Nequi
+            </button>
+        </div>
 
-                <div class="barra-track-confirmacion">
-                    <div class="barra-fill-confirmacion"></div>
-                </div>
+        <button class="btn-pagar" id="btn-confirmar-pago">
+            <span>🔒</span> Confirmar y Pagar
+        </button>
+    </div>
+</div>
+<div class="informacion-2" id="informacion_2">
+    <div class="resumen-section-2">
+        <div class="confirmacion-body">
 
-                <div class="carro-container-confirmacion">
-                    <span class="carro-icono">🚗</span>
-                    <div class="ruta-puntitos">
-                        <span></span><span></span><span></span><span></span><span></span>
-                        <span></span><span></span><span></span><span></span><span></span>
-                    </div>
-                    <span class="destino-icono">📍</span>
-                </div>
-            </div>
-
-            <div class="confirmacion-body">
-
-                <!-- Instrucción principal -->
-                <div class="instruccion-card">
-                    <div class="instruccion-icono">🏁</div>
-                    <p class="instruccion-texto">
-                        Acérquese al <strong>Valet Parking</strong><br>para realizar el pago
-                    </p>
-                </div>
+            <!-- Instrucción principal -->
+            <div class="instruccion-card">
+                <div class="instruccion-icono">🏁</div>
+                <p class="instruccion-texto">
+                    Acérquese al <strong>Valet Parking</strong><br>para realizar el pago
+                </p>
             </div>
         </div>
     </div>

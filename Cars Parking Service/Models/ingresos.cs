@@ -36,7 +36,7 @@ namespace Cars_Parking_Service.Models
         public decimal? valor_propina { get; set; }
         public string? telefono { get; set; }
         public string? nombre_cliente { get; set; }
-
+        public DateTime? fecha_fin_servicio { get; set; }
     }
 
     public class SolicitudDto

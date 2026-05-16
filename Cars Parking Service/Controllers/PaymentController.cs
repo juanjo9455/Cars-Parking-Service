@@ -35,7 +35,7 @@ namespace Cars_Parking_Service.Controllers
             var ingreso = _context.ingresos
                 .FirstOrDefault(i => i.id_ingreso == idIngreso);
 
-            int idValet = ingreso?.id_valet?? 0;
+            int idValet = ingreso?.id_valet ?? 0;
 
             var valet = _context.usuarios
                 .FirstOrDefault(i => i.id_usuario == idValet);
@@ -61,17 +61,26 @@ namespace Cars_Parking_Service.Controllers
             if (ingreso == null)
                 return NotFound();
 
+            var fechaFinServicio = DateTime.Now.AddMinutes(20);
+
             // 🚫 evitar re-ejecución
             if (ingreso.estado_servicio == "solicitado")
             {
-                return Ok(new { mensaje = "Ya estaba solicitado" });
+                if (!ingreso.fecha_fin_servicio.HasValue)
+                {
+                    ingreso.fecha_fin_servicio = fechaFinServicio;
+                    _context.SaveChanges();
+                }
+
+                return Ok(new { mensaje = "Ya estaba solicitado", fechaFinServicio = ingreso.fecha_fin_servicio });
             }
 
             ingreso.estado_servicio = "solicitado";
+            ingreso.fecha_fin_servicio = fechaFinServicio;
 
             _context.SaveChanges(); // ⚠️ te faltaba esto
 
-            return Ok(new { mensaje = "Actualizado correctamente" });
+            return Ok(new { mensaje = "Actualizado correctamente", fechaFinServicio = ingreso.fecha_fin_servicio });
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
