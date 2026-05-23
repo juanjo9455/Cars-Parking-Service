@@ -1,6 +1,6 @@
 using AspNetCoreGeneratedDocument;
-using Cars_Parking_Service.Data;
-using Cars_Parking_Service.Models;
+using CarsParkingService.Data;
+using CarsParkingService.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop.Infrastructure;
 using System.Diagnostics;
 
-namespace Cars_Parking_Service.Controllers
+namespace CarsParkingService.Controllers
 {
     public class PaymentController : Controller
     {

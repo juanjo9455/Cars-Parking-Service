@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>Cars_Parking_Service</RootNamespace>
+    <RootNamespace>CarsParkingService</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Http
 @{
     var idRol = Context.Session.GetInt32("id_rol");
     var imagenUsuario = Context.Session.GetString("imagen_usuario_url");
@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="CarsParking" />
     <link rel="apple-touch-icon" href="~/icons/icon-180.png" />
-    <title>@ViewData["Title"] - Cars_Parking_Service</title>
+    <title>@ViewData["Title"] - CarsParkingService</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/ui.css" asp-append-version="true" />
@@ -50,7 +50,7 @@
                     {
                         <li><a asp-controller="Home" asp-action="Administrador"><i class="fa-solid fa-gear"></i>Configuraciones Admin</a></li>
                     }
-                    <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
+                    <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesi�n</a></li>
                 </ol>
             </div>
         </aside>
@@ -69,3 +69,4 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+

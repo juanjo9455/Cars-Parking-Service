@@ -1108,6 +1108,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
     background: white;
     border-radius: 24px;
     width: 100%;
+    padding: 20px;
     max-width: 480px;
     max-height: 90vh;
     overflow-y: auto;
@@ -1242,7 +1243,10 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 }
 
 .resumen-section-2 {
-    padding: 40px 28px;
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .resumen-titulo {
@@ -1419,13 +1423,6 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 
 .btn-pagar:active {
     transform: translateY(0);
-}
-
-/* ── CONFIRMACIÓN MODAL ── */
-.informacion-2 {
-    padding: 40px 28px;
-    display: flex;
-    flex-direction: column;
 }
 
 .confirmacion-header {

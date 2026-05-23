@@ -3,14 +3,14 @@ using System.Globalization;
 using System.Net;
 using System.Net.Mail;
 using System.Security.Cryptography;
-using Cars_Parking_Service.Models;
+using CarsParkingService.Models;
 using Microsoft.AspNetCore.Mvc;
-using Cars_Parking_Service.Data;
+using CarsParkingService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop.Infrastructure;
 using AspNetCoreGeneratedDocument;
 
-namespace Cars_Parking_Service.Controllers
+namespace CarsParkingService.Controllers
 {
     public class AuthController : Controller
     {

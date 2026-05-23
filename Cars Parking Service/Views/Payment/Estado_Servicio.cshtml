@@ -109,9 +109,9 @@
 <!-- ======= Modal Pedir viculo y Pagar ======= -->
 
 <div class="modal-pagar oculto" id="modal-pagar">
-    <div class="informacion" id="informacion_1">
 
-        <!-- HEADER: Información de conductor -->
+    <!-- Pantalla 1: Resumen y pago -->
+    <div class="informacion" id="informacion_1">
         <div class="header-tiempo">
             <div class="conductor-section">
                 <div class="conductor-avatar">👨‍✈</div>
@@ -124,74 +124,111 @@
             </div>
         </div>
 
-        <!-- RESUMEN DEL VIAJE -->
-        <div class="resumen-titulo">Resumen del viaje</div>
-        <div class="resumen-fila">
-            <span>Tarifa base</span>
-            <span class="resumen-valor" id="tarifa-base">$30.000</span>
-        </div>
-        <div class="resumen-fila propina-fila">
-            <div class="propina-label-container">
-                <span>Propina</span>
-                <!--<button class="btn-agregar-propina" id="btn-propina" type="button" title="Agregar $100 a la propina">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>-->
+        <div class="resumen-titulo" style="padding: 16px 28px 0;">Resumen del viaje</div>
+        <div style="padding: 0 28px;">
+            <div class="resumen-fila">
+                <span>Tarifa base</span>
+                <span class="resumen-valor" id="tarifa-base">$30.000</span>
             </div>
-            <span class="resumen-valor">
-                    
-                <select class="input-group" id="select-propina">
-                    <option value="0">$0.00</option>
-                    <option value="1000">$1.000</option>
-                    <option value="2000">$2.000</option>
-                    <option value="5000">$5.000</option>
-                    <option value="10000">$10.000</option>
-                    <option value="20000">$20.000</option>
-                    <option value="30000">$30.000</option>
-                </select>
-                
-            </span>
+            <div class="resumen-fila propina-fila">
+                <div class="propina-label-container">
+                    <span>Propina</span>
+                </div>
+                <span class="resumen-valor">
+                    <select class="input-group" id="select-propina">
+                        <option value="0">$0.00</option>
+                        <option value="1000">$1.000</option>
+                        <option value="2000">$2.000</option>
+                        <option value="5000">$5.000</option>
+                        <option value="10000">$10.000</option>
+                        <option value="20000">$20.000</option>
+                        <option value="30000">$30.000</option>
+                    </select>
+                </span>
+            </div>
+            <div class="resumen-total-fila">
+                <span class="total-label">Total a pagar</span>
+                <span class="total-valor" id="total-value">$30.000</span>
+            </div>
         </div>
-        <div class="resumen-total-fila">
-            <span class="total-label">Total a pagar</span>
-            <span class="total-valor" id="total-value">$30.000</span>
+
+        <div class="pago-section">
+            <div class="pago-titulo">Método de pago</div>
+            <div class="metodos-grid">
+                <button class="metodo-btn activo" onclick="seleccionar(this)">
+                    <span class="ico">💵</span>Efectivo
+                </button>
+                <button class="metodo-btn" onclick="seleccionar(this)">
+                    <span class="ico"><i class="fa-solid fa-qrcode"></i></span>QR
+                </button>
+                <button class="metodo-btn" onclick="seleccionar(this)">
+                    <span class="ico">
+                        <img src="~/img/nequi.ico" style="width:22px;height:22px;object-fit:contain;" />
+                    </span>Nequi
+                </button>
+            </div>
+            <button class="btn-pagar" id="btn-confirmar-pago">
+                <span>🔒</span> Confirmar y Pagar
+            </button>
         </div>
     </div>
 
-    <!-- MÉTODOS DE PAGO -->
-    <div class="pago-section">
-        <div class="pago-titulo">Método de pago</div>
-        <div class="metodos-grid">
-            <button class="metodo-btn activo" onclick="seleccionar(this)">
-                <span class="ico">💵</span>Efectivo
-            </button>
-            <button class="metodo-btn" onclick="seleccionar(this)">
-                <span class="ico"><i class="fa-solid fa-qrcode"></i></span>QR
-            </button>
-            <button class="metodo-btn" onclick="seleccionar(this)">
-                <span class="ico">
-                    <img src="~/img/nequi.ico" styles="width:22px; height:22px; object-fit:contain;" />
-                </span>Nequi
-            </button>
-        </div>
+    <!-- Pantalla 2: Confirmación de pago -->
+    <div class="informacion" id="informacion_2" style="display:none;">
+        <div class="resumen-section-2">
 
-        <button class="btn-pagar" id="btn-confirmar-pago">
-            <span>🔒</span> Confirmar y Pagar
-        </button>
-    </div>
-</div>
-<div class="informacion-2" id="informacion_2">
-    <div class="resumen-section-2">
-        <div class="confirmacion-body">
+            <div class="confirmacion-header">
+                <div class="check-circle">✓</div>
+                <h2 class="confirmacion-titulo">¡Pago Confirmado!</h2>
+                <p class="confirmacion-sub">Tu servicio ha sido registrado exitosamente</p>
+            </div>
 
-            <!-- Instrucción principal -->
             <div class="instruccion-card">
                 <div class="instruccion-icono">🏁</div>
                 <p class="instruccion-texto">
-                    Acérquese al <strong>Valet Parking</strong><br>para realizar el pago
+                    Acércate al <strong>Valet Parking</strong><br>para recibir tu vehículo
                 </p>
             </div>
+
+            <div class="tiempo-card">
+                <div class="tiempo-icono-wrap">
+                    <span style="font-size:24px;">✅</span>
+                </div>
+                <div class="tiempo-info">
+                    <p class="tiempo-label">Todo listo</p>
+                    <p class="tiempo-valor" style="font-size:14px; font-weight:500; color:#666;">
+                        Puedes cerrar esta pestaña cuando recibas tu vehículo
+                    </p>
+                </div>
+            </div>
+
+            <div class="tiempo-card" id="confirmacion-metodo-card">
+                <div class="tiempo-icono-wrap">
+                    <span style="font-size:24px;" id="confirmacion-metodo-icono">💵</span>
+                </div>
+                <div class="tiempo-info">
+                    <p class="tiempo-label">Método de pago</p>
+                    <p class="tiempo-valor" style="font-size:16px;" id="confirmacion-metodo-texto">Efectivo</p>
+                </div>
+                <span style="font-size:18px;color:#27ae60;">✓</span>
+            </div>
+
+            <div style="background:linear-gradient(135deg,#d32f2f 0%,#b71c1c 100%);border-radius:14px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;color:white;">
+                <div>
+                    <p style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.75;margin:0 0 4px;">Total pagado</p>
+                    <p style="font-size:26px;font-weight:800;margin:0;" id="confirmacion-total">$0</p>
+                </div>
+                <div style="font-size:36px;opacity:0.3;">🧾</div>
+            </div>
+
+            <p style="text-align:center;font-size:13px;color:#aaa;margin:0;line-height:1.6;">
+                Gracias por usar <strong style="color:#d32f2f;">Cars Parking</strong>.<br>
+                ¡Esperamos verte pronto! 🙌
+            </p>
+
         </div>
     </div>
+
 </div>
 
 @section Scripts {

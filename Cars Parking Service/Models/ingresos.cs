@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.ExceptionServices;
 
-namespace Cars_Parking_Service.Models
+namespace CarsParkingService.Models
 {
     [Table("tbl_ingresos")]
     public class ingresos

@@ -1,4 +1,4 @@
-ï»¿@model IEnumerable<Cars_Parking_Service.Models.usuarios>
+@model IEnumerable<CarsParkingService.Models.usuarios>
 
 @{
     ViewData["Title"] = "Index";
@@ -25,7 +25,7 @@
                 @Html.DisplayNameFor(model => model.edad)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.contraseÃ±a)
+                @Html.DisplayNameFor(model => model.contraseña)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.id_rol)
@@ -52,7 +52,7 @@
                 @Html.DisplayFor(modelItem => item.edad)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.contraseÃ±a)
+                @Html.DisplayFor(modelItem => item.contraseña)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.id_rol)
@@ -69,3 +69,4 @@
 }
     </tbody>
 </table>
+

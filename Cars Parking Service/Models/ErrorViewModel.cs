@@ -1,4 +1,4 @@
-namespace Cars_Parking_Service.Models
+namespace CarsParkingService.Models
 {
     public class ErrorViewModel
     {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Cars_Parking_Service.Models;
+using CarsParkingService.Models;
 
-namespace Cars_Parking_Service.Data
+namespace CarsParkingService.Data
 {
     public class ApplicationDbContext : DbContext
     {

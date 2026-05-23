@@ -1,6 +1,6 @@
 ﻿using AspNetCoreGeneratedDocument;
-using Cars_Parking_Service.Data;
-using Cars_Parking_Service.Models;
+using CarsParkingService.Data;
+using CarsParkingService.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +11,7 @@ using System.Diagnostics;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 
-namespace Cars_Parking_Service.Controllers
+namespace CarsParkingService.Controllers
 {
     public class HomeController : Controller
     {
@@ -244,12 +244,16 @@ namespace Cars_Parking_Service.Controllers
                     .OrderByDescending(i => i.fecha_ingreso)
                     .FirstOrDefault();
 
+                bool enviarWhatsapp = true;
+
                 //validar si el vehiculo ya esta en el parqueadero
                 if (ingresoActivo != null)
                 {
                     //caso 1: El vehiculo esta actualente en servicio (no ha salido)
                     if (ingresoActivo.estado_servicio == "activo")
                     {
+                        enviarWhatsapp = false;
+
                         ViewBag.Error = $"El vehiculo con placa {obj_ingreso.placa} ya tiene un servicio activo";
                         return View("Ingreso_Vehiculos");
                     }
@@ -257,6 +261,8 @@ namespace Cars_Parking_Service.Controllers
                     //caso 2: El vehiculo salio pero tiene un pago pendiente
                     if (ingresoActivo.estado_pago == "pendiente")
                     {
+                        enviarWhatsapp = false;
+
                         ViewBag.Error = $"El vehiculo con placa {obj_ingreso.placa} tiene un pago pendiente. Debe cancelarse antes de un nuevo ingreso es este mismo.";
                         return View("Ingreso_Vehiculos");
                     }
@@ -340,7 +346,7 @@ namespace Cars_Parking_Service.Controllers
                     String nombreCliente = valet?.nombres ?? "Cliente";
                     String telefonoCliente = obj_ingreso.telefono ?? string.Empty;
 
-                    if (!string.IsNullOrEmpty(telefonoCliente))
+                    if (!string.IsNullOrEmpty(telefonoCliente) && enviarWhatsapp)
                     {
 
                         await EnviarWhatsAppIngreso(placa, nombreCliente, telefonoCliente, obj_ingreso.id_ingreso);

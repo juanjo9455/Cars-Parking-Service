@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Cars_Parking_Service.Data;
+using CarsParkingService.Data;
 using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateBuilder(args);

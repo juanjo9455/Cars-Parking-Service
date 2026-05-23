@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Cars_Parking_Service.Data;
-using Cars_Parking_Service.Models;
+using CarsParkingService.Data;
+using CarsParkingService.Models;
 
-namespace Cars_Parking_Service.Controllers
+namespace CarsParkingService.Controllers
 {
     public class rolesController : Controller
     {

@@ -183,12 +183,25 @@ function confirmarYPagar(informacion1, informacion2) {
 }
 
 function Pagar(informacion1, informacion2) {
-    console.log('🔄 Confirmando pago...');
+    // Sincronizar método y total antes de mostrar
+    const metodoSeleccionado = document.querySelector('.metodo-btn.activo');
+    const totalTexto = document.getElementById('total-value')?.innerText ?? '$0';
 
+    if (metodoSeleccionado) {
+        const ico = metodoSeleccionado.querySelector('.ico')?.innerHTML ?? '💵';
+        const nombre = metodoSeleccionado.innerText.trim().split('\n').pop().trim();
+        const iconoEl = document.getElementById('confirmacion-metodo-icono');
+        const textoEl = document.getElementById('confirmacion-metodo-texto');
+        if (iconoEl) iconoEl.innerHTML = ico;
+        if (textoEl) textoEl.innerText = nombre;
+    }
+
+    const totalEl = document.getElementById('confirmacion-total');
+    if (totalEl) totalEl.innerText = totalTexto;
+
+    // Cambiar pantalla
     if (informacion1) informacion1.style.display = 'none';
-    if (informacion2) informacion2.style.display = 'block';
-
-    console.log('✅ Cambio a pantalla 2 sin reiniciar contador');
+    if (informacion2) informacion2.style.display = 'flex';
 }
 
 
@@ -477,3 +490,4 @@ function handleTiempoAgotado() {
 
     alert('⚠️ El vehículo ha llegado. Por favor, dirígete al punto de entrega.');
 }
+

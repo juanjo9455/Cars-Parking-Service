@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Cars_Parking_Service.Models
+namespace CarsParkingService.Models
 {
     [Table("tbl_usuarios")]
     public class usuarios
