@@ -115,13 +115,58 @@
         </div>
 
         <!-- Notas/Valuables -->
-        <div class="input-group notas-group">
+        <!--<div class="input-group notas-group">
             <textarea name="notas" id="notas" placeholder="Objetos de valor (opcional)" rows="3"></textarea>
             <input type="hidden" name="sin_objetos_valor" id="sin_objetos_valor_hidden" value="false" style="width:100%;" />
             <button type="button" class="notas-toggle-btn" id="noValuablesBtn">
                 <i class="fa-solid fa-shield-check"></i>
                 No hay objetos de valor
             </button>
+        </div>-->
+        <!-- Notas/Valuables -->
+        <div class="input-group notas-group" style="gap:0">
+
+            <textarea name="notas"
+                    id="notas"
+                    placeholder="Objetos de valor (opcional)"
+                        rows="3">
+            </textarea>
+
+            <input type="hidden"
+                    name="sin_objetos_valor"
+                    id="sin_objetos_valor_hidden"
+                    value="false" />
+
+            <!-- BOTÓN NO HAY OBJETOS -->
+            <button type="button"
+                    class="notas-toggle-btn"
+                    id="noValuablesBtn">
+
+                <i class="fa-solid fa-shield-check"></i>
+                No hay objetos de valor
+
+            </button>
+
+            <!-- BOTÓN FOTO OBJETOS -->
+            <div style="display: flex;">
+                <button type="button" class="photo-btn-2" id="values">
+                    <svg class="camera-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    Evidencia de objetos
+                </button>
+            </div>
+
+            <!-- Contenedor padre para fotos y el video -->
+            <div class="Media-Preview">
+                <!-- Contenedor para preview de fotos -->
+                <div class="photos-preview" id="photosPreview"></div>
+
+                <!-- Contenedor para preview de video -->
+                <div id="videoPreviewContainer" style="margin-top: 12px;"></div>
+            </div>
+
         </div>
 
         <!-- ========== FOTOS Y VIDEO DEL VEHÍCULO ========== -->

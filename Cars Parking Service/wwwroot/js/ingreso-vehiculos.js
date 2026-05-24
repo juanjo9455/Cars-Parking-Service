@@ -6,23 +6,37 @@
     const submitBtn = document.getElementById('acceder');
     const noValuablesBtn = document.getElementById('noValuablesBtn');
     const notasInput = document.getElementById('notas');
+    const btnObjetosImagenes = document.getElementById("values");
     const sinObjetosHidden = document.getElementById('sin_objetos_valor_hidden');
     let firmando = false;
     let firmaRealizada = false;
 
     if (noValuablesBtn && notasInput && sinObjetosHidden) {
         const aplicarEstadoNotas = (activo) => {
+
             if (activo) {
+
                 notasInput.value = 'Sin objetos de valor';
                 notasInput.readOnly = true;
                 notasInput.classList.add('inactivo');
+
                 noValuablesBtn.classList.add('active');
+
+                btnObjetosImagenes.classList.add('inactivo');
+
                 sinObjetosHidden.value = 'true';
+
             } else {
+
                 notasInput.value = '';
                 notasInput.readOnly = false;
+
                 notasInput.classList.remove('inactivo');
+
                 noValuablesBtn.classList.remove('active');
+
+                btnObjetosImagenes.classList.remove('inactivo');
+
                 sinObjetosHidden.value = 'false';
             }
         };

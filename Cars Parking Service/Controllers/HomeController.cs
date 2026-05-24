@@ -29,6 +29,7 @@ namespace CarsParkingService.Controllers
 
         public IActionResult Login()
         {
+
             return View();
         }
 
@@ -93,17 +94,7 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("Login", "Auth");
             }
 
-            int? idBanco = null;
-            int? idValet = null;
-
-            if (rolUsuario == 1)
-            {
-                idValet = idUsuarioSesion;
-            }
-            else if (rolUsuario == 2)
-            {
-                idBanco = idUsuarioSesion;
-            }
+            int idUsuario = idUsuarioSesion.Value;
 
             // Convertir placa a mayúsculas
             string? placaUpper = !string.IsNullOrEmpty(placa) ? placa.Trim().ToUpper() : null;
@@ -127,19 +118,23 @@ namespace CarsParkingService.Controllers
                 new SqlParameter("@lugar", nombreUbicacion ?? (object)DBNull.Value),
                 new SqlParameter("@estado_servicio", estadoServicio ?? (object)DBNull.Value),
                 new SqlParameter("@estado_pago", estadoPago ?? (object)DBNull.Value),
-                new SqlParameter("@id_banco", idBanco ?? (object)DBNull.Value),
-                new SqlParameter("@id_valet", idValet ?? (object)DBNull.Value),
+                new SqlParameter("@id_usuario", idUsuario),
                 new SqlParameter("@parqueadero", nombreParqueadero ?? (object)DBNull.Value),
                 new SqlParameter("@fecha_inicio", fechaInicio.HasValue ? (object)fechaInicio.Value.Date : DBNull.Value),
                 new SqlParameter("@fecha_fin", fechaFin.HasValue ? (object)fechaFin.Value.Date : DBNull.Value)
             };
 
-            var ingresos = _context.ingresos.FromSqlRaw("EXEC sp_consultarRegistros @placa, @lugar, @estado_servicio, @estado_pago, @id_banco, @id_valet, @parqueadero, @fecha_inicio, @fecha_fin",
+            var ingresos = _context.ingresos.FromSqlRaw(
+                "EXEC sp_consultarRegistros @placa, @lugar, @estado_servicio, @estado_pago, @id_usuario, @parqueadero, @fecha_inicio, @fecha_fin",
                 parametros)
                 .AsEnumerable()
                 .OrderByDescending(u => u.fecha_ingreso)
                 .ThenBy(u => u.estado_pago)
                 .ToList();
+
+            int totalRegistros = ingresos.Count();
+
+            ViewBag.TotalRegistros = totalRegistros;
 
             ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
             ViewBag.Parqueaderos = _context.parqueaderos.ToList();

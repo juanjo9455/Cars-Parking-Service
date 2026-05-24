@@ -39,6 +39,10 @@ namespace CarsParkingService.Controllers
             HttpContext.Response.Headers["Pragma"] = "no-cache";
             HttpContext.Response.Headers["Expires"] = "-1";
 
+            ViewBag.Roles = _context.roles
+            .Where(r => r.id_rol != 3)
+            .ToList();
+
             return View();
         }
 
@@ -276,7 +280,7 @@ namespace CarsParkingService.Controllers
         }
 
         [HttpPost]
-        public IActionResult Login(string dni, [FromForm(Name = "contraseña")] string contrasena)
+        public IActionResult Login(string dni, [FromForm(Name = "contraseña")] string contrasena, int id_rol)
         {
             var user = _context.usuarios
                 .FirstOrDefault(u => u.dni == dni && u.contraseña == contrasena);
@@ -285,18 +289,25 @@ namespace CarsParkingService.Controllers
             {
                 if (!user.estado)
                 {
-                    ViewBag.Error = "Usuario Inacivo";
+                    ViewBag.Error = "Usuario Inactivo";
                     return View();
                 }
 
+                // ACTUALIZAR EL ROL DEL DÍA
+                user.id_rol = id_rol;
+
+                // GUARDAR CAMBIO EN BD
+                _context.SaveChanges();
+
+                // SESIÓN
                 HttpContext.Session.SetInt32("id", user.id_usuario);
                 HttpContext.Session.SetString("dni", user.dni);
                 HttpContext.Session.SetString("nombre", user.nombres);
                 HttpContext.Session.SetString("apellido", user.apellidos);
                 HttpContext.Session.SetInt32("id_rol", user.id_rol);
                 HttpContext.Session.SetString("correo", user.correo);
-                
-                // Guardar la imagen de usuario en la sesión si existe
+
+                // Imagen
                 if (!string.IsNullOrEmpty(user.imagen_usuario))
                 {
                     HttpContext.Session.SetString("imagen_usuario_url", user.imagen_usuario);
@@ -306,6 +317,8 @@ namespace CarsParkingService.Controllers
             }
 
             ViewBag.Error = "Usuario o contraseña incorrectos";
+            ViewBag.Roles = _context.roles.ToList();
+
             return View();
         }
 

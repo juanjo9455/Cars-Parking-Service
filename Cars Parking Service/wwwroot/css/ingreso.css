@@ -34,6 +34,40 @@
     box-shadow: 0 6px 14px rgba(211, 47, 47, 0.30);
 }
 
+.photo-btn-2 {
+    width: 100%;
+    margin-top: 10px;
+    padding: 15px;
+    background: #d32f2f;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.25s ease;
+    margin-bottom: 15px;
+    box-shadow: 0 6px 14px rgba(211, 47, 47, 0.30);
+}
+
+.photo-btn-2.inactivo {
+    background: #cfcfcf !important;
+    color: #7a7a7a !important;
+    cursor: not-allowed;
+    pointer-events: none;
+    box-shadow: none;
+    opacity: 0.8;
+    border: 1px solid #b5b5b5;
+}
+
+.photo-btn-2.inactivo svg {
+    opacity: 0.6;
+}
+
 .photo-btn:hover:not(:disabled) {
     background: #b71c1c;
     transform: translateY(-2px);
@@ -143,18 +177,7 @@
 }
 
 /* ===== Botón dentro del campo de notas ===== */
-.ingreso-container .notas-group {
-    position: relative;
-}
-
-.ingreso-container .notas-group textarea {
-    padding-top: 50px;
-}
-
 .notas-toggle-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
     z-index: 2;
     border: 1px solid #d1d5db;
     background: #ffffff;
@@ -166,7 +189,6 @@
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
     transition: all 0.2s ease;
     appearance: none;

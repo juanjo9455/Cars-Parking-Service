@@ -34,6 +34,20 @@
             <div class="error-message" id="errorPassword">⚠️ La contraseña es obligatoria</div>
         </div>
 
+        <div class="input-group">
+                <select name="id_rol" class="form-control">
+                    <option value="">Selecciona tu rol de hoy</option>
+
+                    @foreach (var rol in ViewBag.Roles)
+                    {
+                        <option value="@rol.id_rol">
+                            @rol.nombre_rol
+                        </option>
+                    }
+                </select>
+            <div class="error-message" id="errorRol">⚠️ Selecciona un rol</div>
+        </div>
+
         <button type="submit" class="login-btn" id="acceder">Ingresar</button>
     </form>
 
