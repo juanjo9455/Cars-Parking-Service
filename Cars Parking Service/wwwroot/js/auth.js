@@ -64,6 +64,11 @@
     }
 
     // ===== Formulario de Login =====
+    const btnLogin = document.getElementById("acceder");
+    //const input1 = document.getElementById("dniLogin");
+    //const input2 = document.getElementById("passwordLogin");
+    //const input3 = document.getElementById("rolLogin");
+    //const btnLogin2 = document.getElementById("iniciar");
     var loginForm = document.getElementById('loginForm');
     if (loginForm) {
         var validators = [
@@ -81,6 +86,20 @@
             }
         });
     }
+
+    /*if (btnLogin) {
+
+        btnLogin.addEventListener("click", function () {
+
+            if (input1) { input1.style.display = "none"; }
+            if (input2) { input2.style.display = "none"; }
+            if (input3) { input3.style.display = "block"; }
+            if (btnLogin) { btnLogin.style.display = "none"; }
+            if (btnLogin2) { btnLogin2.style.display = "block"; }
+
+        });
+
+    }*/
 
     // ===== Formulario de Registro =====
     var signUpForm = document.getElementById('signUpForm');

@@ -8,24 +8,28 @@ namespace CarsParkingService.Models
     {
         [Key]
         public int id_usuario { get; set; }
-        public string nombres { get; set; }
+        public string? nombres { get; set; }
 
-        public string apellidos { get; set; }
+        public string? apellidos { get; set; }
 
-        public string dni { get; set; }
+        public string? dni { get; set; }
 
         public int edad { get; set; }
 
-        public string contraseña { get; set; }
+        public string? contraseña { get; set; }
 
         public int id_rol { get; set; }
 
-        public string telefono { get; set; }
+        public string? telefono { get; set; }
 
-        public string correo { get; set; }
+        public string? correo { get; set; }
 
         public string? imagen_usuario { get; set; }
 
         public bool estado { get; set; }
+
+        public DateTime? fecha_ingreso { get; set; }
+
+        public DateTime? fecha_salida { get; set; }
     }
 }

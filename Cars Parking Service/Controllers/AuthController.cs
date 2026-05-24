@@ -40,7 +40,6 @@ namespace CarsParkingService.Controllers
             HttpContext.Response.Headers["Expires"] = "-1";
 
             ViewBag.Roles = _context.roles
-            .Where(r => r.id_rol != 3)
             .ToList();
 
             return View();
@@ -260,8 +259,12 @@ namespace CarsParkingService.Controllers
         public IActionResult SingUp(usuarios nuevoUsuario)
         {
             bool existeDni = _context.usuarios.Any(u => u.dni == nuevoUsuario.dni && u.estado == true);
-            bool existeCorreo = _context.usuarios.Any(u => u.correo.Trim().ToLower() == nuevoUsuario.correo.Trim().ToLower() && u.estado == true);
-
+            bool existeCorreo = _context.usuarios.Any(u =>
+                !string.IsNullOrWhiteSpace(u.correo) &&
+                !string.IsNullOrWhiteSpace(nuevoUsuario.correo) &&
+                u.correo.Trim().ToLower() == nuevoUsuario.correo.Trim().ToLower() &&
+                u.estado == true
+            );
             if (existeDni || existeCorreo)
             {
                 if (existeDni)
@@ -273,6 +276,7 @@ namespace CarsParkingService.Controllers
 
             nuevoUsuario.estado = true;
             nuevoUsuario.id_rol = 1;
+            nuevoUsuario.fecha_ingreso = DateTime.Now;
             _context.usuarios.Add(nuevoUsuario);
             _context.SaveChanges();
 
@@ -280,46 +284,85 @@ namespace CarsParkingService.Controllers
         }
 
         [HttpPost]
-        public IActionResult Login(string dni, [FromForm(Name = "contraseña")] string contrasena, int id_rol)
+        public IActionResult Login(string dni, [FromForm(Name = "contraseña")] string contrasena)
         {
             var user = _context.usuarios
                 .FirstOrDefault(u => u.dni == dni && u.contraseña == contrasena);
 
-            if (user != null)
+            if (user == null)
             {
-                if (!user.estado)
-                {
-                    ViewBag.Error = "Usuario Inactivo";
-                    return View();
-                }
-
-                // ACTUALIZAR EL ROL DEL DÍA
-                user.id_rol = id_rol;
-
-                // GUARDAR CAMBIO EN BD
-                _context.SaveChanges();
-
-                // SESIÓN
-                HttpContext.Session.SetInt32("id", user.id_usuario);
-                HttpContext.Session.SetString("dni", user.dni);
-                HttpContext.Session.SetString("nombre", user.nombres);
-                HttpContext.Session.SetString("apellido", user.apellidos);
-                HttpContext.Session.SetInt32("id_rol", user.id_rol);
-                HttpContext.Session.SetString("correo", user.correo);
-
-                // Imagen
-                if (!string.IsNullOrEmpty(user.imagen_usuario))
-                {
-                    HttpContext.Session.SetString("imagen_usuario_url", user.imagen_usuario);
-                }
-
-                return RedirectToAction("Index", "Home");
+                ViewBag.Error = "Usuario o contraseña incorrectos";
+                return View();
             }
 
-            ViewBag.Error = "Usuario o contraseña incorrectos";
-            ViewBag.Roles = _context.roles.ToList();
+            if (!user.estado)
+            {
+                ViewBag.Error = "Usuario Inactivo";
+                return View();
+            }
 
-            return View();
+            HttpContext.Session.SetInt32("id_usuario", user.id_usuario);
+
+            ViewBag.MostrarRoles = true;
+
+            if (user.id_rol == 3)
+            {
+
+                ViewBag.Roles = _context.roles
+                .Where(r => r.id_rol == 3)
+                .ToList();
+
+            }
+            else {
+
+                ViewBag.Roles = _context.roles.ToList();
+
+            }
+
+            return View("Login");
+        }
+
+        [HttpPost]
+        public IActionResult cambiarRol(int id_rol) {
+
+            var userId = HttpContext.Session.GetInt32("id_usuario");
+
+            if (userId == null) { 
+            
+                return RedirectToAction("Login");
+
+            }
+
+            var user = _context.usuarios.FirstOrDefault(u => u.id_usuario == userId);
+
+            if (user == null) { 
+            
+                return RedirectToAction("Login");
+
+            }
+
+            // Actualizamos el rol
+            user.id_rol = id_rol;
+            _context.SaveChanges();
+
+            // Guardamos el usuario en la sesión
+            HttpContext.Session.SetInt32("id", user.id_usuario);
+            HttpContext.Session.SetInt32("id_rol", id_rol);
+            HttpContext.Session.SetString("dni", user.dni ?? "");
+            HttpContext.Session.SetString("nombre", user.nombres ?? "");
+            HttpContext.Session.SetString("apellido", user.apellidos ?? "");
+            HttpContext.Session.SetString("correo", user.correo ?? "");
+
+            // Imagen
+            if (!string.IsNullOrEmpty(user.imagen_usuario))
+            {
+                HttpContext.Session.SetString("imagen_usuario_url", user.imagen_usuario);
+            }
+
+            // limpiar temporal
+            HttpContext.Session.Remove("id_usuario");
+
+            return RedirectToAction("Index", "Home");
         }
 
         public IActionResult CerrarSesion()
