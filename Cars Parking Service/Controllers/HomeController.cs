@@ -113,25 +113,36 @@ namespace CarsParkingService.Controllers
             System.Diagnostics.Debug.WriteLine($"Fecha Inicio: {fechaInicio?.ToString("yyyy-MM-dd") ?? "NULL"}");
             System.Diagnostics.Debug.WriteLine($"Fecha Fin: {fechaFin?.ToString("yyyy-MM-dd") ?? "NULL"}");
 
-            var parametros = new[] {
+            var parametros = new List<SqlParameter>
+{
                 new SqlParameter("@placa", placaUpper ?? (object)DBNull.Value),
                 new SqlParameter("@lugar", nombreUbicacion ?? (object)DBNull.Value),
                 new SqlParameter("@estado_servicio", estadoServicio ?? (object)DBNull.Value),
                 new SqlParameter("@estado_pago", estadoPago ?? (object)DBNull.Value),
-                new SqlParameter("@id_usuario", idUsuario),
                 new SqlParameter("@parqueadero", nombreParqueadero ?? (object)DBNull.Value),
                 new SqlParameter("@fecha_inicio", fechaInicio.HasValue ? (object)fechaInicio.Value.Date : DBNull.Value),
                 new SqlParameter("@fecha_fin", fechaFin.HasValue ? (object)fechaFin.Value.Date : DBNull.Value)
             };
 
+            // 🔥 lógica de rol
+            if (rolUsuario != 3)
+            {
+                parametros.Add(new SqlParameter("@id_usuario", idUsuario));
+            }
+            else
+            {
+                parametros.Add(new SqlParameter("@id_usuario", DBNull.Value));
+            }
+
+            // ✔ conversión a array (ESTO ES LO CLAVE)
             var ingresos = _context.ingresos.FromSqlRaw(
                 "EXEC sp_consultarRegistros @placa, @lugar, @estado_servicio, @estado_pago, @id_usuario, @parqueadero, @fecha_inicio, @fecha_fin",
-                parametros)
-                .AsEnumerable()
-                .OrderByDescending(u => u.fecha_ingreso)
-                .ThenBy(u => u.estado_pago)
-                .ToList();
-
+                parametros.ToArray()
+            )
+            .AsEnumerable()
+            .OrderByDescending(u => u.fecha_ingreso)
+            .ThenBy(u => u.estado_pago)
+            .ToList();
             int totalRegistros = ingresos.Count();
 
             ViewBag.TotalRegistros = totalRegistros;

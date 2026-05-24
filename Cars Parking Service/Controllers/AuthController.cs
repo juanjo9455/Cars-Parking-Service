@@ -315,7 +315,7 @@ namespace CarsParkingService.Controllers
             }
             else {
 
-                ViewBag.Roles = _context.roles.ToList();
+                ViewBag.Roles = _context.roles.Where(r => r.id_rol != 3).ToList();
 
             }
 
