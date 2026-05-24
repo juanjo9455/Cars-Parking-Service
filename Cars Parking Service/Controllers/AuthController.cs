@@ -268,6 +268,7 @@ namespace CarsParkingService.Controllers
             }
 
             nuevoUsuario.estado = true;
+            nuevoUsuario.id_rol = 1;
             _context.usuarios.Add(nuevoUsuario);
             _context.SaveChanges();
 

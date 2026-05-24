@@ -49,6 +49,7 @@
 
         <!-- SECTION: Panel de Control -->
         <div class="section">
+
             <div class="section-header" id="acciones-principales-titulo">
                 <span class="section-tag" id="titulo-principal">Acciones Principales</span>
                 <span class="section-tag" id="titulo-usuarios" style="display:none">Acciones Usuarios</span>
@@ -96,289 +97,251 @@
                 </div>
             </div>
 
-            <!-- =========================== Usuarios =========================== -->
-            <!-- Aciones Con Usuarios (Ver tabla, Ingresar Usuarios)-->
-            <!-- Card Usuarios (Redirige a SignUp) -->
-            <div class="subcards-row" id="SubCardsUsuarios" style="display : none">
-                <div class="admin-card" id="CardU1" onclick="window.location.href='@Url.Action("SingUp", "Auth")'" >
-                    <div class="admin-card-icon">
-                        <i class="fa-solid fa-user-plus"></i>
-                    </div>
-                    <div class="admin-card-content">
-                        <h3>Registrar Usuarios</h3>
-                        <p>Registrar Valets, Bancos y Administradores en el sistema.</p>
-                    </div>
-                    <span class="admin-card-btn">Ir a registro <i class="fa-solid fa-arrow-right"></i></span>
-                </div>
+        </div>
 
-                <!-- Card pata mostrar Todos Los Usuarios -->
-                <div class="admin-card" id="CardU2">
-                    <div class="admin-card-icon">
-                        <i class="fa-solid fa-users"></i>
-                    </div>
-                    <div class="admin-card-content">
-                        <h3>Tabla de Usuarios</h3>
-                        <p>administrar cuentas de Valets, Bancos y Administradores del sistema.</p>
-                    </div>
-                    <span class="admin-card-btn">Ir a la tabla <i class="fa-solid fa-arrow-right"></i></span>
+        <!-- Estas Acciones Estan Ocultas hasta que se presione alguna Card Principal-->
+        <!-- Aciones Con Ubicaciones de servicio (Ver tabla, Ingresar Ubicaciones)-->
+
+
+        <!-- =========================== Usuarios =========================== -->
+        <!-- Aciones Con Usuarios (Ver tabla, Ingresar Usuarios)-->
+        <!-- Card Usuarios (Redirige a SignUp) -->
+        <div class="subcards-row" id="SubCardsUsuarios" style="display : none">
+            <div class="admin-card" id="CardU1">
+                <div class="admin-card-icon">
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <div class="admin-card-content">
+                    <h3>Registrar Usuarios</h3>
+                    <p>Registrar Valets, Bancos y Administradores en el sistema.</p>
+                </div>
+                <span class="admin-card-btn">Ir a registro <i class="fa-solid fa-arrow-right"></i></span>
+            </div>
+
+            <!-- Card pata mostrar Todos Los Usuarios -->
+            <div class="admin-card" id="CardU2">
+                <div class="admin-card-icon">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="admin-card-content">
+                    <h3>Tabla de Usuarios</h3>
+                    <p>administrar cuentas de Valets, Bancos y Administradores del sistema.</p>
+                </div>
+                <span class="admin-card-btn">Ir a la tabla <i class="fa-solid fa-arrow-right"></i></span>
+            </div>
+        </div>
+
+        <!-- Contenedor Único de Filtros (se muestra/oculta según la sección activa) -->
+        <div id="filtroAdmin" style="display: none;">
+            <p style="color: #857D7B;">Filtros</p>
+            <div class="filters-wrapper" id="filtersAdminWrapper">
+                <button type="button" class="filters-toggle" id="filtersAdminToggle" aria-expanded="false" aria-controls="filtersAdminPanel">
+                    <span><i class="fa-solid fa-filter"></i> Filtros</span>
+                    <i class="fa-solid fa-chevron-down filters-chevron"></i>
+                </button>
+
+                <div class="search-section filters-panel" id="filtersAdminPanel">
+
+                    <!-- FILTROS USUARIOS -->
+                    <form id="formFiltrosUsuarios" method="get" asp-action="Administrador" class="row" style="display: none;">
+                        <div class="form-group col-md-3 mb-3">
+                            <label>Nombre</label>
+                            <input type="text" name="nombre" value="@ViewData["FiltroNombre"]" placeholder="Buscar por nombre" class="form-control">
+                        </div>
+                        <div class="form-group col-md-3 mb-3">
+                            <label>Documento Identificación</label>
+                            <input type="text" name="identificacion" value="@ViewData["FiltroIdentificacion"]" placeholder="Buscar por Documento" class="form-control">
+                        </div>
+                        <div class="form-group col-md-3 mb-3">
+                            <label>Edad</label>
+                            <input type="number" name="edad" value="@ViewData["FiltroEdad"]" placeholder="Buscar por edad" class="form-control">
+                        </div>
+                        <div class="form-group col-md-3 mb-3">
+                            <label>Rol</label>
+                            <select name="rol" style="width:100%;">
+                                <option value="">Todos</option>
+                                <option value="1" selected="@(ViewData["FiltroRol"]?.ToString() == "1")">Valet</option>
+                                <option value="2" selected="@(ViewData["FiltroRol"]?.ToString() == "2")">Banco</option>
+                                <option value="3" selected="@(ViewData["FiltroRol"]?.ToString() == "3")">Administrador</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3 mb-3">
+                            <label>Estado</label>
+                            <select name="estado_usuario" style="width:100%;">
+                                <option value="">Todos</option>
+                                <option value="activo" selected="@(ViewData["FiltroEstadoUsuario"]?.ToString() == "activo")">Activo</option>
+                                <option value="inactivo" selected="@(ViewData["FiltroEstadoUsuario"]?.ToString() == "inactivo")">Inactivo</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mt-2 d-flex justify-content-end gap-2">
+                            <button type="submit" class="btn btn-primary px-4">Buscar</button>
+                            <button type="reset" class="btn btn-secondary px-4">Limpiar</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla para mostrar todos los usuarios del sistema -->
+        <div id="TablaUsuariosContainer" style="display:none; margin-top: 30px;">
+            <div class="header" style="margin-bottom: 20px;">
+                <div class="header-info">
+                    <h2>Lista de Usuarios</h2>
+                    <p>Visualización y gestión de todas las cuentas registradas en el sistema</p>
                 </div>
             </div>
 
-            <!-- Contenedor Único de Filtros (se muestra/oculta según la sección activa) -->
-            <div id="filtroAdmin" style="display: none;">
-                <p style="color: #857D7B;">Filtros</p>
-                <div class="filters-wrapper" id="filtersAdminWrapper">
-                    <button type="button" class="filters-toggle" id="filtersAdminToggle" aria-expanded="false" aria-controls="filtersAdminPanel">
-                        <span><i class="fa-solid fa-filter"></i> Filtros</span>
-                        <i class="fa-solid fa-chevron-down filters-chevron"></i>
-                    </button>
-
-                    <div class="search-section filters-panel" id="filtersAdminPanel">
-
-                        <!-- FILTROS USUARIOS -->
-                        <form id="formFiltrosUsuarios" method="get" asp-action="Administrador" class="row" style="display: none;">
-                            <div class="form-group col-md-3 mb-3">
-                                <label>Nombre</label>
-                                <input type="text" name="nombre" value="@ViewData["FiltroNombre"]" placeholder="Buscar por nombre" class="form-control">
-                            </div>
-                            <div class="form-group col-md-3 mb-3">
-                                <label>Documento Identificación</label>
-                                <input type="text" name="identificacion" value="@ViewData["FiltroIdentificacion"]" placeholder="Buscar por Documento" class="form-control">
-                            </div>
-                            <div class="form-group col-md-3 mb-3">
-                                <label>Edad</label>
-                                <input type="number" name="edad" value="@ViewData["FiltroEdad"]" placeholder="Buscar por edad" class="form-control">
-                            </div>
-                            <div class="form-group col-md-3 mb-3">
-                                <label>Rol</label>
-                                <select name="rol" style="width:100%;">
-                                    <option value="">Todos</option>
-                                    <option value="1" selected="@(ViewData["FiltroRol"]?.ToString() == "1")">Valet</option>
-                                    <option value="2" selected="@(ViewData["FiltroRol"]?.ToString() == "2")">Banco</option>
-                                    <option value="3" selected="@(ViewData["FiltroRol"]?.ToString() == "3")">Administrador</option>
-                                </select>
-                            </div>
-                            <div class="form-group col-md-3 mb-3">
-                                <label>Estado</label>
-                                <select name="estado_usuario" style="width:100%;">
-                                    <option value="">Todos</option>
-                                    <option value="activo" selected="@(ViewData["FiltroEstadoUsuario"]?.ToString() == "activo")">Activo</option>
-                                    <option value="inactivo" selected="@(ViewData["FiltroEstadoUsuario"]?.ToString() == "inactivo")">Inactivo</option>
-                                </select>
-                            </div>
-                            <div class="col-12 mt-2 d-flex justify-content-end gap-2">
-                                <button type="submit" class="btn btn-primary px-4">Buscar</button>
-                                <button type="reset" class="btn btn-secondary px-4">Limpiar</button>
-                            </div>
-                        </form>
-
-                        <!-- FILTROS UBICACIONES -->
-                        <!--<form id="formFiltrosUbicaciones" method="get" asp-action="Administrador" class="row" style="display: none;">
-                            <div class="form-group col-md-4 mb-3">
-                                <label>Nombre Ubicación</label>
-                                <input type="text" name="nombre_ubicacion" placeholder="Buscar por nombre" class="form-control">
-                            </div>
-                            <div class="form-group col-md-4 mb-3">
-                                <label>Dirección</label>
-                                <input type="text" name="direccion" placeholder="Buscar por dirección" class="form-control">
-                            </div>
-                            <div class="form-group col-md-4 mb-3">
-                                <label>Ciudad</label>
-                                <input type="text" name="ciudad" placeholder="Buscar por ciudad" class="form-control">
-                            </div>
-                            <div class="col-12 mt-2 d-flex justify-content-end gap-2">
-                                <button type="submit" class="btn btn-primary px-4">Buscar</button>
-                                <button type="reset" class="btn btn-secondary px-4">Limpiar</button>
-                            </div>
-                        </form>-->
-
-                        <!-- FILTROS PARQUEADEROS -->
-                        <!--<form id="formFiltrosParqueaderos" method="get" asp-action="Administrador" class="row" style="display: none;">
-                            <div class="form-group col-md-4 mb-3">
-                                <label>Nombre Parqueadero</label>
-                                <input type="text" name="nombre_parqueadero" placeholder="Buscar por nombre" class="form-control">
-                            </div>
-                            <div class="form-group col-md-4 mb-3">
-                                <label>Dirección</label>
-                                <input type="text" name="direccion_parq" placeholder="Buscar por dirección" class="form-control">
-                            </div>
-                            <div class="form-group col-md-4 mb-3">
-                                <label>Ciudad</label>
-                                <input type="text" name="ciudad_parq" placeholder="Buscar por ciudad" class="form-control">
-                            </div>
-                            <div class="col-12 mt-2 d-flex justify-content-end gap-2">
-                                <button type="submit" class="btn btn-primary px-4">Buscar</button>
-                                <button type="reset" class="btn btn-secondary px-4">Limpiar</button>
-                            </div>
-                        </form>-->
-
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tabla para mostrar todos los usuarios del sistema -->
-            <div id="TablaUsuariosContainer" style="display:none; margin-top: 30px;">
-                <div class="header" style="margin-bottom: 20px;">
-                    <div class="header-info">
-                        <h2>Lista de Usuarios</h2>
-                        <p>Visualización y gestión de todas las cuentas registradas en el sistema</p>
-                    </div>
-                </div>
-
-                <div class="table-container admin-wide-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Identificacion</th>
-                                <th>Nombre</th>
-                                <th>Teléfono</th>
-                                <th>Edad</th>
-                                <th>Correo</th>
-                                <th>Rol</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (ViewBag.Usuarios != null)
+            <div class="table-container admin-wide-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Identificacion</th>
+                            <th>Nombre</th>
+                            <th>Teléfono</th>
+                            <th>Edad</th>
+                            <th>Correo</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (ViewBag.Usuarios != null)
+                        {
+                            foreach (var user in ViewBag.Usuarios)
                             {
-                                foreach (var user in ViewBag.Usuarios)
-                                {
-                                    <tr class="@(user.estado ? "usuario-activo" : "usuario-inactivo")">
-                                        <td>@user.dni</td>
-                                        <td>@user.nombres</td>
-                                        <td>@user.telefono</td>
-                                        <td>@user.edad</td>
-                                        <td>@user.correo</td> <!-- NUEVO -->
-                                        <td>
-                                            @if (user.id_rol == 1)
-                                            {
-                                                <span class="status-badge" style="background: #2196F3; color: white;">Valet</span>
-                                            }
-                                            else if (user.id_rol == 2)
-                                            {
-                                                <span class="status-badge" style="background: #4CAF50; color: white;">Banco</span>
-                                            }
-                                            else if (user.id_rol == 3)
-                                            {
-                                                <span class="status-badge" style="background: #d32f2f; color: white;">Admin</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="status-badge" style="background: #999; color: white;">Desconocido</span>
-                                            }
-                                        </td>
-                                        <td class="text-center">
-                                            @if (user.estado)
-                                            {
-                                                <span class="status-badge" style="background: #4CAF50; color: white;"><i class="fa-solid fa-check"></i> Activo</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="status-badge" style="background: #f44336; color: white;"><i class="fa-solid fa-x"></i> Inactivo</span>
-                                            }
-                                        </td>
-                                        <td>
-                                            <button class="btn-action" title="Editar" onclick="abrirModalEditarUsuario('@user.id_usuario', '@user.dni', '@user.nombres', '@user.apellidos', '@user.telefono', '@user.edad', '@user.id_rol', '@user.correo', '@user.estado.ToString().ToLower()', '@(string.IsNullOrEmpty(user.imagen_usuario) ? "" : user.imagen_usuario)')">
-                                                <i class="fa-solid fa-pen-to-square" style="color: #2196F3;"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                }
+                                <tr class="@(user.estado ? "usuario-activo" : "usuario-inactivo")">
+                                    <td>@user.dni</td>
+                                    <td>@user.nombres</td>
+                                    <td>@user.telefono</td>
+                                    <td>@user.edad</td>
+                                    <td>@user.correo</td> <!-- NUEVO -->
+                                    <td>
+                                        @if (user.id_rol == 1)
+                                        {
+                                            <span class="status-badge" style="background: #2196F3; color: white;">Valet</span>
+                                        }
+                                        else if (user.id_rol == 2)
+                                        {
+                                            <span class="status-badge" style="background: #4CAF50; color: white;">Banco</span>
+                                        }
+                                        else if (user.id_rol == 3)
+                                        {
+                                            <span class="status-badge" style="background: #d32f2f; color: white;">Admin</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-badge" style="background: #999; color: white;">Desconocido</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (user.estado)
+                                        {
+                                            <span class="status-badge" style="background: #4CAF50; color: white;"><i class="fa-solid fa-check"></i> Activo</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-badge" style="background: #f44336; color: white;"><i class="fa-solid fa-x"></i> Inactivo</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <button class="btn-action" title="Editar" onclick="abrirModalEditarUsuario('@user.id_usuario', '@user.dni', '@user.nombres', '@user.apellidos', '@user.telefono', '@user.edad', '@user.id_rol', '@user.correo', '@user.estado.ToString().ToLower()', '@(string.IsNullOrEmpty(user.imagen_usuario) ? "" : user.imagen_usuario)')">
+                                            <i class="fa-solid fa-pen-to-square" style="color: #2196F3;"></i>
+                                        </button>
+                                    </td>
+                                </tr>
                             }
-                        </tbody>
-                    </table>
+                        }
+                    </tbody>
+                </table>
 
-                </div>
-
-                <!-- Modal Editar Usuario -->
-                <div class="Editar-Ingreso" id="ModalEditarUsuario" style="display : none;">
-                    <div class="modal-overlay" onclick="cerrarModalEditarUsuario()"></div>
-                    <div class="Card-Ingreso">
-                        <span class="close-btn" onclick="cerrarModalEditarUsuario()">&times;</span>
-                        <h3>Editar Usuario</h3>
-                        <form id="formEditarUsuario" method="post" action="/Home/EditarUsuario">
-                            <input type="hidden" id="edit_id_usuario" name="id_usuario" />
-                            <input type="hidden" id="edit_avatar_base64" name="avatarBase64" />
-                            <input type="hidden" id="edit_estado" name="estado" value="true" />
-
-                            <div class="edit-usuario-layout">
-                                <div class="edit-usuario-form-col">
-                                    <div class="form-group-modal">
-                                        <label>DNI</label>
-                                        <input type="text" id="edit_dni" name="dni" class="modal-select" required />
-                                    </div>
-                                    <div class="form-group-modal">
-                                        <label>Nombre</label>
-                                        <input type="text" id="edit_nombre" name="nombre" class="modal-select" required />
-                                    </div>
-                                    <div class="form-group-modal">
-                                        <label>Apellido</label>
-                                        <input type="text" id="edit_apellido" name="apellido" class="modal-select" required />
-                                    </div>
-                                    <div class="form-group-modal">
-                                        <label>Teléfono</label>
-                                        <input type="text" id="edit_telefono" name="telefono" class="modal-select" required />
-                                    </div>
-                                    <div class="form-group-modal">
-                                        <label>Correo</label>
-                                        <input type="email" id="edit_correo" name="correo" class="modal-select" required />
-                                    </div>
-                                    <div class="form-group-modal">
-                                        <label>Edad</label>
-                                        <input type="number" id="edit_edad" name="edad" class="modal-select" required />
-                                    </div>
-                                    <div class="form-group-modal">
-                                        <label>Rol</label>
-                                        <select id="edit_rol" name="id_rol" required style="width: 100%;">
-                                            <option value="">Seleccione un rol...</option>
-                                            <option value="1">Valet</option>
-                                            <option value="2">Banco</option>
-                                            <option value="3">Administrador</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="edit-usuario-avatar-col">
-                                    <div class="edit-avatar-preview" id="editAvatarPreviewWrap">
-                                        <img id="editAvatarPreview" alt="Avatar" style="display:none;" />
-                                        <i id="editAvatarIcon" class="fa-solid fa-image"></i>
-                                    </div>
-                                    <input type="file" id="editAvatarInput" accept="image/*" capture="environment" style="display:none;" />
-                                    <button type="button" class="btn btn-secondary" id="btnTomarFotoAvatar">
-                                        <i class="fa-solid fa-camera"></i> Tomar foto
-                                    </button>
-
-                                    <div class="form-group-modal" style="margin-top: 15px; width: 100%;">
-                                        <label>Estado</label>
-                                        <select id="edit_estado_select" required style="width: 100%;" onchange="document.getElementById('edit_estado').value = this.value;">
-                                            <option value="true">Activo</option>
-                                            <option value="false">Inactivo</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="modal-actions">
-                                <button type="button" class="btn btn-secondary" onclick="cerrarModalEditarUsuario()">Cancelar</button>
-                                <button type="button" class="btn btn-primary" onclick="confirmarGuardarUsuario()">Guardar</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Formulario oculto para enviar eliminación -->
-                <form id="formEliminarUsuario" method="post" action="/Home/EliminarUsuario" style="display:none;">
-                    <input type="hidden" id="delete_id_usuario" name="id_usuario" />
-                </form>
             </div>
+
+            <!-- Modal Editar Usuario -->
+            <div class="Editar-Ingreso" id="ModalEditarUsuario" style="display : none;">
+                <div class="modal-overlay" onclick="cerrarModalEditarUsuario()"></div>
+                <div class="Card-Ingreso">
+                    <span class="close-btn" onclick="cerrarModalEditarUsuario()">&times;</span>
+                    <h3>Editar Usuario</h3>
+                    <form id="formEditarUsuario" method="post" action="/Home/EditarUsuario">
+                        <input type="hidden" id="edit_id_usuario" name="id_usuario" />
+                        <input type="hidden" id="edit_avatar_base64" name="avatarBase64" />
+                        <input type="hidden" id="edit_estado" name="estado" value="true" />
+
+                        <div class="edit-usuario-layout">
+                            <div class="edit-usuario-form-col">
+                                <div class="form-group-modal">
+                                    <label>DNI</label>
+                                    <input type="text" id="edit_dni" name="dni" class="modal-select" required />
+                                </div>
+                                <div class="form-group-modal">
+                                    <label>Nombre</label>
+                                    <input type="text" id="edit_nombre" name="nombre" class="modal-select" required />
+                                </div>
+                                <div class="form-group-modal">
+                                    <label>Apellido</label>
+                                    <input type="text" id="edit_apellido" name="apellido" class="modal-select" required />
+                                </div>
+                                <div class="form-group-modal">
+                                    <label>Teléfono</label>
+                                    <input type="text" id="edit_telefono" name="telefono" class="modal-select" required />
+                                </div>
+                                <div class="form-group-modal">
+                                    <label>Correo</label>
+                                    <input type="email" id="edit_correo" name="correo" class="modal-select" required />
+                                </div>
+                                <div class="form-group-modal">
+                                    <label>Edad</label>
+                                    <input type="number" id="edit_edad" name="edad" class="modal-select" required />
+                                </div>
+                                <div class="form-group-modal">
+                                    <label>Rol</label>
+                                    <select id="edit_rol" name="id_rol" required style="width: 100%;">
+                                        <option value="">Seleccione un rol...</option>
+                                        <option value="1">Valet</option>
+                                        <option value="2">Banco</option>
+                                        <option value="3">Administrador</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="edit-usuario-avatar-col">
+                                <div class="edit-avatar-preview" id="editAvatarPreviewWrap">
+                                    <img id="editAvatarPreview" alt="Avatar" style="display:none;" />
+                                    <i id="editAvatarIcon" class="fa-solid fa-image"></i>
+                                </div>
+                                <input type="file" id="editAvatarInput" accept="image/*" style="display:none;" />
+                                <button type="button" class="btn btn-secondary" id="btnTomarFotoAvatar">
+                                    <i class="fa-solid fa-camera"></i> Tomar foto
+                                </button>
+
+                                <div class="form-group-modal" style="margin-top: 15px; width: 100%;">
+                                    <label>Estado</label>
+                                    <select id="edit_estado_select" required style="width: 100%;" onchange="document.getElementById('edit_estado').value = this.value;">
+                                        <option value="true">Activo</option>
+                                        <option value="false">Inactivo</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button type="button" class="btn btn-secondary" onclick="cerrarModalEditarUsuario()">Cancelar</button>
+                            <button type="button" class="btn btn-primary" onclick="confirmarGuardarUsuario()">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Formulario oculto para enviar eliminación -->
+            <form id="formEliminarUsuario" method="post" action="/Home/EliminarUsuario" style="display:none;">
+                <input type="hidden" id="delete_id_usuario" name="id_usuario" />
+            </form>
         </div>
 
 
         <!-- =========================== Ubicacion =========================== -->
-
-        <!-- Estas Acciones Estan Ocultas hasta que se presione alguna Card Principal-->
-        <!-- Aciones Con Ubicaciones de servicio (Ver tabla, Ingresar Ubicaciones)-->
         <!-- Card Ubicaciones (Redirige a Ingresar Ubicaciones) -->
         <div class="subcards-row" id="SubCardsUbicaciones" style="display : none">
             <div class="admin-card" id="CardUb1">
@@ -673,22 +636,12 @@
                     </div>
 
                     <div class="input-group">
-                        <select class="role-group" id="rolSignUp" name="id_rol" style="color: #333;" required>
-                            <option class="role-option" value="">Selecciona un Rol</option>
-                            <option class="role-option" value="1">Valet</option>
-                            <option class="role-option" value="2">Banco</option>
-                            <option class="role-option" value="3">Administrador</option>
-                        </select>
-                        <div class="error-message" id="errorRolSignUp">⚠️ Debes seleccionar un rol válido</div>
-                    </div>
-
-                    <div class="input-group">
                         <input type="password" id="passwordSignUp" placeholder="Contraseña" name="contraseña">
                         <div class="error-message" id="errorPassword">⚠️ La contraseña debe tener al menos 6 caracteres</div>
                     </div>
 
                     <div class="form-group" style="text-align: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
-                        <button class="btn btn-primary login-btn" type="submit" id="acceder" onclick="mostrarSpinnerEnvio(this)">
+                        <button class="btn btn-primary login-btn" type="submit" id="acceder">
                             <span class="btn-text"><i class="fa-solid fa-user-plus"></i> Registrarse</span>
                             <span class="btn-spinner" style="display: none;"><i class="fa-solid fa-spinner fa-spin"></i> Enviando...</span>
                         </button>
@@ -717,11 +670,26 @@
                     </div>
                     <div class="form-group">
                         <label for="valor_servicio">Valor del Servicio</label>
-                        <input type="number" step="any" id="valor_servicio" name="valor_servicio" class="form-control" required />
+
+                        <div class="input-free-container">
+
+                            <input type="number"
+                                   step="any"
+                                   id="valor_servicio"
+                                   name="valor_servicio"
+                                   class="form-control"
+                                   required />
+
+                            <button type="button"
+                                    id="btnFreeServicio"
+                                    class="btn-free">
+                                FREE
+                            </button>
+
+                        </div>
                     </div>
                     <div class="form-group" style="text-align: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
-                        <button type="button" class="btn btn-secondary" onclick="ocultarFormularioUbicacion()">Volver al Menú de Administrador</button>
-                        <button class="btn btn-primary" type="submit" onclick="mostrarSpinnerEnvio(this)">
+                        <button class="btn btn-primary" type="submit">
                             <span class="btn-text"><i class="fa-solid fa-location-dot"></i> Registrar Ubicación</span>
                             <span class="btn-spinner" style="display: none;"><i class="fa-solid fa-spinner fa-spin"></i> Enviando...</span>
                         </button>
@@ -734,4 +702,37 @@
         <div id="ContainerRegistroParqueadero" style="display:none; margin-top: 30px;">
             <div class="ingreso-container" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
                 <h2 class="ingreso-title"><i class="fa-solid fa-square-parking" style="color: #d32f2f;"></i> Registrar Parqueadero</h2>
-                <p class="ingreso-subtitle">Complete el siguiente formulario para registrar a
+                <p class="ingreso-subtitle">Complete el siguiente formulario para registrar a un nuevo parqueadero.</p>
+                <form id="formRegistroParqueadero" method="post" action="/Home/RegistrarParqueadero">
+                    <div class="form-group">
+                        <label for="nombre_parqueadero">Nombre del parqueadero</label>
+                        <input type="text" id="nombre_parqueadero" name="nombre_parqueadero" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="direccion">Dirección</label>
+                        <input type="text" id="direccion" name="direccion" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="ciudad">Ciudad</label>
+                        <input type="text" id="ciudad" name="ciudad" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="Tarifa">Tarifa</label>
+                        <input type="number" step="any" id="tarifa" name="tarifa" class="form-control" required />
+                    </div>
+                    <div class="form-group" style="text-align: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+                        <button class="btn btn-primary" type="submit">
+                            <span class="btn-text"><i class="fa-solid fa-location-dot"></i> Registrar Parqueadero</span>
+                            <span class="btn-spinner" style="display: none;"><i class="fa-solid fa-spinner fa-spin"></i> Enviando...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        
+        <button type="button" class="btn btn-secondary" id="volverMenuGeneral" style="display: none; margin-left: 13cm; margin-top: .5cm;">
+            Volver al Menú de Administrador
+        </button>
+    </div>
+</div>

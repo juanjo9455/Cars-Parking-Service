@@ -1600,3 +1600,35 @@ tbody td:last-child {
         right: 8px;
     }
 }
+
+
+
+/* Evento del input valor servicio para ubicaciones */
+/* Volver free al input y deshabilitarlo*/
+
+.input-free-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.btn-free {
+    background: #b71c1c;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+    .btn-free:hover {
+        opacity: 0.85;
+    }
+
+.input-disabled {
+    background: #dcdcdc !important;
+    color: #777 !important;
+    cursor: not-allowed;
+}

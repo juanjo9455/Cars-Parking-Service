@@ -227,10 +227,12 @@ namespace CarsParkingService.Controllers
                 }
             }
 
-            //Normalizar la placa (Mayusculas y sin espacios)
-            obj_ingreso.placa = obj_ingreso.placa?.Trim().ToUpper();
+            // Normalizar la placa (Mayusculas y sin espacios) y usarla para la comparación
+            string placaNormalized = obj_ingreso.placa?.Trim().ToUpper() ?? ""; obj_ingreso.placa = placaNormalized;
 
-            if (String.IsNullOrWhiteSpace(obj_ingreso.placa))
+            System.Diagnostics.Debug.WriteLine($"Normalized placa for comparison: '{placaNormalized}'");
+
+            if (String.IsNullOrWhiteSpace(placaNormalized))
             {
                 ViewBag.Error = "La placa del vehiculo es obligatoria";
                 return View("Ingreso_Vehiculos");
@@ -238,32 +240,36 @@ namespace CarsParkingService.Controllers
 
             try
             {
-                //Buscar si existe un ingreso activo con esa placa
+
+                // Buscar si existe un ingreso con la misma placa — hacemos la comparación normalizando también la columna de la BD
                 var ingresoActivo = _context.ingresos
-                    .Where(i => i.placa == obj_ingreso.placa)
+                    .Where(i => i.placa != null && i.placa.Trim().ToUpper() == placaNormalized)
                     .OrderByDescending(i => i.fecha_ingreso)
                     .FirstOrDefault();
 
                 bool enviarWhatsapp = true;
 
-                //validar si el vehiculo ya esta en el parqueadero
+
+                // validar si el vehiculo ya esta en el parqueadero
                 if (ingresoActivo != null)
                 {
-                    //caso 1: El vehiculo esta actualente en servicio (no ha salido)
+                    System.Diagnostics.Debug.WriteLine($"Found ingresoActivo id:{ingresoActivo.id_ingreso} placa:'{ingresoActivo.placa}' estado_servicio:'{ingresoActivo.estado_servicio}' estado_pago:'{ingresoActivo.estado_pago}'");
+
+                    // caso 1: El vehiculo esta actualmente en servicio (no ha salido)
                     if (ingresoActivo.estado_servicio == "activo")
                     {
                         enviarWhatsapp = false;
 
-                        ViewBag.Error = $"El vehiculo con placa {obj_ingreso.placa} ya tiene un servicio activo";
+                        ViewBag.Error = $"El vehiculo con placa {placaNormalized} ya tiene un servicio activo";
                         return View("Ingreso_Vehiculos");
                     }
 
-                    //caso 2: El vehiculo salio pero tiene un pago pendiente
+                    // caso 2: El vehiculo salio pero tiene un pago pendiente
                     if (ingresoActivo.estado_pago == "pendiente")
                     {
                         enviarWhatsapp = false;
 
-                        ViewBag.Error = $"El vehiculo con placa {obj_ingreso.placa} tiene un pago pendiente. Debe cancelarse antes de un nuevo ingreso es este mismo.";
+                        ViewBag.Error = $"El vehiculo con placa {placaNormalized} tiene un pago pendiente. Debe cancelarse antes de un nuevo ingreso en este mismo.";
                         return View("Ingreso_Vehiculos");
                     }
                 }
@@ -342,7 +348,7 @@ namespace CarsParkingService.Controllers
                     var valet = _context.usuarios
                         .FirstOrDefault(i => i.id_usuario == obj_ingreso.id_valet);
 
-                    String placa = obj_ingreso.placa;
+                    String placa = placaNormalized;
                     String nombreCliente = valet?.nombres ?? "Cliente";
                     String telefonoCliente = obj_ingreso.telefono ?? string.Empty;
 
@@ -396,17 +402,7 @@ namespace CarsParkingService.Controllers
                     _context.SaveChanges();
                 }
 
-                // If request is AJAX (fetch/XHR) return JSON so client can handle navigation without full refresh
-                if (Request.Headers != null &&
-                    (Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
-                     (Request.Headers.ContainsKey("Accept") && Request.Headers["Accept"].ToString().Contains("application/json"))))
-                {
-                    var redirect = Url.Action("Tabla_Vehiculos", "Home");
-                    return Json(new { success = true, redirectUrl = redirect });
-                }
-
-                // For normal form POST, return the same view to keep user on the page (no redirect)
-                return View("Ingreso_Vehiculos");
+                return RedirectToAction("Tabla_Vehiculos");
             }
             catch (DbUpdateException ex)
             {

@@ -9,7 +9,6 @@
     const sinObjetosHidden = document.getElementById('sin_objetos_valor_hidden');
     let firmando = false;
     let firmaRealizada = false;
-    let enviandoFormulario = false;
 
     if (noValuablesBtn && notasInput && sinObjetosHidden) {
         const aplicarEstadoNotas = (activo) => {
@@ -94,25 +93,18 @@
         });
     }
 
-    // ========== VALIDACIÓN Y ENVÍO ==========
+    // ========== VALIDACIÓN ANTES DE ENVÍO ==========
+    // Este script SOLO valida los campos del formulario
+    // NO previene el envío a menos que haya errores de validación
+    // El controlador maneja todo lo demás (redirecciones, respuestas, etc)
+    
     form.addEventListener('submit', function(e) {
-        if (enviandoFormulario) {
-            e.preventDefault();
-            return false;
-        }
-
-        console.log('📝 Formulario enviándose...');
-        
-        e.preventDefault();
+        console.log('📝 Validando formulario...');
         
         let errores = [];
 
         // Validar campos básicos
         const placaNormalizada = (document.getElementById('placa')?.value.trim() || '').toUpperCase();
-        if (placaInput) {
-            placaInput.value = placaNormalizada;
-        }
-
         const placa = placaNormalizada;
         const telefono = document.getElementById('telefono')?.value.trim() || '';
         const idValet = document.getElementById('id_valet')?.value || '';
@@ -183,24 +175,17 @@
             console.log('✅ Firma capturada');
         }
 
-        // Si hay errores, no continuar
+        // Si hay errores de validación, PREVENIR el envío
         if (errores.length > 0) {
             console.error('❌ ERRORES DE VALIDACIÓN:', errores);
-            console.error('El formulario NO se enviará');
+            e.preventDefault();
             return false;
         }
 
-        // ✅ Marcar estado de carga para evitar doble clic
-        enviandoFormulario = true;
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.classList.add('is-loading');
-            submitBtn.textContent = 'Ingresando...';
-        }
-        
-        // ✅ Enviar el formulario
-        console.log('=== FORMULARIO VÁLIDO - ENVIANDO ===');
-        HTMLFormElement.prototype.submit.call(form);
+        // ✅ Sin errores - permitir que el formulario se envíe
+        // El controlador manejará todo lo demás (validación de negocio, redirecciones, etc)
+        console.log('=== VALIDACIÓN EXITOSA - PERMITIENDO ENVÍO AL CONTROLADOR ===');
+        // NO hacer preventDefault - dejar que el formulario se envíe
     });
 
     console.log('✅ Evento submit del formulario configurado');

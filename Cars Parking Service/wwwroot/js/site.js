@@ -99,14 +99,16 @@
         ];
 
         ingresoForm.addEventListener('submit', function (e) {
-            e.preventDefault();
+
             var isValid = true;
+
             validators.forEach(function (validate) {
                 if (validate && !validate()) isValid = false;
             });
 
             // Validar firma
             var errorFirma = document.getElementById("errorFirma");
+
             if (window.firmaValida && !window.firmaValida()) {
                 if (errorFirma) errorFirma.classList.add("visible");
                 isValid = false;
@@ -114,8 +116,9 @@
                 if (errorFirma) errorFirma.classList.remove("visible");
             }
 
-            if (isValid) {
-                window.location.href = "/Home/Tabla_Vehiculos";
+            // SOLO cancelar si hay errores
+            if (!isValid) {
+                e.preventDefault();
             }
         });
     }
@@ -244,25 +247,182 @@
     const parqueaderosCard = document.getElementById("CardParqueaderos");
     const tituloAccionesPrincipales = document.getElementById("acciones-principales-titulo");
     const volverMenuGeneral = document.getElementById("volverMenuGeneral");
+    let estadoUsuarios = "principal";
+    let estadoUbicaciones = "principal";
+    let estadoParqueaderos = "principal";
+
+    // =========================== Usuario =========================== \\
+
+    //const CardU1 = document.getElementById("CardU1");
+    //const CardU2 = document.getElementById("CardU2");
+    const CardsU = document.getElementById("SubCardsUsuarios");
+    const CardU1 = document.getElementById("CardU1");
+    const CardU2 = document.getElementById("CardU2");
+    const tblUsuarios = document.getElementById("TablaUsuariosContainer");
+    const ContainerRegistroUsuarios = document.getElementById("ContainerRegistroUsuarios");
+
+
+    // Eventos para la card principal
+
+    if (usuariosCard) {
+        usuariosCard.addEventListener("click", function () {
+
+            // Cambiamos estado checkPoint
+            estadoUsuarios = "subCardsU";
+
+            usuariosCard.style.display = "none";
+            if (ubicacionesCard) ubicacionesCard.style.display = "none";
+            if (parqueaderosCard) parqueaderosCard.style.display = "none";
+
+            // Cambiamos el titulo
+            document.getElementById("titulo-principal").style.display = "none";
+            document.getElementById("titulo-usuarios").style.display = "block";
+            document.getElementById("titulo-ubicaciones").style.display = "none";
+            document.getElementById("titulo-parqueaderos").style.display = "none";
+
+            // Mostramos las card secundarias y el boton
+            if (CardsU) CardsU.style.display = "flex";
+            if (volverMenuGeneral) volverMenuGeneral.style.display = "flex";
+
+        });
+    }
+
+    // Eventos para la sub card 1
+
+    if (CardU1) {
+
+
+        CardU1.addEventListener("click", function () {
+
+            estadoUsuarios = "registroU";
+
+            if (tituloAccionesPrincipales) tituloAccionesPrincipales.style.display = "none";
+
+            CardsU.style.display = "none";
+
+            if (ContainerRegistroUsuarios) {
+                ContainerRegistroUsuarios.style.display = "block";
+            }
+
+        });
+
+    }
+
+    // Eventos para la sub card 2
+
+    if (CardU2) {
+
+        CardU2.addEventListener("click", function () {
+
+            estadoUsuarios = "tablaU";
+
+            if (tituloAccionesPrincipales) tituloAccionesPrincipales.style.display = "none";
+
+            CardsU.style.display = "none";
+
+            // Mostrar filtros específicos para usuarios
+            window.mostrarFiltrosAdmin('usuarios');
+
+            if (tblUsuarios) {
+                tblUsuarios.style.display = "block";
+            }
+        });
+
+    }
+
+    // Eventos para el boton volver
+
+    if (volverMenuGeneral) {
+
+        volverMenuGeneral.addEventListener("click", function () {
+
+            if (estadoUsuarios == "subCardsU") {
+
+                // Ocultamos las sub card de usuarios
+                CardsU.style.display = "none";
+
+                // Mostramos las card principales
+                usuariosCard.style.display = "block";
+                if (ubicacionesCard) ubicacionesCard.style.display = "block";
+                if (parqueaderosCard) parqueaderosCard.style.display = "block";
+
+                // Cambiamos el titulo
+                document.getElementById("titulo-principal").style.display = "block";
+                document.getElementById("titulo-usuarios").style.display = "none";
+                document.getElementById("titulo-ubicaciones").style.display = "none";
+                document.getElementById("titulo-parqueaderos").style.display = "none";
+
+                estadoUsuarios = "principal";
+
+                volverMenuGeneral.style.display = "none";
+
+            }
+
+            if (estadoUsuarios == "registroU" || estadoUsuarios == "tablaU") {
+
+                // Ocultamos el formulario ingreso usuarios
+                if (ContainerRegistroUsuarios) {
+                    ContainerRegistroUsuarios.style.display = "none";
+                }
+
+                // Ocultamos filtros admin
+                const filtroAdminUsuarios = document.getElementById('filtroAdmin');
+
+                if (filtroAdminUsuarios) {
+                    filtroAdminUsuarios.style.display = 'none';
+                }
+
+                // Ocultamos la tabla de usuarios
+                if (tblUsuarios) {
+                    tblUsuarios.style.display = "none";
+                }
+
+                // Mostramos las sub card de usuarios
+                CardsU.style.display = "flex";
+
+                // Mostramos las card principales
+                usuariosCard.style.display = "none";
+                if (ubicacionesCard) ubicacionesCard.style.display = "none";
+                if (parqueaderosCard) parqueaderosCard.style.display = "none";
+
+                // Cambiamos el titulo
+                document.getElementById("titulo-principal").style.display = "none";
+                document.getElementById("titulo-usuarios").style.display = "block";
+                document.getElementById("titulo-ubicaciones").style.display = "none";
+                document.getElementById("titulo-parqueaderos").style.display = "none";
+
+                estadoUsuarios = "subCardsU";
+
+            }
+
+        });
+
+    }
+
+
 
     // =========================== Ubicacion =========================== \\
 
     // Cards secundarias de acciones de ubicaciones
-    //const CardUb1 = document.getElementById("CardUb1");
-    //const CardUb2 = document.getElementById("CardUb2");
+    const CardUb1 = document.getElementById("CardUb1");
+    const CardUb2 = document.getElementById("CardUb2");
     const CardsUb = document.getElementById("SubCardsUbicaciones");
-    const btnRegresarSubUbicaciones = document.getElementById("btnRegresarSubUbicaciones"); // BOTON NUEVO
     const tblUbicaciones = document.getElementById("TablaUbicacionesContainer");
     const containerNuevaUbicacion = document.getElementById("ContainerRegistroUbicacion");
+    const inputValorServicio = document.getElementById("valor_servicio");
+    const btnFreeServicio = document.getElementById("btnFreeServicio");
+
+    let servicioGratis = false;
 
     if (ubicacionesCard) {
-        ubicacionesCard.addEventListener("click", function (){
+        ubicacionesCard.addEventListener("click", function () {
+
+            // Cambiamos estado checkPoint
+            estadoUbicaciones = "subCards";
+
             ubicacionesCard.style.display = "none";
             if (usuariosCard) usuariosCard.style.display = "none";
             if (parqueaderosCard) parqueaderosCard.style.display = "none";
-
-            // Mostrar botón de regreso
-            if (volverMenuGeneral) volverMenuGeneral.style.display = "flex";
 
             // Cambiamos el titulo
             document.getElementById("titulo-principal").style.display = "none";
@@ -270,40 +430,9 @@
             document.getElementById("titulo-ubicaciones").style.display = "block";
             document.getElementById("titulo-parqueaderos").style.display = "none";
 
-            // Mostramos las card secundarias y el boton
+            // Mostramos las card secundarias
             if (CardsUb) CardsUb.style.display = "flex";
-            //if (CardUb1) CardUb1.style.display = "block";
-            //if (CardUb2) CardUb2.style.display = "block";
-            if (btnRegresarSubUbicaciones) btnRegresarSubUbicaciones.style.display = "block";
-
-            CardUb2.addEventListener("click", function () {
-                if (tituloAccionesPrincipales) tituloAccionesPrincipales.style.display = "none";
-                //CardUb1.style.display = "none";
-                //CardUb2.style.display = "none";
-                CardsUb.style.display = "none";
-                if (btnRegresarSubUbicaciones) btnRegresarSubUbicaciones.style.display = "none"; // Ocultar el boton
-
-                // Mostrar filtros específicos para ubicaciones
-                window.mostrarFiltrosAdmin('ubicaciones');
-
-                if (tblUbicaciones) {
-                    tblUbicaciones.style.display = "block";
-                }
-            })
-
-            // (Ubicado donde manejas los clicks de las cards de Ubicación)
-            if (CardUb1) {
-                CardUb1.addEventListener("click", function () {
-                    if (tituloAccionesPrincipales) tituloAccionesPrincipales.style.display = "none";
-                    //CardUb1.style.display = "none";
-                    //CardUb2.style.display = "none";
-                    CardsUb.style.display = "none";
-                    if (btnRegresarSubUbicaciones) btnRegresarSubUbicaciones.style.display = "none";
-
-                    // Mostrar el container de registro
-                    if (containerNuevaUbicacion) containerNuevaUbicacion.style.display = "block";
-                });
-            }
+            if (volverMenuGeneral) volverMenuGeneral.style.display = "flex";
 
             // Validaciones para formulario nueva ubicación
             var formNuevaUbicacion = document.getElementById('formNuevaUbicacion');
@@ -326,69 +455,170 @@
         });
     }
 
-    // =========================== Usuario =========================== \\
+    // Eventos para la sub card 1
 
-    //const CardU1 = document.getElementById("CardU1");
-    //const CardU2 = document.getElementById("CardU2");
-    const CardsU = document.getElementById("SubCardsUsuarios");
-    const btnRegresarSubUsuarios = document.getElementById("btnRegresarSubUsuarios"); // BOTON NUEVO
-    const tblUsuarios = document.getElementById("TablaUsuariosContainer");
+    if (CardUb1) {
 
-    if (usuariosCard) {
-        usuariosCard.addEventListener("click", function () {
-            usuariosCard.style.display = "none";
-            if (ubicacionesCard) ubicacionesCard.style.display = "none";
-            if (parqueaderosCard) parqueaderosCard.style.display = "none";
+        if (CardUb1) {
+            CardUb1.addEventListener("click", function () {
 
-            // Mostrar botón de regreso
-            if (volverMenuGeneral) volverMenuGeneral.style.display = "flex";
+                // Cambiamos estado checkPoint
+                estadoUbicaciones = "registro";
 
-            // Cambiamos el titulo
-            document.getElementById("titulo-principal").style.display = "none";
-            document.getElementById("titulo-usuarios").style.display = "block";
-            document.getElementById("titulo-ubicaciones").style.display = "none";
-            document.getElementById("titulo-parqueaderos").style.display = "none";
-
-            // Mostramos las card secundarias y el boton
-            if (CardsU) CardsU.style.display = "flex";
-            //if (CardU1) CardU1.style.display = "block";
-            //if (CardU2) CardU2.style.display = "block";
-            if (btnRegresarSubUsuarios) btnRegresarSubUsuarios.style.display = "block";
-
-            CardU2.addEventListener("click", function () {
                 if (tituloAccionesPrincipales) tituloAccionesPrincipales.style.display = "none";
-                //CardU1.style.display = "none";
-                //CardU2.style.display = "none";
-                CardsU.style.display = "none";
-                if (btnRegresarSubUsuarios) btnRegresarSubUsuarios.style.display = "none"; // Ocultar el boton
 
-                // Mostrar filtros específicos para usuarios
-                window.mostrarFiltrosAdmin('usuarios');
+                CardsUb.style.display = "none";
 
-                if (tblUsuarios) {
-                    tblUsuarios.style.display = "block";
+                // Mostrar el container de registro
+                if (containerNuevaUbicacion) containerNuevaUbicacion.style.display = "block";
+            });
+        }
+
+    }
+
+    // Eventos para la sub card 2
+
+    if (CardUb2) {
+
+        CardUb2.addEventListener("click", function () {
+
+            // Cambiamos estado checkPoint
+            estadoUbicaciones = "tabla";
+
+            if (tituloAccionesPrincipales) tituloAccionesPrincipales.style.display = "none";
+
+            CardsUb.style.display = "none";
+
+            // Mostrar filtros específicos para ubicaciones
+            window.mostrarFiltrosAdmin('ubicaciones');
+
+            if (tblUbicaciones) {
+                tblUbicaciones.style.display = "block";
+            }
+        })
+
+    }
+
+    // Eventos para el boton volver
+
+    if (volverMenuGeneral) {
+
+        volverMenuGeneral.addEventListener("click", function () {
+
+            if (estadoUbicaciones == "subCards") {
+
+                // Ocultamos las sub card de usuarios
+                CardsUb.style.display = "none";
+
+                // Mostramos las card principales
+                ubicacionesCard.style.display = "block";
+                if (usuariosCard) usuariosCard.style.display = "block";
+                if (parqueaderosCard) parqueaderosCard.style.display = "block";
+
+                // Cambiamos el titulo
+                document.getElementById("titulo-principal").style.display = "block";
+                document.getElementById("titulo-usuarios").style.display = "none";
+                document.getElementById("titulo-ubicaciones").style.display = "none";
+                document.getElementById("titulo-parqueaderos").style.display = "none";
+
+                estadoUbicaciones = "principal";
+
+                volverMenuGeneral.style.display = "none";
+
+            }
+
+            if (estadoUbicaciones == "registro" || estadoUbicaciones == "tabla") {
+
+                // Ocultamos el formulario ingreso usuarios
+                if (ContainerRegistroUbicacion) {
+                    ContainerRegistroUbicacion.style.display = "none";
                 }
-            })
+
+                // Ocultamos filtros admin
+                const filtroAdminUbicaciones = document.getElementById('filtroAdmin');
+
+                if (filtroAdminUbicaciones) {
+                    filtroAdminUbicaciones.style.display = 'none';
+                }
+
+                // Ocultamos la tabla de usuarios
+                if (tblUbicaciones) {
+                    tblUbicaciones.style.display = "none";
+                }
+
+                // Mostramos las sub card de usuarios
+                CardsUb.style.display = "flex";
+
+                // Ocultamos las card principales
+                usuariosCard.style.display = "none";
+                if (ubicacionesCard) ubicacionesCard.style.display = "none";
+                if (parqueaderosCard) parqueaderosCard.style.display = "none";
+
+                // Cambiamos el titulo
+                document.getElementById("titulo-principal").style.display = "none";
+                document.getElementById("titulo-usuarios").style.display = "none";
+                document.getElementById("titulo-ubicaciones").style.display = "block";
+                document.getElementById("titulo-parqueaderos").style.display = "none";
+
+                estadoUbicaciones = "subCards";
+
+            }
+
         });
+
+    }
+
+    // Evento para el input valor_servicio
+
+    if (btnFreeServicio && inputValorServicio) {
+
+        let servicioGratis = false;
+
+        btnFreeServicio.addEventListener("click", function () {
+
+            servicioGratis = !servicioGratis;
+
+            if (servicioGratis) {
+
+                inputValorServicio.value = "";
+                inputValorServicio.disabled = true;
+                inputValorServicio.required = false;
+
+                inputValorServicio.classList.add("input-disabled");
+
+                btnFreeServicio.textContent = "FREE ✓";
+
+            } else {
+
+                inputValorServicio.disabled = false;
+                inputValorServicio.required = true;
+
+                inputValorServicio.classList.remove("input-disabled");
+
+                btnFreeServicio.textContent = "FREE";
+            }
+
+        });
+
     }
 
     // =========================== Parqueadero =========================== \\
 
-    //const CardP1 = document.getElementById("CardP1");
-    //const CardP2 = document.getElementById("CardP2");
+    const CardP1 = document.getElementById("CardP1");
+    const CardP2 = document.getElementById("CardP2");
     const CardsP = document.getElementById("SubCardsParqueaderos");
-    const btnRegresarSubParqueaderos = document.getElementById("btnRegresarSubParqueaderos"); // BOTON NUEVO
     const tblParqueaderos = document.getElementById("TablaParqueaderosContainer");
     const containerNuevoParqueadero = document.getElementById("ContainerRegistroParqueadero");
 
     if (parqueaderosCard) {
-        parqueaderosCard.addEventListener("click", function (){
+        parqueaderosCard.addEventListener("click", function () {
+
+            // Cambiamos estado checkPoint
+            estadoParqueaderos = "subCards"
+
             parqueaderosCard.style.display = "none";
             if (usuariosCard) usuariosCard.style.display = "none";
             if (ubicacionesCard) ubicacionesCard.style.display = "none";
-
-            // Mostrar botón de regreso
-            if (volverMenuGeneral) volverMenuGeneral.style.display = "flex";
 
             // Cambiamos el titulo
             document.getElementById("titulo-principal").style.display = "none";
@@ -398,71 +628,153 @@
 
             // Mostramos las card secundarias y el boton
             if (CardsP) CardsP.style.display = "flex";
-            //if (CardP1) CardP1.style.display = "block";
-            //if (CardP2) CardP2.style.display = "block";
-            if (btnRegresarSubParqueaderos) btnRegresarSubParqueaderos.style.display = "block";
+            if (volverMenuGeneral) volverMenuGeneral.style.display = "flex";
 
-            CardP2.addEventListener("click", function () {
-                if (tituloAccionesPrincipales) tituloAccionesPrincipales.style.display = "none";
-                //CardP1.style.display = "none";
-                //CardP2.style.display = "none";
-                CardsP.style.display = "none";
-                if (btnRegresarSubParqueaderos) btnRegresarSubParqueaderos.style.display = "none"; // Ocultar el boton
-
-                // Mostrar filtros específicos para parqueaderos
-                window.mostrarFiltrosAdmin('parqueaderos');
-
-                if (tblParqueaderos) {
-                    tblParqueaderos.style.display = "block";
-                }
-            })
-
-            // (Ubicado donde manejas los clicks de las cards de Parqueadero)
-            if (CardP1) {
-                CardP1.addEventListener("click", function () {
-                    if (tituloAccionesPrincipales) tituloAccionesPrincipales.style.display = "none";
-                    //CardP1.style.display = "none";
-                    //CardP2.style.display = "none";
-                    CardsP.style.display = "none";
-                    if (btnRegresarSubParqueaderos) btnRegresarSubParqueaderos.style.display = "none";
-
-                    // Mostrar el container de registro
-                    if (containerNuevoParqueadero) containerNuevoParqueadero.style.display = "block";
-                });
-            }
-
-            // Validaciones para formulario nuevo parqueadero
-            var formNuevoParqueadero = document.getElementById('formNuevoParqueadero');
-            if (formNuevoParqueadero) {
-                var valParqueadero = [
-                    addValidation('nuevo_nombre_parqueadero', 'errorNuevoParqueaderoNombre', function (v) { return v !== ''; }),
-                    addValidation('nueva_direccion_parqueadero', 'errorNuevaDireccionParqueadero', function (v) { return v !== ''; }),
-                    addValidation('nueva_ciudad_parqueadero', 'errorNuevaCiudadParqueadero', function (v) { return v !== ''; }),
-                    addValidation('nueva_tarifa_parqueadero', 'errorNuevaTarifaParqueadero', function (v) { return v !== '' && parseFloat(v) >= 0; })
-                ];
-
-                formNuevoParqueadero.addEventListener('submit', function (e) {
-                    var isValid = true;
-                    valParqueadero.forEach(function (validate) {
-                        if (validate && !validate()) isValid = false;
-                    });
-                    if (!isValid) e.preventDefault();
-                });
-            }
         });
     }
+
+    // Eventos para la sub card 1
+
+    if (CardP1) {
+
+        if (CardP1) {
+
+            CardP1.addEventListener("click", function () {
+
+                // Cambiamos estado checkPoint
+                estadoParqueaderos = "registro";
+
+                if (tituloAccionesPrincipales) tituloAccionesPrincipales.style.display = "none";
+
+                CardsP.style.display = "none";
+
+                // Mostrar el container de registro
+                if (containerNuevoParqueadero) containerNuevoParqueadero.style.display = "block";
+            });
+
+        }
+
+        // Validaciones para formulario nuevo parqueadero
+        var formNuevoParqueadero = document.getElementById('formNuevoParqueadero');
+        if (formNuevoParqueadero) {
+            var valParqueadero = [
+                addValidation('nuevo_nombre_parqueadero', 'errorNuevoParqueaderoNombre', function (v) { return v !== ''; }),
+                addValidation('nueva_direccion_parqueadero', 'errorNuevaDireccionParqueadero', function (v) { return v !== ''; }),
+                addValidation('nueva_ciudad_parqueadero', 'errorNuevaCiudadParqueadero', function (v) { return v !== ''; }),
+                addValidation('nueva_tarifa_parqueadero', 'errorNuevaTarifaParqueadero', function (v) { return v !== '' && parseFloat(v) >= 0; })
+            ];
+
+            formNuevoParqueadero.addEventListener('submit', function (e) {
+                var isValid = true;
+                valParqueadero.forEach(function (validate) {
+                    if (validate && !validate()) isValid = false;
+                });
+                if (!isValid) e.preventDefault();
+            });
+        }
+
+    }
+
+    // Eventos para la sub card 2
+
+    if (CardP2) {
+
+        CardP2.addEventListener("click", function () {
+
+            estadoParqueaderos = "tabla";
+
+            if (tituloAccionesPrincipales) tituloAccionesPrincipales.style.display = "none";
+
+            CardsP.style.display = "none";
+
+            // Mostrar filtros específicos para parqueaderos
+            window.mostrarFiltrosAdmin('parqueaderos');
+
+            if (tblParqueaderos) {
+                tblParqueaderos.style.display = "block";
+            }
+        })
+
+    }
+
+    // Eventos para el boton volver
+
+    if (volverMenuGeneral) {
+
+        volverMenuGeneral.addEventListener("click", function () {
+
+            if (estadoParqueaderos == "subCards") {
+
+                // Ocultamos las sub card de usuarios
+                CardsP.style.display = "none";
+
+                // Mostramos las card principales
+                parqueaderosCard.style.display = "block";
+                if (usuariosCard) usuariosCard.style.display = "block";
+                if (ubicacionesCard) ubicacionesCard.style.display = "block";
+
+                // Cambiamos el titulo
+                document.getElementById("titulo-principal").style.display = "block";
+                document.getElementById("titulo-usuarios").style.display = "none";
+                document.getElementById("titulo-ubicaciones").style.display = "none";
+                document.getElementById("titulo-parqueaderos").style.display = "none";
+
+                estadoParqueaderos = "principal";
+
+                volverMenuGeneral.style.display = "none";
+
+            }
+
+            if (estadoParqueaderos == "registro" || estadoParqueaderos == "tabla") {
+
+                // Ocultamos el formulario ingreso usuarios
+                if (ContainerRegistroParqueadero) {
+                    ContainerRegistroParqueadero.style.display = "none";
+                }
+
+                // Ocultamos filtros admin
+                const filtroAdminParqueaderos = document.getElementById('filtroAdmin');
+
+                if (filtroAdminParqueaderos) {
+                    filtroAdminParqueaderos.style.display = 'none';
+                }
+
+                // Ocultamos la tabla de usuarios
+                if (tblParqueaderos) {
+                    tblParqueaderos.style.display = "none";
+                }
+
+                // Mostramos las sub card de usuarios
+                CardsP.style.display = "flex";
+
+                // Ocultamos las card principales
+                parqueaderosCard.style.display = "none";
+                if (ubicacionesCard) ubicacionesCard.style.display = "none";
+                if (usuariosCard) usuariosCard.style.display = "none";
+
+                // Cambiamos el titulo
+                document.getElementById("titulo-principal").style.display = "none";
+                document.getElementById("titulo-usuarios").style.display = "none";
+                document.getElementById("titulo-ubicaciones").style.display = "none";
+                document.getElementById("titulo-parqueaderos").style.display = "block";
+
+                estadoParqueaderos = "subCards";
+
+            }
+
+        });
+
+    }
+
 
     // =========================== Modales Genéricos =========================== \\
     
     // Función genérica para abrir modal
     function abrirModal(modalId) {
         const modal = document.getElementById(modalId);
+
         if (modal) {
             modal.style.display = 'flex';
-            // Ejecutar validación en tiempo real al abrir el modal
-            if (modal.classList.contains('Editar-Ingreso')) {
-                setupEstadosIngresoValidation();
-            }
             console.log(`✅ Modal abierto: ${modalId}`);
         } else {
             console.error(`❌ Modal no encontrado: ${modalId}`);
@@ -472,15 +784,13 @@
     // Función genérica para cerrar modal
     function cerrarModal(modalId) {
         const modal = document.getElementById(modalId);
+
         if (modal) {
             modal.style.display = 'none';
-            console.log(`✅ Modal cerrado: ${modalId}`);
-        } else {
-            console.error(`❌ Modal no encontrado: ${modalId}`);
         }
     }
 
-     // Exponer funciones globalmente para usarlas desde HTML onclick
+    // Exponer globalmente
     window.abrirModal = abrirModal;
     window.cerrarModal = cerrarModal;
 

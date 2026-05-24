@@ -79,8 +79,6 @@
             if (!isValid) {
                 e.preventDefault();
             }
-            // ELIMINADO: window.location.href = "/Home/Tabla_Vehiculos";
-            // Dejar que el formulario se envíe normalmente al servidor
         });
     }
 
