@@ -111,7 +111,14 @@
 <div class="modal-pagar oculto" id="modal-pagar">
 
     <!-- Pantalla 1: Resumen y pago -->
-    <div class="informacion" id="informacion_1">
+    <div class="informacion" id="informacion_1" style="position:relative;">
+        <button type="button"
+                aria-label="Cerrar"
+                onclick="cerrarModalPagar()"
+                style="position:absolute;top:12px;right:12px;width:34px;height:34px;border:none;border-radius:50%;background:rgba(0,0,0,0.6);color:#fff;font-size:22px;line-height:1;z-index:20;cursor:pointer;">
+            &times;
+        </button>
+
         <div class="header-tiempo">
             <div class="conductor-section">
                 <div class="conductor-avatar">👨‍✈</div>

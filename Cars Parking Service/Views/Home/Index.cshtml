@@ -26,3 +26,80 @@
         </div>
     </div>
 </section>
+
+<!-- Notificación estilo Android -->
+<div class="android-notif" id="androidNotif">
+    <div class="notif-app-bar">
+        <div class="notif-app-dot"></div>
+        <span class="notif-app-name">Solicitudes Vehículo</span>
+        <span class="notif-app-time" id="notifTime">ahora</span>
+    </div>
+    <div class="notif-body">
+        <div class="notif-title" id="notifTitle">Nueva solicitud</div>
+        <div class="notif-sub" id="notifSub">Cargando...</div>
+    </div>
+    <div class="notif-actions">
+        <button class="notif-act" onclick="VehiculoBurbuja.dismissNotif()">Ignorar</button>
+        <button class="notif-act" onclick="VehiculoBurbuja.openFromNotif()">Ver ahora</button>
+    </div>
+</div>
+
+<!-- Burbuja ovalada -->
+<div class="bubble" id="vehiculoBubble"
+     onclick="abrirPanelSolicitudes()"
+     role="button" tabindex="0"
+     aria-label="Solicitudes de vehículo">
+    <i class="fa-solid fa-car-side"></i>
+    <span class="bubble-count" id="bubbleCount"></span>
+</div>
+
+<!-- Panel principal -->
+<div class="req-panel" id="reqPanel" role="dialog" aria-label="Panel de solicitudes">
+
+    <div class="panel-header">
+        <div class="panel-header-left">
+            <i class="fa-solid fa-car-side"></i>
+            Solicitudes de vehículo
+        </div>
+        <button class="panel-close" onclick="cerrarPanelSolicitudes()" aria-label="Cerrar panel">
+            <i class="fa-solid fa-x"></i>
+        </button>
+    </div>
+
+    <div class="total-banner">
+        <div class="total-banner-txt">Total solicitudes hoy</div>
+        <div class="total-banner-num" id="totalAcum"></div>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-cell">
+            <div class="stat-num red" id="statPend">0</div>
+            <div class="stat-lbl">Solicitados</div>
+        </div>
+        <div class="stat-cell">
+            <div class="stat-num green" id="statActv">0</div>
+            <div class="stat-lbl">En curso</div>
+        </div>
+        <div class="stat-cell">
+            <div class="stat-num gray" id="statDone">0</div>
+            <div class="stat-lbl">Finalizados</div>
+        </div>
+    </div>
+
+    <div class="panel-split">
+        <div class="panel-split-col">
+            <div class="panel-split-title">Solicitados</div>
+            <div class="panel-list" id="panelPendingList"></div>
+        </div>
+    </div>
+
+    <div class="panel-empty" id="panelEmpty">
+        <i class="fa-solid fa-car-side"></i>
+        <span>Sin solicitudes en este estado</span>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="~/js/solicitudes.js" asp-append-version="true"></script>
+}

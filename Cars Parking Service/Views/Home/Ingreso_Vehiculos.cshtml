@@ -4,6 +4,79 @@
 
 <div id="client-error-container" style="display:none;position:fixed;top:10px;left:10px;right:10px;z-index:9999;background:#fee;border:1px solid #f99;padding:10px;border-radius:6px;color:#600;max-height:40vh;overflow:auto;"></div>
 
+<!-- Notificación estilo Android -->
+<div class="android-notif" id="androidNotif">
+    <div class="notif-app-bar">
+        <div class="notif-app-dot"></div>
+        <span class="notif-app-name">Solicitudes Vehículo</span>
+        <span class="notif-app-time" id="notifTime">ahora</span>
+    </div>
+    <div class="notif-body">
+        <div class="notif-title" id="notifTitle">Nueva solicitud</div>
+        <div class="notif-sub" id="notifSub">Cargando...</div>
+    </div>
+    <div class="notif-actions">
+        <button class="notif-act" onclick="VehiculoBurbuja.dismissNotif()">Ignorar</button>
+        <button class="notif-act" onclick="VehiculoBurbuja.openFromNotif()">Ver ahora</button>
+    </div>
+</div>
+
+<!-- Burbuja ovalada -->
+<div class="bubble" id="vehiculoBubble"
+     onclick="abrirPanelSolicitudes()"
+     role="button" tabindex="0"
+     aria-label="Solicitudes de vehículo">
+    <i class="fa-solid fa-car-side"></i>
+    <span class="bubble-count" id="bubbleCount"></span>
+</div>
+
+<!-- Panel principal -->
+<div class="req-panel" id="reqPanel" role="dialog" aria-label="Panel de solicitudes">
+
+    <div class="panel-header">
+        <div class="panel-header-left">
+            <i class="fa-solid fa-car-side"></i>
+            Solicitudes de vehículo
+        </div>
+        <button class="panel-close" onclick="cerrarPanelSolicitudes()" aria-label="Cerrar panel">
+            <i class="fa-solid fa-x"></i>
+        </button>
+    </div>
+
+    <div class="total-banner">
+        <div class="total-banner-txt">Total solicitudes hoy</div>
+        <div class="total-banner-num" id="totalAcum"></div>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-cell">
+            <div class="stat-num red" id="statPend">0</div>
+            <div class="stat-lbl">Solicitados</div>
+        </div>
+        <div class="stat-cell">
+            <div class="stat-num green" id="statActv">0</div>
+            <div class="stat-lbl">En curso</div>
+        </div>
+        <div class="stat-cell">
+            <div class="stat-num gray" id="statDone">0</div>
+            <div class="stat-lbl">Finalizados</div>
+        </div>
+    </div>
+
+    <div class="panel-split">
+        <div class="panel-split-col">
+            <div class="panel-split-title">Solicitados</div>
+            <div class="panel-list" id="panelPendingList"></div>
+        </div>
+    </div>
+
+    <div class="panel-empty" id="panelEmpty">
+        <i class="fa-solid fa-car-side"></i>
+        <span>Sin solicitudes en este estado</span>
+    </div>
+
+</div>
+
 <div class="ingreso-container">
     <div class="logo-section">
         <div class="car-logo">
@@ -149,12 +222,12 @@
 
             <!-- BOTÓN FOTO OBJETOS -->
             <div style="display: flex;">
-                <button type="button" class="photo-btn-2" id="values">
+                <button type="button" class="photo-btn-2" id="tomarFotoBtn">
                     <svg class="camera-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                         <circle cx="12" cy="13" r="4"></circle>
                     </svg>
-                    Evidencia de objetos
+                    Evidencia de objetos de valor
                 </button>
             </div>
 
@@ -261,6 +334,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/solicitudes.js" asp-append-version="true"></script>
     <script src="~/js/ingreso-vehiculos.js" asp-append-version="true" defer></script>
     <script src="~/js/ingreso-vehiculos-camera.js" asp-append-version="true" defer></script>
 }

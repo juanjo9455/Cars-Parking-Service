@@ -211,7 +211,8 @@ namespace CarsParkingService.Controllers
 
             LimpiarSesionRecuperacion();
 
-            TempData["Mensaje"] = "Contraseña restablecida correctamente. Inicia sesión.";
+            TempData["Mensaje"] = "Contraseña restablecida correctamente. Inicia " +
+                "sesión.";
             return RedirectToAction("Login");
         }
 

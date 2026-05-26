@@ -33,6 +33,118 @@ namespace CarsParkingService.Controllers
             return View();
         }
 
+        // Metodo para obtener las solicitudes de ingresos de vehiculos en estado "solicitado" para el valet y banco
+        [HttpGet]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult ObtenerSolicitudes()
+        {
+            // Obtenemos usuario y rol de la sesión
+            var idUsuario = HttpContext.Session.GetInt32("id");
+            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+
+            // Iniciamos consulta base
+            var query = _context.ingresos
+                .Include(i => i.Valet)
+                .Include(i => i.Banco)
+                .Where(i =>
+                    i.estado_servicio != null &&
+                    i.estado_servicio.Trim().ToLower() == "solicitado"
+                )
+                .AsQueryable();
+
+            // Filtramos según el rol
+            if (idUsuario.HasValue)
+            {
+                // Valet
+                if (rolUsuario == 1)
+                {
+                    query = query.Where(i => i.id_valet == idUsuario.Value);
+                }
+
+                // Banco
+                else if (rolUsuario == 2)
+                {
+                    query = query.Where(i => i.id_banco == idUsuario.Value);
+                }
+
+                // Otros roles que no sean admin
+                else if (rolUsuario != 3)
+                {
+                    query = query.Where(i =>
+                        i.id_valet == idUsuario.Value ||
+                        i.id_banco == idUsuario.Value
+                    );
+                }
+
+                // Si es admin (3)
+                // no filtramos nada
+            }
+
+            // Convertimos los datos en un objeto más limpio
+            var solicitudes = query
+                .Select(i => new
+                {
+                    id = i.id_ingreso,
+                    placa = i.placa,
+                    estado_servicio = i.estado_servicio,
+
+                    id_valet = i.id_valet,
+                    id_banco = i.id_banco,
+
+                    nombre_valet = i.Valet != null
+                        ? i.Valet.nombres
+                        : "Sin valet",
+
+                    nombre_banco = i.Banco != null
+                        ? i.Banco.nombres
+                        : "Sin banco"
+                })
+                .ToList();
+
+            // Contamos solicitudes
+            var cantidad = solicitudes.Count();
+
+            // Retornamos JSON
+            return Json(new
+            {
+                cantidad = cantidad,
+                solicitudes = solicitudes,
+                serverTime = DateTime.Now.ToString("O")
+            });
+        }
+
+        // Metodo para tomar la solicitud de un vehiculo
+        // Cambiamos el estado de solicitado a en curso
+        [HttpPost]
+        public IActionResult TomarSolicitud(int idIngreso) {
+
+            // Buscar el ingreso por ID
+            var ingreso = _context.ingresos
+                .FirstOrDefault(i => i.id_ingreso == idIngreso);
+
+            // Validar que exista
+            if (ingreso == null)
+            {
+                return NotFound(new
+                {
+                    mensaje = "Ingreso no encontrado"
+                });
+            }
+
+            // Cambiar estado
+            ingreso.estado_servicio = "en curso";
+
+            // Guardar cambios en BD
+            _context.SaveChanges();
+
+            // Respuesta exitosa
+            return Ok(new
+            {
+                mensaje = "Solicitud tomada correctamente"
+            });
+
+        } 
+
         public IActionResult Administrador(string? nombre, string? apellido, string? documento, int? edad, int? rol, string? estado)
         {
             var parametros = new[] {
@@ -160,11 +272,16 @@ namespace CarsParkingService.Controllers
 
             return View(ingresos);
         }
+
+        [HttpGet]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+
         public IActionResult Ingreso_Vehiculos()
         {
             CargarDatosFormulario();
             return View();
         }
+
         public IActionResult Pago()
         {
             return View();
@@ -887,5 +1004,6 @@ namespace CarsParkingService.Controllers
             }
             return RedirectToAction("Administrador");
         }
+
     }
 }

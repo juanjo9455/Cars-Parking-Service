@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="~/css/ui.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/ingreso.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/solicitudes.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
@@ -43,9 +44,10 @@
                     <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house"></i>Inicio</a></li>
                     <li><a asp-controller="Home" asp-action="Tabla_Vehiculos"><i class="fa-solid fa-table-list"></i>Tabla Ingresos</a></li>
                     <li><a asp-controller="Home" asp-action="Ingreso_Vehiculos"><i class="fa-solid fa-car-side"></i>Nuevo Ingreso</a></li>
-                    <!--<li><a asp-controller="Payment" asp-action="Pago">Pago</a></li>-->
-                    <!--<li><a asp-controller="Payment" asp-action="Estado_Servicio">Estado Del Servicio</a></li>-->
-                    <!-- Poner "CerrarSesion" en el asp-action -->
+                    <!--
+                    <li><a asp-controller="Payment" asp-action="Pago">Pago</a></li>
+                    <li><a asp-controller="Payment" asp-action="Estado_Servicio">Estado Del Servicio</a></li>
+                    -->
                     @if (idRol == 3)
                     {
                         <li><a asp-controller="Home" asp-action="Administrador"><i class="fa-solid fa-gear"></i>Configuraciones Admin</a></li>

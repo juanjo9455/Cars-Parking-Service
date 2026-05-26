@@ -1651,12 +1651,15 @@ tbody td:last-child {
     transition: 0.3s;
 }
 
-    .btn-free:hover {
-        opacity: 0.85;
-    }
+.btn-free:hover {
+    opacity: 0.85;
+}
 
 .input-disabled {
     background: #dcdcdc !important;
     color: #777 !important;
     cursor: not-allowed;
+}
+
+
 }

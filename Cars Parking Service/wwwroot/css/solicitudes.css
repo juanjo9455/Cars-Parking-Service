@@ -1,0 +1,610 @@
+﻿/* ====================== en esta seccion estaran los estilos de la busbuja de alerta ====================== */
+
+/* ═══════════════════════════════════════
+       BURBUJA FLOTANTE — SOLICITUDES VEHÍCULO
+       Pega este bloque en tu CSS global o
+       dentro de cada layout que lo necesite.
+    ═══════════════════════════════════════ */
+
+/* ── BURBUJA OVALADA ── */
+.bubble {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    height: 50px;
+    min-width: 50px;
+    border-radius: 25px;
+    background: #C0392B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    cursor: pointer;
+    border: 2.5px solid #fff;
+    z-index: 1000;
+    padding: 0 16px 0 13px;
+    transition: transform .15s, background .2s, min-width .3s;
+}
+
+.bubble:hover {
+    transform: scale(1.05);
+    background: #A93226;
+}
+
+.bubble:active {
+    transform: scale(0.94);
+}
+
+.bubble i {
+    font-size: 24px;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+/* Número visible dentro de la burbuja */
+.bubble-count {
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1;
+    min-width: 0;
+    transition: opacity .2s, max-width .25s;
+}
+
+.bubble-count.hidden {
+    opacity: 0;
+    max-width: 0;
+    overflow: hidden;
+    padding: 0;
+}
+
+.bubble-count.visible {
+    opacity: 1;
+    max-width: 40px;
+}
+
+/* Pulso cuando hay pendientes */
+@keyframes pulse-ring {
+    0% {
+        box-shadow: 0 0 0 0 rgba(192,57,43,.6);
+    }
+
+    70% {
+        box-shadow: 0 0 0 14px rgba(192,57,43,0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(192,57,43,0);
+    }
+}
+
+.bubble.active {
+    animation: pulse-ring 1.5s ease-out infinite;
+}
+
+/* Pop al recibir nueva solicitud */
+@keyframes pop {
+    0% {
+        transform: scale(1);
+    }
+
+    35% {
+        transform: scale(1.22);
+    }
+
+    65% {
+        transform: scale(.94);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.bubble.popping {
+    animation: pop .38s ease forwards;
+}
+
+/* Rebote del número */
+@keyframes num-bump {
+    0% {
+        transform: scale(1);
+    }
+
+    40% {
+        transform: scale(1.45);
+    }
+
+    70% {
+        transform: scale(.88);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.bubble-count.bump {
+    animation: num-bump .3s ease forwards;
+}
+
+/* ── NOTIFICACIÓN ESTILO ANDROID ── */
+.android-notif {
+    position: fixed;
+    top: 74px;
+    right: 16px;
+    width: 260px;
+    background: #fff;
+    border-radius: 12px;
+    border: 0.5px solid #ddd;
+    z-index: 999;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+}
+
+.android-notif.show {
+    display: flex;
+}
+
+.notif-app-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border-bottom: 0.5px solid #eee;
+    background: #f8f8f8;
+}
+
+.notif-app-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #C0392B;
+    flex-shrink: 0;
+}
+
+.notif-app-name {
+    font-size: 11px;
+    color: #666;
+    flex: 1;
+    font-family: sans-serif;
+}
+
+.notif-app-time {
+    font-size: 11px;
+    color: #aaa;
+    font-family: sans-serif;
+}
+
+.notif-body {
+    padding: 10px 12px;
+}
+
+.notif-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #111;
+    font-family: sans-serif;
+}
+
+.notif-sub {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+    font-family: sans-serif;
+}
+
+.notif-actions {
+    display: flex;
+    border-top: 0.5px solid #eee;
+}
+
+.notif-act {
+    flex: 1;
+    padding: 9px 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: #C0392B;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: sans-serif;
+    transition: background .12s;
+}
+
+.notif-act:hover {
+    background: #fce8e6;
+}
+
+.notif-act + .notif-act {
+    border-left: 0.5px solid #eee;
+}
+
+/* ── PANEL PRINCIPAL ── */
+.req-panel {
+    position: fixed;
+    top: 74px;
+    right: 16px;
+    width: 300px;
+    background: #fff;
+    border-radius: 12px;
+    border: 0.5px solid #ddd;
+    z-index: 1001;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,.15);
+}
+
+.req-panel.open {
+    display: flex;
+}
+
+/* Cabecera */
+.panel-header {
+    background: #C0392B;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.panel-header-left {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: sans-serif;
+}
+
+.panel-header-left i {
+    font-size: 17px;
+}
+
+.panel-close {
+    background: rgba(255,255,255,.2);
+    border: none;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #fff;
+}
+
+/* Banner total acumulado */
+.total-banner {
+    background: #C0392B;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(255,255,255,.2);
+}
+
+.total-banner-txt {
+    color: #fff;
+    font-size: 12px;
+    font-family: sans-serif;
+}
+
+.total-banner-num {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1;
+    font-family: sans-serif;
+}
+
+/* Stats bar */
+.stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    border-bottom: 0.5px solid #eee;
+}
+
+.panel-split {
+    display: flex;
+    border-bottom: 0.5px solid #eee;
+}
+
+.panel-split-col {
+    min-width: 0;
+    width: 100%;
+}
+
+.panel-split-title {
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #666;
+    background: #fafafa;
+    border-bottom: 0.5px solid #eee;
+    font-family: sans-serif;
+}
+
+.panel-split-col .panel-list {
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.panel-split-col:first-child {
+    border-right: 0.5px solid #eee;
+}
+
+/* Boton para aceptar o tomar cada solicitud */
+.btn-solicitud {
+    background: #c62828;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: .2s;
+}
+
+.btn-solicitud:hover {
+    transform: scale(1.03);
+}
+
+.panel-finalized-wrap {
+    border-bottom: 0.5px solid #eee;
+}
+
+@media (max-width: 768px) {
+    .panel-split {
+        grid-template-columns: 1fr;
+    }
+
+    .panel-split-col:first-child {
+        border-right: none;
+        border-bottom: 0.5px solid #eee;
+    }
+}
+
+.stat-cell {
+    padding: 9px 0;
+    text-align: center;
+    border-right: 0.5px solid #eee;
+}
+
+.stat-cell:last-child {
+    border-right: none;
+}
+
+.stat-num {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1;
+    font-family: sans-serif;
+}
+
+.stat-num.red {
+    color: #C0392B;
+}
+
+.stat-num.green {
+    color: #27ae60;
+}
+
+.stat-num.gray {
+    color: #888;
+}
+
+.stat-lbl {
+    font-size: 10px;
+    color: #aaa;
+    margin-top: 3px;
+    font-family: sans-serif;
+}
+
+/* Tabs */
+.panel-tabs {
+    display: flex;
+    background: #f8f8f8;
+    border-bottom: 0.5px solid #eee;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 8px 0;
+    font-size: 11px;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+    font-family: sans-serif;
+}
+
+.tab-btn.active {
+    color: #C0392B;
+    border-bottom-color: #C0392B;
+}
+
+/* Lista de solicitudes */
+.panel-list {
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.req-item {
+    display: flex;
+    align-items: flex-start;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 12px;
+    border-bottom: 0.5px solid #eee;
+    cursor: pointer;
+    transition: background .12s;
+}
+
+.req-item:last-child {
+    border-bottom: none;
+}
+
+.req-item:hover {
+    background: #fafafa;
+}
+
+.req-item-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #fce8e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.req-item-icon i {
+    font-size: 17px;
+    color: #C0392B;
+}
+
+.req-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.req-item-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: #111;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: sans-serif;
+}
+
+.req-item-sub {
+    font-size: 11px;
+    color: #666;
+    margin-top: 2px;
+    font-family: sans-serif;
+}
+
+.req-item-time {
+    font-size: 11px;
+    color: #aaa;
+    flex-shrink: 0;
+    padding-top: 1px;
+    font-family: sans-serif;
+}
+
+.status-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 3px;
+    vertical-align: middle;
+}
+
+.dot-pending {
+    background: #C0392B;
+}
+
+.dot-active {
+    background: #27ae60;
+}
+
+.dot-done {
+    background: #aaa;
+}
+
+/* Estado vacío */
+.panel-empty {
+    padding: 24px 0;
+    text-align: center;
+    color: #aaa;
+    font-size: 12px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-family: sans-serif;
+}
+
+.panel-empty i {
+    font-size: 28px;
+    color: #ddd;
+}
+
+/* Footer del panel */
+.panel-footer {
+    padding: 9px 12px;
+    border-top: 0.5px solid #eee;
+    display: flex;
+    gap: 7px;
+}
+
+.footer-btn {
+    flex: 1;
+    padding: 7px 0;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1.5px solid #C0392B;
+    transition: background .15s, color .15s;
+    font-family: sans-serif;
+}
+
+.footer-btn.primary {
+    background: #C0392B;
+    color: #fff;
+}
+
+.footer-btn.primary:hover {
+    background: #A93226;
+}
+
+.footer-btn.secondary {
+    background: transparent;
+    color: #C0392B;
+}
+
+.footer-btn.secondary:hover {
+    background: #fce8e6;
+}
+
+/* ── TOAST ── */
+.req-toast {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: #222;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 1100;
+    transition: transform .3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+    font-family: sans-serif;
+}
+
+.req-toast.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.req-toast i {
+    font-size: 15px;
+}

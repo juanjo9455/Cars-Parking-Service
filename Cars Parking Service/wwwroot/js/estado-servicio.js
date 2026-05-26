@@ -124,7 +124,6 @@ function cerrarModalPagar() {
     const modal = document.getElementById('modal-pagar');
     if (modal) {
         modal.classList.add('oculto');
-        detenerContador();
         console.log('✅ Modal cerrado');
     }
 }
@@ -138,7 +137,7 @@ function seleccionar(button) {
     const metodosBtns = document.querySelectorAll('.metodo-btn');
     metodosBtns.forEach(btn => btn.classList.remove('activo'));
     button.classList.add('activo');
-    console.log('✅ Método de pago seleccionado:', button.textContent.trim());
+    console.log('✅ Método de pago seleccionado:', button.textContent.strip());
 }
 
 // ============================================================
