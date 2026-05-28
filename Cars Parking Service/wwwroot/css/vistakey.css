@@ -1,6 +1,5 @@
 /* ===================== Panel Key ===================== */
 
-/* Animación y énfasis para el estado SOLICITADO */
 .alerta-solicitado {
     border-left: 5px solid #d32f2f !important;
     background-color: #fff8f8 !important;
@@ -8,32 +7,21 @@
 }
 
 @keyframes flashInfoKey {
-    0% {
-        background-color: #ffffff;
-    }
-
-    50% {
-        background-color: #ffeaea;
-    }
-
-    100% {
-        background-color: #ffffff;
-    }
+    0% { background-color: #ffffff; }
+    50% { background-color: #ffeaea; }
+    100% { background-color: #ffffff; }
 }
 
 .alerta-solicitado td {
     color: #b71c1c;
 }
 
-/* Modificamos los badges predeterminados de tu site.css para el Key, 
-   si quieres que destaquen más dependiendo su contexto */
 .alerta-solicitado .status-pendiente {
     background: #d32f2f;
     color: white;
     box-shadow: 0px 0px 8px rgba(211, 47, 47, 0.4);
 }
 
-/* Estilos de botones tipo icono (Acciones) */
 .actions-form {
     display: inline-flex;
     gap: 8px;
@@ -93,7 +81,311 @@
     box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
 }
 
-/* Evitar que td Acciones crezca desproporcionado */
 .cell-action {
     white-space: nowrap;
+}
+
+/* ===================== MODAL DESPACHO ===================== */
+
+.modal-key {
+    border: none;
+    border-radius: 24px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.20), 0 8px 20px rgba(0,0,0,0.08);
+    animation: modalFade .25s ease;
+}
+
+@keyframes modalFade {
+    from {
+        transform: translateY(15px) scale(.97);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* ================= HEADER ================= */
+
+.modal-key-header {
+    position: relative;
+    background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 55%, #8e0000 100%);
+    padding: 26px;
+    border: none;
+    overflow: hidden;
+}
+
+    .modal-key-header::before {
+        content: "";
+        position: absolute;
+        width: 220px;
+        height: 220px;
+        background: rgba(255,255,255,0.06);
+        border-radius: 50%;
+        top: -100px;
+        right: -80px;
+    }
+
+.modal-header-content {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+    z-index: 2;
+}
+
+.modal-icon-wrap {
+    width: 68px;
+    height: 68px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 30px;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+}
+
+.modal-title {
+    color: white;
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: .3px;
+}
+
+.modal-subtitle {
+    color: rgba(255,255,255,0.88);
+    margin: 6px 0 0;
+    font-size: .95rem;
+    line-height: 1.4;
+}
+
+.btn-close-white {
+    filter: brightness(0) invert(1);
+    opacity: .9;
+}
+
+    .btn-close-white:hover {
+        opacity: 1;
+    }
+
+/* ================= BODY ================= */
+
+.modal-key-body {
+    padding: 28px;
+    background: linear-gradient(to bottom, #fff, #fcfcfc);
+}
+
+/* ================= ALERTA VISUAL ================= */
+
+.modal-alert {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fff4f4;
+    border: 1px solid #ffd9d9;
+    border-left: 5px solid #d32f2f;
+    padding: 16px 18px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+}
+
+    .modal-alert i {
+        color: #d32f2f;
+        font-size: 24px;
+    }
+
+    .modal-alert strong {
+        display: block;
+        color: #b71c1c;
+        margin-bottom: 3px;
+    }
+
+    .modal-alert span {
+        color: #666;
+        font-size: .92rem;
+    }
+
+/* ================= CARD PLACA ================= */
+
+.modal-summary-card {
+    background: white;
+    border-radius: 18px;
+    padding: 18px 20px;
+    border: 1px solid #efefef;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+    margin-bottom: 24px;
+}
+
+.summary-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.summary-label {
+    font-size: .82rem;
+    text-transform: uppercase;
+    color: #888;
+    letter-spacing: 1px;
+    font-weight: 700;
+}
+
+.summary-value {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #b71c1c;
+    letter-spacing: 3px;
+}
+
+.summary-status {
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff7f7;
+    color: #c62828;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: .85rem;
+    font-weight: 700;
+}
+
+/* ================= FORM ================= */
+
+.modal-field {
+    background: #fafafa;
+    border: 1px solid #ececec;
+    border-radius: 18px;
+    padding: 18px;
+}
+
+    .modal-field .form-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #333;
+        font-size: .95rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+    }
+
+        .modal-field .form-label i {
+            color: #d32f2f;
+        }
+
+#modalIdValetKey {
+    min-height: 52px;
+    border-radius: 14px;
+    border: 1px solid #ddd;
+    padding-inline: 14px;
+    font-size: .96rem;
+    font-weight: 500;
+    transition: .25s ease;
+}
+
+    #modalIdValetKey:hover {
+        border-color: #c5c5c5;
+    }
+
+    #modalIdValetKey:focus {
+        border-color: #d32f2f;
+        box-shadow: 0 0 0 .25rem rgba(211,47,47,.12);
+    }
+
+.field-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    color: #777;
+    font-size: .85rem;
+}
+
+/* ================= ACTIONS ================= */
+
+.modal-actions-key {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.btn-cancelar {
+    border: 1px solid #ddd;
+    background: white;
+    color: #444;
+    padding: 12px 20px;
+    border-radius: 14px;
+    font-weight: 600;
+    transition: .25s ease;
+}
+
+    .btn-cancelar:hover {
+        background: #f5f5f5;
+        transform: translateY(-1px);
+    }
+
+.btn-despachar {
+    border: none;
+    background: linear-gradient(135deg, #d32f2f, #b71c1c);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 14px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    transition: .25s ease;
+    box-shadow: 0 10px 24px rgba(211,47,47,.24);
+}
+
+    .btn-despachar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 30px rgba(211,47,47,.30);
+    }
+
+    .btn-despachar i {
+        margin-right: 6px;
+    }
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 768px) {
+
+    .modal-key-body {
+        padding: 20px;
+    }
+
+    .modal-key-header {
+        padding: 22px;
+    }
+
+    .modal-icon-wrap {
+        width: 58px;
+        height: 58px;
+        font-size: 24px;
+    }
+
+    .modal-title {
+        font-size: 1.15rem;
+    }
+
+    .summary-value {
+        font-size: 1.2rem;
+    }
+
+    .modal-actions-key {
+        flex-direction: column-reverse;
+    }
+
+    .btn-cancelar,
+    .btn-despachar {
+        width: 100%;
+    }
 }

@@ -6,15 +6,13 @@
 <link rel="stylesheet" href="~/css/vistakey.css" />
 
 <div class="container mt-4">
-    <!-- Header tipo Tabla_Vehiculos -->
     <div class="header">
         <div class="header-info">
-            <h2>Control de Parqueadero</h2>
+            <h2>@ViewData["NombreParqueadero"]</h2>
             <p>Gestión de vehículos en la sucursal</p>
         </div>
     </div>
 
-    <!-- Filtros de búsqueda (Usando search-section de Site.css) -->
     <p style="color: #857D7B;">Filtrar vehículos</p>
     <div class="search-section mb-4">
         <form method="get" action="@Url.Action("VistaKey", "Home")" class="row">
@@ -22,7 +20,7 @@
                 <label>Placa</label>
                 <input type="text" name="placa" value="@ViewData["FiltroPlaca"]" placeholder="Buscar Placa..." style="text-transform: uppercase;">
             </div>
-            
+
             <div class="form-group col-md-4 mb-3">
                 <label>Estado Servicio</label>
                 <select name="estado_servicio" style="width:100%;">
@@ -45,7 +43,6 @@
         </form>
     </div>
 
-    <!-- Tabla de vehículos -->
     <div class="table-container">
         <table class="tabla-key">
             <thead>
@@ -61,7 +58,6 @@
             <tbody>
                 @foreach (var item in Model)
                 {
-                    // Alerta roja si es solicitado
                     var claseAlerta = (item.estado_servicio?.Trim().ToLower() == "solicitado") ? "alerta-solicitado" : "";
 
                     <tr class="@claseAlerta">
@@ -75,20 +71,26 @@
                         <td data-label="Banco Asignado">@(item.Banco?.nombres ?? "N/A")</td>
                         <td data-label="Fecha Ingreso">@item.fecha_ingreso?.ToString("dd/MM/yyyy HH:mm")</td>
                         <td data-label="Acciones" class="cell-action">
-                            
+
                             <form method="post" action="@Url.Action("ActualizarEstadoKey", "Home")" class="d-inline actions-form">
                                 <input type="hidden" name="id_ingreso" value="@item.id_ingreso" />
-                                
+
                                 @if (item.estado_servicio != "parqueado" && item.estado_servicio != "despachado")
                                 {
                                     <button type="submit" name="nuevo_estado" value="parqueado" class="btn-icon btn-icon-success" title="Marcar como Parqueado">
                                         <i class="fa-solid fa-square-parking"></i>
                                     </button>
                                 }
-                                
-                                @if (item.estado_servicio != "despachado")
+
+                                @if (item.estado_servicio != "despachado" && item.estado_servicio?.Trim().ToLower() == "parqueado")
                                 {
-                                    <button type="submit" name="nuevo_estado" value="despachado" class="btn-icon btn-icon-warning" title="Marcar como Despachado" onclick="return confirm('¿Seguro que el vehículo salió del parqueadero?');">
+                                    <button type="button"
+                                            class="btn-icon btn-icon-warning"
+                                            title="Despachar"
+                                            onclick="abrirModalDespacho(this)"
+                                            data-id-ingreso="@item.id_ingreso"
+                                            data-placa="@item.placa"
+                                            data-id-valet="@(item.id_valet)">
                                         <i class="fa-solid fa-right-from-bracket"></i>
                                     </button>
                                 }
@@ -100,7 +102,7 @@
                         </td>
                     </tr>
                 }
-                
+
                 @if (!Model.Any())
                 {
                     <tr>
@@ -114,4 +116,139 @@
     </div>
 </div>
 
-<script src="~/js/vistakey.js"></script>
+<!-- Modal despacho -->
+<div class="modal fade" id="modalDespachoKey" tabindex="-1" aria-labelledby="modalDespachoKeyLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modal-key">
+
+            <!-- HEADER -->
+            <div class="modal-header modal-key-header">
+
+                <div class="modal-header-info">
+
+                    <div class="modal-icon-box">
+                        <i class="fa-solid fa-car-side"></i>
+                    </div>
+
+                    <div>
+                        <h5 class="modal-title" id="modalDespachoKeyLabel">
+                            Confirmar despacho
+                        </h5>
+
+                        <p class="modal-subtitle">
+                            El vehículo será retirado del parqueadero
+                        </p>
+                    </div>
+
+                </div>
+
+                <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <!-- BODY -->
+            <div class="modal-body modal-key-body">
+
+                <!-- CARD VEHICULO -->
+                <div class="vehicle-card">
+
+                    <div class="vehicle-icon">
+                        <i class="fa-solid fa-id-card"></i>
+                    </div>
+
+                    <div class="vehicle-info">
+                        <span class="vehicle-label">
+                            Placa del vehículo
+                        </span>
+
+                        <span class="vehicle-plate" id="modalPlacaKey">
+                            
+                        </span>
+                    </div>
+
+                </div>
+
+                <!-- ALERT -->
+                <div class="modal-alert">
+
+                    <i class="fa-solid fa-circle-exclamation"></i>
+
+                    <span>
+                        Verifica el valet encargado antes de continuar.
+                    </span>
+
+                </div>
+
+                <!-- FORM -->
+                <form method="post"
+                      action="@Url.Action("ActualizarEstadoKey", "Home")"
+                      id="formDespachoKey">
+
+                    <input type="hidden"
+                           name="id_ingreso"
+                           id="modalIdIngresoKey" />
+
+                    <input type="hidden"
+                           name="nuevo_estado"
+                           value="despachado" />
+
+                    <!-- SELECT -->
+                    <div class="form-section">
+
+                        <label class="form-label-custom">
+                            Valet asignado
+                        </label>
+
+                        <select name="id_valet"
+                                id="modalIdValetKey"
+                                class="form-select select-valet">
+
+                            @if (ViewBag.valets != null)
+                            {
+                                foreach (var valet in ViewBag.valets)
+                                {
+                                    <option value="@valet.id_usuario">
+                                        @valet.nombres
+                                    </option>
+                                }
+                            }
+
+                        </select>
+
+                        <small class="form-hint">
+                            Selecciona el encargado del despacho.
+                        </small>
+
+                    </div>
+
+                    <!-- BOTONES -->
+                    <div class="modal-actions-key">
+
+                        <button type="button"
+                                class="btn-cancelar"
+                                data-bs-dismiss="modal">
+
+                            Cancelar
+
+                        </button>
+
+                        <button type="submit"
+                                class="btn-despachar">
+
+                            <i class="fa-solid fa-paper-plane"></i>
+                            Confirmar despacho
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/js/vistakey.js?v=@DateTime.Now.Ticks"></script>

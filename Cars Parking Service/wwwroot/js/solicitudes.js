@@ -7,12 +7,12 @@
     setInterval(() => {
         cargarSolicitudes();
         mostrarSolicitados();
-    }, 60000);
+    }, 5000);
     
     setInterval(() => {
         cargarEnCurso();
         mostrarEnCurso();
-    }, 60000);
+    }, 5000);
 
 });
 

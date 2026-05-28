@@ -34,9 +34,12 @@ namespace CarsParkingService.Models
         public byte[]? firma { get; set; }
         public decimal? valor_servicio { get; set; }
         public decimal? valor_propina { get; set; }
+        public decimal? total_servicio { get; set; }
         public string? telefono { get; set; }
         public string? nombre_cliente { get; set; }
         public DateTime? fecha_fin_servicio { get; set; }
+        public int? valet_despacho { get; set; } 
+        public string? metodo_pago { get; set; }
     }
 
     public class SolicitudDto

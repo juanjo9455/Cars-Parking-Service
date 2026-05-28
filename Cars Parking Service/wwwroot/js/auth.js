@@ -68,10 +68,6 @@
 
     // ===== Formulario de Login =====
     const btnLogin = document.getElementById("acceder");
-    //const input1 = document.getElementById("dniLogin");
-    //const input2 = document.getElementById("passwordLogin");
-    //const input3 = document.getElementById("rolLogin");
-    //const btnLogin2 = document.getElementById("iniciar");
     var loginForm = document.getElementById('loginForm');
     if (loginForm) {
         var validators = [
@@ -88,6 +84,98 @@
                 e.preventDefault();
             }
         });
+    }
+
+    // ===== Validación para formulario de cambio de rol (CambiarRol) =====
+    // Busca el select de roles y su formulario (si existe)
+    const selectRolGlobal = document.getElementById('selectRol');
+    if (selectRolGlobal) {
+        const formCambiarRol = selectRolGlobal.closest('form');
+
+        // Función util para mostrar mensaje de error debajo del contenedor
+        function showSelectError(container, message) {
+            if (!container) return;
+            let existing = container.querySelector('.error-roles');
+            if (!existing) {
+                existing = document.createElement('div');
+                existing.className = 'error-roles';
+                existing.style.color = '#d32f2f';
+                existing.style.marginTop = '8px';
+                existing.style.fontSize = '0.95rem';
+                container.appendChild(existing);
+            }
+            existing.textContent = message;
+            existing.classList.add('visible');
+        }
+
+        function clearSelectError(container) {
+            if (!container) return;
+            const existing = container.querySelector('.error-roles');
+            if (existing) {
+                existing.textContent = '';
+                existing.classList.remove('visible');
+            }
+        }
+
+        if (formCambiarRol) {
+            formCambiarRol.addEventListener('submit', function (e) {
+                const contenedorParqueadero = document.getElementById('contenedorParqueadero');
+                const contenedorUbicacion = document.getElementById('contenedorUbicacion');
+                const selectParqueadero = contenedorParqueadero ? contenedorParqueadero.querySelector('select[name="id_parqueadero"]') : null;
+                const selectUbicacion = contenedorUbicacion ? contenedorUbicacion.querySelector('select[name="id_ubicacion"]') : null;
+
+                const rolSeleccionado = selectRolGlobal.value;
+
+                // Limpiar errores previos
+                clearSelectError(contenedorParqueadero);
+                clearSelectError(contenedorUbicacion);
+
+                // Si se muestra contenedorParqueadero y no se seleccionó un parqueadero => impedir envío
+                if (contenedorParqueadero && contenedorParqueadero.style.display !== 'none' && selectParqueadero) {
+                    if (!selectParqueadero.value || selectParqueadero.value.trim() === '') {
+                        e.preventDefault();
+                        showSelectError(contenedorParqueadero, '⚠️ Debes seleccionar un parqueadero válido antes de continuar.');
+                        selectParqueadero.focus();
+                        return;
+                    }
+                }
+
+                // Si se muestra contenedorUbicacion y no se seleccionó una ubicación => impedir envío
+                if (contenedorUbicacion && contenedorUbicacion.style.display !== 'none' && selectUbicacion) {
+                    if (!selectUbicacion.value || selectUbicacion.value.trim() === '') {
+                        e.preventDefault();
+                        showSelectError(contenedorUbicacion, '⚠️ Debes seleccionar una ubicación válida antes de continuar.');
+                        selectUbicacion.focus();
+                        return;
+                    }
+                }
+
+                // Adicional: si el rol requiere ambas (banco y parqueadero) se puede validar aquí.
+                // Por petición actual: validar que se introduzca banco y parqueadero cuando corresponda.
+                // (Si el select de id_parqueadero/ubicacion no está presente o no visible, no se fuerza.)
+            });
+
+            // limpiar errores al cambiar selección
+            formCambiarRol.addEventListener('change', function (ev) {
+                const target = ev.target;
+                if (!target) return;
+                const contParq = document.getElementById('contenedorParqueadero');
+                const contUb = document.getElementById('contenedorUbicacion');
+
+                if (target.name === 'id_parqueadero' && contParq) {
+                    clearSelectError(contParq);
+                }
+                if (target.name === 'id_ubicacion' && contUb) {
+                    clearSelectError(contUb);
+                }
+
+                // Si cambian rol, actualizar visibilidad y limpiar errores
+                if (target.id === 'selectRol') {
+                    if (contParq) clearSelectError(contParq);
+                    if (contUb) clearSelectError(contUb);
+                }
+            });
+        }
     }
 
     /*if (btnLogin) {

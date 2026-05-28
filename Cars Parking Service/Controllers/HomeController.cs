@@ -15,8 +15,12 @@ namespace CarsParkingService.Controllers
 {
     public class HomeController : Controller
     {
-
         private readonly ApplicationDbContext _context;
+        
+        // Diccionario para almacenar códigos de seguridad generados
+        // Key: id_ingreso, Value: (código, fecha_generación)
+        private static Dictionary<int, (string codigo, DateTime fechaGeneracion)> codigosSeguridad = new();
+
         public HomeController(ApplicationDbContext context)
         {
             _context = context;
@@ -43,9 +47,14 @@ namespace CarsParkingService.Controllers
             var idUsuarioSesion = HttpContext.Session.GetInt32("id");
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
 
-            // Verificar que sea rol Key (4) o Admin (3)
-            if (!idUsuarioSesion.HasValue || (rolUsuario != 4 && rolUsuario != 3))
+            System.Diagnostics.Debug.WriteLine($"=== VistaKey GET ===");
+            System.Diagnostics.Debug.WriteLine($"idUsuarioSesion: {idUsuarioSesion}");
+            System.Diagnostics.Debug.WriteLine($"rolUsuario: {rolUsuario}");
+
+            // Verificar que sea rol Key (4)
+            if (!idUsuarioSesion.HasValue || (rolUsuario != 4))
             {
+                System.Diagnostics.Debug.WriteLine($"Acceso denegado: no es rol Key");
                 return RedirectToAction("Login", "Auth");
             }
 
@@ -65,27 +74,81 @@ namespace CarsParkingService.Controllers
                 query = query.Where(i => i.estado_servicio == estado_servicio);
             }
 
+            // Buscamos la sesion activa con el usuario
+            var sesion = _context.sesiones
+            .FirstOrDefault(s =>
+                s.id_usuario == idUsuarioSesion &&
+                s.fecha_fin == null
+            );
+
+            System.Diagnostics.Debug.WriteLine($"Sesión encontrada: {(sesion != null ? "SÍ" : "NO")}");
+            if (sesion != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"  id_parqueadero en sesión: {sesion.id_parqueadero}");
+                System.Diagnostics.Debug.WriteLine($"  id_ubicacion en sesión: {sesion.id_ubicacion}");
+                System.Diagnostics.Debug.WriteLine($"  id_rol en sesión: {sesion.id_rol}");
+            }
+
+            if (sesion == null)
+            {
+                System.Diagnostics.Debug.WriteLine($"ERROR: No hay sesión activa para el usuario {idUsuarioSesion}");
+                return RedirectToAction("Login");
+            }
+
+            // Excluir los servicios finalizados y despachados, y los pagos ya pagados
             var ingresos = query
+                .Where(i =>
+                    i.id_parqueadero == sesion.id_parqueadero &&
+                    i.estado_servicio != "finalizado" &&
+                    i.estado_servicio != "despachado" &&
+                    i.estado_pago != "pagado")
                 .AsEnumerable()
                 // Ordenamos: Primero los "solicitado" (para la cola visual), luego por fecha descendente
                 .OrderByDescending(i => i.estado_servicio?.Trim().ToLower() == "solicitado")
                 .ThenByDescending(i => i.fecha_ingreso)
                 .ToList();
 
+            System.Diagnostics.Debug.WriteLine($"Total ingresos encontrados: {ingresos.Count}");
+            foreach (var ing in ingresos)
+            {
+                System.Diagnostics.Debug.WriteLine($"  - ID: {ing.id_ingreso}, Placa: {ing.placa}, Parqueadero: {ing.id_parqueadero}, Estado: {ing.estado_servicio}");
+            }
+
+            // Obtener nombre del parqueadero
+            var parqueadero = _context.parqueaderos.FirstOrDefault(p => p.id_parqueadero == sesion.id_parqueadero);
+            
             ViewData["FiltroPlaca"] = placa;
             ViewData["FiltroEstado"] = estado_servicio;
+            ViewData["NombreParqueadero"] = parqueadero?.nombre_parqueadero ?? "Parqueadero";
+
+            ViewBag.valets = _context.usuarios.Where(v => v.id_rol == 1).ToList();
 
             return View(ingresos);
         }
 
         // POST: Cambiar el estado desde la vista Key
         [HttpPost]
-        public IActionResult ActualizarEstadoKey(int id_ingreso, string nuevo_estado)
+        public IActionResult ActualizarEstadoKey(int id_ingreso, string nuevo_estado, int? id_valet = null)
         {
             var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
             if (ingreso != null)
             {
                 ingreso.estado_servicio = nuevo_estado;
+
+                // Si llegó un id_valet (p. ej. desde el modal de despacho) lo guardamos en valet_despacho
+                if (id_valet.HasValue)
+                {
+                    ingreso.valet_despacho = id_valet.Value;
+                }
+                else
+                {
+                    // Si NO llegó valet y la acción es marcar "parqueado", dejamos id_valet nulo (según requisito)
+                    if (nuevo_estado == "parqueado")
+                    {
+                        ingreso.valet_despacho = null;
+                    }
+                    // en otros casos no modificamos id_valet para no sobreescribir datos previos
+                }
 
                 if (nuevo_estado == "despachado")
                 {
@@ -98,7 +161,6 @@ namespace CarsParkingService.Controllers
             // Lo retornamos a la vista
             return RedirectToAction("VistaKey");
         }
-
 
         // Metodo para obtener las solicitudes de ingresos de vehiculos en estado "solicitado" para el valet y banco
         [HttpGet]
@@ -120,31 +182,22 @@ namespace CarsParkingService.Controllers
                 .AsQueryable();
 
             // Filtramos según el rol
-            if (idUsuario.HasValue)
+            if (rolUsuario == 2 && idUsuario.HasValue)
             {
-                // Valet
-                if (rolUsuario == 1)
-                {
-                    query = query.Where(i => i.id_valet == idUsuario.Value);
-                }
+                // Buscar sesión activa del usuario banco
+                var sesionBanco = _context.sesiones
+                    .FirstOrDefault(s =>
+                        s.id_usuario == idUsuario.Value &&
+                        s.fecha_fin == null
+                    );
 
-                // Banco
-                else if (rolUsuario == 2)
-                {
-                    query = query.Where(i => i.id_banco == idUsuario.Value);
-                }
-
-                // Otros roles que no sean admin
-                else if (rolUsuario != 3)
+                // Filtrar por ubicación de la sesión
+                if (sesionBanco != null)
                 {
                     query = query.Where(i =>
-                        i.id_valet == idUsuario.Value ||
-                        i.id_banco == idUsuario.Value
+                        i.id_ubicacion == sesionBanco.id_ubicacion
                     );
                 }
-
-                // Si es admin (3)
-                // no filtramos nada
             }
 
             // Convertimos los datos en un objeto más limpio
@@ -505,7 +558,26 @@ namespace CarsParkingService.Controllers
                     .FirstOrDefault();
 
                 bool enviarWhatsapp = true;
+                // ==============================
+                // OBTENER PARQUEADERO DE SESION
+                // ==============================
+                var idUsuarioSesion = HttpContext.Session.GetInt32("id");
+                var rolUsuarioSesion = HttpContext.Session.GetInt32("id_rol");
 
+                // Buscar sesión activa del usuario
+                var sesionUsuario = _context.sesiones
+                    .FirstOrDefault(s =>
+                        s.id_usuario == idUsuarioSesion &&
+                        s.fecha_fin == null
+                    );
+
+                // Si el usuario tiene una sesión con parqueadero (Valet o Banco con sesión),
+                // usar ese parqueadero en lugar del que viene del formulario
+                if (sesionUsuario != null && sesionUsuario.id_parqueadero.HasValue)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Asignando parqueadero de sesión: {sesionUsuario.id_parqueadero}");
+                    obj_ingreso.id_parqueadero = sesionUsuario.id_parqueadero.Value;
+                }
 
                 // validar si el vehiculo ya esta en el parqueadero
                 if (ingresoActivo != null)
@@ -513,7 +585,7 @@ namespace CarsParkingService.Controllers
                     System.Diagnostics.Debug.WriteLine($"Found ingresoActivo id:{ingresoActivo.id_ingreso} placa:'{ingresoActivo.placa}' estado_servicio:'{ingresoActivo.estado_servicio}' estado_pago:'{ingresoActivo.estado_pago}'");
 
                     // caso 1: El vehiculo esta actualmente en servicio (no ha salido)
-                    if (ingresoActivo.estado_servicio == "activo")
+                    if (ingresoActivo.estado_servicio == "activo" || ingresoActivo.estado_servicio == "solicitado" || ingresoActivo.estado_servicio == "en curso" || ingresoActivo.estado_servicio == "parqueado")
                     {
                         enviarWhatsapp = false;
 
@@ -657,6 +729,15 @@ namespace CarsParkingService.Controllers
                     };
                     _context.imagenes.Add(videoImagen);
                     _context.SaveChanges();
+                }
+
+                // Verificar rol del usuario
+                var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+                
+                // Key (rol 4) va a VistaKey, todos los demás van a Tabla_Vehiculos
+                if (rolUsuario == 4)
+                {
+                    return RedirectToAction("VistaKey");
                 }
 
                 return RedirectToAction("Tabla_Vehiculos");
@@ -828,6 +909,112 @@ namespace CarsParkingService.Controllers
             return RedirectToAction("Tabla_Vehiculos");
         }
 
+        // =========================== PAGO Y CÓDIGOS DE SEGURIDAD =========================== \\
+
+        [HttpPost]
+        public IActionResult GenerarCodigoSeguridad(int id, string metodoPago)
+        {
+            try
+            {
+                var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id);
+                if (ingreso == null)
+                {
+                    return Json(new { success = false, message = "Ingreso no encontrado" });
+                }
+
+                // Generar código aleatorio de 6 dígitos
+                Random random = new Random();
+                string codigo = random.Next(100000, 999999).ToString();
+
+                // Almacenar código con expiración de 5 minutos
+                codigosSeguridad[id] = (codigo, DateTime.Now);
+
+                // Actualizar método de pago
+                ingreso.metodo_pago = metodoPago;
+                _context.SaveChanges();
+
+                return Json(new { success = true, codigo = codigo });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error generando código: {ex.Message}");
+                return Json(new { success = false, message = "Error al generar código" });
+            }
+        }
+
+        [HttpPost]
+        public IActionResult ValidarCodigoSeguridad(int id, string codigo)
+        {
+            try
+            {
+                // Validar si el código existe
+                if (!codigosSeguridad.ContainsKey(id))
+                {
+                    return Json(new { success = false, message = "No hay código generado para este ingreso" });
+                }
+
+                var (codigoGenerado, fechaGeneracion) = codigosSeguridad[id];
+
+                // Validar que no haya expirado (5 minutos)
+                if ((DateTime.Now - fechaGeneracion).TotalMinutes > 5)
+                {
+                    codigosSeguridad.Remove(id);
+                    return Json(new { success = false, message = "Código expirado" });
+                }
+
+                // Validar que el código coincida
+                if (codigoGenerado != codigo)
+                {
+                    return Json(new { success = false, message = "Código inválido" });
+                }
+
+                // Código válido - remover de almacenamiento
+                codigosSeguridad.Remove(id);
+                return Json(new { success = true, message = "Código validado correctamente" });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error validando código: {ex.Message}");
+                return Json(new { success = false, message = "Error al validar código" });
+            }
+        }
+
+        [HttpPost]
+        public IActionResult FinalizarServicio(int id, string estadoServicio)
+        {
+            try
+            {
+                var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id);
+                if (ingreso == null)
+                {
+                    return Json(new { success = false, message = "Ingreso no encontrado" });
+                }
+
+                // Validación: No permitir finalizar si no está pagado
+                if (estadoServicio == "finalizado" && ingreso.estado_pago != "pagado")
+                {
+                    return Json(new { success = false, message = "El servicio debe estar pagado antes de finalizarlo" });
+                }
+
+                ingreso.estado_servicio = estadoServicio;
+                ingreso.estado_pago = "pagado";
+
+                if (estadoServicio == "finalizado")
+                {
+                    ingreso.fecha_salida = DateTime.Now;
+                }
+
+                _context.SaveChanges();
+
+                return Json(new { success = true, message = "Servicio finalizado correctamente" });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error finalizando servicio: {ex.Message}");
+                return Json(new { success = false, message = "Error al finalizar servicio" });
+            }
+        }
+
         public override void OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext context)
         {
             // Verifica primero si el usuario tiene sesión, si no, lo manda a login inmediatamente
@@ -855,7 +1042,7 @@ namespace CarsParkingService.Controllers
             bool existeDni = _context.usuarios
                 .Any(u => u.dni == dni && u.id_usuario != id_usuario && u.estado == true);
 
-            // Validar si el correo ya le pertenece a OTRO usuario
+            // Validar si el correo ya le pertence a OTRO usuario
             bool existeCorreo = _context.usuarios
                 .Any(u => u.correo.Trim().ToLower() == correo.Trim().ToLower() && u.id_usuario != id_usuario && u.estado == true);
 
@@ -1098,7 +1285,7 @@ namespace CarsParkingService.Controllers
             }
             else
             {
-                TempData["Error"] = "No se encontró el parqueadero a editar.";
+                TempData["Error"] = "No se encontró el parqueadero a deshabilitar.";
             }
             return RedirectToAction("Administrador");
         }
@@ -1139,5 +1326,84 @@ namespace CarsParkingService.Controllers
             return RedirectToAction("Administrador");
         }
 
+        // =================== Nuevos métodos para VistaKey =================== //
+
+        // Nuevo método para obtener ingresos de VistaKey sin recargar la página
+        [HttpGet]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult ObtenerIngresosPorParqueadero()
+        {
+            var idUsuarioSesion = HttpContext.Session.GetInt32("id");
+            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+
+            System.Diagnostics.Debug.WriteLine($"=== ObtenerIngresosPorParqueadero ===");
+            System.Diagnostics.Debug.WriteLine($"idUsuarioSesion: {idUsuarioSesion}");
+            System.Diagnostics.Debug.WriteLine($"rolUsuario: {rolUsuario}");
+
+            // Verificar que sea rol Key (4)
+            if (!idUsuarioSesion.HasValue || (rolUsuario != 4))
+            {
+                System.Diagnostics.Debug.WriteLine($"Acceso denegado: no es rol Key");
+                return Unauthorized();
+            }
+
+            // Buscamos la sesión activa con el usuario
+            var sesion = _context.sesiones
+                .FirstOrDefault(s =>
+                    s.id_usuario == idUsuarioSesion &&
+                    s.fecha_fin == null
+                );
+
+            System.Diagnostics.Debug.WriteLine($"Sesión encontrada: {(sesion != null ? "SÍ" : "NO")}");
+            if (sesion != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"id_parqueadero de sesión: {sesion.id_parqueadero}");
+            }
+
+            if (sesion == null)
+            {
+                System.Diagnostics.Debug.WriteLine($"No hay sesión activa");
+                return Unauthorized();
+            }
+
+            // Obtener ingresos del parqueadero actual
+            var ingresos = _context.ingresos
+                .Include(i => i.Valet)
+                .Include(i => i.Banco)
+                .Where(i =>
+                    i.id_parqueadero == sesion.id_parqueadero &&
+                    i.estado_servicio != "finalizado" &&
+                    i.estado_servicio != "despachado" &&
+                    i.estado_pago != "pagado")
+                .AsEnumerable()
+                .OrderByDescending(i => i.estado_servicio?.Trim().ToLower() == "solicitado")
+                .ThenByDescending(i => i.fecha_ingreso)
+                .Select(i => new
+                {
+                    id = i.id_ingreso,
+                    placa = i.placa,
+                    estado_servicio = i.estado_servicio,
+                    estado_pago = i.estado_pago,
+                    id_valet = i.id_valet,
+                    id_banco = i.id_banco,
+                    nombre_valet = i.Valet != null ? i.Valet.nombres : "N/A",
+                    nombre_banco = i.Banco != null ? i.Banco.nombres : "N/A",
+                    fecha_ingreso = i.fecha_ingreso
+                })
+                .ToList();
+
+            System.Diagnostics.Debug.WriteLine($"Total ingresos obtenidos: {ingresos.Count}");
+            foreach (var ing in ingresos)
+            {
+                System.Diagnostics.Debug.WriteLine($"  - ID: {ing.id}, Placa: {ing.placa}, Estado: {ing.estado_servicio}, Pago: {ing.estado_pago}");
+            }
+
+            return Json(new
+            {
+                cantidad = ingresos.Count(),
+                ingresos = ingresos,
+                serverTime = DateTime.Now.ToString("O")
+            });
+        }
     }
 }

@@ -130,54 +130,59 @@
                 </div>
             </div>
         </div>
-
-        <div class="resumen-titulo" style="padding: 16px 28px 0;">Resumen del viaje</div>
-        <div style="padding: 0 28px;">
-            <div class="resumen-fila">
-                <span>Tarifa base</span>
-                <span class="resumen-valor" id="tarifa-base">$30.000</span>
-            </div>
-            <div class="resumen-fila propina-fila">
-                <div class="propina-label-container">
-                    <span>Propina</span>
+        <form method="post" asp-action="guardarPago">
+            <input type="hidden" id="idIngresoForm" name="idIngreso" value="@Model?.id_ingreso" />
+            <input type="hidden" id="tarifaValor" value="@((decimal?)ViewBag.tarifa ?? 0)" />
+            <div class="resumen-titulo" style="padding: 16px 28px 0;">Resumen del viaje</div>
+            <div style="padding: 0 28px;">
+                <div class="resumen-fila">
+                    <span>Tarifa base</span>
+                    <span class="resumen-valor" id="tarifa-base" name="tarifa" value="@((decimal?)ViewBag.tarifa ?? 0)">$@(((decimal?)ViewBag.tarifa ?? 0).ToString("N0"))</span>
                 </div>
-                <span class="resumen-valor">
-                    <select class="input-group" id="select-propina">
-                        <option value="0">$0.00</option>
-                        <option value="1000">$1.000</option>
-                        <option value="2000">$2.000</option>
-                        <option value="5000">$5.000</option>
-                        <option value="10000">$10.000</option>
-                        <option value="20000">$20.000</option>
-                        <option value="30000">$30.000</option>
-                    </select>
-                </span>
+                <div class="resumen-fila propina-fila">
+                    <div class="propina-label-container">
+                        <span>Propina</span>
+                    </div>
+                    <span class="resumen-valor" name="propina">
+                        <select class="input-group" id="select-propina">
+                            <option value="0">$0.00</option>
+                            <option value="1000">$1.000</option>
+                            <option value="2000">$2.000</option>
+                            <option value="5000">$5.000</option>
+                            <option value="10000">$10.000</option>
+                            <option value="20000">$20.000</option>
+                            <option value="30000">$30.000</option>
+                        </select>
+                    </span>
+                </div>
+                <div class="resumen-total-fila">
+                    <span class="total-label">Total a pagar</span>
+                    <span class="total-valor" id="total-value" name="total">$@(((decimal?)ViewBag.tarifa ?? 0).ToString("N0"))</span>
+                </div>
             </div>
-            <div class="resumen-total-fila">
-                <span class="total-label">Total a pagar</span>
-                <span class="total-valor" id="total-value">$30.000</span>
-            </div>
-        </div>
 
-        <div class="pago-section">
-            <div class="pago-titulo">Método de pago</div>
-            <div class="metodos-grid">
-                <button class="metodo-btn activo" onclick="seleccionar(this)">
-                    <span class="ico">💵</span>Efectivo
-                </button>
-                <button class="metodo-btn" onclick="seleccionar(this)">
-                    <span class="ico"><i class="fa-solid fa-qrcode"></i></span>QR
-                </button>
-                <button class="metodo-btn" onclick="seleccionar(this)">
-                    <span class="ico">
-                        <img src="~/img/nequi.ico" style="width:22px;height:22px;object-fit:contain;" />
-                    </span>Nequi
+            <div class="pago-section">
+                <div class="pago-titulo">Método de pago</div>
+                <div class="metodos-grid" name="metodoPago">
+                    <button class="metodo-btn activo" onclick="seleccionar(this)">
+                        <span class="ico">💵</span>Efectivo
+                    </button>
+                    <button class="metodo-btn" onclick="seleccionar(this)">
+                        <span class="ico"><i class="fa-solid fa-qrcode"></i></span>QR
+                    </button>
+                    <button class="metodo-btn" onclick="seleccionar(this)">
+                        <span class="ico">
+                            <img src="~/img/nequi.ico" style="width:22px;height:22px;object-fit:contain;" />
+                        </span>Nequi
+                    </button>
+                </div>
+                <button class="btn-pagar" id="btn-confirmar-pago" type="button">
+                    <span>🔒</span> Confirmar y Pagar
                 </button>
             </div>
-            <button class="btn-pagar" id="btn-confirmar-pago">
-                <span>🔒</span> Confirmar y Pagar
-            </button>
-        </div>
+
+        </form>
+
     </div>
 
     <!-- Pantalla 2: Confirmación de pago -->

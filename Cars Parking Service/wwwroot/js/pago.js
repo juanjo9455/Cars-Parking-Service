@@ -1,4 +1,208 @@
-﻿document.addEventListener("DOMContentLoaded", function () {
+﻿// Funciones para gestionar el flujo de pago con código de seguridad en Tabla_Vehiculos
+
+function abrirModalPago(idIngreso, placa, nombreCliente) {
+    const modal = document.getElementById(`modal-pago-${idIngreso}`);
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function cerrarModalPago(idIngreso) {
+    const modal = document.getElementById(`modal-pago-${idIngreso}`);
+    if (modal) {
+        modal.style.display = 'none';
+        limpiarModalPago(idIngreso);
+    }
+}
+
+function cerrarModalFinalizacion(idIngreso) {
+    const modal = document.getElementById(`modal-${idIngreso}`);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function limpiarModalPago(idIngreso) {
+    // Limpiar campos para próxima apertura
+    const codigoValidacion = document.getElementById(`codigo-validacion-${idIngreso}`);
+    if (codigoValidacion) {
+        codigoValidacion.value = '';
+    }
+    
+    // Esconder la barra de código generado
+    const codigoGenerado = document.getElementById(`codigo-generado-${idIngreso}`);
+    if (codigoGenerado) {
+        codigoGenerado.style.display = 'none';
+    }
+    
+    // Esconder la sección de validación
+    const validacionContenedor = document.getElementById(`validacion-contenedor-${idIngreso}`);
+    if (validacionContenedor) {
+        validacionContenedor.style.display = 'none';
+    }
+    
+    // Mostrar el botón de generar código nuevamente
+    const btnContenedor = document.getElementById(`btn-generar-contenedor-${idIngreso}`);
+    if (btnContenedor) {
+        btnContenedor.style.display = 'block';
+        const btnGenerar = btnContenedor.querySelector('button');
+        if (btnGenerar) {
+            btnGenerar.disabled = false;
+            btnGenerar.textContent = '<i class="fa-solid fa-key"></i> Generar Código de Seguridad';
+        }
+    }
+    
+    // Habilitar el selector de método de pago nuevamente
+    const metodoSelect = document.getElementById(`metodo-pago-${idIngreso}`);
+    if (metodoSelect) {
+        metodoSelect.disabled = false;
+    }
+}
+
+function generarCodigoSeguridad(idIngreso) {
+    const metodoPago = document.getElementById(`metodo-pago-${idIngreso}`)?.value;
+    
+    if (!metodoPago) {
+        alert('Selecciona un método de pago');
+        return;
+    }
+
+    // Deshabilitar botón mientras se procesa
+    const btnContenedor = document.getElementById(`btn-generar-contenedor-${idIngreso}`);
+    const btnGenerar = btnContenedor?.querySelector('button');
+    
+    if (btnGenerar) btnGenerar.disabled = true;
+
+    fetch(`/Home/GenerarCodigoSeguridad?id=${idIngreso}&metodoPago=${metodoPago}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Mostrar el código generado
+            document.getElementById(`codigo-valor-${idIngreso}`).textContent = data.codigo;
+            document.getElementById(`codigo-generado-${idIngreso}`).style.display = 'block';
+            
+            // Mostrar la sección de validación
+            document.getElementById(`validacion-contenedor-${idIngreso}`).style.display = 'block';
+            
+            // Esconder el botón de generar código
+            if (btnContenedor) btnContenedor.style.display = 'none';
+            
+            document.getElementById(`metodo-pago-actual-${idIngreso}`).textContent = metodoPago;
+            
+            // Deshabilitar cambios posteriores en el método de pago
+            document.getElementById(`metodo-pago-${idIngreso}`).disabled = true;
+        } else {
+            alert('Error: ' + (data.message || 'No se pudo generar el código'));
+            if (btnGenerar) btnGenerar.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al generar el código de seguridad');
+        if (btnGenerar) btnGenerar.disabled = false;
+    });
+}
+
+function validarCodigoYAbrir(idIngreso, modalId) {
+    const codigoIngresado = document.getElementById(`codigo-validacion-${idIngreso}`)?.value;
+    
+    if (!codigoIngresado || codigoIngresado.length !== 6) {
+        alert('Ingresa un código válido de 6 dígitos');
+        return;
+    }
+
+    // Mostrar estado de procesamiento
+    const btnValidar = document.querySelector(`#modal-pago-${idIngreso} button[onclick*="validarCodigoYAbrir"]`);
+    if (btnValidar) {
+        btnValidar.disabled = true;
+        btnValidar.textContent = 'Validando...';
+    }
+
+    fetch(`/Home/ValidarCodigoSeguridad?id=${idIngreso}&codigo=${codigoIngresado}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            cerrarModalPago(idIngreso);
+            // Abrir el modal de finalización
+            const modalFinalizacion = document.getElementById(modalId);
+            if (modalFinalizacion) {
+                modalFinalizacion.style.display = 'flex';
+            }
+        } else {
+            alert('Error: ' + (data.message || 'Código inválido o expirado'));
+            if (btnValidar) {
+                btnValidar.disabled = false;
+                btnValidar.textContent = '✓ Validar y Continuar';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al validar el código');
+        if (btnValidar) {
+            btnValidar.disabled = false;
+            btnValidar.textContent = '✓ Validar y Continuar';
+        }
+    });
+}
+
+function finalizarServicio(idIngreso) {
+    const estadoServicio = document.getElementById(`estado-servicio-${idIngreso}`)?.value;
+    
+    if (!estadoServicio) {
+        alert('Selecciona un estado para el servicio');
+        return;
+    }
+
+    // Deshabilitar botón mientras se procesa
+    const btnConfirmar = document.querySelector(`#modal-${idIngreso} button[onclick*="finalizarServicio"]`);
+    if (btnConfirmar) {
+        btnConfirmar.disabled = true;
+        btnConfirmar.textContent = 'Procesando...';
+    }
+
+    fetch(`/Home/FinalizarServicio?id=${idIngreso}&estadoServicio=${estadoServicio}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Servicio finalizado con éxito');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'No se pudo finalizar el servicio'));
+            if (btnConfirmar) {
+                btnConfirmar.disabled = false;
+                btnConfirmar.textContent = '✓ Confirmar';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al finalizar el servicio');
+        if (btnConfirmar) {
+            btnConfirmar.disabled = false;
+            btnConfirmar.textContent = '✓ Confirmar';
+        }
+    });
+}
+
+// ========== CÓDIGO ORIGINAL DEL ARCHIVO ==========
+
+document.addEventListener("DOMContentLoaded", function () {
     // ========== Inicialización de Variables ==========
     const methodCards = document.querySelectorAll('.pago-method-card');
     const confirmBtn = document.querySelector('.pago-btn-primary');

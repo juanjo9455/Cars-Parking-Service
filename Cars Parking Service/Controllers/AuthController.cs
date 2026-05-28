@@ -332,7 +332,7 @@ namespace CarsParkingService.Controllers
         }
 
         [HttpPost]
-        public IActionResult cambiarRol(int id_rol, int id_parqueadero, int id_ubicacion)
+        public IActionResult cambiarRol(int id_rol, int? id_parqueadero, int? id_ubicacion)
         {
             var userId = HttpContext.Session.GetInt32("id_usuario");
 
@@ -355,6 +355,19 @@ namespace CarsParkingService.Controllers
             // ==============================
             // CREAR REGISTRO DE SESIÓN
             // ==============================
+
+            // Buscar sesiones abiertas del usuario
+            var sesionesAbiertas = _context.sesiones
+                .Where(s =>
+                    s.id_usuario == user.id_usuario &&
+                    s.fecha_fin == null)
+                .ToList();
+
+            // Cerrarlas
+            foreach (var s in sesionesAbiertas)
+            {
+                s.fecha_fin = DateTime.Now;
+            }
 
             var sesion = new sesiones
             {
@@ -395,9 +408,23 @@ namespace CarsParkingService.Controllers
             HttpContext.Session.SetString("apellido", user.apellidos ?? "");
             HttpContext.Session.SetString("correo", user.correo ?? "");
 
-            // Guardar también lugar de trabajo
-            HttpContext.Session.SetInt32("id_parqueadero", id_parqueadero);
-            HttpContext.Session.SetInt32("id_ubicacion", id_ubicacion);
+            // Guardar lugar de trabajo solo si existen valores
+
+            if (id_parqueadero.HasValue)
+            {
+                HttpContext.Session.SetInt32(
+                    "id_parqueadero",
+                    id_parqueadero.Value
+                );
+            }
+
+            if (id_ubicacion.HasValue)
+            {
+                HttpContext.Session.SetInt32(
+                    "id_ubicacion",
+                    id_ubicacion.Value
+                );
+            }
 
             // Imagen
             if (!string.IsNullOrEmpty(user.imagen_usuario))
@@ -425,7 +452,31 @@ namespace CarsParkingService.Controllers
 
         public IActionResult CerrarSesion()
         {
+            var userId = HttpContext.Session.GetInt32("id");
+
+            if (userId == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            // Buscar sesión activa del usuario
+            var userSesion = _context.sesiones
+                .FirstOrDefault(s =>
+                    s.id_usuario == userId &&
+                    s.fecha_fin == null
+                );
+
+            // Si existe sesión activa
+            if (userSesion != null)
+            {
+                userSesion.fecha_fin = DateTime.Now;
+
+                _context.SaveChanges();
+            }
+
+            // Limpiar sesión web
             HttpContext.Session.Clear();
+
             return RedirectToAction("Login");
         }
 

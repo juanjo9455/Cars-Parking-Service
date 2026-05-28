@@ -250,54 +250,115 @@
                             <td data-label="Estado Pago"><span class="status-badge status-pagado">Pagado</span></td>
                         }
                     <td data-label="Estado Servicio">@ingresos.estado_servicio</td>
-                    <td data-label="Acción" class="cell-action"><i class="fa-solid fa-pen-to-square btn-action" onclick="abrirModal('modal-@ingresos.id_ingreso')" style="cursor: pointer;"></i></td>
+                    <td data-label="Acción" class="cell-action"><i class="fa-solid fa-credit-card btn-action" onclick="abrirModalPago('@ingresos.id_ingreso', '@ingresos.placa', '@ingresos.nombre_cliente')" style="cursor: pointer;"></i></td>
                 </tr>
-                <form class="ActualizarEstados" asp-action="ActualizarEstadosIngreso" asp-controller="Home" method="post">
-                    <input type="hidden" name="id_ingreso" value="@ingresos.id_ingreso"/>
-                    <div id="modal-@ingresos.id_ingreso" class="Editar-Ingreso" style="display:none;">
-                        <div class="modal-overlay" onclick="cerrarModal('modal-@ingresos.id_ingreso')"></div>
-                            <div class="Card-Ingreso card-ingreso-vehiculos">
-                            <span class="close-btn" onclick="cerrarModal('modal-@ingresos.id_ingreso')">&times;</span>
-                            <h3>Actualizar Vehículo</h3>
+                
+                <!-- MODAL INTERMEDIO DE PAGO -->
+                <div id="modal-pago-@ingresos.id_ingreso" class="Editar-Ingreso" style="display:none;">
+                    <div class="modal-overlay" onclick="cerrarModalPago('@ingresos.id_ingreso')"></div>
+                    <div class="Card-Ingreso card-ingreso-vehiculos">
+                        <span class="close-btn" onclick="cerrarModalPago('@ingresos.id_ingreso')">&times;</span>
+                        <h3>Pago para Vehículo</h3>
 
-                            @if (!string.IsNullOrEmpty(modalError) && modalErrorIngresoId == ingresos.id_ingreso.ToString())
-                            {
-                                <div class="alert alert-danger" style="margin-bottom:12px; position:relative; text-align:left;">
-                                    <span>@modalError</span>
-                                    <button type="button" onclick="this.parentElement.style.display='none';" style="position:absolute;top:4px;right:10px;background:none;border:none;font-size:20px;line-height:1;color:#a94442;cursor:pointer;">&times;</button>
-                                </div>
-                            }
+                        <!-- Información del vehículo -->
+                        <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p><strong>Placa:</strong> @ingresos.placa</p>
+                            <p><strong>Cliente:</strong> @ingresos.nombre_cliente</p>
+                            <p style="margin-bottom: 0;"><strong>Método de Pago Actual:</strong> 
+                                <span id="metodo-pago-actual-@ingresos.id_ingreso">
+                                    @(string.IsNullOrEmpty(ingresos.metodo_pago) ? "No especificado" : ingresos.metodo_pago)
+                                </span>
+                            </p>
+                        </div>
 
-                            <div class="info-auto">
-                                <p><strong>Placa:</strong> @ingresos.placa</p>
-                                <p><strong>Nombre Cliente:</strong> @ingresos.nombre_cliente</p>
-                                <p><strong>Teléfono:</strong> @ingresos.telefono</p>
+                        <!-- Cambiar método de pago -->
+                        <div class="form-group-modal" style="margin-bottom: 20px;">
+                            <label>Editar método de pago:</label>
+                            <select id="metodo-pago-@ingresos.id_ingreso" style="width:100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="QR">QR</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Efectivo">Efectivo</option>
+                            </select>
+                        </div>
+
+                        <!-- Generar código de seguridad -->
+                        <div id="btn-generar-contenedor-@ingresos.id_ingreso" style="margin-bottom: 20px;">
+                            <button type="button" class="btn btn-primary" onclick="generarCodigoSeguridad('@ingresos.id_ingreso')" style="width: 100%; padding: 10px;">
+                                <i class="fa-solid fa-key"></i> Generar Código de Seguridad
+                            </button>
+                        </div>
+
+                        <!-- Mostrar código generado (OCULTO INICIALMENTE) -->
+                        <div id="codigo-generado-@ingresos.id_ingreso" style="display:none; background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                            <p style="margin: 0 0 10px 0; color: #666;"><strong>Código de Seguridad Generado:</strong></p>
+                            <p style="margin: 0; font-size: 24px; font-weight: bold; color: #2e7d32; font-family: monospace;" id="codigo-valor-@ingresos.id_ingreso">------</p>
+                            <small style="color: #666; display: block; margin-top: 10px;">Comparte este código con el cliente</small>
+                            <button type="button" class="btn btn-link" onclick="generarCodigoSeguridad('@ingresos.id_ingreso')" style="margin-top: 10px; color: #2e7d32; text-decoration: underline;">
+                                Generar otro código
+                            </button>
+                        </div>
+
+                        <!-- Ingresar código de validación (OCULTO INICIALMENTE) -->
+                        <div id="validacion-contenedor-@ingresos.id_ingreso" style="display:none; margin-bottom: 20px;">
+                            <div class="form-group-modal" style="margin-bottom: 20px;">
+                                <label>Ingresa el código que el cliente confirmó:</label>
+                                <input type="text" id="codigo-validacion-@ingresos.id_ingreso" placeholder="Ej: 123456" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 16px; letter-spacing: 5px;" maxlength="6">
                             </div>
 
-                            <div class="form-group-modal">
-                                <label for="estado-pago-@ingresos.id_ingreso">Estado de Pago:</label>
-                                <select id="estado-pago-@ingresos.id_ingreso" name="estado_pago" style="width:100%;">
-                                    <option value="pendiente" selected="@(ingresos.estado_pago == "pendiente" ? "selected" : null)">Pendiente</option>
-                                    <option value="pagado" selected="@((ingresos.estado_pago == "pagado" || ingresos.estado_pago == "cancelado") ? "selected" : null)">Pagado</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group-modal">
-                                <label for="estado-servicio-@ingresos.id_ingreso">Estado de Servicio:</label>
-                                <select id="estado-servicio-@ingresos.id_ingreso" name="estado_servicio" style="width:100%;">
-                                    <option value="activo" selected="@(ingresos.estado_servicio == "activo" ? "selected" : null)">Activo</option>
-                                    <option value="cancelado" selected="@(ingresos.estado_servicio == "en curso" ? "selected" : null)">En Curso</option>
-                                    <option value="finalizado" selected="@(ingresos.estado_servicio == "finalizado" ? "selected" : null)">Finalizado</option>
-                                    <option value="cancelado" selected="@(ingresos.estado_servicio == "cancelado" ? "selected" : null)">Cancelado</option>
-                                </select>
-                            </div>
-
-                            <div class="modal-actions">
-                                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            <!-- Botones de validación -->
+                            <div class="modal-actions" style="display: flex; gap: 10px;">
+                                <button type="button" class="btn btn-secondary" onclick="cerrarModalPago('@ingresos.id_ingreso')" style="flex: 1;">
+                                    Cancelar
+                                </button>
+                                <button type="button" class="btn btn-primary" onclick="validarCodigoYAbrir('@ingresos.id_ingreso', 'modal-@ingresos.id_ingreso')" style="flex: 1;">
+                                    <i class="fa-solid fa-check"></i> Validar y Continuar
+                                </button>
                             </div>
                         </div>
                     </div>
-                </form>
+                </div>
+
+                <!-- MODAL FINAL DE FINALIZACIÓN DE PAGO -->
+                <div id="modal-@ingresos.id_ingreso" class="Editar-Ingreso" style="display:none;">
+                    <div class="modal-overlay" onclick="cerrarModalFinalizacion('@ingresos.id_ingreso')"></div>
+                    <div class="Card-Ingreso card-ingreso-vehiculos">
+                        <span class="close-btn" onclick="cerrarModalFinalizacion('@ingresos.id_ingreso')">&times;</span>
+                        <h3>Finalizar Servicio de Vehículo</h3>
+
+                        <!-- Información del vehículo -->
+                        <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p><strong>Placa:</strong> @ingresos.placa</p>
+                            <p><strong>Cliente:</strong> @ingresos.nombre_cliente</p>
+                            <p><strong>Método de Pago:</strong> <span id="metodo-pago-final-@ingresos.id_ingreso">@(ingresos.metodo_pago ?? "No especificado")</span></p>
+                            <p style="margin-bottom: 0;"><strong>Estado Actual:</strong> @ingresos.estado_servicio</p>
+                        </div>
+
+                        <!-- Seleccionar estado final -->
+                        <div class="form-group-modal" style="margin-bottom: 20px;">
+                            <label>Estado del Servicio:</label>
+                            <select id="estado-servicio-@ingresos.id_ingreso" style="width:100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="finalizado">Finalizado</option>
+                                <option value="cancelado">Cancelado</option>
+                            </select>
+                        </div>
+
+                        <!-- Mostrar estado de pago -->
+                        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="margin: 0; color: #1976d2;"><strong>Estado de Pago: PAGADO ✓</strong></p>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="modal-actions" style="display: flex; gap: 10px;">
+                            <button type="button" class="btn btn-secondary" onclick="cerrarModalFinalizacion('@ingresos.id_ingreso')" style="flex: 1;">
+                                Cancelar
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="finalizarServicio('@ingresos.id_ingreso')" style="flex: 1;">
+                                <i class="fa-solid fa-check-circle"></i> Confirmar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             }
             </tbody>
         </table>
@@ -306,6 +367,7 @@
 
 @section Scripts {
     <script src="~/js/solicitudes.js" asp-append-version="true"></script>
+    <script src="~/js/pago.js" asp-append-version="true"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const fechaInicio = document.getElementById('fechaInicio');

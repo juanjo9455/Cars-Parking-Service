@@ -8,7 +8,7 @@ let tiempoFinServicio = null;
 
 // Variables para manejo de propina y totales
 let propinaActual = 0;
-const TARIFA_BASE = 30000;
+let tarifaActual = 0; // Será obtenida dinámicamente
 const INCREMENTO_PROPINA = 100;
 
 let idIngresoActual = null;
@@ -63,12 +63,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (btnPagar) {
         btnPagar.addEventListener('click', function () {
+            // Obtener tarifa dinámica antes de abrir modal
+            obtenerYestablecerTarifa();
             abrirModalPagar(modal, informacion1, informacion2);
         });
     }
 
     if (btnConfirmarPago) {
-        btnConfirmarPago.addEventListener('click', function () {
+        btnConfirmarPago.addEventListener('click', function (e) {
+            e.preventDefault(); // Prevenir cualquier acción por defecto
+            e.stopPropagation();
             Pagar(informacion1, informacion2);
         });
     }
@@ -101,6 +105,50 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log('✅ Inicialización completada');
 });
 
+// ============================================================
+// OBTENER TARIFA DINÁMICA
+// ============================================================
+
+function obtenerYestablecerTarifa() {
+    // Obtener la tarifa del hidden input (valor numérico directo)
+    const tarifaInput = document.getElementById('tarifaValor');
+    
+    if (tarifaInput && tarifaInput.value) {
+        tarifaActual = parseFloat(tarifaInput.value) || 0;
+    } else {
+        // Fallback: intentar parsear desde el texto mostrado (para compatibilidad)
+        const tarifaBaseText = document.getElementById('tarifa-base')?.textContent?.trim() || '0';
+        
+        let numeroLimpio = tarifaBaseText
+            .replace(/\$/g, '')           // Remover símbolo de moneda
+            .trim();                       // Remover espacios
+        
+        let numero = 0;
+        
+        // Detectar si tiene coma (separador decimal colombiano)
+        if (numeroLimpio.includes(',')) {
+            // Formato: "40.000,50" o "40.000,00"
+            numeroLimpio = numeroLimpio
+                .replace(/\./g, '')        // Remover puntos (separadores de miles)
+                .replace(',', '.');        // Cambiar coma por punto (decimal)
+            numero = Math.floor(parseFloat(numeroLimpio)) || 0;
+        } else if (numeroLimpio.includes('.') && numeroLimpio.lastIndexOf('.') > numeroLimpio.length - 4) {
+            // Formato: "40.000" (punto es separador de miles, no decimal)
+            numeroLimpio = numeroLimpio.replace(/\./g, ''); // Remover puntos
+            numero = parseInt(numeroLimpio) || 0;
+        } else {
+            // Formato: "40000" o "40000.00"
+            numero = Math.floor(parseFloat(numeroLimpio)) || 0;
+        }
+        
+        tarifaActual = numero;
+    }
+
+    console.log('💵 Tarifa obtenida:', tarifaActual);
+    
+    // Inicializar el total con la tarifa actual y propina actual
+    actualizarPropinayTotal();
+}
 
 // ============================================================
 // 3. GESTIÓN DE MODAL
@@ -128,7 +176,6 @@ function cerrarModalPagar() {
     }
 }
 
-
 // ============================================================
 // 4. GESTIÓN DE MÉTODOS DE PAGO
 // ============================================================
@@ -150,11 +197,13 @@ function actualizarPropinayTotal() {
         propinaElement.textContent = formatearMoneda(propinaActual);
     }
 
-    const totalNuevo = TARIFA_BASE + propinaActual;
+    const totalNuevo = tarifaActual + propinaActual;
     const totalElement = document.getElementById('total-value');
     if (totalElement) {
         totalElement.textContent = formatearMoneda(totalNuevo);
     }
+
+    console.log(`📊 Total actualizado: ${tarifaActual} + ${propinaActual} = ${totalNuevo}`);
 }
 
 function formatearMoneda(cantidad) {
@@ -162,8 +211,10 @@ function formatearMoneda(cantidad) {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
     });
-}
 
+
+
+}
 
 // ============================================================
 // 5. CONFIRMACIÓN Y PAGO
@@ -182,27 +233,94 @@ function confirmarYPagar(informacion1, informacion2) {
 }
 
 function Pagar(informacion1, informacion2) {
-    // Sincronizar método y total antes de mostrar
-    const metodoSeleccionado = document.querySelector('.metodo-btn.activo');
-    const totalTexto = document.getElementById('total-value')?.innerText ?? '$0';
+    console.log('🔄 Procesando pago...');
 
+    // Usar la tarifa que ya fue obtenida dinámicamente
+    const tarifaBase = tarifaActual;
+    const propina = parseInt(document.getElementById('select-propina')?.value || '0');
+    const total = tarifaBase + propina;
+    
+    // Obtener método de pago seleccionado
+    const metodoSeleccionado = document.querySelector('.metodo-btn.activo');
+    let metodoPago = 'Efectivo'; // default
+    
     if (metodoSeleccionado) {
-        const ico = metodoSeleccionado.querySelector('.ico')?.innerHTML ?? '💵';
-        const nombre = metodoSeleccionado.innerText.trim().split('\n').pop().trim();
-        const iconoEl = document.getElementById('confirmacion-metodo-icono');
-        const textoEl = document.getElementById('confirmacion-metodo-texto');
-        if (iconoEl) iconoEl.innerHTML = ico;
-        if (textoEl) textoEl.innerText = nombre;
+        const textoMetodo = metodoSeleccionado.innerText.trim().split('\n').pop().trim();
+        metodoPago = textoMetodo;
     }
 
-    const totalEl = document.getElementById('confirmacion-total');
-    if (totalEl) totalEl.innerText = totalTexto;
+    // Obtener ID ingreso
+    const idIngreso = document.getElementById('idIngreso')?.value;
 
-    // Cambiar pantalla
-    if (informacion1) informacion1.style.display = 'none';
-    if (informacion2) informacion2.style.display = 'flex';
+    if (!idIngreso) {
+        console.error('❌ ID de ingreso no encontrado');
+        alert('Error: No se pudo obtener el ID del ingreso');
+        return;
+    }
+
+    console.log('📊 Datos a guardar:');
+    console.log('  ID Ingreso:', idIngreso);
+    console.log('  Tarifa:', tarifaBase);
+    console.log('  Propina:', propina);
+    console.log('  Total:', total);
+    console.log('  Método:', metodoPago);
+
+    // Enviar datos al servidor
+    fetch('/Payment/GuardarPago', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams({
+            'idIngreso': idIngreso,
+            'tarifa': tarifaBase,
+            'propina': propina,
+            'metodoPago': metodoPago
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('✅ Pago guardado exitosamente');
+
+            // Si no pasaron informacion1/2 como parámetros, obtenerlas del DOM
+            const info1 = informacion1 || document.getElementById('informacion_1');
+            const info2 = informacion2 || document.getElementById('informacion_2');
+
+            // Sincronizar método y total en la pantalla de confirmación
+            const ico = metodoSeleccionado?.querySelector('.ico')?.innerHTML ?? '💵';
+            const iconoEl = document.getElementById('confirmacion-metodo-icono');
+            const textoEl = document.getElementById('confirmacion-metodo-texto');
+            
+            if (iconoEl) iconoEl.innerHTML = ico;
+            if (textoEl) textoEl.innerText = metodoPago;
+
+            // Mostrar total en la confirmación
+            const totalEl = document.getElementById('confirmacion-total');
+            if (totalEl) totalEl.innerText = formatearMoneda(total);
+
+            // Cambiar pantalla
+            if (info1) info1.style.display = 'none';
+            if (info2) {
+                info2.style.display = 'block';
+                // Aplicar flex si es necesario
+                setTimeout(() => {
+                    info2.style.display = 'flex';
+                }, 0);
+            }
+
+            console.log('✅ Pantalla de confirmación mostrada');
+        } else {
+            console.error('❌ Error:', data.message);
+            alert('Error al guardar pago: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error en fetch:', error);
+        alert('Error de conexión al guardar pago');
+    });
 }
-
 
 // ============================================================
 // 6. CONTADOR DE TIEMPO

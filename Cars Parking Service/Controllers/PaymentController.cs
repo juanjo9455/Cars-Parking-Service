@@ -43,6 +43,9 @@ namespace CarsParkingService.Controllers
             ViewBag.imagenUsuario = valet?.imagen_usuario ?? string.Empty;
             ViewBag.nombreUsuario = valet?.nombres ?? "Valet";
 
+            var ubicacion_Servicio = _context.ubicacion_servicios.Where(u => u.id_ubicacion == ingreso.id_ubicacion).FirstOrDefault();
+            ViewBag.tarifa = ubicacion_Servicio.valor_servicio;
+
             if (ingreso == null)
             {
                 return NotFound();
@@ -89,5 +92,51 @@ namespace CarsParkingService.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
+        [HttpPost]
+        [AllowAnonymous]
+        public IActionResult GuardarPago(int idIngreso, decimal tarifa, decimal propina, string metodoPago)
+        {
+            try
+            {
+                var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == idIngreso);
+                if (ingreso == null)
+                {
+                    return BadRequest(new { success = false, message = "Ingreso no encontrado" });
+                }
+
+                // Calcular el total
+                decimal total = tarifa + propina;
+
+                // Guardar los datos de pago en la BD
+                ingreso.valor_servicio = tarifa;
+                ingreso.valor_propina = propina;
+                ingreso.total_servicio = total;
+                ingreso.metodo_pago = metodoPago;
+
+                _context.SaveChanges();
+
+                // Log para debuggear
+                System.Diagnostics.Debug.WriteLine($"=== PAGO GUARDADO ===");
+                System.Diagnostics.Debug.WriteLine($"ID Ingreso: {idIngreso}");
+                System.Diagnostics.Debug.WriteLine($"Tarifa: {tarifa}");
+                System.Diagnostics.Debug.WriteLine($"Propina: {propina}");
+                System.Diagnostics.Debug.WriteLine($"Total: {total}");
+                System.Diagnostics.Debug.WriteLine($"Método: {metodoPago}");
+
+                // Mostrar la segunda pantalla del modal
+                return Ok(new 
+                { 
+                    success = true, 
+                    message = "Pago guardado exitosamente",
+                    total = total,
+                    metodo = metodoPago
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error guardando pago: {ex.Message}");
+                return BadRequest(new { success = false, message = "Error al guardar el pago" });
+            }
+        }
     }
 }
