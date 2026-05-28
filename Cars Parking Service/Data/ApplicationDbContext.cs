@@ -16,5 +16,6 @@ namespace CarsParkingService.Data
         public DbSet<ingresos> ingresos { get; set; }
         public DbSet<imagenes> imagenes { get; set; }
         public DbSet<configuraciones> configuraciones { get; set; }
+        public DbSet<sesiones> sesiones { get; set; }
     }
 }

@@ -10,21 +10,78 @@
         </div>
     </div>
 
-        @if (ViewBag.MostrarRoles == true)
-        {
+        @if (ViewBag.MostrarRoles == true) {
             <h1 class="login-title">Ingresar al sistema</h1>
+
             <form method="post" asp-action="CambiarRol">
+
+                <!-- SELECT DE ROLES -->
                 <div class="input-group">
-                    <select name="id_rol" class="form-control">
+
+                    <select name="id_rol"
+                            class="form-control"
+                            id="selectRol"
+                            onchange="mostrarCamposRol()">
 
                         @foreach (var rol in ViewBag.Roles)
                         {
-                            <option value="@rol.id_rol">@rol.nombre_rol</option>
+                            <option value="@rol.id_rol">
+                                @rol.nombre_rol
+                            </option>
                         }
+
                     </select>
+
                 </div>
 
-                <button type="submit" class="login-btn">Iniciar</button>
+
+                <!-- CONTENEDOR PARQUEADERO -->
+                <div
+                     id="contenedorParqueadero"
+                     style="display:none;">
+
+                    <select name="id_parqueadero" class="form-control">
+                        <option value="" disabled selected hidden>
+                            Selecciona un parqueadero
+                        </option>
+                        @foreach (var parqueadero in ViewBag.Parqueaderos)
+                        {
+
+                            <option value="@parqueadero.id_parqueadero">
+                                @parqueadero.nombre_parqueadero
+                            </option>
+                        }
+
+                    </select>
+
+                </div>
+
+
+                <!-- CONTENEDOR UBICACIONES -->
+                <div
+                     id="contenedorUbicacion"
+                     style="display:none;">
+
+                    <select name="id_ubicaciones" class="form-control">
+
+                        <option value="" disabled selected hidden>
+                            Selecciona una ubicación
+                        </option>
+                        @foreach (var ubicacion in ViewBag.Ubicaciones)
+                        {
+                            <option value="@ubicacion.id_ubicacion">
+                                @ubicacion.nombre_ubicacion
+                            </option>
+                        }
+
+                    </select>
+
+                </div>
+
+                <button type="submit" class="login-btn">
+                    Iniciar
+                </button>
+
             </form>
         }
         else

@@ -33,6 +33,73 @@ namespace CarsParkingService.Controllers
             return View();
         }
 
+        // =================== vista key =================== //
+
+        // GET: /Home/VistaKey
+        [HttpGet]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult VistaKey(string placa, string estado_servicio)
+        {
+            var idUsuarioSesion = HttpContext.Session.GetInt32("id");
+            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+
+            // Verificar que sea rol Key (4) o Admin (3)
+            if (!idUsuarioSesion.HasValue || (rolUsuario != 4 && rolUsuario != 3))
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            var query = _context.ingresos
+                .Include(i => i.Valet)
+                .Include(i => i.Banco)
+                .AsQueryable();
+
+            // Aplicar Filtros básicos si existen
+            if (!string.IsNullOrEmpty(placa))
+            {
+                query = query.Where(i => i.placa.Contains(placa.Trim().ToUpper()));
+            }
+
+            if (!string.IsNullOrEmpty(estado_servicio))
+            {
+                query = query.Where(i => i.estado_servicio == estado_servicio);
+            }
+
+            var ingresos = query
+                .AsEnumerable()
+                // Ordenamos: Primero los "solicitado" (para la cola visual), luego por fecha descendente
+                .OrderByDescending(i => i.estado_servicio?.Trim().ToLower() == "solicitado")
+                .ThenByDescending(i => i.fecha_ingreso)
+                .ToList();
+
+            ViewData["FiltroPlaca"] = placa;
+            ViewData["FiltroEstado"] = estado_servicio;
+
+            return View(ingresos);
+        }
+
+        // POST: Cambiar el estado desde la vista Key
+        [HttpPost]
+        public IActionResult ActualizarEstadoKey(int id_ingreso, string nuevo_estado)
+        {
+            var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
+            if (ingreso != null)
+            {
+                ingreso.estado_servicio = nuevo_estado;
+
+                if (nuevo_estado == "despachado")
+                {
+                    ingreso.fecha_salida = DateTime.Now;
+                }
+
+                _context.SaveChanges();
+            }
+
+            // Lo retornamos a la vista
+            return RedirectToAction("VistaKey");
+        }
+
+
         // Metodo para obtener las solicitudes de ingresos de vehiculos en estado "solicitado" para el valet y banco
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -110,6 +177,73 @@ namespace CarsParkingService.Controllers
                 cantidad = cantidad,
                 solicitudes = solicitudes,
                 serverTime = DateTime.Now.ToString("O")
+            });
+        }
+
+        [HttpGet]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult ObtenerEnCurso()
+        {
+            // Obtenemos usuario y rol
+            var idUsuario = HttpContext.Session.GetInt32("id");
+            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+
+            // Consulta base
+            var query = _context.ingresos
+                .Include(i => i.Valet)
+                .Include(i => i.Banco)
+                .Where(i =>
+                    i.estado_servicio != null &&
+                    i.estado_servicio.Trim().ToLower() == "en curso"
+                )
+                .AsQueryable();
+
+            // Filtrado por rol
+            if (idUsuario.HasValue)
+            {
+                // Valet
+                if (rolUsuario == 1)
+                {
+                    query = query.Where(i => i.id_valet == idUsuario.Value);
+                }
+
+                // Banco
+                else if (rolUsuario == 2)
+                {
+                    query = query.Where(i => i.id_banco == idUsuario.Value);
+                }
+
+                // Otros roles
+                else if (rolUsuario != 3)
+                {
+                    query = query.Where(i =>
+                        i.id_valet == idUsuario.Value ||
+                        i.id_banco == idUsuario.Value
+                    );
+                }
+            }
+
+            // Convertimos datos
+            var enCurso = query
+                .Select(i => new
+                {
+                    id = i.id_ingreso,
+                    placa = i.placa,
+
+                    nombre_valet = i.Valet != null
+                        ? i.Valet.nombres
+                        : "Sin valet",
+
+                    nombre_banco = i.Banco != null
+                        ? i.Banco.nombres
+                        : "Sin banco"
+                })
+                .ToList();
+
+            return Json(new
+            {
+                cantidad = enCurso.Count(),
+                vehiculos = enCurso
             });
         }
 

@@ -1,0 +1,99 @@
+/* ===================== Panel Key ===================== */
+
+/* Animación y énfasis para el estado SOLICITADO */
+.alerta-solicitado {
+    border-left: 5px solid #d32f2f !important;
+    background-color: #fff8f8 !important;
+    animation: flashInfoKey 2.5s infinite;
+}
+
+@keyframes flashInfoKey {
+    0% {
+        background-color: #ffffff;
+    }
+
+    50% {
+        background-color: #ffeaea;
+    }
+
+    100% {
+        background-color: #ffffff;
+    }
+}
+
+.alerta-solicitado td {
+    color: #b71c1c;
+}
+
+/* Modificamos los badges predeterminados de tu site.css para el Key, 
+   si quieres que destaquen más dependiendo su contexto */
+.alerta-solicitado .status-pendiente {
+    background: #d32f2f;
+    color: white;
+    box-shadow: 0px 0px 8px rgba(211, 47, 47, 0.4);
+}
+
+/* Estilos de botones tipo icono (Acciones) */
+.actions-form {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-icon {
+    border: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #f1f1f1;
+    color: #555;
+}
+
+.btn-icon:hover {
+    transform: scale(1.1);
+}
+
+.btn-icon-success {
+    background-color: rgba(76, 175, 80, 0.15);
+    color: #2e7d32;
+}
+
+.btn-icon-success:hover {
+    background-color: #4CAF50;
+    color: white;
+    box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+}
+
+.btn-icon-warning {
+    background-color: rgba(255, 152, 0, 0.15);
+    color: #e65100;
+}
+
+.btn-icon-warning:hover {
+    background-color: #FF9800;
+    color: white;
+    box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
+}
+
+.btn-icon-info {
+    margin-left: 8px;
+    background-color: rgba(33, 150, 243, 0.15);
+    color: #1565c0;
+}
+
+.btn-icon-info:hover {
+    background-color: #2196F3;
+    color: white;
+    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+}
+
+/* Evitar que td Acciones crezca desproporcionado */
+.cell-action {
+    white-space: nowrap;
+}

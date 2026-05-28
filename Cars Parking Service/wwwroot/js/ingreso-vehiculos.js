@@ -6,7 +6,7 @@
     const submitBtn = document.getElementById('acceder');
     const noValuablesBtn = document.getElementById('noValuablesBtn');
     const notasInput = document.getElementById('notas');
-    const btnObjetosImagenes = document.getElementById("values");
+    const btnObjetosImagenes = document.getElementById("tomarFotoBtn");
     const sinObjetosHidden = document.getElementById('sin_objetos_valor_hidden');
     let firmando = false;
     let firmaRealizada = false;

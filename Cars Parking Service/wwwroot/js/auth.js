@@ -1,5 +1,8 @@
 ﻿document.addEventListener("DOMContentLoaded", function () {
 
+    // Metodo para validar roles con parqueaderos y ubicaciones
+    mostrarCamposRol();
+
     // Utilidades de validacion
     function showError(input, errorEl) {
         input.classList.add('input-error');
@@ -427,3 +430,39 @@
         }
     }
 });
+
+// Validacion de roles con parqueaderos y ubicaciones
+function mostrarCamposRol() {
+
+    // Obtenemos el select de roles
+    const selectRol = document.getElementById('selectRol');
+
+    // Contenedores
+    const contenedorParqueadero = document.getElementById('contenedorParqueadero');
+    const contenedorUbicacion = document.getElementById('contenedorUbicacion');
+
+    // Si no existe el bloque en esta vista, no hacemos nada
+    if (!selectRol || !contenedorParqueadero || !contenedorUbicacion) {
+        return;
+    }
+
+    // Valor seleccionado
+    const rolSeleccionado = selectRol.value;
+
+    // Ocultamos todo primero
+    contenedorParqueadero.style.display = 'none';
+    contenedorUbicacion.style.display = 'none';
+
+    // 1 = valet
+    // 2 = banco
+    // 4 = key
+    if (rolSeleccionado == 2) {
+        contenedorUbicacion.style.display = 'block';
+    }
+    else if (rolSeleccionado == 4) {
+        contenedorParqueadero.style.display = 'block';
+    }
+}
+
+// Exponerla globalmente para usarla desde onchange en Razor
+window.mostrarCamposRol = mostrarCamposRol;

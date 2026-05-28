@@ -32,7 +32,6 @@
         <button class="notif-act" onclick="VehiculoBurbuja.openFromNotif()">Ver ahora</button>
     </div>
 </div>
-
 <!-- Burbuja ovalada -->
 <div class="bubble" id="vehiculoBubble"
      onclick="abrirPanelSolicitudes()"
@@ -66,7 +65,7 @@
             <div class="stat-lbl">Solicitados</div>
         </div>
         <div class="stat-cell">
-            <div class="stat-num green" id="statActv">0</div>
+            <div class="stat-num green" id="statActv"></div>
             <div class="stat-lbl">En curso</div>
         </div>
         <div class="stat-cell">
@@ -75,16 +74,41 @@
         </div>
     </div>
 
-    <div class="panel-split">
-        <div class="panel-split-col">
-            <div class="panel-split-title">Solicitados</div>
-            <div class="panel-list" id="panelPendingList"></div>
-        </div>
+    <div class="tabs-nav" role="tablist">
+        <button class="tab-btn active" role="tab" aria-selected="true"
+                aria-controls="tab-solicitados" id="btn-solicitados"
+                onclick="switchTab('solicitados')">
+            Solicitados
+            <span class="tab-badge" id="badge-solicitados"></span>
+        </button>
+        <button class="tab-btn" role="tab" aria-selected="false"
+                aria-controls="tab-encurso" id="btn-encurso"
+                onclick="switchTab('encurso')">
+            En curso
+            <span class="tab-badge" id="badge-encurso"></span>
+        </button>
     </div>
 
-    <div class="panel-empty" id="panelEmpty">
-        <i class="fa-solid fa-car-side"></i>
-        <span>Sin solicitudes en este estado</span>
+    <div class="tab-content active" id="tab-solicitados" role="tabpanel" aria-labelledby="btn-solicitados">
+
+        <div class="panel-list" id="panelPendingList"></div>
+
+        <div class="panel-empty" id="panelEmpty">
+            <i class="fa-solid fa-car-side"></i>
+            <span>Sin solicitudes en este estado</span>
+        </div>
+
+    </div>
+
+    <div class="tab-content" id="tab-encurso" role="tabpanel" aria-labelledby="btn-encurso">
+
+        <div class="panel-list" id="panelActiveList"></div>
+
+        <div class="panel-empty" id="panelEmptyEnCurso">
+            <i class="fa-solid fa-car-side"></i>
+            <span>Sin vehiculos en este estado</span>
+        </div>
+
     </div>
 
 </div>

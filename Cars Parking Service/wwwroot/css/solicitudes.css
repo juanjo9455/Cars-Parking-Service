@@ -608,3 +608,51 @@
 .req-toast i {
     font-size: 15px;
 }
+
+/* Pestañas para solicitudes y vehiculos en curso */
+
+.tabs-nav {
+    display: flex;
+    border-bottom: 0.5px solid #ddd;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    color: #888;
+    border-bottom: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.tab-btn.active {
+    color: #111;
+    font-weight: 500;
+    border-bottom: 2px solid #111;
+}
+
+.tab-badge {
+    background: #f0f0f0;
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-size: 11px;
+}
+
+.tab-btn.active .tab-badge {
+    background: #111;
+    color: #fff;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}

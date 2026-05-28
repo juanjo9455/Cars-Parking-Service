@@ -32,6 +32,13 @@ namespace CarsParkingService.Controllers
         {
             if (!string.IsNullOrEmpty(HttpContext.Session.GetString("dni")))
             {
+                // Validamos si es el rol 4 (Key) para llevarlo a su vista, de lo contrario va al Index
+                var rolActivo = HttpContext.Session.GetInt32("id_rol");
+                if (rolActivo == 4)
+                {
+                    return RedirectToAction("VistaKey", "Home");
+                }
+
                 return RedirectToAction("Index", "Home");
             }
 
@@ -39,8 +46,7 @@ namespace CarsParkingService.Controllers
             HttpContext.Response.Headers["Pragma"] = "no-cache";
             HttpContext.Response.Headers["Expires"] = "-1";
 
-            ViewBag.Roles = _context.roles
-            .ToList();
+            ViewBag.Roles = _context.roles.ToList();
 
             return View();
         }
@@ -317,6 +323,8 @@ namespace CarsParkingService.Controllers
             else {
 
                 ViewBag.Roles = _context.roles.Where(r => r.id_rol != 3).ToList();
+                ViewBag.Parqueaderos = _context.parqueaderos.ToList();
+                ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
 
             }
 
@@ -324,44 +332,93 @@ namespace CarsParkingService.Controllers
         }
 
         [HttpPost]
-        public IActionResult cambiarRol(int id_rol) {
-
+        public IActionResult cambiarRol(int id_rol, int id_parqueadero, int id_ubicacion)
+        {
             var userId = HttpContext.Session.GetInt32("id_usuario");
 
-            if (userId == null) { 
-            
+            if (userId == null)
+            {
                 return RedirectToAction("Login");
-
             }
 
-            var user = _context.usuarios.FirstOrDefault(u => u.id_usuario == userId);
+            var user = _context.usuarios
+                .FirstOrDefault(u => u.id_usuario == userId);
 
-            if (user == null) { 
-            
+            if (user == null)
+            {
                 return RedirectToAction("Login");
-
             }
 
-            // Actualizamos el rol
+            // Actualizamos el rol actual del usuario
             user.id_rol = id_rol;
+
+            // ==============================
+            // CREAR REGISTRO DE SESIÓN
+            // ==============================
+
+            var sesion = new sesiones
+            {
+                id_usuario = user.id_usuario,
+                id_rol = id_rol,
+
+                // Si es Key guardamos parqueadero
+                id_parqueadero = id_rol == 4
+                    ? id_parqueadero
+                    : null,
+
+                // Si es Banco guardamos ubicación
+                id_ubicacion = id_rol == 2
+                    ? id_ubicacion
+                    : null,
+
+                fecha_inicio = DateTime.Now,
+
+                // Aún no termina turno
+                fecha_fin = null
+            };
+
+            // Agregamos a la BD
+            _context.sesiones.Add(sesion);
+
+            // Guardamos TODO
             _context.SaveChanges();
 
-            // Guardamos el usuario en la sesión
+            // ==============================
+            // SESIÓN DEL SISTEMA
+            // ==============================
+
             HttpContext.Session.SetInt32("id", user.id_usuario);
             HttpContext.Session.SetInt32("id_rol", id_rol);
+
             HttpContext.Session.SetString("dni", user.dni ?? "");
             HttpContext.Session.SetString("nombre", user.nombres ?? "");
             HttpContext.Session.SetString("apellido", user.apellidos ?? "");
             HttpContext.Session.SetString("correo", user.correo ?? "");
 
+            // Guardar también lugar de trabajo
+            HttpContext.Session.SetInt32("id_parqueadero", id_parqueadero);
+            HttpContext.Session.SetInt32("id_ubicacion", id_ubicacion);
+
             // Imagen
             if (!string.IsNullOrEmpty(user.imagen_usuario))
             {
-                HttpContext.Session.SetString("imagen_usuario_url", user.imagen_usuario);
+                HttpContext.Session.SetString(
+                    "imagen_usuario_url",
+                    user.imagen_usuario
+                );
             }
 
-            // limpiar temporal
+            // Limpiar temporal
             HttpContext.Session.Remove("id_usuario");
+
+            // ==============================
+            // REDIRECCIONES
+            // ==============================
+
+            if (id_rol == 4)
+            {
+                return RedirectToAction("VistaKey", "Home");
+            }
 
             return RedirectToAction("Index", "Home");
         }

@@ -99,15 +99,6 @@ body {
     border-color: #2e7d32;
 }
 
-/* El select muestra el color #999 si no se ha elegido opción válida */
-.input-group select:invalid {
-    color: #999;
-}
-
-.input-group select:valid {
-    color: #333;
-}
-
 /* ===== Validacion - Estados de error y exito ===== */
 .input-group input.input-error {
     border-color: #d32f2f;

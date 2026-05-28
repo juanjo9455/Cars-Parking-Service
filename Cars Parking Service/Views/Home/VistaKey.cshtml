@@ -1,0 +1,117 @@
+﻿@model IEnumerable<CarsParkingService.Models.ingresos>
+@{
+    ViewData["Title"] = "Panel de Parqueadero (Key)";
+}
+
+<link rel="stylesheet" href="~/css/vistakey.css" />
+
+<div class="container mt-4">
+    <!-- Header tipo Tabla_Vehiculos -->
+    <div class="header">
+        <div class="header-info">
+            <h2>Control de Parqueadero</h2>
+            <p>Gestión de vehículos en la sucursal</p>
+        </div>
+    </div>
+
+    <!-- Filtros de búsqueda (Usando search-section de Site.css) -->
+    <p style="color: #857D7B;">Filtrar vehículos</p>
+    <div class="search-section mb-4">
+        <form method="get" action="@Url.Action("VistaKey", "Home")" class="row">
+            <div class="form-group col-md-4 mb-3">
+                <label>Placa</label>
+                <input type="text" name="placa" value="@ViewData["FiltroPlaca"]" placeholder="Buscar Placa..." style="text-transform: uppercase;">
+            </div>
+            
+            <div class="form-group col-md-4 mb-3">
+                <label>Estado Servicio</label>
+                <select name="estado_servicio" style="width:100%;">
+                    <option value="">Todos los estados</option>
+                    <option value="solicitado" selected="@(ViewData["FiltroEstado"]?.ToString() == "solicitado")">Solicitado (Prioridad)</option>
+                    <option value="activo" selected="@(ViewData["FiltroEstado"]?.ToString() == "activo")">Activo</option>
+                    <option value="parqueado" selected="@(ViewData["FiltroEstado"]?.ToString() == "parqueado")">Parqueado</option>
+                    <option value="despachado" selected="@(ViewData["FiltroEstado"]?.ToString() == "despachado")">Despachado</option>
+                </select>
+            </div>
+
+            <div class="col-12 mt-2 d-flex justify-content-end gap-2">
+                <button type="submit" class="btn btn-primary px-4">
+                    <span class="btn-text">Buscar</span>
+                </button>
+                <a href="@Url.Action("VistaKey", "Home")" class="btn btn-secondary px-4">
+                    <span class="btn-text">Limpiar</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla de vehículos -->
+    <div class="table-container">
+        <table class="tabla-key">
+            <thead>
+                <tr>
+                    <th>Placa</th>
+                    <th>Estado</th>
+                    <th>Valet Asignado</th>
+                    <th>Banco Asignado</th>
+                    <th>Fecha Ingreso</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    // Alerta roja si es solicitado
+                    var claseAlerta = (item.estado_servicio?.Trim().ToLower() == "solicitado") ? "alerta-solicitado" : "";
+
+                    <tr class="@claseAlerta">
+                        <td class="fw-bold" data-label="Placa">@item.placa</td>
+                        <td data-label="Estado">
+                            <span class="status-badge @(item.estado_servicio == "solicitado" ? "status-pendiente" : item.estado_servicio == "parqueado" ? "status-pagado" : "status-en-uso")">
+                                @item.estado_servicio?.ToUpper()
+                            </span>
+                        </td>
+                        <td data-label="Valet Asignado">@(item.Valet?.nombres ?? "N/A")</td>
+                        <td data-label="Banco Asignado">@(item.Banco?.nombres ?? "N/A")</td>
+                        <td data-label="Fecha Ingreso">@item.fecha_ingreso?.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td data-label="Acciones" class="cell-action">
+                            
+                            <form method="post" action="@Url.Action("ActualizarEstadoKey", "Home")" class="d-inline actions-form">
+                                <input type="hidden" name="id_ingreso" value="@item.id_ingreso" />
+                                
+                                @if (item.estado_servicio != "parqueado" && item.estado_servicio != "despachado")
+                                {
+                                    <button type="submit" name="nuevo_estado" value="parqueado" class="btn-icon btn-icon-success" title="Marcar como Parqueado">
+                                        <i class="fa-solid fa-square-parking"></i>
+                                    </button>
+                                }
+                                
+                                @if (item.estado_servicio != "despachado")
+                                {
+                                    <button type="submit" name="nuevo_estado" value="despachado" class="btn-icon btn-icon-warning" title="Marcar como Despachado" onclick="return confirm('¿Seguro que el vehículo salió del parqueadero?');">
+                                        <i class="fa-solid fa-right-from-bracket"></i>
+                                    </button>
+                                }
+                            </form>
+
+                            <button type="button" class="btn-icon btn-icon-info" title="Ver Info/Notas" onclick="verInfoExtra('@item.placa', '@(item.notas ?? "Sin notas")')">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+                
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center" style="padding: 30px; color:#888;">
+                            No se encontraron vehículos.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="~/js/vistakey.js"></script>

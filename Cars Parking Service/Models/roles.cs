@@ -8,6 +8,6 @@ namespace CarsParkingService.Models
     {
         [Key]
         public int id_rol { get; set; }
-        public string nombre_rol { get; set; }
+        public string? nombre_rol { get; set; }
     }
 }
