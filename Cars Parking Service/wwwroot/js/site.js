@@ -1092,3 +1092,391 @@ document.addEventListener('DOMContentLoaded', function () {
         reader.readAsDataURL(file);
     });
 });
+
+
+// =========================== Eventos para asignar valet al servicio sin valet ============================ \\
+function abrirModalValet() {
+
+    const modalValet = document.getElementById('modal-valet');
+
+    if (modalValet) {
+
+        modalValet.style.display = "block";
+
+    }
+
+}
+
+function cerrarModalValet() {
+
+    const modalValet = document.getElementById('modal-valet');
+
+    if (modalValet) {
+
+        modalValet.style.display = "none";
+
+    }
+
+}
+
+// =========================== Eventos para pagar el servicio ============================ \\
+
+// =========================== Flujo Pago y Finalización =========================== \\
+
+// Abrir modal de pago
+function abrirModalPago(idIngreso, placa, nombreCliente) {
+    const modal = document.getElementById(`modal-pago-${idIngreso}`);
+
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+// Cerrar modal de pago
+function cerrarModalPago(idIngreso) {
+    const modal = document.getElementById(`modal-pago-${idIngreso}`);
+
+    if (modal) {
+        modal.style.display = 'none';
+        limpiarModalPago(idIngreso);
+    }
+}
+
+// Cerrar modal de finalización
+function cerrarModalFinalizacion(idIngreso) {
+    const modal = document.getElementById(`modal-${idIngreso}`);
+
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Limpiar modal de pago
+function limpiarModalPago(idIngreso) {
+
+    const codigoValidacion = document.getElementById(`codigo-validacion-${idIngreso}`);
+
+    if (codigoValidacion) {
+        codigoValidacion.value = '';
+    }
+
+    const codigoGenerado = document.getElementById(`codigo-generado-${idIngreso}`);
+
+    if (codigoGenerado) {
+        codigoGenerado.style.display = 'none';
+    }
+
+    const validacionContenedor = document.getElementById(`validacion-contenedor-${idIngreso}`);
+
+    if (validacionContenedor) {
+        validacionContenedor.style.display = 'none';
+    }
+
+    const btnContenedor = document.getElementById(`btn-generar-contenedor-${idIngreso}`);
+
+    if (btnContenedor) {
+
+        btnContenedor.style.display = 'block';
+
+        const btnGenerar = btnContenedor.querySelector('button');
+
+        if (btnGenerar) {
+            btnGenerar.disabled = false;
+            btnGenerar.innerHTML = '<i class="fa-solid fa-key"></i> Generar Código de Seguridad';
+        }
+    }
+
+    const metodoSelect = document.getElementById(`metodo-pago-${idIngreso}`);
+
+    if (metodoSelect) {
+        metodoSelect.disabled = false;
+    }
+}
+
+// Generar código de seguridad
+function generarCodigoSeguridad(idIngreso) {
+
+    const metodoSelect = document.getElementById(`metodo-pago-${idIngreso}`);
+
+    if (!metodoSelect) return;
+
+    const metodoPago = metodoSelect.value;
+
+    if (!metodoPago) {
+        alert('Selecciona un método de pago');
+        return;
+    }
+
+    const btnContenedor = document.getElementById(`btn-generar-contenedor-${idIngreso}`);
+    const btnGenerar = btnContenedor?.querySelector('button');
+    const otroCodigo = document.getElementById("OtroCodigo");
+
+    if (otroCodigo) {
+
+        otroCodigo.style
+
+    }
+
+    if (btnGenerar) {
+        btnGenerar.disabled = true;
+    }
+
+    fetch(`/Home/GenerarCodigoSeguridad?id=${idIngreso}&metodoPago=${metodoPago}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+
+        if (data.success) {
+
+            const codigoValor = document.getElementById(`codigo-valor-${idIngreso}`);
+            const codigoGenerado = document.getElementById(`codigo-generado-${idIngreso}`);
+            const validacionContenedor = document.getElementById(`validacion-contenedor-${idIngreso}`);
+            const metodoPagoActual = document.getElementById(`metodo-pago-actual-${idIngreso}`);
+
+            if (codigoValor) {
+                codigoValor.textContent = data.codigo;
+            }
+
+            if (codigoGenerado) {
+                codigoGenerado.style.display = 'none';
+            }
+
+            if (validacionContenedor) {
+                validacionContenedor.style.display = 'block';
+            }
+
+            if (btnContenedor) {
+                btnContenedor.style.display = 'none';
+            }
+
+            if (metodoPagoActual) {
+                metodoPagoActual.textContent = metodoPago;
+            }
+
+            metodoSelect.disabled = true;
+
+            const contadorElemento =
+                document.getElementById(`contador-codigo-${idIngreso}`);
+
+            let tiempoRestante = 60;
+
+            const intervalo = setInterval(() => {
+
+                contadorElemento.textContent =
+                    `El código expira en ${tiempoRestante}s`;
+
+                tiempoRestante--;
+
+                if (tiempoRestante < 0) {
+
+                    clearInterval(intervalo);
+
+                   eliminarCodigoSeguridad(idIngreso);
+
+                }
+            }, 1000);
+
+        } else {
+
+            alert('Error: ' + (data.message || 'No se pudo generar el código'));
+
+            if (btnGenerar) {
+                btnGenerar.disabled = false;
+            }
+        }
+
+    })
+    .catch(error => {
+
+        console.error('Error:', error);
+
+        alert('Error al generar el código de seguridad');
+
+        if (btnGenerar) {
+            btnGenerar.disabled = false;
+        }
+    });
+}
+
+function eliminarCodigoSeguridad(idIngreso) {
+
+    fetch(`/Home/EliminarCodigoSeguridad?id=${idIngreso}`, {
+        method: 'POST'
+    })
+        .then(response => response.json())
+        .then(data => {
+
+            if (data.success) {
+
+                const codigoValor =
+                    document.getElementById(`codigo-valor-${idIngreso}`);
+
+                const codigoGenerado =
+                    document.getElementById(`codigo-generado-${idIngreso}`);
+
+                const contadorElemento =
+                    document.getElementById(`contador-codigo-${idIngreso}`);
+
+                if (codigoValor) {
+                    codigoValor.textContent = '------';
+                }
+
+                if (contadorElemento) {
+                    contadorElemento.textContent = 'Código expirado';
+                }
+
+                if (codigoGenerado) {
+
+                    setTimeout(() => {
+
+                        codigoGenerado.style.display = 'none';
+
+                    }, 1500);
+
+                }
+
+            } else {
+
+                console.error('No se pudo eliminar el código');
+
+            }
+
+        })
+        .catch(error => {
+
+            console.error('Error eliminando código:', error);
+
+        });
+}
+
+// Validar código y abrir modal final
+function validarCodigoYAbrir(idIngreso, modalId) {
+
+    const codigoInput = document.getElementById(`codigo-validacion-${idIngreso}`);
+
+    if (!codigoInput) return;
+
+    const codigoIngresado = codigoInput.value;
+
+    if (!codigoIngresado || codigoIngresado.length !== 6) {
+        alert('Ingresa un código válido de 6 dígitos');
+        return;
+    }
+
+    const btnValidar = document.querySelector(
+        `#modal-pago-${idIngreso} button[onclick*="validarCodigoYAbrir"]`
+    );
+
+    if (btnValidar) {
+        btnValidar.disabled = true;
+        btnValidar.innerHTML = 'Validando...';
+    }
+
+    fetch(`/Home/ValidarCodigoSeguridad?id=${idIngreso}&codigo=${codigoIngresado}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+
+            if (data.success) {
+
+                cerrarModalPago(idIngreso);
+
+                const modalFinalizacion = document.getElementById(modalId);
+
+                if (modalFinalizacion) {
+                    modalFinalizacion.style.display = 'flex';
+                }
+
+            } else {
+
+                alert('Error: ' + (data.message || 'Código inválido o expirado'));
+
+                if (btnValidar) {
+                    btnValidar.disabled = false;
+                    btnValidar.innerHTML = '✓ Validar y Continuar';
+                }
+            }
+
+        })
+        .catch(error => {
+
+            console.error('Error:', error);
+
+            alert('Error al validar el código');
+
+            if (btnValidar) {
+                btnValidar.disabled = false;
+                btnValidar.innerHTML = '✓ Validar y Continuar';
+            }
+        });
+}
+
+// Finalizar servicio
+function finalizarServicio(idIngreso) {
+
+    const estadoServicioSelect = document.getElementById(`estado-servicio-${idIngreso}`);
+
+    if (!estadoServicioSelect) return;
+
+    const estadoServicio = estadoServicioSelect.value;
+
+    if (!estadoServicio) {
+        alert('Selecciona un estado para el servicio');
+        return;
+    }
+
+    const btnConfirmar = document.querySelector(
+        `#modal-${idIngreso} button[onclick*="finalizarServicio"]`
+    );
+
+    if (btnConfirmar) {
+        btnConfirmar.disabled = true;
+        btnConfirmar.innerHTML = 'Procesando...';
+    }
+
+    fetch(`/Home/FinalizarServicio?id=${idIngreso}&estadoServicio=${estadoServicio}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+
+            if (data.success) {
+
+                alert('Servicio finalizado con éxito');
+
+                location.reload();
+
+            } else {
+
+                alert('Error: ' + (data.message || 'No se pudo finalizar el servicio'));
+
+                if (btnConfirmar) {
+                    btnConfirmar.disabled = false;
+                    btnConfirmar.innerHTML = '✓ Confirmar';
+                }
+            }
+
+        })
+        .catch(error => {
+
+            console.error('Error:', error);
+
+            alert('Error al finalizar el servicio');
+
+            if (btnConfirmar) {
+                btnConfirmar.disabled = false;
+                btnConfirmar.innerHTML = '✓ Confirmar';
+            }
+        });
+}

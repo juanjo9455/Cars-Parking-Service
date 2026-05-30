@@ -159,7 +159,8 @@
         <!-- Selección de Valet -->
         <div class="input-group">
                 <select name="id_valet" id="id_valet" style="width:100%;" required>
-                <option value="">Selecciona un Valet</option>
+                <option value="">Selecciona un valet</option>
+                <option value="">Aun sin valet</option>
                 @foreach(var valet in ViewBag.Valets){
                     <option value="@valet.id_usuario">@valet.nombres @valet.apellidos</option>
                 }

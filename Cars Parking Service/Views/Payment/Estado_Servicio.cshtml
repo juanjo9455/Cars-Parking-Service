@@ -69,7 +69,7 @@
             @if (Model?.estado_servicio == "solicitado")
             {
                 <button class="btn-pagar" id="btn-pagar">
-                    <span>🔒</span> Pagar
+                    <span>🔒</span> Solicitar Pago
                 </button>
             }
             else
@@ -87,11 +87,11 @@
         <div class="confirmacion">
             <div class="confirmacion-header">
                 <div class="check-circle">✓</div>
-                <h2 class="confirmacion-titulo">¡Solicitud Enviada!</h2>
+                <h2 class="confirmacion-titulo">¡Enviar Solicitud!</h2>
                 <p class="confirmacion-sub">
-                    Hemos notificado a nuestro equipo que has solicitado tu vehículo.
+                    Se notificará a nuestro equipo que has solicitado tu vehículo.
                     En breve, será llevado hasta tu ubicación.
-
+                    <br/>
                     Te avisaremos en cuanto esté listo para ti.
                 </p>
 
@@ -111,13 +111,17 @@
 <div class="modal-pagar oculto" id="modal-pagar">
 
     <!-- Pantalla 1: Resumen y pago -->
-    <div class="informacion" id="informacion_1" style="position:relative;">
-        <button type="button"
-                aria-label="Cerrar"
-                onclick="cerrarModalPagar()"
-                style="position:absolute;top:12px;right:12px;width:34px;height:34px;border:none;border-radius:50%;background:rgba(0,0,0,0.6);color:#fff;font-size:22px;line-height:1;z-index:20;cursor:pointer;">
-            &times;
-        </button>
+    <div class="informacion" id="informacion_1"
+         style="position:relative; display:@(Model?.estado_servicio == "solicitado" ? "none" : "block")">
+    <button type="button"
+            aria-label="Cerrar"
+            onclick="cerrarModalPagar()"
+            class="btn-cerrar-modal"
+            style="position:absolute;top:12px;right:12px;width:34px;height:34px;
+        border:none;border-radius:50%;background:rgba(0,0,0,0.6);
+        color:#fff;font-size:22px;line-height:1;z-index:20;cursor:pointer;">
+        &times;
+    </button>
 
         <div class="header-tiempo">
             <div class="conductor-section">
@@ -164,20 +168,20 @@
             <div class="pago-section">
                 <div class="pago-titulo">Método de pago</div>
                 <div class="metodos-grid" name="metodoPago">
-                    <button class="metodo-btn activo" onclick="seleccionar(this)">
+                    <button type="button" class="metodo-btn activo" onclick="seleccionar(this)">
                         <span class="ico">💵</span>Efectivo
-                    </button>
-                    <button class="metodo-btn" onclick="seleccionar(this)">
+                    </button>   
+                    <button type="button" class="metodo-btn" onclick="seleccionar(this)">
                         <span class="ico"><i class="fa-solid fa-qrcode"></i></span>QR
                     </button>
-                    <button class="metodo-btn" onclick="seleccionar(this)">
+                    <button type="button" class="metodo-btn" onclick="seleccionar(this)">
                         <span class="ico">
                             <img src="~/img/nequi.ico" style="width:22px;height:22px;object-fit:contain;" />
                         </span>Nequi
                     </button>
                 </div>
                 <button class="btn-pagar" id="btn-confirmar-pago" type="button">
-                    <span>🔒</span> Confirmar y Pagar
+                    <span>🔒</span> Confirmar Soliciud
                 </button>
             </div>
 
@@ -186,32 +190,17 @@
     </div>
 
     <!-- Pantalla 2: Confirmación de pago -->
-    <div class="informacion" id="informacion_2" style="display:none;">
+    <div class="informacion" id="informacion_2"
+         style="display:@(Model?.estado_servicio == "solicitado" ? "block" : "none")">
         <div class="resumen-section-2">
 
             <div class="confirmacion-header">
                 <div class="check-circle">✓</div>
-                <h2 class="confirmacion-titulo">¡Pago Confirmado!</h2>
-                <p class="confirmacion-sub">Tu servicio ha sido registrado exitosamente</p>
+                <h2 class="confirmacion-titulo">¡Acercate al valet para realizar el pago!</h2>
             </div>
-
-            <div class="instruccion-card">
-                <div class="instruccion-icono">🏁</div>
-                <p class="instruccion-texto">
-                    Acércate y pagua a la persona que te entregua el vehiculo
-                </p>
-            </div>
-
-            <div class="tiempo-card">
-                <div class="tiempo-icono-wrap">
-                    <span style="font-size:24px;">✅</span>
-                </div>
-                <div class="tiempo-info">
-                    <p class="tiempo-label">Todo listo</p>
-                    <p class="tiempo-valor" style="font-size:14px; font-weight:500; color:#666;">
-                        Puedes cerrar esta pestaña cuando recibas tu vehículo
-                    </p>
-                </div>
+            <br />
+            <div class="confirmacion-header">
+                <h2 class="confirmacion-titulo">¡No Cierre Esta Pagina!</h2>
             </div>
 
             <div class="tiempo-card" id="confirmacion-metodo-card">
@@ -233,6 +222,47 @@
                 <div style="font-size:36px;opacity:0.3;">🧾</div>
             </div>
 
+            <div class="tiempo-card">
+                <div class="tiempo-icono-wrap">
+                    <span style="font-size:24px;">✅</span>
+                </div>
+                <div class="tiempo-info" style="height: 2cm;">
+                    <p class="tiempo-label">Todo listo</p>
+                    <p class="tiempo-valor" style="font-size:14px; font-weight:500; color:#666;">
+                        Codigo de verificacion:
+                    </p>
+                </div>
+                <br />
+                <br />
+                <div style="width: 100%;height: 3cm;">
+                    <div id="codigo-generado"
+                         style="@(string.IsNullOrEmpty(Model?.codigo_seguridad) ? "display:none;" : "display:block;") background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+
+                        <p style="margin: 0 0 10px 0; color: #666;">
+                            <strong>Código de Seguridad Generado:</strong>
+                        </p>
+
+                        <p style="margin: 0;
+                            font-size: 24px;
+                            font-weight: bold;
+                            color: #2e7d32;
+                            font-family: monospace;"
+                               id="codigo-valor">
+
+                            @(Model?.codigo_seguridad ?? "------")
+
+                        </p>
+
+                        <p id="contador-codigo"
+                               style="margin-top:10px;
+                            color:#d32f2f;
+                            font-weight:bold;">
+                        </p>
+
+                    </div>
+                </div>
+            </div>
+
             <p style="text-align:center;font-size:13px;color:#aaa;margin:0;line-height:1.6;">
                 Gracias por usar <strong style="color:#d32f2f;">Cars Parking</strong>.<br>
                 ¡Esperamos verte pronto! 🙌
@@ -242,6 +272,7 @@
     </div>
 
 </div>
+
 
 @section Scripts {
     <script src="~/js/estado-servicio.js" asp-append-version="true"></script>

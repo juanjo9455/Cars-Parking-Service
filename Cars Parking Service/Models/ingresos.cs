@@ -15,7 +15,7 @@ namespace CarsParkingService.Models
         public DateTime? fecha_salida { get; set; }
         public string? estado_pago { get; set; }
         public string? estado_servicio { get; set; }
-        public int id_valet { get; set; }
+        public int? id_valet { get; set; }
         [ForeignKey("id_valet")]
         public usuarios? Valet { get; set; }
 
@@ -34,12 +34,14 @@ namespace CarsParkingService.Models
         public byte[]? firma { get; set; }
         public decimal? valor_servicio { get; set; }
         public decimal? valor_propina { get; set; }
-        public decimal? total_servicio { get; set; }
         public string? telefono { get; set; }
         public string? nombre_cliente { get; set; }
         public DateTime? fecha_fin_servicio { get; set; }
         public int? valet_despacho { get; set; } 
         public string? metodo_pago { get; set; }
+        public decimal? total_servicio { get; set; } = 0;
+        public string? codigo_seguridad { get; set; }
+        public DateTime? fecha_expiracion_codigo { get; set; }
     }
 
     public class SolicitudDto

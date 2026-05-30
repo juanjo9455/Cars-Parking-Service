@@ -146,7 +146,7 @@
             if (errorTelefono) errorTelefono.style.display = 'block';
         }
 
-        if (!idValet || idValet === 'Selecciona un Valet') {
+        if (idValet === 'Selecciona un Valet') {
             errores.push('Valet requerido');
             const errorValet = document.getElementById('errorValet');
             if (errorValet) errorValet.style.display = 'block';

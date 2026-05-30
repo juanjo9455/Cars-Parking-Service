@@ -28,7 +28,20 @@ namespace CarsParkingService.Controllers
 
         public IActionResult Index()
         {
+
+            var usuarioId = HttpContext.Session.GetInt32("id");
+
+            var nombreUbicacion = (from s in _context.sesiones
+                                   join u in _context.ubicacion_servicios
+                                   on s.id_ubicacion equals u.id_ubicacion
+                                   where s.id_usuario == usuarioId
+                                   select u.nombre_ubicacion)
+                                  .FirstOrDefault();
+
+            ViewBag.ubicacion = nombreUbicacion ?? "Ubicación no disponible";
+
             return View();
+
         }
 
         public IActionResult Login()
@@ -134,7 +147,7 @@ namespace CarsParkingService.Controllers
             if (ingreso != null)
             {
                 ingreso.estado_servicio = nuevo_estado;
-
+                
                 // Si llegó un id_valet (p. ej. desde el modal de despacho) lo guardamos en valet_despacho
                 if (id_valet.HasValue)
                 {
@@ -435,7 +448,7 @@ namespace CarsParkingService.Controllers
 
             // ✔ conversión a array (ESTO ES LO CLAVE)
             var ingresos = _context.ingresos.FromSqlRaw(
-                "EXEC sp_consultarRegistros @placa, @lugar, @estado_servicio, @estado_pago, @id_usuario, @parqueadero, @fecha_inicio, @fecha_fin",
+                "EXEC sp_consultarRegistros @placa, @lugar, @estado_servicio, @estado_pago, @id_usuario, @parqueadero, @fecha_inicio, @fecha_fin", 
                 parametros.ToArray()
             )
             .AsEnumerable()
@@ -448,6 +461,8 @@ namespace CarsParkingService.Controllers
 
             ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
             ViewBag.Parqueaderos = _context.parqueaderos.ToList();
+            ViewBag.Valets = _context.usuarios.Where(u => u.id_rol == 1 && u.estado == true).ToList();
+
 
             ViewData["FiltroPlaca"] = placa;
             ViewData["FiltroLugar"] = lugar;
@@ -459,10 +474,25 @@ namespace CarsParkingService.Controllers
 
             return View(ingresos);
         }
+        [HttpPost]
+        public IActionResult actualizarValet(int id_ingreso, int id_valet)
+        {
+            var ingreso = _context.ingresos
+                .FirstOrDefault(i => i.id_ingreso == id_ingreso);
 
+            if (ingreso == null)
+            {
+                return NotFound();
+            }
+
+            ingreso.id_valet = id_valet;
+
+            _context.SaveChanges();
+
+            return RedirectToAction("Tabla_Vehiculos");
+        }
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-
         public IActionResult Ingreso_Vehiculos()
         {
             CargarDatosFormulario();
@@ -505,11 +535,11 @@ namespace CarsParkingService.Controllers
             }
 
             // Validar que se haya seleccionado un valet
-            if (id_valet <= 0)
+            /*if (id_valet <= 0)
             {
                 ViewBag.Error = "Debe seleccionar un valet para el ingreso del vehículo.";
                 return View("Ingreso_Vehiculos");
-            }
+            }*/
 
             // Validar que se haya seleccionado un banco
             if (id_banco <= 0)
@@ -609,13 +639,21 @@ namespace CarsParkingService.Controllers
                 obj_ingreso.fecha_fin_servicio = null;
                 obj_ingreso.estado_pago = "pendiente";
                 obj_ingreso.estado_servicio = "activo";
-                obj_ingreso.id_valet = id_valet;
+                if (id_valet == 0) {
+
+                    obj_ingreso.id_valet = null;
+
+                }else{
+
+                    obj_ingreso.id_valet = id_valet;
+
+                }
                 obj_ingreso.id_banco = id_banco;
 
                 // Si la ubicación tiene un valor fijo inicial, pudieras ponerlo aquí (opcional)
                 obj_ingreso.valor_servicio = 0;
                 obj_ingreso.valor_propina = 0;
-
+                obj_ingreso.total_servicio = 0;
 
                 // Convertir la firma de base64 a byte[]
                 // Verificamos que la firma no llegue vacia
@@ -681,10 +719,10 @@ namespace CarsParkingService.Controllers
                     String nombreCliente = valet?.nombres ?? "Cliente";
                     String telefonoCliente = obj_ingreso.telefono ?? string.Empty;
 
-                    if (!string.IsNullOrEmpty(telefonoCliente) && enviarWhatsapp)
+                    if (enviarWhatsapp)
                     {
 
-                        await EnviarWhatsAppIngreso(placa, nombreCliente, telefonoCliente, obj_ingreso.id_ingreso);
+                        await EnviarWhatsAppIngreso(placa, nombreCliente, obj_ingreso.id_ingreso, telefonoCliente);
 
                     }
 
@@ -759,7 +797,7 @@ namespace CarsParkingService.Controllers
         }
 
         // Metodo para enviar mensaje al whatsapp para solicitar vehiculo y pagar servicio
-        private async Task EnviarWhatsAppIngreso(string placa, string nombre, string telefono, int idIngreso)
+        private async Task EnviarWhatsAppIngreso(string placa, string nombre, int idIngreso, string telefono)
         {
             var token = "EAAN1Ou7KFoABOxsr5ohcvViIX6kLd90FRB4gmnNUNFmyKqlOIfLGWN7XCFuy96Gk6l940v8mxzSU9z9ldvZCYSDhQ9hSlZBzoQsUZBRNEkeHkKqsjIhu7FUQ5i7bSd5tE9fxBZBZC9ar1DgPjGSazftOQjXPanTJDqLhom7aVZBpvcDnrScZCkZAamOTj19Ib7aI4gZDZD";
             var url = "https://graph.facebook.com/v22.0/625779610608874/messages";
@@ -779,18 +817,23 @@ namespace CarsParkingService.Controllers
                     components = new object[]
                     {
             // HEADER
-            new {
-                type = "header",
-                parameters = new object[]
+                new
                 {
-                    new {
-                        type = "image",
-                        image = new {
-                            link = "https://archivos.crmgrupoge.com:8085/logo_cars_parking.jpg"
+                    type = "header",
+
+                    parameters = new object[]
+                    {
+                        new
+                        {
+                            type = "image",
+
+                            image = new
+                            {
+                                link = "https://archivos.crmgrupoge.com:8085/logo_cars_parking.jpg"
+                            }
                         }
                     }
-                }
-            },
+                },
 
             // BODY
             new {
@@ -799,7 +842,6 @@ namespace CarsParkingService.Controllers
                 {
                     new { type = "text", text = placa },
                     new { type = "text", text = nombre },
-                    new { type = "text", text = telefono },
                     new { type = "text", text = linkPago }
                 }
             },
@@ -930,6 +972,8 @@ namespace CarsParkingService.Controllers
                 codigosSeguridad[id] = (codigo, DateTime.Now);
 
                 // Actualizar método de pago
+                ingreso.codigo_seguridad = codigo;
+                ingreso.fecha_expiracion_codigo = DateTime.Now.AddMinutes(1); ;
                 ingreso.metodo_pago = metodoPago;
                 _context.SaveChanges();
 
@@ -942,6 +986,55 @@ namespace CarsParkingService.Controllers
             }
         }
 
+        // Metodo para eliminar el codigo de seguridad despues de 1minuto
+        [HttpPost]
+        public IActionResult EliminarCodigoSeguridad(int id)
+        {
+            var ingreso = _context.ingresos
+                .FirstOrDefault(i => i.id_ingreso == id);
+
+            if (ingreso == null)
+            {
+                return Json(new
+                {
+                    success = false
+                });
+            }
+
+            ingreso.codigo_seguridad = null;
+            ingreso.fecha_expiracion_codigo = null;
+
+            _context.SaveChanges();
+
+            return Json(new
+            {
+                success = true
+            });
+        }
+        [HttpGet]
+        public IActionResult VerificarCodigoSeguridad(int id)
+        {
+            var ingreso = _context.ingresos
+                .FirstOrDefault(i => i.id_ingreso == id);
+
+            if (ingreso == null)
+            {
+                return Json(new
+                {
+                    success = false
+                });
+            }
+
+            // Verificar si ya existe código
+            bool tieneCodigo = !string.IsNullOrEmpty(ingreso.codigo_seguridad);
+
+            return Json(new
+            {
+                success = true,
+                tieneCodigo = tieneCodigo,
+                codigo = ingreso.codigo_seguridad
+            });
+        }
         [HttpPost]
         public IActionResult ValidarCodigoSeguridad(int id, string codigo)
         {
@@ -988,12 +1081,6 @@ namespace CarsParkingService.Controllers
                 if (ingreso == null)
                 {
                     return Json(new { success = false, message = "Ingreso no encontrado" });
-                }
-
-                // Validación: No permitir finalizar si no está pagado
-                if (estadoServicio == "finalizado" && ingreso.estado_pago != "pagado")
-                {
-                    return Json(new { success = false, message = "El servicio debe estar pagado antes de finalizarlo" });
                 }
 
                 ingreso.estado_servicio = estadoServicio;

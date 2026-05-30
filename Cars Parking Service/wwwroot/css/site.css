@@ -650,6 +650,61 @@
     border: 1px solid #ddd;
 }
 
+/* Estilos para el boton de alerta cuando no hay un valet asignado al ingreso */
+.alert-btn {
+    background-color: #e74c3c; /* rojo alerta */
+    border: none;
+    color: white;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    animation: bellShake 1s infinite;
+    transition: transform 0.2s ease, background 0.2s ease;
+}   
+
+.alert-btn:hover {
+    background-color: #c0392b;
+    transform: scale(1.1);
+}
+
+/* Animación tipo campana */
+@keyframes bellShake {
+    0% {
+        transform: rotate(0);
+    }
+
+    10% {
+        transform: rotate(10deg);
+    }
+
+    20% {
+        transform: rotate(-10deg);
+    }
+
+    30% {
+        transform: rotate(8deg);
+    }
+
+    40% {
+        transform: rotate(-8deg);
+    }
+
+    50% {
+        transform: rotate(5deg);
+    }
+
+    60% {
+        transform: rotate(-5deg);
+    }
+
+    100% {
+        transform: rotate(0);
+    }
+}
+
 .table-container {
     overflow-x: auto;
     border-radius: 12px;
@@ -1661,5 +1716,3 @@ tbody td:last-child {
     cursor: not-allowed;
 }
 
-
-}

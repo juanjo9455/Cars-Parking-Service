@@ -91,7 +91,24 @@ namespace CarsParkingService.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+        [HttpGet]
+        public IActionResult ObtenerEstadoIngreso(int id)
+        {
+            var ingreso = _context.ingresos
+                .FirstOrDefault(i => i.id_ingreso == id);
 
+            if (ingreso == null)
+                return Json(new { success = false });
+
+            return Json(new
+            {
+                success = true,
+                estadoPago = ingreso.estado_pago,
+                codigo = ingreso.codigo_seguridad,
+                // ← NUEVO: enviar fecha para restaurar el temporizador
+                fechaFinServicio = ingreso.fecha_fin_servicio?.ToString("O") // ISO 8601
+            });
+        }
         [HttpPost]
         [AllowAnonymous]
         public IActionResult GuardarPago(int idIngreso, decimal tarifa, decimal propina, string metodoPago)
@@ -100,36 +117,35 @@ namespace CarsParkingService.Controllers
             {
                 var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == idIngreso);
                 if (ingreso == null)
-                {
                     return BadRequest(new { success = false, message = "Ingreso no encontrado" });
-                }
 
-                // Calcular el total
                 decimal total = tarifa + propina;
 
-                // Guardar los datos de pago en la BD
                 ingreso.valor_servicio = tarifa;
                 ingreso.valor_propina = propina;
                 ingreso.total_servicio = total;
                 ingreso.metodo_pago = metodoPago;
+                ingreso.estado_pago = "solicitado";
+
+                // ← NUEVO: guardar cuándo vence el temporizador de 20 min
+                // Solo si no fue guardado antes (por si el cliente recarga y vuelve a llamar)
+                if (ingreso.fecha_fin_servicio == null)
+                    ingreso.fecha_fin_servicio = DateTime.Now.AddMinutes(20);
 
                 _context.SaveChanges();
 
-                // Log para debuggear
                 System.Diagnostics.Debug.WriteLine($"=== PAGO GUARDADO ===");
-                System.Diagnostics.Debug.WriteLine($"ID Ingreso: {idIngreso}");
-                System.Diagnostics.Debug.WriteLine($"Tarifa: {tarifa}");
-                System.Diagnostics.Debug.WriteLine($"Propina: {propina}");
-                System.Diagnostics.Debug.WriteLine($"Total: {total}");
-                System.Diagnostics.Debug.WriteLine($"Método: {metodoPago}");
+                System.Diagnostics.Debug.WriteLine($"ID: {idIngreso} | Total: {total} | Método: {metodoPago}");
+                System.Diagnostics.Debug.WriteLine($"Fecha fin servicio: {ingreso.fecha_fin_servicio}");
 
-                // Mostrar la segunda pantalla del modal
-                return Ok(new 
-                { 
-                    success = true, 
+                return Ok(new
+                {
+                    success = true,
                     message = "Pago guardado exitosamente",
                     total = total,
-                    metodo = metodoPago
+                    metodo = metodoPago,
+                    // ← devolver la fecha al cliente también por si acaso
+                    fechaFinServicio = ingreso.fecha_fin_servicio?.ToString("O")
                 });
             }
             catch (Exception ex)

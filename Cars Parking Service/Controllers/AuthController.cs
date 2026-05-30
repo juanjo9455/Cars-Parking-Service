@@ -309,6 +309,7 @@ namespace CarsParkingService.Controllers
             }
 
             HttpContext.Session.SetInt32("id_usuario", user.id_usuario);
+            HttpContext.Session.SetInt32("id_rol", user.id_rol);
 
             ViewBag.MostrarRoles = true;
 

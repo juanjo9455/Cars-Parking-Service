@@ -1,209 +1,232 @@
-// Tiempo estimado de llegada en minutos (puede ser dinámico desde BD)
+// ============================================================
+// VARIABLES GLOBALES
+// ============================================================
+
 const TIEMPO_ESTIMADO_MINUTOS = 20;
 
-// Variable para controlar el intervalo del contador
 let intervaloContador = null;
-let tiempoRestante = TIEMPO_ESTIMADO_MINUTOS * 60; // Convertir a segundos
+let tiempoRestante = TIEMPO_ESTIMADO_MINUTOS * 60;
 let tiempoFinServicio = null;
 
-// Variables para manejo de propina y totales
 let propinaActual = 0;
-let tarifaActual = 0; // Será obtenida dinámicamente
-const INCREMENTO_PROPINA = 100;
+let tarifaActual = 0;
 
 let idIngresoActual = null;
 let claveTemporizador = null;
 
+let intervaloCodigo = null;
+let estadoActual = null; // ← guarda el estado global para bloquear cierre
+
+// ============================================================
+// DOM READY
+// ============================================================
 
 document.addEventListener("DOMContentLoaded", function () {
+
     console.log('📋 Inicializando Estado de Servicio...');
 
-    // Obtener referencias a elementos del DOM
-    const btnPagar = document.getElementById('btn-pagar');
-    const btnConfirmarPago = document.getElementById('btn-confirmar-pago');
+    const idIngreso = document.getElementById('idIngreso')?.value;
     const modal = document.getElementById('modal-pagar');
-    const informacion1 = document.getElementById('informacion_1');
-    const informacion2 = document.getElementById('informacion_2');
-    const confirmacion = document.getElementById('modal-confirmacion');
-    const btn_confirmacion = document.getElementById('btn-confirmacion');
+
+    // ── Recuperar estado real desde BD al cargar/recargar ──
+    if (idIngreso) {
+
+        fetch(`/Payment/ObtenerEstadoIngreso?id=${idIngreso}`)
+            .then(res => res.json())
+            .then(data => {
+
+                if (!data.success) return;
+
+                console.log("📦 Estado BD:", data.estadoPago);
+
+                estadoActual = data.estadoPago;
+
+                if (data.estadoPago === "solicitado") {
+
+                    // 1. Abrir el modal (quitar clase oculto)
+                    if (modal) modal.classList.remove('oculto');
+
+                    // 2. Mostrar pantalla 2 dentro del modal
+                    mostrarInformacion2(data.codigo);
+
+                    // 3. Restaurar el temporizador desde el servidor
+                    if (data.fechaFinServicio) {
+                        inicializarTemporizadorPersistente(data.fechaFinServicio);
+                    } else {
+                        // Fallback: intentar desde localStorage
+                        const guardado = leerTemporizador();
+                        if (guardado) {
+                            const restante = Math.ceil((guardado.finMs - Date.now()) / 1000);
+                            if (restante > 0) {
+                                tiempoFinServicio = guardado.finMs;
+                                tiempoRestante = restante;
+                                mostrarTiempoEspera();
+                                iniciarContador();
+                            }
+                        }
+                    }
+
+                    // 4. Iniciar verificación de código de seguridad
+                    iniciarVerificacionCodigo();
+
+                    // 5. Bloquear botón cerrar del modal
+                    bloquearCierreModal();
+
+                } else {
+                    mostrarInformacion1();
+                }
+            })
+            .catch(err => console.error("❌ Error cargando estado:", err));
+    }
+
+    // ── Botón Solicitar Vehículo ──
     const btnSolicitar = document.getElementById('btn-solicitar');
-    const tiempoEspera = document.getElementById('tiempoEspera');
-    const idIngresoInput = document.getElementById('idIngreso');
-    const fechaFinServicioInput = document.getElementById('fechaFinServicio');
+    const btn_confirmacion = document.getElementById('btn-confirmacion');
+    const confirmacion = document.getElementById('modal-confirmacion');
 
-
-    idIngresoActual = idIngresoInput?.value ?? null;
-    claveTemporizador = idIngresoActual ? `estado-servicio-timer-${idIngresoActual}` : null;
-    const fechaFinServicioServidor = fechaFinServicioInput?.value ? new Date(fechaFinServicioInput.value) : null;
-
-    // ========== Estado inicial del contador ========== //
-    inicializarTemporizadorPersistente(fechaFinServicioServidor);
-
-    // ========== Evento: Solicitar vehículo ========== //
     if (btnSolicitar) {
         btnSolicitar.addEventListener('click', function (e) {
             e.preventDefault();
-            if (confirmacion) {
-                confirmacion.style.display = 'block';
-            }
+            if (confirmacion) confirmacion.style.display = 'block';
         });
     }
 
     if (btn_confirmacion) {
         btn_confirmacion.addEventListener('click', function (e) {
             e.preventDefault();
-
             if (btn_confirmacion.disabled) return;
             btn_confirmacion.disabled = true;
             btn_confirmacion.textContent = '⏳ Procesando...';
-
             solicitarVehiculo();
         });
     }
 
+    // ── Botón Pagar ──
+    const btnPagar = document.getElementById('btn-pagar');
     if (btnPagar) {
         btnPagar.addEventListener('click', function () {
-            // Obtener tarifa dinámica antes de abrir modal
             obtenerYestablecerTarifa();
-            abrirModalPagar(modal, informacion1, informacion2);
+            abrirModalPagar(modal,
+                document.getElementById('informacion_1'),
+                document.getElementById('informacion_2'));
         });
     }
 
+    // ── Confirmar pago ──
+    const btnConfirmarPago = document.getElementById('btn-confirmar-pago');
     if (btnConfirmarPago) {
         btnConfirmarPago.addEventListener('click', function (e) {
-            e.preventDefault(); // Prevenir cualquier acción por defecto
+            e.preventDefault();
             e.stopPropagation();
-            Pagar(informacion1, informacion2);
+            Pagar(document.getElementById('informacion_1'),
+                document.getElementById('informacion_2'));
         });
     }
 
-    // ========== Evento: Agregar Propina ==========
+    // ── Propina ──
     const selectPropina = document.getElementById('select-propina');
-
     if (selectPropina) {
-        selectPropina.addEventListener('change', function () {
-            propinaActual = parseInt(this.value) || 0;
-            actualizarPropinayTotal();
-            console.log('💰 Propina seleccionada:', propinaActual);
-        });
+        selectPropina.addEventListener('change', actualizarPropinayTotal);
+        actualizarPropinayTotal();
     }
 
-    // ========== Evento: Cerrar Modal (click en overlay) - SOLO EN PANTALLA 1 ========== 
+    // ── Evitar cierre del modal haciendo click fuera si está en "solicitado" ──
     if (modal) {
         modal.addEventListener('click', function (e) {
-            if (e.target === this && informacion1 && informacion1.style.display !== 'none') {
-                cerrarModalPagar();
+            if (estadoActual === 'solicitado' && e.target === modal) {
+                e.stopPropagation();
             }
         });
-    }
-
-    // ========== Inicialización: Esconder segunda pantalla ==========
-    if (informacion2) {
-        informacion2.style.display = 'none';
     }
 
     console.log('✅ Inicialización completada');
 });
 
 // ============================================================
-// OBTENER TARIFA DINÁMICA
+// BLOQUEAR CIERRE DEL MODAL (pantalla de confirmación final)
 // ============================================================
 
-function obtenerYestablecerTarifa() {
-    // Obtener la tarifa del hidden input (valor numérico directo)
-    const tarifaInput = document.getElementById('tarifaValor');
-    
-    if (tarifaInput && tarifaInput.value) {
-        tarifaActual = parseFloat(tarifaInput.value) || 0;
-    } else {
-        // Fallback: intentar parsear desde el texto mostrado (para compatibilidad)
-        const tarifaBaseText = document.getElementById('tarifa-base')?.textContent?.trim() || '0';
-        
-        let numeroLimpio = tarifaBaseText
-            .replace(/\$/g, '')           // Remover símbolo de moneda
-            .trim();                       // Remover espacios
-        
-        let numero = 0;
-        
-        // Detectar si tiene coma (separador decimal colombiano)
-        if (numeroLimpio.includes(',')) {
-            // Formato: "40.000,50" o "40.000,00"
-            numeroLimpio = numeroLimpio
-                .replace(/\./g, '')        // Remover puntos (separadores de miles)
-                .replace(',', '.');        // Cambiar coma por punto (decimal)
-            numero = Math.floor(parseFloat(numeroLimpio)) || 0;
-        } else if (numeroLimpio.includes('.') && numeroLimpio.lastIndexOf('.') > numeroLimpio.length - 4) {
-            // Formato: "40.000" (punto es separador de miles, no decimal)
-            numeroLimpio = numeroLimpio.replace(/\./g, ''); // Remover puntos
-            numero = parseInt(numeroLimpio) || 0;
-        } else {
-            // Formato: "40000" o "40000.00"
-            numero = Math.floor(parseFloat(numeroLimpio)) || 0;
-        }
-        
-        tarifaActual = numero;
-    }
+function bloquearCierreModal() {
+    // Ocultar el botón X del modal-pagar
+    const btnCerrar = document.querySelector('#modal-pagar .btn-cerrar-modal');
+    if (btnCerrar) btnCerrar.style.display = 'none';
 
-    console.log('💵 Tarifa obtenida:', tarifaActual);
-    
-    // Inicializar el total con la tarifa actual y propina actual
-    actualizarPropinayTotal();
+    // Deshabilitar la función cerrarModalPagar
+    estadoActual = 'solicitado';
+
+    console.log('🔒 Modal bloqueado — no se puede cerrar');
 }
 
 // ============================================================
-// 3. GESTIÓN DE MODAL
+// MOSTRAR / OCULTAR PANTALLAS INTERNAS DEL MODAL
+// ============================================================
+
+function mostrarInformacion1() {
+    const i1 = document.getElementById('informacion_1');
+    const i2 = document.getElementById('informacion_2');
+    if (i1) i1.style.display = 'block';
+    if (i2) i2.style.display = 'none';
+}
+
+function mostrarInformacion2(codigo) {
+    const i1 = document.getElementById('informacion_1');
+    const i2 = document.getElementById('informacion_2');
+    if (i1) i1.style.display = 'none';
+    if (i2) i2.style.display = 'block';
+
+    const codigoValor = document.getElementById('codigo-valor');
+    if (codigoValor && codigo) codigoValor.textContent = codigo;
+}
+
+// ============================================================
+// ABRIR / CERRAR MODAL PAGAR
 // ============================================================
 
 function abrirModalPagar(modal, informacion1, informacion2) {
-    if (!modal) {
-        console.error('❌ Modal no encontrado');
-        return;
-    }
-
+    if (!modal) return;
     modal.classList.remove('oculto');
-
     if (informacion1) informacion1.style.display = 'block';
     if (informacion2) informacion2.style.display = 'none';
-
-    console.log('✅ Modal abierto - Solicitar vehículo');
 }
 
 function cerrarModalPagar() {
-    const modal = document.getElementById('modal-pagar');
-    if (modal) {
-        modal.classList.add('oculto');
-        console.log('✅ Modal cerrado');
+    // Si está en estado solicitado NO se puede cerrar
+    if (estadoActual === 'solicitado') {
+        console.warn('🔒 Modal bloqueado — pago en proceso');
+        return;
     }
+    const modal = document.getElementById('modal-pagar');
+    if (modal) modal.classList.add('oculto');
 }
 
 // ============================================================
-// 4. GESTIÓN DE MÉTODOS DE PAGO
+// SELECCIONAR MÉTODO DE PAGO
 // ============================================================
 
 function seleccionar(button) {
-    const metodosBtns = document.querySelectorAll('.metodo-btn');
-    metodosBtns.forEach(btn => btn.classList.remove('activo'));
+    event.preventDefault();
+    document.querySelectorAll('.metodo-btn').forEach(btn => btn.classList.remove('activo'));
     button.classList.add('activo');
-    console.log('✅ Método de pago seleccionado:', button.textContent.strip());
 }
 
 // ============================================================
-// 4.5. GESTIÓN DE PROPINA
+// TARIFA Y PROPINA
 // ============================================================
 
+function obtenerYestablecerTarifa() {
+    const tarifaInput = document.getElementById('tarifaValor');
+    tarifaActual = parseFloat(tarifaInput?.value || 0);
+    actualizarPropinayTotal();
+}
+
 function actualizarPropinayTotal() {
-    const propinaElement = document.getElementById('propina-value');
-    if (propinaElement) {
-        propinaElement.textContent = formatearMoneda(propinaActual);
-    }
-
-    const totalNuevo = tarifaActual + propinaActual;
-    const totalElement = document.getElementById('total-value');
-    if (totalElement) {
-        totalElement.textContent = formatearMoneda(totalNuevo);
-    }
-
-    console.log(`📊 Total actualizado: ${tarifaActual} + ${propinaActual} = ${totalNuevo}`);
+    const tarifaInput = document.getElementById('tarifaValor');
+    const selectPropina = document.getElementById('select-propina');
+    tarifaActual = parseInt(tarifaInput?.value || 0);
+    propinaActual = parseInt(selectPropina?.value || 0);
+    const total = tarifaActual + propinaActual;
+    const totalEl = document.getElementById('total-value');
+    if (totalEl) totalEl.textContent = formatearMoneda(total);
 }
 
 function formatearMoneda(cantidad) {
@@ -211,230 +234,11 @@ function formatearMoneda(cantidad) {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
     });
-
-
-
 }
 
 // ============================================================
-// 5. CONFIRMACIÓN Y PAGO
+// SOLICITAR VEHÍCULO
 // ============================================================
-
-function confirmarYPagar(informacion1, informacion2) {
-    console.log('🔄 Confirmando pago...');
-
-    if (informacion1) informacion1.style.display = 'block';
-    if (informacion2) informacion2.style.display = 'none';
-
-    tiempoRestante = TIEMPO_ESTIMADO_MINUTOS * 60;
-    iniciarContador();
-
-    console.log('✅ Pago confirmado - Temporizador iniciado');
-}
-
-function Pagar(informacion1, informacion2) {
-    console.log('🔄 Procesando pago...');
-
-    // Usar la tarifa que ya fue obtenida dinámicamente
-    const tarifaBase = tarifaActual;
-    const propina = parseInt(document.getElementById('select-propina')?.value || '0');
-    const total = tarifaBase + propina;
-    
-    // Obtener método de pago seleccionado
-    const metodoSeleccionado = document.querySelector('.metodo-btn.activo');
-    let metodoPago = 'Efectivo'; // default
-    
-    if (metodoSeleccionado) {
-        const textoMetodo = metodoSeleccionado.innerText.trim().split('\n').pop().trim();
-        metodoPago = textoMetodo;
-    }
-
-    // Obtener ID ingreso
-    const idIngreso = document.getElementById('idIngreso')?.value;
-
-    if (!idIngreso) {
-        console.error('❌ ID de ingreso no encontrado');
-        alert('Error: No se pudo obtener el ID del ingreso');
-        return;
-    }
-
-    console.log('📊 Datos a guardar:');
-    console.log('  ID Ingreso:', idIngreso);
-    console.log('  Tarifa:', tarifaBase);
-    console.log('  Propina:', propina);
-    console.log('  Total:', total);
-    console.log('  Método:', metodoPago);
-
-    // Enviar datos al servidor
-    fetch('/Payment/GuardarPago', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: new URLSearchParams({
-            'idIngreso': idIngreso,
-            'tarifa': tarifaBase,
-            'propina': propina,
-            'metodoPago': metodoPago
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            console.log('✅ Pago guardado exitosamente');
-
-            // Si no pasaron informacion1/2 como parámetros, obtenerlas del DOM
-            const info1 = informacion1 || document.getElementById('informacion_1');
-            const info2 = informacion2 || document.getElementById('informacion_2');
-
-            // Sincronizar método y total en la pantalla de confirmación
-            const ico = metodoSeleccionado?.querySelector('.ico')?.innerHTML ?? '💵';
-            const iconoEl = document.getElementById('confirmacion-metodo-icono');
-            const textoEl = document.getElementById('confirmacion-metodo-texto');
-            
-            if (iconoEl) iconoEl.innerHTML = ico;
-            if (textoEl) textoEl.innerText = metodoPago;
-
-            // Mostrar total en la confirmación
-            const totalEl = document.getElementById('confirmacion-total');
-            if (totalEl) totalEl.innerText = formatearMoneda(total);
-
-            // Cambiar pantalla
-            if (info1) info1.style.display = 'none';
-            if (info2) {
-                info2.style.display = 'block';
-                // Aplicar flex si es necesario
-                setTimeout(() => {
-                    info2.style.display = 'flex';
-                }, 0);
-            }
-
-            console.log('✅ Pantalla de confirmación mostrada');
-        } else {
-            console.error('❌ Error:', data.message);
-            alert('Error al guardar pago: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('❌ Error en fetch:', error);
-        alert('Error de conexión al guardar pago');
-    });
-}
-
-// ============================================================
-// 6. CONTADOR DE TIEMPO
-// ============================================================
-
-function obtenerClaveTemporizador() {
-    return claveTemporizador;
-}
-
-function guardarTemporizador(finMs) {
-    const clave = obtenerClaveTemporizador();
-    if (!clave) return;
-
-    localStorage.setItem(clave, JSON.stringify({ finMs }));
-}
-
-function leerTemporizador() {
-    const clave = obtenerClaveTemporizador();
-    if (!clave) return null;
-
-    const valor = localStorage.getItem(clave);
-    if (!valor) return null;
-
-    try {
-        const data = JSON.parse(valor);
-        return typeof data.finMs === 'number' ? data : null;
-    } catch {
-        return null;
-    }
-}
-
-function limpiarTemporizador() {
-    const clave = obtenerClaveTemporizador();
-    if (!clave) return;
-
-    localStorage.removeItem(clave);
-}
-
-function mostrarTiempoEspera() {
-    const tiempoEspera = document.getElementById('tiempoEspera');
-    if (tiempoEspera) {
-        tiempoEspera.style.display = 'block';
-    }
-}
-
-function ocultarTiempoEspera() {
-    const tiempoEspera = document.getElementById('tiempoEspera');
-    if (tiempoEspera) {
-        tiempoEspera.style.display = 'none';
-    }
-}
-
-function inicializarTemporizadorPersistente(fechaFinServicioServidor) {
-    if (fechaFinServicioServidor instanceof Date && !Number.isNaN(fechaFinServicioServidor.getTime())) {
-        const restanteServidor = Math.ceil((fechaFinServicioServidor.getTime() - Date.now()) / 1000);
-        if (restanteServidor > 0) {
-            tiempoFinServicio = fechaFinServicioServidor.getTime();
-            tiempoRestante = restanteServidor;
-            guardarTemporizador(tiempoFinServicio);
-            mostrarTiempoEspera();
-            iniciarContador();
-            return;
-        }
-    }
-
-    const guardado = leerTemporizador();
-    if (!guardado) {
-        ocultarTiempoEspera();
-        return;
-    }
-
-    const restante = Math.ceil((guardado.finMs - Date.now()) / 1000);
-    if (restante <= 0) {
-        limpiarTemporizador();
-        ocultarTiempoEspera();
-        return;
-    }
-
-    tiempoFinServicio = guardado.finMs;
-    tiempoRestante = restante;
-    mostrarTiempoEspera();
-    iniciarContador();
-}
-
-function iniciarTemporizadorDesdeAhora() {
-    const finMs = Date.now() + (TIEMPO_ESTIMADO_MINUTOS * 60 * 1000);
-    tiempoFinServicio = finMs;
-    guardarTemporizador(finMs);
-    mostrarTiempoEspera();
-    iniciarContador();
-}
-
-function renderizarBotonPagar() {
-    let btnPagar = document.getElementById('btn-pagar');
-    if (!btnPagar) {
-        const contenedorVehiculo = document.querySelector('.vehiculo');
-        if (!contenedorVehiculo) return;
-
-        btnPagar = document.createElement('button');
-        btnPagar.className = 'btn-pagar';
-        btnPagar.id = 'btn-pagar';
-        btnPagar.innerHTML = '<span>🔒</span> Pagar';
-        contenedorVehiculo.appendChild(btnPagar);
-
-        const modal = document.getElementById('modal-pagar');
-        const informacion1 = document.getElementById('informacion_1');
-        const informacion2 = document.getElementById('informacion_2');
-        btnPagar.addEventListener('click', function () {
-            abrirModalPagar(modal, informacion1, informacion2);
-        });
-    }
-
-    btnPagar.style.display = 'block';
-}
 
 function solicitarVehiculo() {
     const idIngreso = document.getElementById('idIngreso')?.value;
@@ -449,29 +253,16 @@ function solicitarVehiculo() {
 
     fetch('/Payment/SolicitarVehiculo', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idIngreso: parseInt(idIngreso) })
     })
-        .then(response => {
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return response.json();
-        })
+        .then(response => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json(); })
         .then(data => {
-            console.log('✅ Estado actualizado');
-
-            if (confirmacion) {
-                confirmacion.style.display = 'none';
-            }
-
-            if (btnSolicitarActual) {
-                btnSolicitarActual.style.display = 'none';
-            }
-
+            console.log('✅ Vehículo solicitado');
+            if (confirmacion) confirmacion.style.display = 'none';
+            if (btnSolicitarActual) btnSolicitarActual.style.display = 'none';
             renderizarBotonPagar();
             iniciarTemporizadorDesdeAhora();
-
             if (btnConfirmacionActual) {
                 btnConfirmacionActual.disabled = false;
                 btnConfirmacionActual.textContent = 'Aceptar';
@@ -480,10 +271,9 @@ function solicitarVehiculo() {
         .catch(error => {
             console.error('❌ Error:', error);
             alert('Error al solicitar vehículo: ' + error.message);
-
             if (btnSolicitarActual) {
                 btnSolicitarActual.disabled = false;
-                btnSolicitarActual.textContent = '🚇 Solicitar Vehículo';
+                btnSolicitarActual.textContent = '🚗 Solicitar Vehículo';
             }
             if (btnConfirmacionActual) {
                 btnConfirmacionActual.disabled = false;
@@ -492,32 +282,144 @@ function solicitarVehiculo() {
         });
 }
 
-/**
-    * Inicia el contador de tiempo regresivo
-    * Actualiza cada segundo
-    */
+// ============================================================
+// PAGAR
+// ============================================================
+
+function Pagar(informacion1, informacion2) {
+    const idIngreso = document.getElementById('idIngreso')?.value;
+    const propina = parseInt(document.getElementById('select-propina')?.value || '0');
+    const total = tarifaActual + propina;
+    const metodoSeleccionado = document.querySelector('.metodo-btn.activo');
+    const metodoPago = metodoSeleccionado?.innerText?.trim().split('\n').pop().trim() || 'Efectivo';
+
+    if (!idIngreso) { alert('Error: No se pudo obtener el ID del ingreso'); return; }
+
+    fetch('/Payment/GuardarPago', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams({
+            idIngreso: idIngreso,
+            tarifa: tarifaActual,
+            propina: propina,
+            metodoPago: metodoPago
+        })
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                console.log('✅ Pago guardado');
+
+                estadoActual = 'solicitado'; // ← bloquear cierre desde este momento
+
+                // Sincronizar método y total en pantalla 2
+                const ico = metodoSeleccionado?.querySelector('.ico')?.innerHTML ?? '💵';
+                const iconoEl = document.getElementById('confirmacion-metodo-icono');
+                const textoEl = document.getElementById('confirmacion-metodo-texto');
+                const totalEl = document.getElementById('confirmacion-total');
+                if (iconoEl) iconoEl.innerHTML = ico;
+                if (textoEl) textoEl.innerText = metodoPago;
+                if (totalEl) totalEl.innerText = formatearMoneda(total);
+
+                // Cambiar a pantalla 2
+                const i1 = informacion1 || document.getElementById('informacion_1');
+                const i2 = informacion2 || document.getElementById('informacion_2');
+                if (i1) i1.style.display = 'none';
+                if (i2) i2.style.display = 'block';
+
+                // Ocultar el botón X del modal
+                bloquearCierreModal();
+
+                // Iniciar verificación de código
+                iniciarVerificacionCodigo();
+
+            } else {
+                alert('Error al guardar pago: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error en fetch:', error);
+            alert('Error de conexión al guardar pago');
+        });
+}
+
+// ============================================================
+// TEMPORIZADOR
+// ============================================================
+
+function obtenerClaveTemporizador() {
+    const idIngreso = document.getElementById('idIngreso')?.value;
+    return idIngreso ? `timer_ingreso_${idIngreso}` : null;
+}
+
+function guardarTemporizador(finMs) {
+    const clave = obtenerClaveTemporizador();
+    if (clave) localStorage.setItem(clave, JSON.stringify({ finMs }));
+}
+
+function leerTemporizador() {
+    const clave = obtenerClaveTemporizador();
+    if (!clave) return null;
+    try { return JSON.parse(localStorage.getItem(clave)); } catch { return null; }
+}
+
+function limpiarTemporizador() {
+    const clave = obtenerClaveTemporizador();
+    if (clave) localStorage.removeItem(clave);
+}
+
+function mostrarTiempoEspera() {
+    const el = document.getElementById('tiempoEspera');
+    if (el) el.style.display = 'block';
+}
+
+function ocultarTiempoEspera() {
+    const el = document.getElementById('tiempoEspera');
+    if (el) el.style.display = 'none';
+}
+
+function inicializarTemporizadorPersistente(fechaFinServicioServidor) {
+    const fechaFin = new Date(fechaFinServicioServidor);
+    if (!isNaN(fechaFin.getTime())) {
+        const restante = Math.ceil((fechaFin.getTime() - Date.now()) / 1000);
+        if (restante > 0) {
+            tiempoFinServicio = fechaFin.getTime();
+            tiempoRestante = restante;
+            guardarTemporizador(tiempoFinServicio);
+            mostrarTiempoEspera();
+            iniciarContador();
+            return;
+        }
+    }
+    // Fallback localStorage
+    const guardado = leerTemporizador();
+    if (!guardado) { ocultarTiempoEspera(); return; }
+    const restante = Math.ceil((guardado.finMs - Date.now()) / 1000);
+    if (restante <= 0) { limpiarTemporizador(); ocultarTiempoEspera(); return; }
+    tiempoFinServicio = guardado.finMs;
+    tiempoRestante = restante;
+    mostrarTiempoEspera();
+    iniciarContador();
+}
+
+function iniciarTemporizadorDesdeAhora() {
+    const finMs = Date.now() + (TIEMPO_ESTIMADO_MINUTOS * 60 * 1000);
+    tiempoFinServicio = finMs;
+    guardarTemporizador(finMs);
+    mostrarTiempoEspera();
+    iniciarContador();
+}
+
 function iniciarContador() {
-    // Evitar múltiples contadores
-    if (intervaloContador !== null) {
-        clearInterval(intervaloContador);
-        intervaloContador = null;
-    }
-
-    if (!tiempoFinServicio) {
-        return;
-    }
-
-    console.log('⏱ Iniciando contador: ' + TIEMPO_ESTIMADO_MINUTOS + ' minutos');
-
-    // Actualizar inmediatamente
+    if (intervaloContador !== null) { clearInterval(intervaloContador); intervaloContador = null; }
+    if (!tiempoFinServicio) return;
     actualizarDisplayTiempo();
-
-    // Actualizar cada segundo
     intervaloContador = setInterval(function () {
         tiempoRestante = Math.max(0, Math.ceil((tiempoFinServicio - Date.now()) / 1000));
         actualizarDisplayTiempo();
-
-        // Si el tiempo se agota
         if (tiempoRestante <= 0) {
             detenerContador();
             limpiarTemporizador();
@@ -526,85 +428,85 @@ function iniciarContador() {
     }, 1000);
 }
 
-/**
-    * Detiene el contador de tiempo
-    */
 function detenerContador() {
-    if (intervaloContador !== null) {
-        clearInterval(intervaloContador);
-        intervaloContador = null;
-        console.log('⏹ Contador detenido');
-    }
+    if (intervaloContador !== null) { clearInterval(intervaloContador); intervaloContador = null; }
 }
 
-/**
-    * Actualiza la visualización del tiempo en el DOM
-    */
 function actualizarDisplayTiempo() {
-    // Convertir segundos a minutos y segundos
     const minutos = Math.floor(tiempoRestante / 60);
     const segundos = tiempoRestante % 60;
+    const tiempoFormato = String(minutos).padStart(2, '0') + ':' + String(segundos).padStart(2, '0');
 
-    // Formato: "MM:SS"
-    const tiempoFormato =
-        String(minutos).padStart(2, '0') + ':' +
-        String(segundos).padStart(2, '0');
-
-    // ========== Actualizar Contador en Pantalla 1 ========== 
     const tiempoEspera = document.getElementById('tiempoEspera');
-    if (tiempoEspera) {
-        tiempoEspera.style.display = 'block';
-    }
+    if (tiempoEspera) tiempoEspera.style.display = 'block';
 
-    const etiquetaLlegada = document.querySelector('.etiqueta-llegada');
-    if (etiquetaLlegada) {
-        etiquetaLlegada.innerHTML = '⏱ Tu vehículo llega en: <strong>' + tiempoFormato + '</strong>';
-    }
-
-    const etiquetaLlegadaConfirmacion = document.querySelector('.etiqueta-llegada-confirmacion');
-    if (etiquetaLlegadaConfirmacion) {
-        etiquetaLlegadaConfirmacion.innerHTML = '⏱ Tu vehículo llega en: <strong>' + tiempoFormato + '</strong>';
-    }
-
-    // ========== Actualizar Contador en Pantalla 2 ========== 
-    const elementoConfirmacion = document.getElementById('confirmacion-minutos');
-    if (elementoConfirmacion) {
-        elementoConfirmacion.textContent = minutos;
-    }
-
-    // ========== Actualizar Contador en Pantalla 2 (Timer Display) ========== 
-    const timers = document.querySelectorAll('.timer-display');
-
-    timers.forEach(timer => {
-        timer.textContent = tiempoFormato;
+    document.querySelectorAll('.etiqueta-llegada-confirmacion, .etiqueta-llegada').forEach(el => {
+        el.innerHTML = '⏱ Tu vehículo llega en: <strong>' + tiempoFormato + '</strong>';
     });
-    // ========== Actualizar Barra de Progreso (Pantalla 1) ========== 
-    const barraFill = document.querySelector('.barra-fill');
-    if (barraFill) {
-        const tiempoTotal = TIEMPO_ESTIMADO_MINUTOS * 60;
-        const tiempoTranscurrido = tiempoTotal - tiempoRestante;
-        const porcentajeCompleto = (tiempoTranscurrido / tiempoTotal) * 100;
-        barraFill.style.width = porcentajeCompleto + '%';
-    }
 
-    // ========== Actualizar Barra de Progreso (Pantalla 2) ========== 
-    const barraFillConfirmacion = document.querySelector('.barra-fill-confirmacion');
-    if (barraFillConfirmacion) {
-        const tiempoTotal = TIEMPO_ESTIMADO_MINUTOS * 60;
-        const tiempoTranscurrido = tiempoTotal - tiempoRestante;
-        const porcentajeCompleto = (tiempoTranscurrido / tiempoTotal) * 100;
-        barraFillConfirmacion.style.width = porcentajeCompleto + '%';
-    }
+    document.querySelectorAll('.timer-display').forEach(el => { el.textContent = tiempoFormato; });
 
-    console.log(`⏱ Tiempo restante: ${tiempoFormato}`);
+    const tiempoTotal = TIEMPO_ESTIMADO_MINUTOS * 60;
+    const porcentaje = ((tiempoTotal - tiempoRestante) / tiempoTotal) * 100;
+    document.querySelectorAll('.barra-fill, .barra-fill-confirmacion').forEach(el => {
+        el.style.width = porcentaje + '%';
+    });
 }
 
-/**
-    * Maneja cuando el tiempo se agota
-    */
 function handleTiempoAgotado() {
-    console.log('⚠️ ¡Tiempo agotado!');
-
     alert('⚠️ El vehículo ha llegado. Por favor, dirígete al punto de entrega.');
 }
 
+// ============================================================
+// CÓDIGO DE SEGURIDAD
+// ============================================================
+
+/*function iniciarVerificacionCodigo() {
+    if (intervaloCodigo !== null) clearInterval(intervaloCodigo);
+    intervaloCodigo = setInterval(() => {
+        const idIngreso = document.getElementById('idIngreso')?.value;
+        if (!idIngreso) return;
+        fetch(`/Payment/VerificarCodigoSeguridad?id=${idIngreso}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.tieneCodigo) {
+                    clearInterval(intervaloCodigo);
+                    mostrarCodigoSeguridad(data.codigo);
+                }
+            })
+            .catch(err => console.error('❌ Error verificando código:', err));
+    }, 3000);
+}
+
+function mostrarCodigoSeguridad(codigo) {
+    const contenedor = document.getElementById('codigo-generado');
+    const valor = document.getElementById('codigo-valor');
+    if (contenedor) contenedor.style.display = 'block';
+    if (valor) valor.textContent = codigo;
+}*/
+
+// ============================================================
+// BOTÓN PAGAR DINÁMICO
+// ============================================================
+
+function renderizarBotonPagar() {
+    let btnPagar = document.getElementById('btn-pagar');
+    if (!btnPagar) {
+        const contenedor = document.querySelector('.vehiculo');
+        if (!contenedor) return;
+        btnPagar = document.createElement('button');
+        btnPagar.className = 'btn-pagar';
+        btnPagar.id = 'btn-pagar';
+        btnPagar.innerHTML = '<span>🔒</span> Pagar';
+        contenedor.appendChild(btnPagar);
+        btnPagar.addEventListener('click', function () {
+            obtenerYestablecerTarifa();
+            abrirModalPagar(
+                document.getElementById('modal-pagar'),
+                document.getElementById('informacion_1'),
+                document.getElementById('informacion_2')
+            );
+        });
+    }
+    btnPagar.style.display = 'block';
+}

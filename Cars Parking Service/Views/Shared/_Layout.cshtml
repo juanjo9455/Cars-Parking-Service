@@ -41,15 +41,23 @@
             </div>
             <div class="menu-lateral">
                 <ol>
-                    @if (idRol == 1 || idRol == 2 || idRol == 3)
-                    {
+                    @if (idRol == 2 || idRol == 3 ){
+
                         <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house"></i>Inicio</a></li>
                         <li><a asp-controller="Home" asp-action="Tabla_Vehiculos"><i class="fa-solid fa-table-list"></i>Tabla Ingresos</a></li>
                         <li><a asp-controller="Home" asp-action="Ingreso_Vehiculos"><i class="fa-solid fa-car-side"></i>Nuevo Ingreso</a></li>
+
                     } 
-                    @if (idRol == 3)
-                    {
+                    @if (idRol == 3){
+
                         <li><a asp-controller="Home" asp-action="Administrador"><i class="fa-solid fa-gear"></i>Configuraciones Admin</a></li>
+
+                    }
+                    @if (idRol == 1){
+                                                
+                        <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house"></i>Inicio</a></li>
+                        <li><a asp-controller="Home" asp-action="Tabla_Vehiculos"><i class="fa-solid fa-table-list"></i>Tabla Ingresos</a></li>
+    
                     }
 
                     <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
