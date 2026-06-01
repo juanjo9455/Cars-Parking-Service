@@ -1119,6 +1119,32 @@ function cerrarModalValet() {
 
 }
 
+// abrir modal para tomar foto del vehiculo
+function abrirModalFoto(idIngreso) {
+
+    const modalFoto = document.getElementById("modal-foto");
+
+    if (modalFoto) {
+
+        modalFoto.style.display = "block";
+
+    }
+
+}
+
+// cerrar modal para tomar foto del vehiculo
+function cerrarModalFoto() {
+
+    const modalFoto = document.getElementById("modal-foto");
+
+    if (modalFoto) {
+
+        modalFoto.style.display = "none";
+
+    }
+
+}
+
 // =========================== Eventos para pagar el servicio ============================ \\
 
 // =========================== Flujo Pago y Finalización =========================== \\

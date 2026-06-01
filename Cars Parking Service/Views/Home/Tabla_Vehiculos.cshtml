@@ -245,51 +245,80 @@
                 </tr>
             </thead>
             <tbody>
-            @foreach (var ingresos in Model)
+                @foreach (var ingresos in Model)
             {
-                <tr>
-                    <td data-label="Placa">@ingresos.placa</td>
-                    <td data-label="Lugar">@ingresos.Ubicacion?.nombre_ubicacion</td>
-                    <td data-label="Hora Ingreso">@ingresos.fecha_ingreso</td>
-                    <td data-label="Hora Salida">@ingresos.fecha_salida</td>
-                    @if(@ingresos.estado_pago == "pendiente"){
-                        <td data-label="Estado Pago"><span class="status-badge status-pendiente">Pendiente</span></td>
+                    <tr>
+                        <td data-label="Placa">@ingresos.placa</td>
+                        <td data-label="Lugar">@ingresos.Ubicacion?.nombre_ubicacion</td>
+                        <td data-label="Hora Ingreso">@ingresos.fecha_ingreso</td>
+                        <td data-label="Hora Salida">@ingresos.fecha_salida</td>
 
+                        @if (ingresos.estado_pago == "pendiente")
+                        {
+                            <td data-label="Estado Pago">
+                                <span class="status-badge status-pendiente">Pendiente</span>
+                            </td>
                         }
-                        else if(@ingresos.estado_pago == "pagado")
+                        else if (ingresos.estado_pago == "pagado")
                         {
-                            <td data-label="Estado Pago"><span class="status-badge status-pagado">Pagado</span></td>
-                        }else if(@ingresos.estado_pago == "solicitado")
+                            <td data-label="Estado Pago">
+                                <span class="status-badge status-pagado">Pagado</span>
+                            </td>
+                        }
+                        else if (ingresos.estado_pago == "solicitado")
                         {
-                            <td data-label="Estado Pago"><span class="status-badge status-pendiente">Solicitado</span></td>
+                            <td data-label="Estado Pago">
+                                <span class="status-badge status-pendiente">Solicitado</span>
+                            </td>
+                        }
 
-                        }
                         <td data-label="Estado Servicio">@ingresos.estado_servicio</td>
-                        @if (ingresos.estado_pago == "pagado" && ingresos.estado_servicio == "finalizado")
+
+                        @if (idRol == 1) // VALET
                         {
-
-                            <td type="button" class="btn-icon btn-icon-info" title="Ver Info/Notas" style="margin-left: 10px;">
-                                <i class="fa-solid fa-circle-info"></i>
-                            </td>
-
+                            if (!ingresos.foto_estacionamiento)
+                            {
+                                <td data-label="Acción" class="cell-action">
+                                    <i class="fa-solid fa-camera btn-action"
+                                       onclick="abrirModalFoto('@ingresos.id_ingreso')"
+                                       style="cursor:pointer;"></i>
+                                </td>
+                            }
+                            else
+                            {
+                                
+                            }
                         }
-                        else if (ingresos.id_valet is null)
+                        else // BANCO Y ADMIN
                         {
-                        
-                            <td>
-                                <button class="alert-btn" type="button" onclick="abrirModalValet()">
-                                    <i class="fa-solid fa-user"></i>
-                                </button>
-                            </td>
-                        
-                        }
-
-                        else
-                        {
-
-                            <td data-label="Acción" class="cell-action"><i class="fa-solid fa-credit-card btn-action" onclick="abrirModalPago('@ingresos.id_ingreso', '@ingresos.placa', '@ingresos.nombre_cliente')" style="cursor: pointer;"></i></td>
-
-
+                            if (ingresos.estado_pago == "pagado" &&
+                                ingresos.estado_servicio == "finalizado")
+                            {
+                                <td type="button"
+                                    class="btn-icon btn-icon-info"
+                                    title="Ver Info/Notas"
+                                    style="margin-left: 10px;">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                </td>
+                            }
+                            else if (ingresos.id_valet is null)
+                            {
+                                <td>
+                                    <button class="alert-btn"
+                                            type="button"
+                                            onclick="abrirModalValet()">
+                                        <i class="fa-solid fa-user"></i>
+                                    </button>
+                                </td>
+                            }
+                            else
+                            {
+                                <td data-label="Acción" class="cell-action">
+                                    <i class="fa-solid fa-credit-card btn-action"
+                                       onclick="abrirModalPago('@ingresos.id_ingreso', '@ingresos.placa', '@ingresos.nombre_cliente')"
+                                       style="cursor:pointer;"></i>
+                                </td>
+                            }
                         }
                     </tr>
                
@@ -330,6 +359,51 @@
                     </div>
 
                 </div>
+
+                // Modal para tomar foto de parqueo
+
+                    <div id="modal-foto" class="Editar-Ingreso" style="display:none;">
+
+                        <div class="modal-overlay" onclick="cerrarModalFoto()"></div>
+                        <div class="Card-Ingreso card-ingreso-vehiculos" style=" margin-left: 13cm; margin-top: 2cm;">
+                            <form method="post" action="/Home/fotoParqueo">
+                            
+                                <input type="hidden" name="id_ingreso" value="@ingresos.id_ingreso" />
+
+                                <span class="close-btn" onclick="cerrarModalFoto()">&times;</span>
+                            
+                                <!-- BOTÓN FOTO OBJETOS -->
+                                <div style="display: flex;">
+                                    <button type="button" class="photo-btn-2" id="tomarFotoBtn">
+                                        <svg class="camera-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                            <circle cx="12" cy="13" r="4"></circle>
+                                        </svg>
+                                        Evidencia del parqueo
+                                    </button>
+                                </div>
+
+                                <!-- Contenedor padre para fotos y el video -->
+                                <div class="Media-Preview">
+                                    <!-- Contenedor para preview de fotos -->
+                                    <div class="photos-preview" id="photosPreview"></div>
+
+                                    <!-- Contenedor para preview de video -->
+                                    <div id="videoPreviewContainer" style="margin-top: 12px;"></div>
+                                </div>
+
+                                
+                                <!-- Input oculto para invocar la cámara nativa del dispositivo SOLO para fotos -->
+                                <input type="file" id="cameraInput" accept="image/*" capture style="display:none;">
+
+                                <!-- Inputs ocultos para enviar los archivos como base64 -->
+                                <div id="fotosBase64Container"></div>
+                                <input type="hidden" name="videoBase64" id="videoBase64Input" />
+                                <div class="error-message" id="errorMedia" style="display:none;"></div>
+                            </form>
+                        </div>
+
+                    </div>
 
                 <!-- MODAL INTERMEDIO DE PAGO -->
                 <div id="modal-pago-@ingresos.id_ingreso" class="Editar-Ingreso" style="display:none;">
@@ -444,6 +518,7 @@
                 </div>
 
             }
+
             </tbody>
         </table>
     </div>

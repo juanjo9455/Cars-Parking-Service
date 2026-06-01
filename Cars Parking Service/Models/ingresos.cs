@@ -37,11 +37,13 @@ namespace CarsParkingService.Models
         public string? telefono { get; set; }
         public string? nombre_cliente { get; set; }
         public DateTime? fecha_fin_servicio { get; set; }
-        public int? valet_despacho { get; set; } 
+        public int? valet_despacho { get; set; }
         public string? metodo_pago { get; set; }
         public decimal? total_servicio { get; set; } = 0;
         public string? codigo_seguridad { get; set; }
         public DateTime? fecha_expiracion_codigo { get; set; }
+        public DateTime? fecha_entrega { get; set; }
+        public bool foto_estacionamiento { get; set; }
     }
 
     public class SolicitudDto

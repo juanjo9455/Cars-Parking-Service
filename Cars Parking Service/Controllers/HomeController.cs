@@ -1089,6 +1089,7 @@ namespace CarsParkingService.Controllers
                 if (estadoServicio == "finalizado")
                 {
                     ingreso.fecha_salida = DateTime.Now;
+                    ingreso.fecha_entrega = DateTime.Now;
                 }
 
                 _context.SaveChanges();

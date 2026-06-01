@@ -497,7 +497,7 @@ function renderizarBotonPagar() {
         btnPagar = document.createElement('button');
         btnPagar.className = 'btn-pagar';
         btnPagar.id = 'btn-pagar';
-        btnPagar.innerHTML = '<span>🔒</span> Pagar';
+        btnPagar.innerHTML = '<span>🔒</span> Solicitar Pago';
         contenedor.appendChild(btnPagar);
         btnPagar.addEventListener('click', function () {
             obtenerYestablecerTarifa();

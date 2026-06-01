@@ -74,7 +74,7 @@
             }
             else
             {
-                <button type="button" class="servicio-btn" id="btn-solicitar">
+                <button type="button" class="servicio-btn" id="btn-solicitar" style="display:@(Model?.estado_servicio == "finalizado" ? "none" : "block")">
                     🚗 Solicitar Vehículo
                 </button>
             }
@@ -191,7 +191,7 @@
 
     <!-- Pantalla 2: Confirmación de pago -->
     <div class="informacion" id="informacion_2"
-         style="display:@(Model?.estado_servicio == "solicitado" ? "block" : "none")">
+         style="display:@(Model?.estado_pago == "solicitado" ? "block" : "none")">
         <div class="resumen-section-2">
 
             <div class="confirmacion-header">
@@ -217,7 +217,7 @@
             <div style="background:linear-gradient(135deg,#d32f2f 0%,#b71c1c 100%);border-radius:14px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;color:white;">
                 <div>
                     <p style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.75;margin:0 0 4px;">Total pagado</p>
-                    <p style="font-size:26px;font-weight:800;margin:0;" id="confirmacion-total">$0</p>
+                    <p style="font-size:26px;font-weight:800;margin:0;" id="confirmacion-total">@Model?.total_servicio</p>
                 </div>
                 <div style="font-size:36px;opacity:0.3;">🧾</div>
             </div>
