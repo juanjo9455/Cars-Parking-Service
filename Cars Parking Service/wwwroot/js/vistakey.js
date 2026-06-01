@@ -3,8 +3,62 @@
 /**
  * Función sencilla para mostrar algo de información del vehículo
  */
-function verInfoExtra(placa, notas) {
-    alert(`Vehículo: ${placa}\n\nNotas/Objetos de valor:\n${document.createElement('textarea').innerHTML = notas || 'No hay notas registradas.'}`);
+function verInfoExtra(btn) {
+    const idIngreso = btn?.dataset?.idIngreso;
+    const data = window.vistaKeyInfoMap?.[String(idIngreso)];
+
+    if (!data) {
+        alert('No se encontró información del vehículo.');
+        return;
+    }
+
+    const modal = document.getElementById('modalInfoKey');
+    const placa = document.getElementById('infoKeyPlaca');
+    const cliente = document.getElementById('infoKeyCliente');
+    const valet = document.getElementById('infoKeyValet');
+    const ubicacion = document.getElementById('infoKeyUbicacion');
+    const gallery = document.getElementById('infoKeyGallery');
+    const noPhotos = document.getElementById('infoKeyNoPhotos');
+
+    if (!modal || !placa || !cliente || !valet || !ubicacion || !gallery || !noPhotos) return;
+
+    placa.textContent = data.placa || 'N/A';
+    cliente.textContent = data.cliente || 'N/A';
+    valet.textContent = data.valet || 'N/A';
+    ubicacion.textContent = data.ubicacion || 'N/A';
+
+    gallery.innerHTML = '';
+
+    const fotos = Array.isArray(data.fotos) ? data.fotos : [];
+    if (fotos.length === 0) {
+        noPhotos.style.display = 'block';
+    } else {
+        noPhotos.style.display = 'none';
+
+        fotos.forEach((foto, index) => {
+            const item = document.createElement('div');
+            item.className = 'info-key-photo-item';
+
+            const img = document.createElement('img');
+            img.src = foto;
+            img.alt = `Foto ${index + 1}`;
+            img.loading = 'lazy';
+
+            item.appendChild(img);
+            gallery.appendChild(item);
+        });
+    }
+
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function cerrarModalInfoKey() {
+    const modal = document.getElementById('modalInfoKey');
+    if (!modal) return;
+
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
 }
 
 /**
@@ -126,7 +180,11 @@ function construirFilaTabla(ingreso) {
 
     // Botón Ver Info
     botonesAccion += `
-        <button type="button" class="btn-icon btn-icon-info" title="Ver Info/Notas" onclick="verInfoExtra('${ingreso.placa}', 'Sin notas')">
+        <button type="button"
+                class="btn-icon btn-icon-info"
+                title="Ver información del vehículo"
+                onclick="verInfoExtra(this)"
+                data-id-ingreso="${ingreso.id}">
             <i class="fa-solid fa-circle-info"></i>
         </button>
     `;
@@ -152,7 +210,7 @@ function construirFilaTabla(ingreso) {
 }
 
 /**
- * Actualiza la tabla con los ingresos del servidor
+ * Actualiza la tabla with los ingresos del servidor
  */
 async function actualizarTabla() {
     if (actualizacionEnProceso) return;
@@ -217,9 +275,8 @@ function reinicializarEventos() {
 
     // Si hay botones de info, asegurarse de que tengan el evento
     document.querySelectorAll('.btn-icon-info').forEach(btn => {
-        btn.onclick = function() {
-            const placa = this.getAttribute('data-placa') || btn.parentElement.parentElement.querySelector('td').textContent;
-            verInfoExtra(placa, 'Sin notas');
+        btn.onclick = function () {
+            verInfoExtra(this);
         };
     });
 }

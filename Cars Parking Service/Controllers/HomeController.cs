@@ -64,7 +64,6 @@ namespace CarsParkingService.Controllers
             System.Diagnostics.Debug.WriteLine($"idUsuarioSesion: {idUsuarioSesion}");
             System.Diagnostics.Debug.WriteLine($"rolUsuario: {rolUsuario}");
 
-            // Verificar que sea rol Key (4)
             if (!idUsuarioSesion.HasValue || (rolUsuario != 4))
             {
                 System.Diagnostics.Debug.WriteLine($"Acceso denegado: no es rol Key");
@@ -74,9 +73,9 @@ namespace CarsParkingService.Controllers
             var query = _context.ingresos
                 .Include(i => i.Valet)
                 .Include(i => i.Banco)
+                .Include(i => i.Ubicacion)
                 .AsQueryable();
 
-            // Aplicar Filtros básicos si existen
             if (!string.IsNullOrEmpty(placa))
             {
                 query = query.Where(i => i.placa.Contains(placa.Trim().ToUpper()));
@@ -87,20 +86,11 @@ namespace CarsParkingService.Controllers
                 query = query.Where(i => i.estado_servicio == estado_servicio);
             }
 
-            // Buscamos la sesion activa con el usuario
             var sesion = _context.sesiones
-            .FirstOrDefault(s =>
-                s.id_usuario == idUsuarioSesion &&
-                s.fecha_fin == null
-            );
-
-            System.Diagnostics.Debug.WriteLine($"Sesión encontrada: {(sesion != null ? "SÍ" : "NO")}");
-            if (sesion != null)
-            {
-                System.Diagnostics.Debug.WriteLine($"  id_parqueadero en sesión: {sesion.id_parqueadero}");
-                System.Diagnostics.Debug.WriteLine($"  id_ubicacion en sesión: {sesion.id_ubicacion}");
-                System.Diagnostics.Debug.WriteLine($"  id_rol en sesión: {sesion.id_rol}");
-            }
+                .FirstOrDefault(s =>
+                    s.id_usuario == idUsuarioSesion &&
+                    s.fecha_fin == null
+                );
 
             if (sesion == null)
             {
@@ -108,7 +98,6 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("Login");
             }
 
-            // Excluir los servicios finalizados y despachados, y los pagos ya pagados
             var ingresos = query
                 .Where(i =>
                     i.id_parqueadero == sesion.id_parqueadero &&
@@ -116,25 +105,46 @@ namespace CarsParkingService.Controllers
                     i.estado_servicio != "despachado" &&
                     i.estado_pago != "pagado")
                 .AsEnumerable()
-                // Ordenamos: Primero los "solicitado" (para la cola visual), luego por fecha descendente
                 .OrderByDescending(i => i.estado_servicio?.Trim().ToLower() == "solicitado")
                 .ThenByDescending(i => i.fecha_ingreso)
                 .ToList();
 
-            System.Diagnostics.Debug.WriteLine($"Total ingresos encontrados: {ingresos.Count}");
-            foreach (var ing in ingresos)
-            {
-                System.Diagnostics.Debug.WriteLine($"  - ID: {ing.id_ingreso}, Placa: {ing.placa}, Parqueadero: {ing.id_parqueadero}, Estado: {ing.estado_servicio}");
-            }
-
-            // Obtener nombre del parqueadero
             var parqueadero = _context.parqueaderos.FirstOrDefault(p => p.id_parqueadero == sesion.id_parqueadero);
-            
+
+            var idsIngresos = ingresos.Select(i => i.id_ingreso).ToList();
+
+            var imagenesPorIngreso = _context.imagenes
+                .Where(img => idsIngresos.Contains(img.id_ingreso))
+                .AsEnumerable()
+                .Select(img => new
+                {
+                    img.id_ingreso,
+                    foto = $"data:image/jpeg;base64,{Convert.ToBase64String(img.dato_imagen)}"
+                })
+                .GroupBy(x => x.id_ingreso)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(x => x.foto).ToList()
+                );
+
+            var vistaKeyInfo = ingresos.ToDictionary(
+                i => i.id_ingreso,
+                i => new
+                {
+                    idIngreso = i.id_ingreso,
+                    placa = i.placa,
+                    cliente = i.nombre_cliente ?? "N/A",
+                    valet = i.Valet?.nombres ?? "N/A",
+                    ubicacion = i.Ubicacion?.nombre_ubicacion ?? "N/A",
+                    fotos = imagenesPorIngreso.TryGetValue(i.id_ingreso, out var fotos) ? fotos : new List<string>()
+                }
+            );
+
             ViewData["FiltroPlaca"] = placa;
             ViewData["FiltroEstado"] = estado_servicio;
             ViewData["NombreParqueadero"] = parqueadero?.nombre_parqueadero ?? "Parqueadero";
-
             ViewBag.valets = _context.usuarios.Where(v => v.id_rol == 1).ToList();
+            ViewBag.VistaKeyInfoJson = System.Text.Json.JsonSerializer.Serialize(vistaKeyInfo);
 
             return View(ingresos);
         }
@@ -1492,6 +1502,69 @@ namespace CarsParkingService.Controllers
                 ingresos = ingresos,
                 serverTime = DateTime.Now.ToString("O")
             });
+        }
+
+        [HttpPost]
+        public IActionResult fotoParqueo(int id_ingreso, string fotoBase64)
+        {
+            var idUsuarioSesion = HttpContext.Session.GetInt32("id");
+            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+
+            if (!idUsuarioSesion.HasValue || rolUsuario != 1)
+            {
+                return Forbid();
+            }
+
+            var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            if (ingreso == null)
+            {
+                return NotFound();
+            }
+
+            if (ingreso.id_valet != idUsuarioSesion.Value)
+            {
+                TempData["Error"] = "Solo el valet asignado puede registrar la foto del vehículo.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            if (ingreso.foto_estacionamiento)
+            {
+                TempData["Error"] = "La evidencia del parqueo ya fue registrada.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            if (string.IsNullOrWhiteSpace(fotoBase64))
+            {
+                TempData["Error"] = "Debe capturar una foto del vehículo.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            try
+            {
+                var base64Data = fotoBase64.Contains(",")
+                    ? fotoBase64.Split(',')[1]
+                    : fotoBase64;
+
+                var imagen = new imagenes
+                {
+                    id_ingreso = id_ingreso,
+                    dato_imagen = Convert.FromBase64String(base64Data)
+                };
+
+                ingreso.foto_estacionamiento = true;
+
+                _context.imagenes.Add(imagen);
+                _context.SaveChanges();
+
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error en fotoParqueo: {ex.Message}");
+                TempData["Error"] = "No fue posible guardar la foto del vehículo.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
         }
     }
 }

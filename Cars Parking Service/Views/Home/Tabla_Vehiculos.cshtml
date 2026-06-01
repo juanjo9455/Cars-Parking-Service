@@ -4,6 +4,7 @@
     var modalError = TempData["Error"] as string;
     var modalErrorIngresoId = TempData["ErrorIngresoId"]?.ToString();
     var idRol = Context.Session.GetInt32("id_rol");
+    var idUsuarioSesion = Context.Session.GetInt32("id");
 }
 
 <style>
@@ -276,17 +277,20 @@
 
                         @if (idRol == 1) // VALET
                         {
-                            if (!ingresos.foto_estacionamiento)
+                            if (ingresos.id_valet == idUsuarioSesion && !ingresos.foto_estacionamiento)
                             {
                                 <td data-label="Acción" class="cell-action">
                                     <i class="fa-solid fa-camera btn-action"
-                                       onclick="abrirModalFoto('@ingresos.id_ingreso')"
+                                       onclick="abrirModalFoto(this)"
+                                       data-id-ingreso="@ingresos.id_ingreso"
+                                       data-placa="@ingresos.placa"
+                                       data-cliente="@ingresos.nombre_cliente"
                                        style="cursor:pointer;"></i>
                                 </td>
                             }
                             else
                             {
-                                
+                                <td></td>
                             }
                         }
                         else // BANCO Y ADMIN
@@ -362,44 +366,39 @@
 
                 // Modal para tomar foto de parqueo
 
-                    <div id="modal-foto" class="Editar-Ingreso" style="display:none;">
+                    <div id="modal-foto-parqueo" class="Editar-Ingreso" style="display:none;">
 
                         <div class="modal-overlay" onclick="cerrarModalFoto()"></div>
                         <div class="Card-Ingreso card-ingreso-vehiculos" style=" margin-left: 13cm; margin-top: 2cm;">
-                            <form method="post" action="/Home/fotoParqueo">
-                            
-                                <input type="hidden" name="id_ingreso" value="@ingresos.id_ingreso" />
+                            <form method="post" asp-controller="Home" asp-action="fotoParqueo" id="formFotoParqueo">
+                                <input type="hidden" name="id_ingreso" id="fotoIdIngreso" />
+                                <input type="hidden" name="fotoBase64" id="fotoBase64" />
 
                                 <span class="close-btn" onclick="cerrarModalFoto()">&times;</span>
-                            
-                                <!-- BOTÓN FOTO OBJETOS -->
-                                <div style="display: flex;">
-                                    <button type="button" class="photo-btn-2" id="tomarFotoBtn">
+
+                                <h3>Evidencia del parqueo</h3>
+
+                                <div class="info-auto" style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:20px;">
+                                    <p><strong>Placa:</strong> <span id="fotoPlaca"></span></p>
+                                    <p><strong>Cliente:</strong> <span id="fotoCliente"></span></p>
+                                </div>
+
+                                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                                    <button type="button" class="photo-btn-2" id="tomarFotoParqueoBtn">
                                         <svg class="camera-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                                             <circle cx="12" cy="13" r="4"></circle>
                                         </svg>
-                                        Evidencia del parqueo
+                                        Tomar foto
                                     </button>
                                 </div>
 
-                                <!-- Contenedor padre para fotos y el video -->
                                 <div class="Media-Preview">
-                                    <!-- Contenedor para preview de fotos -->
-                                    <div class="photos-preview" id="photosPreview"></div>
-
-                                    <!-- Contenedor para preview de video -->
-                                    <div id="videoPreviewContainer" style="margin-top: 12px;"></div>
+                                    <div class="photos-preview" id="fotoPreviewParqueo"></div>
                                 </div>
 
-                                
-                                <!-- Input oculto para invocar la cámara nativa del dispositivo SOLO para fotos -->
-                                <input type="file" id="cameraInput" accept="image/*" capture style="display:none;">
-
-                                <!-- Inputs ocultos para enviar los archivos como base64 -->
-                                <div id="fotosBase64Container"></div>
-                                <input type="hidden" name="videoBase64" id="videoBase64Input" />
-                                <div class="error-message" id="errorMedia" style="display:none;"></div>
+                                <input type="file" id="cameraInputParqueo" accept="image/*" capture="environment" style="display:none;">
+                                <div class="error-message" id="errorFotoParqueo" style="display:none;"></div>
                             </form>
                         </div>
 
@@ -527,7 +526,7 @@
 @section Scripts {
     <script src="~/js/solicitudes.js" asp-append-version="true"></script>
     <script src="~/js/pago.js" asp-append-version="true"></script>
-    <script>
+    <!--<script>
         document.addEventListener('DOMContentLoaded', function () {
             const fechaInicio = document.getElementById('fechaInicio');
             const fechaFin = document.getElementById('fechaFin');
@@ -565,6 +564,91 @@
                     modal.style.display = 'flex';
                 }
             }
+        });
+    </script>-->
+
+    <script>
+        // abrir modal para tomar foto del vehiculo
+        function abrirModalFoto(btnOrId) {
+            const modalFoto = document.getElementById("modal-foto-parqueo");
+            const fotoIdIngreso = document.getElementById("fotoIdIngreso");
+            const fotoPlaca = document.getElementById("fotoPlaca");
+            const fotoCliente = document.getElementById("fotoCliente");
+            const fotoBase64 = document.getElementById("fotoBase64");
+            const fotoPreview = document.getElementById("fotoPreviewParqueo");
+            const errorFoto = document.getElementById("errorFotoParqueo");
+
+            if (!modalFoto || !fotoIdIngreso || !fotoPlaca || !fotoCliente || !fotoBase64 || !fotoPreview) {
+                return;
+            }
+
+            const elemento = btnOrId?.dataset ? btnOrId : null;
+
+            fotoIdIngreso.value = elemento?.dataset?.idIngreso || btnOrId || '';
+            fotoPlaca.textContent = elemento?.dataset?.placa || '';
+            fotoCliente.textContent = elemento?.dataset?.cliente || '';
+            fotoBase64.value = '';
+            fotoPreview.innerHTML = '';
+
+            if (errorFoto) errorFoto.style.display = 'none';
+
+            modalFoto.style.display = "flex";
+        }
+
+        // cerrar modal para tomar foto del vehiculo
+        function cerrarModalFoto() {
+            const modalFoto = document.getElementById("modal-foto-parqueo");
+            const fotoBase64 = document.getElementById("fotoBase64");
+            const fotoPreview = document.getElementById("fotoPreviewParqueo");
+            const errorFoto = document.getElementById("errorFotoParqueo");
+            const cameraInput = document.getElementById("cameraInputParqueo");
+
+            if (modalFoto) modalFoto.style.display = "none";
+            if (fotoBase64) fotoBase64.value = '';
+            if (fotoPreview) fotoPreview.innerHTML = '';
+            if (errorFoto) errorFoto.style.display = 'none';
+            if (cameraInput) cameraInput.value = '';
+        }
+
+        function fileToDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = ev => resolve(ev.target.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const btn = document.getElementById('tomarFotoParqueoBtn');
+            const cameraInput = document.getElementById('cameraInputParqueo');
+            const form = document.getElementById('formFotoParqueo');
+            const fotoBase64 = document.getElementById('fotoBase64');
+            const fotoPreview = document.getElementById('fotoPreviewParqueo');
+            const errorFoto = document.getElementById('errorFotoParqueo');
+
+            if (!btn || !cameraInput || !form || !fotoBase64 || !fotoPreview) return;
+
+            btn.addEventListener('click', function () {
+                if (errorFoto) errorFoto.style.display = 'none';
+                cameraInput.value = '';
+                cameraInput.click();
+            });
+
+            cameraInput.addEventListener('change', async function (e) {
+                const file = e.target.files && e.target.files[0];
+                if (!file || !file.type.startsWith('image/')) return;
+
+                const base64 = await fileToDataUrl(file);
+                fotoBase64.value = base64;
+
+                fotoPreview.innerHTML = `
+                    <div class="photo-item">
+                        <img src="${base64}" alt="Previsualización" style="max-width:100%;border-radius:10px;display:block;" />
+                    </div>`;
+
+                setTimeout(() => form.submit(), 150);
+            });
         });
     </script>
 }

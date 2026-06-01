@@ -96,7 +96,11 @@
                                 }
                             </form>
 
-                            <button type="button" class="btn-icon btn-icon-info" title="Ver Info/Notas" onclick="verInfoExtra('@item.placa', '@(item.notas ?? "Sin notas")')">
+                            <button type="button"
+                                    class="btn-icon btn-icon-info"
+                                    title="Ver información del vehículo"
+                                    onclick="verInfoExtra(this)"
+                                    data-id-ingreso="@item.id_ingreso">
                                 <i class="fa-solid fa-circle-info"></i>
                             </button>
                         </td>
@@ -251,4 +255,56 @@
         </div>
     </div>
 </div>
+
+<!-- Modal información vehículo -->
+<div class="info-key-modal" id="modalInfoKey" aria-hidden="true">
+    <div class="info-key-modal-card" role="dialog" aria-modal="true" aria-labelledby="infoKeyTitle">
+        <div class="info-key-modal-header">
+            <div>
+                <h5 id="infoKeyTitle">Información del vehículo</h5>
+                <p>Detalle completo del ingreso</p>
+            </div>
+            <button type="button" class="info-key-close" onclick="cerrarModalInfoKey()" aria-label="Cerrar">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="info-key-modal-body">
+            <div class="info-key-grid">
+                <div class="info-key-item">
+                    <span class="info-key-label">Placa</span>
+                    <span class="info-key-value" id="infoKeyPlaca"></span>
+                </div>
+
+                <div class="info-key-item">
+                    <span class="info-key-label">Cliente</span>
+                    <span class="info-key-value" id="infoKeyCliente"></span>
+                </div>
+
+                <div class="info-key-item">
+                    <span class="info-key-label">Valet asignado</span>
+                    <span class="info-key-value" id="infoKeyValet"></span>
+                </div>
+
+                <div class="info-key-item">
+                    <span class="info-key-label">Ubicación del servicio</span>
+                    <span class="info-key-value" id="infoKeyUbicacion"></span>
+                </div>
+            </div>
+
+            <div class="info-key-gallery-wrap">
+                <h6>Fotos del vehículo</h6>
+                <div class="info-key-gallery" id="infoKeyGallery"></div>
+                <div class="info-key-no-photos" id="infoKeyNoPhotos" style="display:none;">
+                    No hay fotos registradas para este vehículo.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.vistaKeyInfoMap = @Html.Raw(ViewBag.VistaKeyInfoJson ?? "{}");
+</script>
+
 <script src="~/js/vistakey.js?v=@DateTime.Now.Ticks"></script>

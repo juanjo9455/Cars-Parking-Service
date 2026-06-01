@@ -1120,29 +1120,45 @@ function cerrarModalValet() {
 }
 
 // abrir modal para tomar foto del vehiculo
-function abrirModalFoto(idIngreso) {
+function abrirModalFoto(btnOrId) {
+    const modalFoto = document.getElementById("modal-foto-parqueo");
+    const fotoIdIngreso = document.getElementById("fotoIdIngreso");
+    const fotoPlaca = document.getElementById("fotoPlaca");
+    const fotoCliente = document.getElementById("fotoCliente");
+    const fotoBase64 = document.getElementById("fotoBase64");
+    const fotoPreview = document.getElementById("fotoPreviewParqueo");
+    const errorFoto = document.getElementById("errorFotoParqueo");
 
-    const modalFoto = document.getElementById("modal-foto");
-
-    if (modalFoto) {
-
-        modalFoto.style.display = "block";
-
+    if (!modalFoto || !fotoIdIngreso || !fotoPlaca || !fotoCliente || !fotoBase64 || !fotoPreview) {
+        return;
     }
 
+    const elemento = btnOrId?.dataset ? btnOrId : null;
+
+    fotoIdIngreso.value = elemento?.dataset?.idIngreso || btnOrId || '';
+    fotoPlaca.textContent = elemento?.dataset?.placa || '';
+    fotoCliente.textContent = elemento?.dataset?.cliente || '';
+    fotoBase64.value = '';
+    fotoPreview.innerHTML = '';
+
+    if (errorFoto) errorFoto.style.display = 'none';
+
+    modalFoto.style.display = "flex";
 }
 
 // cerrar modal para tomar foto del vehiculo
 function cerrarModalFoto() {
+    const modalFoto = document.getElementById("modal-foto-parqueo");
+    const fotoBase64 = document.getElementById("fotoBase64");
+    const fotoPreview = document.getElementById("fotoPreviewParqueo");
+    const errorFoto = document.getElementById("errorFotoParqueo");
+    const cameraInput = document.getElementById("cameraInputParqueo");
 
-    const modalFoto = document.getElementById("modal-foto");
-
-    if (modalFoto) {
-
-        modalFoto.style.display = "none";
-
-    }
-
+    if (modalFoto) modalFoto.style.display = "none";
+    if (fotoBase64) fotoBase64.value = '';
+    if (fotoPreview) fotoPreview.innerHTML = '';
+    if (errorFoto) errorFoto.style.display = 'none';
+    if (cameraInput) cameraInput.value = '';
 }
 
 // =========================== Eventos para pagar el servicio ============================ \\
