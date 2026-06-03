@@ -8,9 +8,9 @@ namespace CarsParkingService.Models
     {
         [Key]
         public int id_parqueadero { get; set; }
-        public string direccion { get; set; }
-        public string ciudad { get; set; }
-        public string nombre_parqueadero { get; set; }
+        public string? direccion { get; set; }
+        public string? ciudad { get; set; }
+        public string? nombre_parqueadero { get; set; }
         public decimal tarifa { get; set; }
         public string estado { get; set; } = "activo";
     }

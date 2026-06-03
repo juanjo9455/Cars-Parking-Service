@@ -75,14 +75,14 @@
                             <form method="post" action="@Url.Action("ActualizarEstadoKey", "Home")" class="d-inline actions-form">
                                 <input type="hidden" name="id_ingreso" value="@item.id_ingreso" />
 
-                                @if (item.estado_servicio != "parqueado" && item.estado_servicio != "despachado" && item.id_valet is not null)
+                                @if (item.estado_servicio != "parqueado" && item.estado_servicio != "despachado" && item.id_valet is not null && item.estado_servicio != "solicitado")
                                 {
                                     <button type="submit" name="nuevo_estado" value="parqueado" class="btn-icon btn-icon-success" title="Marcar como Parqueado">
                                         <i class="fa-solid fa-square-parking"></i>
                                     </button>
                                 }
 
-                                @if (item.estado_servicio != "despachado" && item.estado_servicio?.Trim().ToLower() == "parqueado")
+                                @if (item.estado_servicio != "despachado" && item.estado_servicio?.Trim().ToLower() == "parqueado" || item.estado_servicio == "solicitado")
                                 {
                                     <button type="button"
                                             class="btn-icon btn-icon-warning"

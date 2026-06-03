@@ -44,14 +44,14 @@
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.Valet)
         </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Valet.id_usuario)
+        <dd class="col-sm-10">
+            @(Model.Valet?.id_usuario)
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.Banco)
         </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Banco.id_usuario)
+        <dd class="col-sm-10">
+            @(Model.Banco?.id_usuario)
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.id_parqueadero)
@@ -62,8 +62,8 @@
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.Ubicacion)
         </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Ubicacion.id_ubicacion)
+        <dd class="col-sm-10">
+            @(Model.Ubicacion?.id_ubicacion)
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.notas)

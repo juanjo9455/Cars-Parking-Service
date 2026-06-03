@@ -9,7 +9,7 @@ namespace CarsParkingService.Models
     {
         [Key]
         public int id_configuracion { get; set; }
-        public string clave { get; set; }
-        public string valor { get; set; }
+        public string? clave { get; set; }
+        public string? valor { get; set; }
     }
 }

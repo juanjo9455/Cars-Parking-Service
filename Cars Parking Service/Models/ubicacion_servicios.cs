@@ -8,9 +8,9 @@ namespace CarsParkingService.Models
     {
         [Key]
         public int id_ubicacion { get; set; }
-        public string nombre_ubicacion { get; set; }
-        public string direccion { get; set; }
-        public string ciudad { get; set; }
+        public string? nombre_ubicacion { get; set; }
+        public string? direccion { get; set; }
+        public string? ciudad { get; set; }
         public decimal valor_servicio { get; set; }
         public string estado { get; set; } = "activo";
     }

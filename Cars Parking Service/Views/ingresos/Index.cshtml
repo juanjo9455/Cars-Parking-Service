@@ -73,16 +73,17 @@
                 @Html.DisplayFor(modelItem => item.estado_servicio)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Valet.id_usuario)
+                @(item.Valet?.id_usuario)
             </td>
+
             <td>
-                @Html.DisplayFor(modelItem => item.Banco.id_usuario)
+                @(item.Banco?.id_usuario)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.id_parqueadero)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Ubicacion.id_ubicacion)
+                @(item.Ubicacion?.id_ubicacion)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.notas)

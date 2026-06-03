@@ -10,8 +10,8 @@
     }, 5000);
     
     setInterval(() => {
-        cargarEnCurso();
-        mostrarEnCurso();
+        cargarDespachados();
+        mostrarDespachados();
     }, 5000);
 
 });
@@ -93,7 +93,7 @@ function cerrarPanelSolicitudes() {
 let solicitudes = [];
 
 // Creamos array con los vehiculos en curso
-let vehiculosEnCurso = [];
+let vehiculosDespachados= [];
 
 // Creamos metodo para leer el JSON de las solicitudes de HomeController //
 // Función asíncrona para consultar las solicitudes al servidor
@@ -157,30 +157,30 @@ async function cargarSolicitudes(){
 
 }
 
-async function cargarEnCurso() {
+async function cargarDespachados() {
 
-    const url = `/Home/ObtenerEnCurso?ts=${Date.now()}`;
+    const url = `/Home/ObtenerDespachados?ts=${Date.now()}`;
 
     const response = await fetch(url, {
         cache: 'no-store'
     });
 
     if (!response.ok) {
-        console.error('Error obteniendo vehículos en curso');
+        console.error('Error obteniendo vehículos despachados');
         return;
     }
 
     const data = await response.json();
 
     // Guardamos array global
-    vehiculosEnCurso = data.vehiculos;
+    vehiculosDespachados = data.vehiculos;
 
     // Contador visual
     const statActv = document.getElementById('statActv');
-    const badgeEnCurso = document.getElementById('badge-encurso');
+    const badgeDespachados = document.getElementById('badge-despachados');
 
     if (statActv) statActv.textContent = data.cantidad;
-    if (badgeEnCurso) badgeEnCurso.textContent = data.cantidad;
+    if (badgeDespachados) badgeDespachados.textContent = data.cantidad;
 }
 
 // Funcion para mostrar los vehiculos solicitados en el html
@@ -257,35 +257,35 @@ function mostrarSolicitados() {
 }
 
 // Funcion para mostrar los vehiculos en curso en el html
-function mostrarEnCurso() {
+function mostrarDespachados() {
 
-    const panelEnCurso = document.getElementById('panelActiveList');
+    const panelDespachados = document.getElementById('panelActiveList');
 
-    const panelEmpty = document.getElementById('panelEmptyEnCurso');
+    const panelEmpty = document.getElementById('panelEmptyDespachados');
 
-    if (!panelEnCurso || !panelEmpty) {
-        console.error('Elementos panelEnCurso o panelEmptyEnCurso no encontrados');
+    if (!panelDespachados || !panelEmpty) {
+        console.error('Elementos panelDespachados o panelEmptyDespachados no encontrados');
         return;
     }
 
-    if (vehiculosEnCurso.length == 0) {
+    if (vehiculosDespachados.length == 0) {
 
         panelEmpty.style.display = "block"
-        panelEnCurso.style.display = "none";
+        panelDespachados.style.display = "none";
 
         return;
     }
 
     panelEmpty.style.display = "none";
-    panelEnCurso.style.display = "block";
+    panelDespachados.style.display = "block";
 
 
-    panelEnCurso.innerHTML = '';
+    panelDespachados.innerHTML = '';
 
-    vehiculosEnCurso.forEach(vehiculos => {
+    vehiculosDespachados.forEach(vehiculos => {
 
         // Creamos el html dinamicamente
-        const enCursoHTML = `
+        const DespachadosHTML = `
 
             <div class="req-item">
 
@@ -314,7 +314,7 @@ function mostrarEnCurso() {
         `;
 
         // Insertamos el HTML en el panel
-        panelEnCurso.innerHTML += enCursoHTML;
+        panelDespachados.innerHTML += DespachadosHTML;
 
     })
 
@@ -333,7 +333,6 @@ async function tomarSolicitud(idIngreso) {
 
     }
 
-
     const response = await fetch(`/Home/TomarSolicitud?idIngreso=${idIngreso}`,{
 
         method: 'post'
@@ -344,8 +343,8 @@ async function tomarSolicitud(idIngreso) {
 
         console.log('Solicitud tomada');
 
-        cargarSolicitudes();
-        cargarEnCurso();
+            cargarSolicitudes();
+            cargarDespachados();
     }
 
 }
@@ -364,7 +363,7 @@ function switchTab(tab) {
     // Renderizar contenido al cambiar pestaña
     if (tab === 'solicitados') {
         mostrarSolicitados();
-    } else if (tab === 'encurso') {
-        mostrarEnCurso();
+    } else if (tab === 'despachados') {
+        mostrarDespachados();
     }
 }

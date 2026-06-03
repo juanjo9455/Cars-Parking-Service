@@ -76,9 +76,11 @@ namespace CarsParkingService.Controllers
                 .Include(i => i.Ubicacion)
                 .AsQueryable();
 
-            if (!string.IsNullOrEmpty(placa))
+            if (!string.IsNullOrWhiteSpace(placa))
             {
-                query = query.Where(i => i.placa.Contains(placa.Trim().ToUpper()));
+                query = query.Where(i =>
+                i.placa != null &&
+                i.placa.Contains(placa.Trim().ToUpper()));
             }
 
             if (!string.IsNullOrEmpty(estado_servicio))
@@ -258,7 +260,7 @@ namespace CarsParkingService.Controllers
 
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult ObtenerEnCurso()
+        public IActionResult ObtenerDespachados()
         {
             // Obtenemos usuario y rol
             var idUsuario = HttpContext.Session.GetInt32("id");
@@ -270,7 +272,7 @@ namespace CarsParkingService.Controllers
                 .Include(i => i.Banco)
                 .Where(i =>
                     i.estado_servicio != null &&
-                    i.estado_servicio.Trim().ToLower() == "en curso"
+                    i.estado_servicio.Trim().ToLower() == "despachado"
                 )
                 .AsQueryable();
 
@@ -300,7 +302,7 @@ namespace CarsParkingService.Controllers
             }
 
             // Convertimos datos
-            var enCurso = query
+            var despachados = query
                 .Select(i => new
                 {
                     id = i.id_ingreso,
@@ -318,8 +320,8 @@ namespace CarsParkingService.Controllers
 
             return Json(new
             {
-                cantidad = enCurso.Count(),
-                vehiculos = enCurso
+                cantidad = despachados.Count(),
+                vehiculos = despachados
             });
         }
 
@@ -1142,7 +1144,7 @@ namespace CarsParkingService.Controllers
 
             // Validar si el correo ya le pertence a OTRO usuario
             bool existeCorreo = _context.usuarios
-                .Any(u => u.correo.Trim().ToLower() == correo.Trim().ToLower() && u.id_usuario != id_usuario && u.estado == true);
+                .Any(u => u.correo != null && u.correo.Trim().ToLower() == correo.Trim().ToLower() && u.id_usuario != id_usuario && u.estado == true);
 
             if (existeDni)
             {

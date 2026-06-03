@@ -43,8 +43,16 @@ namespace CarsParkingService.Controllers
             ViewBag.imagenUsuario = valet?.imagen_usuario ?? string.Empty;
             ViewBag.nombreUsuario = valet?.nombres ?? "Valet";
 
-            var ubicacion_Servicio = _context.ubicacion_servicios.Where(u => u.id_ubicacion == ingreso.id_ubicacion).FirstOrDefault();
-            ViewBag.tarifa = ubicacion_Servicio.valor_servicio;
+            //var ubicacion_Servicio = _context.ubicacion_servicios.Where(u => u.id_ubicacion == ingreso.id_ubicacion).FirstOrDefault();
+            //ViewBag.tarifa = ubicacion_Servicio.valor_servicio;
+
+            if (ingreso != null)
+            {
+                var ubicacionServicio = _context.ubicacion_servicios
+                    .FirstOrDefault(u => u.id_ubicacion == ingreso.id_ubicacion);
+
+                ViewBag.tarifa = ubicacionServicio?.valor_servicio;
+            }
 
             if (ingreso == null)
             {

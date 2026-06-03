@@ -323,11 +323,14 @@ namespace CarsParkingService.Controllers
             }
             else {
 
-                ViewBag.Roles = _context.roles.Where(r => r.id_rol != 3).ToList();
-                ViewBag.Parqueaderos = _context.parqueaderos.ToList();
-                ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
+                ViewBag.Roles = _context.roles
+                .Where(r => r.id_rol != 3)
+                .ToList();
 
             }
+
+            ViewBag.Parqueaderos = _context.parqueaderos.ToList();
+            ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
 
             return View("Login");
         }

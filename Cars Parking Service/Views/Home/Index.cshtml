@@ -104,7 +104,7 @@
         </div>
         <div class="stat-cell">
             <div class="stat-num green" id="statActv"></div>
-            <div class="stat-lbl">En curso</div>
+            <div class="stat-lbl">Despachado</div>
         </div>
         <div class="stat-cell">
             <div class="stat-num gray" id="statDone">0</div>
@@ -120,10 +120,10 @@
             <span class="tab-badge" id="badge-solicitados"></span>
         </button>
         <button class="tab-btn" role="tab" aria-selected="false"
-                aria-controls="tab-encurso" id="btn-encurso"
-                onclick="switchTab('encurso')">
-            En curso
-            <span class="tab-badge" id="badge-encurso"></span>
+                aria-controls="tab-despachados" id="btn-despachados"
+                onclick="switchTab('despachados')">
+            Despachado
+            <span class="tab-badge" id="badge-despachados"></span>
         </button>
     </div>
 
@@ -135,9 +135,9 @@
         </div>
     </div>
 
-    <div class="tab-content" id="tab-encurso" role="tabpanel" aria-labelledby="btn-encurso">
+    <div class="tab-content" id="tab-despachados" role="tabpanel" aria-labelledby="btn-despachados">
         <div class="panel-list" id="panelActiveList"></div>
-        <div class="panel-empty" id="panelEmptyEnCurso">
+        <div class="panel-empty" id="panelEmptyDespachados">
             <i class="fa-solid fa-car-side"></i>
             <span>Sin vehiculos en este estado</span>
         </div>
