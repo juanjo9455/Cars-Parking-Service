@@ -59,6 +59,12 @@
                         <li><a asp-controller="Home" asp-action="Tabla_Vehiculos"><i class="fa-solid fa-table-list"></i>Tabla Ingresos</a></li>
     
                     }
+                    @if (idRol == 2)
+                    {
+                            
+                        <li><a asp-controller="Home" asp-action="Liquidacion"><i class="fa-solid fa-sack-dollar"></i>Liquidacion</a></li>
+
+                    }
 
                     <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
                 </ol>

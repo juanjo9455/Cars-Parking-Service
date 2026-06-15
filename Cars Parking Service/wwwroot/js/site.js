@@ -1121,44 +1121,116 @@ function cerrarModalValet() {
 
 // abrir modal para tomar foto del vehiculo
 function abrirModalFoto(btnOrId) {
-    const modalFoto = document.getElementById("modal-foto-parqueo");
+
+    const modalAcciones = document.getElementById('modal-acciones');
+    const btn = btnOrId;
+
+    document.getElementById("contenido-modal-acciones").innerHTML = `
+
+        <form method="post" action="/Home/fotoParqueo" id="formFotoParqueo">
+            <input type="hidden" name="id_ingreso" id="fotoIdIngreso" />
+            <input type="hidden" name="fotoBase64" id="fotoBase64" />
+
+            <span class="close-btn" onclick="cerrarModalFoto()">&times;</span>
+
+            <h3>Evidencia del parqueo</h3>
+
+            <div class="info-auto" style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:20px;">
+                <p><strong>Placa:</strong> <span id="fotoPlaca"></span></p>
+                <p><strong>Cliente:</strong> <span id="fotoCliente"></span></p>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <button type="button" class="photo-btn-2" id="tomarFotoParqueoBtn">
+                    <svg class="camera-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    Tomar foto
+                </button>
+            </div>
+
+            <div class="Media-Preview">
+                <div class="photos-preview" id="fotoPreviewParqueo"></div>
+            </div>
+
+            <input type="file" id="cameraInputParqueo" accept="image/*" capture="environment" style="display:none;">
+            <div class="error-message" id="errorFotoParqueo" style="display:none;"></div>
+        </form>
+
+    
+    `;
+    const btnTomarFoto = document.getElementById("tomarFotoParqueoBtn");
+    const cameraInput = document.getElementById("cameraInputParqueo");
+    const form = document.getElementById("formFotoParqueo");
+    const fotoBase64 = document.getElementById("fotoBase64");
+    const fotoPreview = document.getElementById("fotoPreviewParqueo");
     const fotoIdIngreso = document.getElementById("fotoIdIngreso");
     const fotoPlaca = document.getElementById("fotoPlaca");
     const fotoCliente = document.getElementById("fotoCliente");
-    const fotoBase64 = document.getElementById("fotoBase64");
-    const fotoPreview = document.getElementById("fotoPreviewParqueo");
-    const errorFoto = document.getElementById("errorFotoParqueo");
 
-    if (!modalFoto || !fotoIdIngreso || !fotoPlaca || !fotoCliente || !fotoBase64 || !fotoPreview) {
-        return;
-    }
+    btnTomarFoto.addEventListener("click", () => {
+        cameraInput.click();
+    });
 
-    const elemento = btnOrId?.dataset ? btnOrId : null;
+    cameraInput.addEventListener("change", async function (e) {
 
-    fotoIdIngreso.value = elemento?.dataset?.idIngreso || btnOrId || '';
-    fotoPlaca.textContent = elemento?.dataset?.placa || '';
-    fotoCliente.textContent = elemento?.dataset?.cliente || '';
-    fotoBase64.value = '';
-    fotoPreview.innerHTML = '';
+        const file = e.target.files?.[0];
 
-    if (errorFoto) errorFoto.style.display = 'none';
+        if (!file || !file.type.startsWith('image/')) return;
 
-    modalFoto.style.display = "flex";
+        const base64 = await fileToDataUrl(file);
+
+        fotoBase64.value = base64;
+
+        btnTomarFoto.disabled = true;
+        btnTomarFoto.style.backgroundColor = "#b0b0b0";
+        btnTomarFoto.style.color = "#666";
+        btnTomarFoto.style.cursor = "not-allowed";
+        btnTomarFoto.style.opacity = "0.7";
+        btnTomarFoto.style.pointerEvents = "none";
+        btnTomarFoto.innerHTML = "Procesando...";
+
+        fotoPreview.innerHTML = `
+        <div class="photo-item">
+            <img src="${base64}"
+                 alt="Previsualización"
+                 style="max-width:100%; border-radius:10px;">
+        </div>
+    `;
+
+        setTimeout(() => form.submit(), 150);
+    });
+
+    fotoIdIngreso.value = btn.dataset.idIngreso;
+    fotoPlaca.textContent = btn.dataset.placa;
+    fotoCliente.textContent = btn.dataset.cliente;
+
+    if (modalAcciones) { modalAcciones.style.display = "flex"; }
 }
 
 // cerrar modal para tomar foto del vehiculo
 function cerrarModalFoto() {
-    const modalFoto = document.getElementById("modal-foto-parqueo");
+    const modalAcciones = document.getElementById('modal-acciones');
     const fotoBase64 = document.getElementById("fotoBase64");
     const fotoPreview = document.getElementById("fotoPreviewParqueo");
     const errorFoto = document.getElementById("errorFotoParqueo");
     const cameraInput = document.getElementById("cameraInputParqueo");
 
-    if (modalFoto) modalFoto.style.display = "none";
+    if (modalAcciones) modalAcciones.style.display = "none";
     if (fotoBase64) fotoBase64.value = '';
     if (fotoPreview) fotoPreview.innerHTML = '';
     if (errorFoto) errorFoto.style.display = 'none';
     if (cameraInput) cameraInput.value = '';
+}
+
+function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = ev => resolve(ev.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 }
 
 // =========================== Eventos para pagar el servicio ============================ \\
@@ -1166,20 +1238,90 @@ function cerrarModalFoto() {
 // =========================== Flujo Pago y Finalización =========================== \\
 
 // Abrir modal de pago
-function abrirModalPago(idIngreso, placa, nombreCliente) {
-    const modal = document.getElementById(`modal-pago-${idIngreso}`);
+function abrirModalPago(btn) {
+    const modalAcciones = document.getElementById('modal-acciones');
+    const id = btn.getAttribute('data-id');
+    const placa = btn.getAttribute('data-placa');
+    const nombre_cliente = btn.getAttribute('data-cliente');
+    const metodo_pago = btn.getAttribute('data-metodo-pago');
+    const estado_servicio = btn.getAttribute('data-estado-servicio');
 
-    if (modal) {
-        modal.style.display = 'flex';
-    }
+    document.getElementById("contenido-modal-acciones").innerHTML = `
+    
+        <span class="close-btn" onclick="cerrarModalPago('${id}')">&times;</span>
+        <h3>Pago para Vehículo</h3>
+
+        <!-- Información del vehículo -->
+        <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+            <p><strong>Placa:</strong> ${placa}</p>
+            <p><strong>Cliente:</strong> ${nombre_cliente}</p>
+            <p style="margin-bottom: 0;">
+                <strong>Método de Pago Actual:</strong>
+                <span id="metodo-pago-actual-${id}">
+                    ${metodo_pago || "No especificado"}
+                </span>
+            </p>
+        </div>
+        <br />
+        <p> Editar Metodo De Pago </p>
+        <select id="metodo-pago-${id}" style="width:100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 20px;">
+            <option value="QR" ${metodo_pago === "QR" ? "selected" : ""}>
+                QR
+            </option>
+
+            <option value="Transferencia" ${metodo_pago === "Transferencia" ? "selected" : ""}>
+                Transferencia
+            </option>
+
+            <option value="Efectivo" ${metodo_pago === "Efectivo" ? "selected" : ""}>
+                Efectivo
+            </option>
+
+        </select>
+        <br />
+        <!-- Generar código de seguridad -->
+        <div id="btn-generar-contenedor-${id}" style="margin-bottom: 20px;">
+            <button type="button" class="btn btn-primary" onclick="generarCodigoSeguridad('${id}')" style="width: 100%; padding: 10px;">
+                <i class="fa-solid fa-key"></i> Generar Código de Seguridad
+            </button>
+        </div>
+
+        <p id="contador-codigo-${id}"
+                style="margin-top:10px; color:red; font-weight:bold;">
+        </p>
+
+        <!-- Ingresar código de validación (OCULTO INICIALMENTE) -->
+        <div id="validacion-contenedor-${id}" style="display:none; margin-bottom: 20px;">
+            <div class="form-group-modal" style="margin-bottom: 20px;">
+                <label>Ingresa el código que el cliente confirmó:</label>
+                <input type="text" id="codigo-validacion-${id}" placeholder="Ej: 123456" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 16px; letter-spacing: 5px;" maxlength="6">
+                <button type="button" id="OtroCodigo" class="btn btn-link" onclick="generarCodigoSeguridad('${id}')" style="margin-top: 10px; color: #2e7d32; text-decoration: underline;">
+                    Generar otro código
+                </button>
+            </div>
+
+            <!-- Botones de validación -->
+            <div class="modal-actions" style="display: flex; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalPago('${id}')" style="flex: 1;">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="validarCodigoYAbrir('${id}', '${placa}', '${nombre_cliente}', '${metodo_pago}','modal-acciones')" style="flex: 1;">
+                    <i class="fa-solid fa-check"></i> Validar y Continuar
+                </button>
+            </div>
+        </div>
+    
+    `
+
+    if (modalAcciones) { modalAcciones.style.display = 'flex'; }
 }
 
 // Cerrar modal de pago
 function cerrarModalPago(idIngreso) {
-    const modal = document.getElementById(`modal-pago-${idIngreso}`);
-
-    if (modal) {
-        modal.style.display = 'none';
+    const modalAcciones = document.getElementById('modal-acciones');
+    
+    if (modalAcciones) {
+        modalAcciones.style.display = 'none';
         limpiarModalPago(idIngreso);
     }
 }
@@ -1396,7 +1538,7 @@ function eliminarCodigoSeguridad(idIngreso) {
 }
 
 // Validar código y abrir modal final
-function validarCodigoYAbrir(idIngreso, modalId) {
+function validarCodigoYAbrir(idIngreso, placa, nombre_cliente, metodo_pago, modalId) {
 
     const codigoInput = document.getElementById(`codigo-validacion-${idIngreso}`);
 
@@ -1431,11 +1573,49 @@ function validarCodigoYAbrir(idIngreso, modalId) {
 
                 cerrarModalPago(idIngreso);
 
-                const modalFinalizacion = document.getElementById(modalId);
+                const modalAcciones = document.getElementById(modalId);
 
-                if (modalFinalizacion) {
-                    modalFinalizacion.style.display = 'flex';
-                }
+                document.getElementById("contenido-modal-acciones").innerHTML = `
+
+                    <div class="Card-Ingreso card-ingreso-vehiculos">
+                        <span class="close-btn" onclick="cerrarModalFinalizacion('${idIngreso}')">&times;</span>
+                        <h3>Finalizar Servicio de Vehículo</h3>
+
+                        <!-- Información del vehículo -->
+                        <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p><strong>Placa:</strong> ${placa}</p>
+                            <p><strong>Cliente:</strong> ${nombre_cliente}</p>
+                            <p><strong>Método de Pago:</strong> <span id="metodo-pago-final-${idIngreso}">${metodo_pago ?? "No especificado"}</span></p>
+                            <p style="margin-bottom: 0;"><strong>Estado Actual:</strong> ${estado_servicio}</p>
+                        </div>
+
+                        <!-- Seleccionar estado final -->
+                        <div class="form-group-modal" style="margin-bottom: 20px;">
+                            <label>Estado del Servicio:</label>
+                            <select id="estado-servicio-${idIngreso}" style="width:100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="finalizado">Finalizado</option>
+                            </select>
+                        </div>
+
+                        <!-- Mostrar estado de pago -->
+                        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="margin: 0; color: #1976d2;"><strong>Estado de Pago: PAGADO ✓</strong></p>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="modal-actions" style="display: flex; gap: 10px;">
+                            <button type="button" class="btn btn-secondary" onclick="cerrarModalFinalizacion('${idIngreso}')" style="flex: 1;">
+                                Cancelar
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="finalizarServicio('${idIngreso}')" style="flex: 1;">
+                                <i class="fa-solid fa-check-circle"></i> Confirmar
+                            </button>
+                        </div>
+                    </div>
+                
+                `;
+
+                if (modalAcciones) { modalAcciones.style.display = 'flex'; }
 
             } else {
 

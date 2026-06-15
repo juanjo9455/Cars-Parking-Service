@@ -136,10 +136,22 @@ async function obtenerIngresosPorParqueadero() {
  * Construye una fila de tabla HTML a partir de un ingreso
  */
 function construirFilaTabla(ingreso) {
-    const claseAlerta = ingreso.estado_servicio?.trim().toLowerCase() === 'solicitado' ? 'alerta-solicitado' : '';
-    const claseBadge = ingreso.estado_servicio === 'solicitado' ? 'status-pendiente' 
-                     : ingreso.estado_servicio === 'parqueado' ? 'status-pagado' 
-                     : 'status-en-uso';
+
+    const estado = ingreso.estado_servicio?.trim().toLowerCase();
+    let claseAlerta = '';
+
+    if (estado === 'solicitado') {
+        claseAlerta = 'alerta-solicitado';
+    }
+    else if (estado === 'esperando valet' || ingreso.id_valet == null) {
+        claseAlerta = 'alerta-sin-valet';
+    }
+
+    // Ahora claseBadge afuera
+    const claseBadge = estado === 'solicitado' ? 'status-pendiente'
+        : estado === 'esperando valet' ? 'status-esperando-valet'
+            : estado === 'parqueado' ? 'status-pagado'
+                : 'status-en-uso';
     
     const fechaFormato = new Date(ingreso.fecha_ingreso).toLocaleString('es-ES', {
         year: 'numeric',

@@ -68,11 +68,11 @@
         </div>
         <div class="stat-cell">
             <div class="stat-num green" id="statActv"></div>
-            <div class="stat-lbl">En curso</div>
+            <div class="stat-lbl">Despachado</div>
         </div>
         <div class="stat-cell">
             <div class="stat-num gray" id="statDone">0</div>
-            <div class="stat-lbl">Finalizados</div>
+            <div class="stat-lbl">Esperando Valet</div>
         </div>
     </div>
 
@@ -84,33 +84,41 @@
             <span class="tab-badge" id="badge-solicitados"></span>
         </button>
         <button class="tab-btn" role="tab" aria-selected="false"
-                aria-controls="tab-encurso" id="btn-encurso"
-                onclick="switchTab('encurso')">
-            En curso
-            <span class="tab-badge" id="badge-encurso"></span>
+                aria-controls="tab-despachados" id="btn-despachados"
+                onclick="switchTab('despachados')">
+            Despachado
+            <span class="tab-badge" id="badge-despachados"></span>
+        </button>
+        <button class="tab-btn" role="tab" aria-selected="false"
+                aria-controls="tab-esperando-valet" id="btn-esperando-valet"
+                onclick="switchTab('esperando-valet')">
+            Esperando Valet
+            <span class="tab-badge" id="badge-esperando-valet"></span>
         </button>
     </div>
 
     <div class="tab-content active" id="tab-solicitados" role="tabpanel" aria-labelledby="btn-solicitados">
-
         <div class="panel-list" id="panelPendingList"></div>
-
         <div class="panel-empty" id="panelEmpty">
             <i class="fa-solid fa-car-side"></i>
             <span>Sin solicitudes en este estado</span>
         </div>
-
     </div>
 
-    <div class="tab-content" id="tab-encurso" role="tabpanel" aria-labelledby="btn-encurso">
-
+    <div class="tab-content" id="tab-despachados" role="tabpanel" aria-labelledby="btn-despachados">
         <div class="panel-list" id="panelActiveList"></div>
-
-        <div class="panel-empty" id="panelEmptyEnCurso">
+        <div class="panel-empty" id="panelEmptyDespachados">
             <i class="fa-solid fa-car-side"></i>
             <span>Sin vehiculos en este estado</span>
         </div>
+    </div>
 
+    <div class="tab-content" id="tab-esperando-valet" role="tabpanel" aria-labelledby="btn-esperando-valet">
+        <div class="panel-list" id="panelEperandoValetList"></div>
+        <div class="panel-empty" id="panelEmptyEsperandoValet">
+            <i class="fa-solid fa-car-side"></i>
+            <span>Sin vehiculos en este estado</span>
+        </div>
     </div>
 
 </div>
@@ -246,14 +254,54 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var ingresos in Model)
-            {
-                    <tr>
+            @foreach (var ingresos in Model){
+                var claseAlerta = "";
+                if (ingresos.estado_servicio?.Trim().ToLower() == "solicitado")
+                {
+                    claseAlerta = "alerta-solicitado";
+                }
+                else if (ingresos.id_valet == null)
+                {
+                    claseAlerta = "alerta-sin-valet";
+                }
+
+                <tr class="@claseAlerta">
+
+                    @if (ingresos.estado_servicio == "esperando valet" && idRol == 1)
+                    {
+
+                        <td data-label="Placa">@ingresos.placa</td>
+                        <td data-label="Lugar">@ingresos.Ubicacion?.nombre_ubicacion</td>
+                        <td data-label="Hora Ingreso">@ingresos.fecha_ingreso</td>
+                        <td data-label="Hora Salida"></td>
+                        <td data-label="Estado Pago">
+                            <span class="status-badge status"></span>
+                        </td>
+                        <td data-label="Acción" class="cell-action">
+                            <button class="btn-tomar-vehiculo"
+                                    type="button"
+                                    onclick="abrirModalTomarVehiculo(this)"
+                                    data-id="@ingresos.id_ingreso"
+                                    data-placa="@ingresos.placa"
+                                    data-cliente="@ingresos.nombre_cliente"
+                                    data-id-valet="@idUsuarioSesion"
+                                    title="Sin valet asignado — disponible para tomar">
+                                <span class="btn-tomar-ping"></span>
+                                <i class="fa-solid fa-key"></i>
+                                Tomar vehículo
+                            </button>
+                        </td>
+
+                    }
+                    else
+                    {
+                            
                         <td data-label="Placa">@ingresos.placa</td>
                         <td data-label="Lugar">@ingresos.Ubicacion?.nombre_ubicacion</td>
                         <td data-label="Hora Ingreso">@ingresos.fecha_ingreso</td>
                         <td data-label="Hora Salida">@ingresos.fecha_salida</td>
 
+                            
                         @if (ingresos.estado_pago == "pendiente")
                         {
                             <td data-label="Estado Pago">
@@ -274,249 +322,102 @@
                         }
 
                         <td data-label="Estado Servicio">@ingresos.estado_servicio</td>
+    
 
-                        @if (idRol == 1) // VALET
-                        {
-                            if (ingresos.id_valet == idUsuarioSesion && !ingresos.foto_estacionamiento)
-                            {
-                                <td data-label="Acción" class="cell-action">
-                                    <i class="fa-solid fa-camera btn-action"
-                                       onclick="abrirModalFoto(this)"
-                                       data-id-ingreso="@ingresos.id_ingreso"
-                                       data-placa="@ingresos.placa"
-                                       data-cliente="@ingresos.nombre_cliente"
-                                       style="cursor:pointer;"></i>
-                                </td>
-                            }
-                            else
-                            {
-                                <td></td>
-                            }
-                        }
-                        else // BANCO Y ADMIN
-                        {
-                            if (ingresos.estado_pago == "pagado" &&
-                                ingresos.estado_servicio == "finalizado")
-                            {
-                                <td type="button"
-                                    class="btn-icon btn-icon-info"
-                                    title="Ver Info/Notas"
-                                    style="margin-left: 10px;">
-                                    <i class="fa-solid fa-circle-info"></i>
-                                </td>
-                            }
-                            else if (ingresos.id_valet is null)
-                            {
-                                <td>
-                                    <button class="alert-btn"
-                                            type="button"
-                                            onclick="abrirModalValet()">
-                                        <i class="fa-solid fa-user"></i>
-                                    </button>
-                                </td>
-                            }
-                            else
-                            {
-                                <td data-label="Acción" class="cell-action">
-                                    <i class="fa-solid fa-credit-card btn-action"
-                                       onclick="abrirModalPago('@ingresos.id_ingreso', '@ingresos.placa', '@ingresos.nombre_cliente')"
-                                       style="cursor:pointer;"></i>
-                                </td>
-                            }
-                        }
-                    </tr>
-               
-                <div id="modal-valet" class="Editar-Ingreso" style="display:none;">
-
-                    <div class="modal-overlay" onclick="cerrarModalValet()"></div>
-                        <div class="Card-Ingreso card-ingreso-vehiculos" style=" margin-left: 13cm; margin-top: 2cm;">
-                            <form method="post" action="/Home/actualizarValet">
-                            
-                            <input type="hidden" name="id_ingreso" value="@ingresos.id_ingreso" />
-
-                            <span class="close-btn" onclick="cerrarModalValet()">&times;</span>
-                            
-                            <h3>Asignar valet al ingreso</h3>
-
-                            <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                                <p><strong>Placa:</strong> @ingresos.placa</p>
-                                <p><strong>Cliente:</strong> @ingresos.nombre_cliente</p>
-                            </div>
-                                <div class="input-group">
-                                    <select name="id_valet" id="id_valet" style="width:100%;" required>
-                                        <option value="">Selecciona un valet</option>
-                                        <option value="">Aun sin valet</option>
-                                        @foreach (var valet in ViewBag.Valets)
-                                        {
-                                            <option value="@valet.id_usuario">@valet.nombres @valet.apellidos</option>
-                                        }
-                
-                                        @if (ViewBag.UsuarioSesion?.usuario_rol == 2)
-                                        {
-                                            <option value="@ViewBag.UsuarioSesion?.IdUsuario">@ViewBag.UsuarioSesion?.nombre @ViewBag.UsuarioSesion?.apellido (banco)</option>
-                                        }
-                                    </select>
-                                    <div class="error-message" id="errorValet" style="display: none;">⚠️ Selecciona un valet</div>
-                                </div>
-                                <button type="submit" class="ingreso-btn" id="acceder">Asignar</button>
-                        </form>
-                    </div>
-
-                </div>
-
-                // Modal para tomar foto de parqueo
-
-                    <div id="modal-foto-parqueo" class="Editar-Ingreso" style="display:none;">
-
-                        <div class="modal-overlay" onclick="cerrarModalFoto()"></div>
-                        <div class="Card-Ingreso card-ingreso-vehiculos" style=" margin-left: 13cm; margin-top: 2cm;">
-                            <form method="post" asp-controller="Home" asp-action="fotoParqueo" id="formFotoParqueo">
-                                <input type="hidden" name="id_ingreso" id="fotoIdIngreso" />
-                                <input type="hidden" name="fotoBase64" id="fotoBase64" />
-
-                                <span class="close-btn" onclick="cerrarModalFoto()">&times;</span>
-
-                                <h3>Evidencia del parqueo</h3>
-
-                                <div class="info-auto" style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:20px;">
-                                    <p><strong>Placa:</strong> <span id="fotoPlaca"></span></p>
-                                    <p><strong>Cliente:</strong> <span id="fotoCliente"></span></p>
-                                </div>
-
-                                <div style="display:flex; gap:10px; margin-bottom:15px;">
-                                    <button type="button" class="photo-btn-2" id="tomarFotoParqueoBtn">
-                                        <svg class="camera-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                            <circle cx="12" cy="13" r="4"></circle>
-                                        </svg>
-                                        Tomar foto
-                                    </button>
-                                </div>
-
-                                <div class="Media-Preview">
-                                    <div class="photos-preview" id="fotoPreviewParqueo"></div>
-                                </div>
-
-                                <input type="file" id="cameraInputParqueo" accept="image/*" capture="environment" style="display:none;">
-                                <div class="error-message" id="errorFotoParqueo" style="display:none;"></div>
-                            </form>
-                        </div>
-
-                    </div>
-
-                <!-- MODAL INTERMEDIO DE PAGO -->
-                <div id="modal-pago-@ingresos.id_ingreso" class="Editar-Ingreso" style="display:none;">
-                    <div class="modal-overlay" onclick="cerrarModalPago('@ingresos.id_ingreso')"></div>
-                    <div class="Card-Ingreso card-ingreso-vehiculos">
-                        <span class="close-btn" onclick="cerrarModalPago('@ingresos.id_ingreso')">&times;</span>
-                        <h3>Pago para Vehículo</h3>
-
-                        <!-- Información del vehículo -->
-                        <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
-                            <p><strong>Placa:</strong> @ingresos.placa</p>
-                            <p><strong>Cliente:</strong> @ingresos.nombre_cliente</p>
-                            <p style="margin-bottom: 0;"><strong>Método de Pago Actual:</strong> 
-                                <span id="metodo-pago-actual-@ingresos.id_ingreso">
-                                    @(string.IsNullOrEmpty(ingresos.metodo_pago) ? "No especificado" : ingresos.metodo_pago)
-                                </span>
-                            </p>
-                        </div>
-                        <br />
-                        <p> Editar Metodo De Pago </p>
-                        <select id="metodo-pago-@ingresos.id_ingreso" style="width:100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 20px;">
-                                
-                            <option value="QR"
-                                    selected="@(ingresos.metodo_pago == "QR" ? "selected" : null)">
-                                QR
-                            </option>
-
-                            <option value="Transferencia"
-                                    selected="@(ingresos.metodo_pago == "Transferencia" ? "selected" : null)">
-                                Transferencia
-                            </option>
-
-                            <option value="Efectivo"
-                                    selected="@(ingresos.metodo_pago == "Efectivo" ? "selected" : null)">
-                                Efectivo
-                            </option>
-
-                        </select>
-                        <br />
-                        <!-- Generar código de seguridad -->
-                        <div id="btn-generar-contenedor-@ingresos.id_ingreso" style="margin-bottom: 20px;">
-                            <button type="button" class="btn btn-primary" onclick="generarCodigoSeguridad('@ingresos.id_ingreso')" style="width: 100%; padding: 10px;">
-                                <i class="fa-solid fa-key"></i> Generar Código de Seguridad
-                            </button>
-                        </div>
+                    }      
                         
-                        <p id="contador-codigo-@ingresos.id_ingreso"
-                                style="margin-top:10px; color:red; font-weight:bold;">
-                        </p>
+                    <td data-label="Acción" class="cell-action">
 
-                        <!-- Ingresar código de validación (OCULTO INICIALMENTE) -->
-                        <div id="validacion-contenedor-@ingresos.id_ingreso" style="display:none; margin-bottom: 20px;">
-                            <div class="form-group-modal" style="margin-bottom: 20px;">
-                                <label>Ingresa el código que el cliente confirmó:</label>
-                                <input type="text" id="codigo-validacion-@ingresos.id_ingreso" placeholder="Ej: 123456" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 16px; letter-spacing: 5px;" maxlength="6">
-                                <button type="button" id="OtroCodigo" class="btn btn-link" onclick="generarCodigoSeguridad('@ingresos.id_ingreso')" style="margin-top: 10px; color: #2e7d32; text-decoration: underline;">
-                                    Generar otro código
-                                </button>
-                            </div>
+                        
+                        @* 1. Tomar vehículo *@
+                        @if (ingresos.id_valet is null && idRol == 1)
+                        {
+                            <i class="fa-solid fa-car-side btn-action"
+                                    onclick="abrirModalTomarVehiculo(this)"
+                                    data-id="@ingresos.id_ingreso"
+                                    data-placa="@ingresos.placa"
+                                    data-cliente="@ingresos.nombre_cliente"
+                                    style="cursor:pointer;">
+                            </i>
+                        }
 
-                            <!-- Botones de validación -->
-                            <div class="modal-actions" style="display: flex; gap: 10px;">
-                                <button type="button" class="btn btn-secondary" onclick="cerrarModalPago('@ingresos.id_ingreso')" style="flex: 1;">
-                                    Cancelar
-                                </button>
-                                <button type="button" class="btn btn-primary" onclick="validarCodigoYAbrir('@ingresos.id_ingreso', 'modal-@ingresos.id_ingreso')" style="flex: 1;">
-                                    <i class="fa-solid fa-check"></i> Validar y Continuar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                        @* 2. Cámara solo para el valet responsable *@
+                        @if (ingresos.id_valet == idUsuarioSesion &&
+                                    !ingresos.foto_estacionamiento &&
+                                    ingresos.estado_servicio != "solicitado")
+                        {
+                            <i class="fa-solid fa-camera btn-action"
+                                    onclick="abrirModalFoto(this)"
+                                    data-id-ingreso="@ingresos.id_ingreso"
+                                    data-placa="@ingresos.placa"
+                                    data-cliente="@ingresos.nombre_cliente"
+                                    style="cursor:pointer;">
+                            </i>
+                        }
+                        @if(idUsuarioSesion == ingresos.id_valet){
 
-                <!-- MODAL FINAL DE FINALIZACIÓN DE PAGO -->
-                <div id="modal-@ingresos.id_ingreso" class="Editar-Ingreso" style="display:none;">
-                    <div class="modal-overlay" onclick="cerrarModalFinalizacion('@ingresos.id_ingreso')"></div>
-                    <div class="Card-Ingreso card-ingreso-vehiculos">
-                        <span class="close-btn" onclick="cerrarModalFinalizacion('@ingresos.id_ingreso')">&times;</span>
-                        <h3>Finalizar Servicio de Vehículo</h3>
+                            @* 3. Pago *@
+                            @if (ingresos.id_valet != null && ingresos.foto_estacionamiento && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado")
+                            {
+                                <i class="fa-solid fa-credit-card btn-action"
+                                        onclick="abrirModalPago(this)"
+                                        data-id="@ingresos.id_ingreso"
+                                        data-placa="@ingresos.placa"
+                                        data-cliente="@ingresos.nombre_cliente"
+                                        data-metodo-pago="@(ingresos.metodo_pago ?? "No especificado")"
+                                        data-estado-servicio="@(ingresos.estado_servicio ?? "No especificado")"
+                                        style="cursor:pointer;">
+                                </i>
+                            }
 
-                        <!-- Información del vehículo -->
-                        <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                            <p><strong>Placa:</strong> @ingresos.placa</p>
-                            <p><strong>Cliente:</strong> @ingresos.nombre_cliente</p>
-                            <p><strong>Método de Pago:</strong> <span id="metodo-pago-final-@ingresos.id_ingreso">@(ingresos.metodo_pago ?? "No especificado")</span></p>
-                            <p style="margin-bottom: 0;"><strong>Estado Actual:</strong> @ingresos.estado_servicio</p>
-                        </div>
+                        }
+                        else
+                        {
+                            @* 3.1. Pago *@
+                                @if (ingresos.id_valet != null && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado")
+                            {
+                                <i class="fa-solid fa-credit-card btn-action"
+                                        onclick="abrirModalPago(this)"
+                                        data-id="@ingresos.id_ingreso"
+                                        data-placa="@ingresos.placa"
+                                        data-cliente="@ingresos.nombre_cliente"
+                                        data-metodo-pago="@(ingresos.metodo_pago ?? "No especificado")"
+                                        data-estado-servicio="@(ingresos.estado_servicio ?? "No especificado")"
+                                        style="cursor:pointer;">
+                                </i>
+                            }
 
-                        <!-- Seleccionar estado final -->
-                        <div class="form-group-modal" style="margin-bottom: 20px;">
-                            <label>Estado del Servicio:</label>
-                            <select id="estado-servicio-@ingresos.id_ingreso" style="width:100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                                <option value="finalizado">Finalizado</option>
-                            </select>
-                        </div>
+                        }
+                        @* 4. Información *@
+                        @if (ingresos.estado_pago == "pagado" &&
+                                    ingresos.estado_servicio == "finalizado")
+                        {
+                            <i class="fa-solid fa-circle-info btn-action"
+                                    title="Ver información">
+                            </i>
+                        }
 
-                        <!-- Mostrar estado de pago -->
-                        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                            <p style="margin: 0; color: #1976d2;"><strong>Estado de Pago: PAGADO ✓</strong></p>
-                        </div>
 
-                        <!-- Botones de acción -->
-                        <div class="modal-actions" style="display: flex; gap: 10px;">
-                            <button type="button" class="btn btn-secondary" onclick="cerrarModalFinalizacion('@ingresos.id_ingreso')" style="flex: 1;">
-                                Cancelar
-                            </button>
-                            <button type="button" class="btn btn-success" onclick="finalizarServicio('@ingresos.id_ingreso')" style="flex: 1;">
-                                <i class="fa-solid fa-check-circle"></i> Confirmar
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                    </td>
 
+                </tr>
             }
+
+                <!-- Modal unificado para todas las acciones con los ingresos -->
+
+                <div id="modal-acciones" class="Editar-Ingreso" style="display:none;">
+                    
+                    <div class="modal-overlay" onclick="cerrarModalAcciones()"></div>
+
+                    <div class="Card-Ingreso card-ingreso-vehiculos">
+                        <span class="close-btn" onclick="cerrarModalAcciones()">&times;</span>
+
+                        <div id="contenido-modal-acciones">
+                            
+                        </div>
+                    </div>
+
+                </div>
 
             </tbody>
         </table>
@@ -568,48 +469,6 @@
     </script>-->
 
     <script>
-        // abrir modal para tomar foto del vehiculo
-        function abrirModalFoto(btnOrId) {
-            const modalFoto = document.getElementById("modal-foto-parqueo");
-            const fotoIdIngreso = document.getElementById("fotoIdIngreso");
-            const fotoPlaca = document.getElementById("fotoPlaca");
-            const fotoCliente = document.getElementById("fotoCliente");
-            const fotoBase64 = document.getElementById("fotoBase64");
-            const fotoPreview = document.getElementById("fotoPreviewParqueo");
-            const errorFoto = document.getElementById("errorFotoParqueo");
-
-            if (!modalFoto || !fotoIdIngreso || !fotoPlaca || !fotoCliente || !fotoBase64 || !fotoPreview) {
-                return;
-            }
-
-            const elemento = btnOrId?.dataset ? btnOrId : null;
-
-            fotoIdIngreso.value = elemento?.dataset?.idIngreso || btnOrId || '';
-            fotoPlaca.textContent = elemento?.dataset?.placa || '';
-            fotoCliente.textContent = elemento?.dataset?.cliente || '';
-            fotoBase64.value = '';
-            fotoPreview.innerHTML = '';
-
-            if (errorFoto) errorFoto.style.display = 'none';
-
-            modalFoto.style.display = "flex";
-        }
-
-        // cerrar modal para tomar foto del vehiculo
-        function cerrarModalFoto() {
-            const modalFoto = document.getElementById("modal-foto-parqueo");
-            const fotoBase64 = document.getElementById("fotoBase64");
-            const fotoPreview = document.getElementById("fotoPreviewParqueo");
-            const errorFoto = document.getElementById("errorFotoParqueo");
-            const cameraInput = document.getElementById("cameraInputParqueo");
-
-            if (modalFoto) modalFoto.style.display = "none";
-            if (fotoBase64) fotoBase64.value = '';
-            if (fotoPreview) fotoPreview.innerHTML = '';
-            if (errorFoto) errorFoto.style.display = 'none';
-            if (cameraInput) cameraInput.value = '';
-        }
-
         function fileToDataUrl(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -618,37 +477,5 @@
                 reader.readAsDataURL(file);
             });
         }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            const btn = document.getElementById('tomarFotoParqueoBtn');
-            const cameraInput = document.getElementById('cameraInputParqueo');
-            const form = document.getElementById('formFotoParqueo');
-            const fotoBase64 = document.getElementById('fotoBase64');
-            const fotoPreview = document.getElementById('fotoPreviewParqueo');
-            const errorFoto = document.getElementById('errorFotoParqueo');
-
-            if (!btn || !cameraInput || !form || !fotoBase64 || !fotoPreview) return;
-
-            btn.addEventListener('click', function () {
-                if (errorFoto) errorFoto.style.display = 'none';
-                cameraInput.value = '';
-                cameraInput.click();
-            });
-
-            cameraInput.addEventListener('change', async function (e) {
-                const file = e.target.files && e.target.files[0];
-                if (!file || !file.type.startsWith('image/')) return;
-
-                const base64 = await fileToDataUrl(file);
-                fotoBase64.value = base64;
-
-                fotoPreview.innerHTML = `
-                    <div class="photo-item">
-                        <img src="${base64}" alt="Previsualización" style="max-width:100%;border-radius:10px;display:block;" />
-                    </div>`;
-
-                setTimeout(() => form.submit(), 150);
-            });
-        });
     </script>
 }

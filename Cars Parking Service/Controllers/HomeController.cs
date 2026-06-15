@@ -50,6 +50,11 @@ namespace CarsParkingService.Controllers
             return View();
         }
 
+        public IActionResult Liquidacion()
+        {
+            return View();
+        }
+
         // =================== vista key =================== //
 
         // GET: /Home/VistaKey
@@ -325,6 +330,50 @@ namespace CarsParkingService.Controllers
             });
         }
 
+        [HttpGet]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult ObtenerEsperandoValet()
+        {
+
+            // Obtenemos usuario y rol
+            var idUsuario = HttpContext.Session.GetInt32("id");
+            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+
+            // Consulta base
+            var query = _context.ingresos
+                .Include(i => i.Valet)
+                .Include(i => i.Banco)
+                .Where(i =>
+                    i.estado_servicio != null &&
+                    i.estado_servicio.Trim().ToLower() == "despachado"
+                )
+                .AsQueryable();
+
+            // Convertimos datos
+            var esperandoValet = query
+                .Select(i => new
+                {
+                    id = i.id_ingreso,
+                    placa = i.placa,
+
+                    nombre_valet = i.Valet != null
+                        ? i.Valet.nombres
+                        : "Sin valet",
+
+                    nombre_banco = i.Banco != null
+                        ? i.Banco.nombres
+                        : "Sin banco"
+                })
+                .ToList();
+
+            return Json(new
+            {
+                cantidad = esperandoValet.Count(),
+                vehiculos = esperandoValet
+            });
+
+        }
+
         // Metodo para tomar la solicitud de un vehiculo
         // Cambiamos el estado de solicitado a en curso
         [HttpPost]
@@ -457,15 +506,15 @@ namespace CarsParkingService.Controllers
             {
                 parametros.Add(new SqlParameter("@id_usuario", DBNull.Value));
             }
-
+            
             // ✔ conversión a array (ESTO ES LO CLAVE)
             var ingresos = _context.ingresos.FromSqlRaw(
                 "EXEC sp_consultarRegistros @placa, @lugar, @estado_servicio, @estado_pago, @id_usuario, @parqueadero, @fecha_inicio, @fecha_fin", 
                 parametros.ToArray()
             )
             .AsEnumerable()
-            .OrderByDescending(u => u.fecha_ingreso)
-            .ThenBy(u => u.estado_pago)
+            .OrderByDescending(u => u.estado_servicio?.Trim().ToLower() == "solicitado")
+            .ThenByDescending(u => u.fecha_ingreso)
             .ToList();
             int totalRegistros = ingresos.Count();
 
@@ -498,6 +547,7 @@ namespace CarsParkingService.Controllers
             }
 
             ingreso.id_valet = id_valet;
+            ingreso.estado_servicio = "activo";
 
             _context.SaveChanges();
 
@@ -627,7 +677,7 @@ namespace CarsParkingService.Controllers
                     System.Diagnostics.Debug.WriteLine($"Found ingresoActivo id:{ingresoActivo.id_ingreso} placa:'{ingresoActivo.placa}' estado_servicio:'{ingresoActivo.estado_servicio}' estado_pago:'{ingresoActivo.estado_pago}'");
 
                     // caso 1: El vehiculo esta actualmente en servicio (no ha salido)
-                    if (ingresoActivo.estado_servicio == "activo" || ingresoActivo.estado_servicio == "solicitado" || ingresoActivo.estado_servicio == "en curso" || ingresoActivo.estado_servicio == "parqueado")
+                    if (ingresoActivo.estado_servicio == "activo" || ingresoActivo.estado_servicio == "solicitado" || ingresoActivo.estado_servicio == "despachado" || ingresoActivo.estado_servicio == "parqueado")
                     {
                         enviarWhatsapp = false;
 
@@ -650,13 +700,16 @@ namespace CarsParkingService.Controllers
                 obj_ingreso.fecha_salida = null;
                 obj_ingreso.fecha_fin_servicio = null;
                 obj_ingreso.estado_pago = "pendiente";
-                obj_ingreso.estado_servicio = "activo";
                 if (id_valet == 0) {
 
                     obj_ingreso.id_valet = null;
+                    obj_ingreso.estado_servicio = "esperando valet";
 
-                }else{
+                }
+                else
+                {
 
+                    obj_ingreso.estado_servicio = "activo";
                     obj_ingreso.id_valet = id_valet;
 
                 }
@@ -1568,5 +1621,7 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("Tabla_Vehiculos");
             }
         }
+
+
     }
 }

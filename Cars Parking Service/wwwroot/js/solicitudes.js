@@ -14,6 +14,11 @@
         mostrarDespachados();
     }, 5000);
 
+    setInterval(() => {
+        cargarEsperandoValet();
+        mostrarEperandoValet();
+    }, 5000);
+
 });
 
 // Creamos la funcion para abrir y cerrar el panel de solicitudes //
@@ -93,8 +98,12 @@ function cerrarPanelSolicitudes() {
 let solicitudes = [];
 
 // Creamos array con los vehiculos en curso
-let vehiculosDespachados= [];
+let vehiculosDespachados = [];
 
+let vehiculosEsperandoValet = [];
+
+
+// ============= Cargar Estados ============= //
 // Creamos metodo para leer el JSON de las solicitudes de HomeController //
 // Función asíncrona para consultar las solicitudes al servidor
 async function cargarSolicitudes(){
@@ -183,6 +192,32 @@ async function cargarDespachados() {
     if (badgeDespachados) badgeDespachados.textContent = data.cantidad;
 }
 
+async function cargarEsperandoValet() {
+
+    const url = `/Home/ObtenerEsperandoValet?ts=${Date.now()}`;
+
+    const response = await fetch(url, {
+        cache: 'no-store'
+    });
+
+    if (!response.ok) {
+        console.error('Error obteniendo vehiculos esperando valet');
+        return;
+    }
+
+    const data = await response.json();
+
+    vehiculosEsperandoValet = data.vehiculos;
+
+    const statDone = document.getElementById('statDone');
+    const badgeEsperandoValet = document.getElementById('badge-esperando-valet');
+
+    if (statDone) statDone.textContent = data.cantidad;
+    if (badgeEsperandoValet) badgeEsperandoValet.textContent = data.cantidad;
+
+}
+
+// ============= Mostrar Estados ============= //
 // Funcion para mostrar los vehiculos solicitados en el html
 function mostrarSolicitados() {
 
@@ -255,7 +290,6 @@ function mostrarSolicitados() {
 
     })
 }
-
 // Funcion para mostrar los vehiculos en curso en el html
 function mostrarDespachados() {
 
@@ -320,6 +354,67 @@ function mostrarDespachados() {
 
 }
 
+function mostrarEperandoValet() {
+
+    const panelEsperandoValet = document.getElementById('panelEperandoValetList');
+
+    const panelEmpty = document.getElementById('panelEmptyEsperandoValet');
+
+    if (!panelEsperandoValet || !panelEmpty) {
+        console.error('Elementos panelEsperandoValet o panelEmpty no encontrados');
+        return;
+    }
+
+    if (vehiculosEsperandoValet.length == 0) {
+
+        panelEmpty.style.display = "block"
+        panelEsperandoValet.style.display = "none";
+
+        return;
+    }
+
+    panelEmpty.style.display = "none";
+    panelEsperandoValet.style.display = "block";
+
+    panelEsperandoValet.innerHTML = '';
+
+    vehiculosEsperandoValet.forEach(vehiculos => {
+
+        // Creamos el html dinamicamente
+        const EsperandoValetHTML = `
+
+            <div class="req-item">
+
+                <div class="req-item-icon">
+                    <i class="fa-solid fa-car-side"></i>
+                </div>
+
+                <div class="req-item-info">
+
+                    <div class="req-item-title">
+                        ${vehiculos.placa}
+                    </div>
+
+                    <div class="req-item-sub">
+                        Banco: ${vehiculos.nombre_banco}
+                    </div>
+
+                    <div class="req-item-sub">
+                        Valet: ${vehiculos.nombre_valet}
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+
+        // Insertamos el HTML en el panel
+        panelEsperandoValet.innerHTML += EsperandoValetHTML;
+
+    })
+
+}
 // Funcion para tomar la solicitud de un vehiculo
 // Lo que queremos es que pase de estar en solicitud a En Curso
 async function tomarSolicitud(idIngreso) {
@@ -366,4 +461,67 @@ function switchTab(tab) {
     } else if (tab === 'despachados') {
         mostrarDespachados();
     }
+}
+
+
+// ================= solicitud para tomar vehiculo cuando no hay un valet asignado ================= //
+
+function abrirModalTomarVehiculo(btn) {
+
+    const modalAcciones = document.getElementById('modal-acciones');
+    const id = btn.getAttribute('data-id');
+    const placa = btn.getAttribute('data-placa');
+    const nombre_cliente = btn.getAttribute('data-cliente');
+    const id_valet = btn.getAttribute('data-id-valet');
+
+    document.getElementById("contenido-modal-acciones").innerHTML = `
+    
+        <form method="post" action="/Home/actualizarValet">
+
+            <input type="hidden" name="id_ingreso" value="${id}" />
+
+            <input type="hidden" name="id_valet" value="${id_valet}" />
+
+            <span class="close-btn" onclick="cerrarModalTomarVehiculo()">&times;</span>
+
+            <h3>Confirmar Asignacion</h3>
+
+            <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <p><strong>Placa:</strong> ${placa}</p>
+                <p><strong>Cliente:</strong> ${nombre_cliente}</p>
+            </div>
+            <div class="alerta-confirmacion">
+                <div class="alerta-warning">
+                    <span class="alerta-icono">&#9888;</span>
+                    <div class="alerta-texto">
+                        <p class="alerta-titulo">¿Estás seguro?</p>
+                        <p class="alerta-mensaje">
+                            Estás a punto de tomar la solicitud del vehículo con placa
+                            <strong>${placa}</strong>. Esta acción te asignará como valet responsable.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="ingreso-btn" id="confirmar" onclick="tomarSolicitud()">Confirmar</button>
+        </form>
+    
+    `;
+
+    if (modalAcciones) { modalAcciones.style.display = "flex"; }
+
+}
+
+function cerrarModalTomarVehiculo() {
+
+    const modalAcciones = document.getElementById('modal-acciones');
+
+    if (modalAcciones) { modalAcciones.style.display = "none"; }
+}
+
+function tomarSolicitud() {
+
+    const btnConfirmar = document.getElementById('confirmar');
+
+    if (btnConfirmar) { btnConfirmar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...'; }
+
 }

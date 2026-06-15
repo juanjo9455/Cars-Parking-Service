@@ -1,0 +1,298 @@
+﻿@using Microsoft.AspNetCore.Http
+@{
+    ViewData["Title"] = "Liquidacion";
+    Layout = "~/Views/Shared/_LayoutLiquidacion.cshtml";
+    var nombre = Context.Session.GetString("nombre") ?? "Usuario";
+    var idRol = Context.Session.GetInt32("id_rol");
+}
+
+<div class="page">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <h1>Liquidación de banco</h1>
+            <p>Resumen de los servicios pendientes por liquidar</p>
+        </div>
+
+        <div class="header-right">
+            <span class="meta">
+                <strong>@DateTime.Now.ToString("dd 'de' MMMM 'de' yyyy")</strong>
+            </span>
+
+            <span class="meta">
+                Usuario:
+                <strong>@nombre</strong>
+            </span>
+
+            <span class="badge-pending">
+                <i class="fa-solid fa-clock"></i>
+                Pendiente de liquidación
+            </span>
+        </div>
+    </div>
+
+    <!-- Cards -->
+    <div class="cards-row">
+
+        <div class="stat-card">
+            <div class="icon-wrap">
+                <i class="fa-solid fa-car"></i>
+            </div>
+            <div class="slabel">Vehículos liquidados</div>
+            <div class="sval">@ViewBag.totalVehiculos</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="icon-wrap">
+                <i class="fa-solid fa-money-bill"></i>
+            </div>
+            <div class="slabel">Total efectivo</div>
+            <div class="sval">$@ViewBag.totalEfectivo</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="icon-wrap">
+                <i class="fa-solid fa-building-columns"></i>
+            </div>
+            <div class="slabel">Total transferencias</div>
+            <div class="sval">$@ViewBag.TotalTransferencia</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="icon-wrap">
+                <i class="fa-solid fa-coins"></i>
+            </div>
+            <div class="slabel">Total propinas</div>
+            <div class="sval">$@ViewBag.totalPropinas</div>
+        </div>
+
+        <div class="stat-card highlight">
+            <div class="icon-wrap">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+            </div>
+            <div class="slabel">Total general</div>
+            <div class="sval">$@ViewBag.totalGeneral</div>
+        </div>
+
+    </div>
+
+    <!-- Valets -->
+    <div class="section">
+
+        <h2>
+            <i class="fa-solid fa-user-dollar"></i>
+            Efectivo recibido por valets
+        </h2>
+
+        <div class="alert-y">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>
+                Verifique físicamente la entrega del dinero antes de confirmar la liquidación.
+            </span>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Valet</th>
+                    <th>Vehículos</th>
+                    <th>Total efectivo</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <!-- Ejemplo -->
+                <tr>
+                    <td>Nombre Valet</td>
+                    <td>0</td>
+                    <td>$0</td>
+                </tr>
+
+            </tbody>
+        </table>
+
+        <div class="valet-total">
+            <span>Total efectivo pendiente por validar:</span>
+            <strong>$0</strong>
+        </div>
+
+    </div>
+
+    <!-- Registros -->
+    <div class="section">
+
+        <h2>
+            <i class="fa-solid fa-list"></i>
+            Registros incluidos en esta liquidación
+        </h2>
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Placa</th>
+                    <th>Cliente</th>
+                    <th>Método de pago</th>
+                    <th>Valor servicio</th>
+                    <th>Propina</th>
+                    <th>Total</th>
+                    <th>Recibido por</th>
+                </tr>
+            </thead>
+
+            <tbody id="rows-visible">
+
+                <!-- Ejemplo -->
+                <tr>
+                    <td>ABC123</td>
+                    <td>Nombre Cliente</td>
+                    <td>
+                        <span class="badge-m bc">
+                            Efectivo
+                        </span>
+                    </td>
+                    <td>$0</td>
+                    <td>$0</td>
+                    <td>$0</td>
+                    <td>Nombre Usuario</td>
+                </tr>
+
+            </tbody>
+
+            <tbody id="rows-extra">
+            </tbody>
+
+        </table>
+
+        <div class="table-footer">
+
+            <span class="table-count">
+                Mostrando 0 de 0 registros
+            </span>
+
+            <button class="btn-show" id="toggleBtn">
+                <i class="fa-solid fa-chevron-down" id="toggleIcon"></i>
+                <span id="toggleLabel">
+                    Mostrar todos los registros
+                </span>
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- Confirmación -->
+    <div class="confirm-card">
+
+        <h2>Confirmar liquidación</h2>
+
+        <p>
+            Al confirmar esta liquidación se generará un registro permanente en el sistema.
+        </p>
+
+        <div class="conf-summary">
+
+            <div class="ci">
+                <div class="cl">Vehículos</div>
+                <div class="cv">0</div>
+            </div>
+
+            <div class="ci">
+                <div class="cl">Total efectivo</div>
+                <div class="cv">$0</div>
+            </div>
+
+            <div class="ci">
+                <div class="cl">Transferencias</div>
+                <div class="cv">$0</div>
+            </div>
+
+            <div class="ci">
+                <div class="cl">Propinas</div>
+                <div class="cv">$0</div>
+            </div>
+
+            <div class="ci total-card">
+                <div class="cl">Total general</div>
+                <div class="cv">$0</div>
+            </div>
+
+        </div>
+
+        <div class="btn-row">
+
+            <button class="btn btn-cancel">
+                <i class="fa-solid fa-xmark"></i>
+                Cancelar
+            </button>
+
+            <button class="btn btn-confirm" id="openModal">
+                <i class="fa-solid fa-check"></i>
+                Confirmar liquidación
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- Mensaje éxito -->
+    <div class="success-banner" id="successBanner">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>
+            Liquidación confirmada exitosamente.
+        </span>
+    </div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-wrap" id="modalWrap">
+
+    <div class="modal">
+
+        <div class="modal-hdr">
+
+            <div class="micon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+
+            <h3>Confirmar liquidación</h3>
+
+        </div>
+
+        <p>
+            Está a punto de registrar esta liquidación.
+            Esta acción no podrá deshacerse.
+        </p>
+
+        <div class="modal-rows">
+
+            <div class="mrow">
+                <span>Vehículos</span>
+                <span>0</span>
+            </div>
+
+            <div class="mrow">
+                <span>Total general</span>
+                <span>$0</span>
+            </div>
+
+        </div>
+
+        <div class="modal-btns">
+
+            <button class="btn btn-cancel" id="closeModal">
+                Volver
+            </button>
+
+            <button class="btn btn-confirm" id="doConfirm">
+                Confirmar
+            </button>
+
+        </div>
+
+    </div>
+
+</div>

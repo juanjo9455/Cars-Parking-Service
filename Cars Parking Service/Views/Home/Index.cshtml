@@ -108,7 +108,7 @@
         </div>
         <div class="stat-cell">
             <div class="stat-num gray" id="statDone">0</div>
-            <div class="stat-lbl">Finalizados</div>
+            <div class="stat-lbl">Esperando Valet</div>
         </div>
     </div>
 
@@ -125,6 +125,12 @@
             Despachado
             <span class="tab-badge" id="badge-despachados"></span>
         </button>
+        <button class="tab-btn" role="tab" aria-selected="false"
+                aria-controls="tab-esperando-valet" id="btn-esperando-valet"
+                onclick="switchTab('esperando-valet')">
+            Esperando Valet
+            <span class="tab-badge" id="badge-esperando-valet"></span>
+        </button>
     </div>
 
     <div class="tab-content active" id="tab-solicitados" role="tabpanel" aria-labelledby="btn-solicitados">
@@ -138,6 +144,14 @@
     <div class="tab-content" id="tab-despachados" role="tabpanel" aria-labelledby="btn-despachados">
         <div class="panel-list" id="panelActiveList"></div>
         <div class="panel-empty" id="panelEmptyDespachados">
+            <i class="fa-solid fa-car-side"></i>
+            <span>Sin vehiculos en este estado</span>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-esperando-valet" role="tabpanel" aria-labelledby="btn-esperando-valet">
+        <div class="panel-list" id="panelEperandoValetList"></div>
+        <div class="panel-empty" id="panelEmptyEsperandoValet">
             <i class="fa-solid fa-car-side"></i>
             <span>Sin vehiculos en este estado</span>
         </div>

@@ -227,7 +227,7 @@
     position: fixed;
     top: 74px;
     right: 16px;
-    width: 300px;
+    width: 400px;
     background: #fff;
     border-radius: 12px;
     border: 0.5px solid #ddd;
@@ -655,4 +655,53 @@
 
 .tab-content.active {
     display: block;
+}
+
+/* ====================== solicitud para tomar vehiculo cuando no halla valet asignado ====================== */
+
+.btn-tomar-vehiculo {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 13px;
+    border-radius: 8px;
+    border: 1.5px solid #C0392B;
+    background: #fff5f5;
+    color: #922B21;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+    position: relative;
+}
+
+.btn-tomar-vehiculo:hover {
+    background: #C0392B;
+    color: #fff;
+}
+
+.btn-tomar-ping {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #C0392B;
+    animation: ping-valet 1.4s ease-out infinite;
+}
+
+@keyframes ping-valet {
+    0% {
+        box-shadow: 0 0 0 0 rgba(192,57,43,.6);
+    }
+
+    70% {
+        box-shadow: 0 0 0 8px rgba(192,57,43,0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(192,57,43,0);
+    }
 }
