@@ -43,9 +43,9 @@
     color: #666;
 }
 
-    .meta strong {
-        color: #333;
-    }
+.meta strong {
+    color: #333;
+}
 
 .badge-pending {
     background: #FFF8E1;
@@ -61,6 +61,32 @@
    CARDS
 ========================= */
 
+.total-registros-filtro {
+    margin-top: 18px;
+    padding: 14px 18px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-left: 5px solid #d32f2f;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #444;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.total-registros-filtro i {
+    color: #d32f2f;
+    font-size: 16px;
+}
+
+.total-registros-filtro strong {
+    color: #d32f2f;
+    font-size: 17px;
+}
+
 .cards-row {
     display: grid;
     grid-template-columns: repeat(5,1fr);
@@ -69,16 +95,18 @@
 }
 
 .stat-card {
+    margin-top: 15px;
+    border-radius: 10px; 
     background: #fff;
+    width: 11.1cm;
     border: 0.5px solid #e0e0e0;
-    border-radius: var(--border-radius-lg);
     padding: 1.25rem 1rem;
 }
 
-    .stat-card.highlight {
-        background: #8E0000;
-        border-color: #8E0000;
-    }
+.stat-card.highlight {
+    background: #8E0000;
+    border-color: #8E0000;
+}
 
 .icon-wrap {
     width: 36px;
@@ -130,15 +158,15 @@
     margin-bottom: 1.5rem;
 }
 
-    .section h2 {
-        font-size: 16px;
-        font-weight: 500;
-        color: #8E0000;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
+.section h2 {
+    font-size: 16px;
+    font-weight: 500;
+    color: #8E0000;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 
 /* =========================
    ALERTA
@@ -158,11 +186,11 @@
     line-height: 1.5;
 }
 
-    .alert-y i {
-        color: #E6A817;
-        font-size: 16px;
-        margin-top: 2px;
-    }
+.alert-y i {
+    color: #E6A817;
+    font-size: 16px;
+    margin-top: 2px;
+}
 
 /* =========================
    TABLAS
@@ -213,19 +241,19 @@ tbody tr {
     border-top: 1px solid #eee;
 }
 
-    .valet-total span {
-        font-size: 13px;
-        color: #555;
-    }
+.valet-total span {
+    font-size: 13px;
+    color: #555;
+}
 
-    .valet-total strong {
-        background: #FFF0F0;
-        color: #C62828;
-        border-radius: 6px;
-        padding: 4px 12px;
-        font-size: 16px;
-        font-weight: 500;
-    }
+.valet-total strong {
+    background: #FFF0F0;
+    color: #C62828;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 16px;
+    font-weight: 500;
+}
 
 /* =========================
    BADGES
@@ -281,13 +309,13 @@ tbody tr {
     transition: .15s;
 }
 
-    .btn-show:hover {
-        background: #F0F0F0;
-    }
+.btn-show:hover {
+    background: #F0F0F0;
+}
 
-    .btn-show i {
-        transition: .2s;
-    }
+.btn-show i {
+    transition: .2s;
+}
 
 /* =========================
    CONFIRMACION
@@ -301,19 +329,19 @@ tbody tr {
     margin-bottom: 1.5rem;
 }
 
-    .confirm-card h2 {
-        color: #8E0000;
-        font-size: 18px;
-        font-weight: 500;
-        margin-bottom: 8px;
-    }
+.confirm-card h2 {
+    color: #8E0000;
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
 
-    .confirm-card p {
-        color: #666;
-        font-size: 13px;
-        line-height: 1.6;
-        margin-bottom: 1.5rem;
-    }
+.confirm-card p {
+    color: #666;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
 
 .conf-summary {
     display: grid;
@@ -328,33 +356,34 @@ tbody tr {
     border-radius: 8px;
     padding: 12px;
     text-align: center;
+    width: 7.9cm;
 }
 
-    .ci .cl {
-        color: #999;
-        font-size: 11px;
-        margin-bottom: 4px;
-    }
+.ci .cl {
+    color: #999;
+    font-size: 11px;
+    margin-bottom: 4px;
+}
 
-    .ci .cv {
-        color: #222;
-        font-size: 15px;
-        font-weight: 500;
-    }
+.ci .cv {
+    color: #222;
+    font-size: 15px;
+    font-weight: 500;
+}
 
 .total-card {
     background: #FFF0F0;
     border-color: #FFCDD2;
 }
 
-    .total-card .cl {
-        color: #8E0000;
-    }
+.total-card .cl {
+    color: #8E0000;
+}
 
-    .total-card .cv {
-        color: #C62828;
-        font-size: 17px;
-    }
+.total-card .cv {
+    color: #C62828;
+    font-size: 17px;
+}
 
 /* =========================
    BOTONES
@@ -385,18 +414,18 @@ tbody tr {
     color: #555;
 }
 
-    .btn-cancel:hover {
-        background: #E0E0E0;
-    }
+.btn-cancel:hover {
+    background: #E0E0E0;
+}
 
 .btn-confirm {
     background: #C62828;
     color: #fff;
 }
 
-    .btn-confirm:hover {
-        background: #8E0000;
-    }
+.btn-confirm:hover {
+    background: #8E0000;
+}
 
 /* =========================
    MODAL
@@ -412,13 +441,13 @@ tbody tr {
     z-index: 999;
 }
 
-    .modal-wrap.active {
-        display: flex;
-    }
+.modal-wrap.active {
+    display: flex;
+}
 
-.modal {
+.modal-confirmar {
     background: #fff;
-    border-radius: var(--border-radius-lg);
+    border-radius: 15px;
     padding: 2rem;
     width: 420px;
     max-width: 95%;
@@ -447,7 +476,7 @@ tbody tr {
     font-weight: 500;
 }
 
-.modal p {
+.modal-confirmar p {
     font-size: 13px;
     color: #555;
     line-height: 1.6;
@@ -470,9 +499,9 @@ tbody tr {
     font-size: 13px;
 }
 
-    .mrow:last-child {
-        border-bottom: none;
-    }
+.mrow:last-child {
+    border-bottom: none;
+}
 
 .tr-row span {
     color: #C62828;

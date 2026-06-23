@@ -128,7 +128,12 @@
     <!-- Header -->
     <div class="header">
         <div class="header-info">
-            <h2>Ingresos - Valet Parking</h2>
+            <h2>
+                Ingresos - Valet Parking -
+                <span style="color: #b00020; font-weight: 600;">
+                    @ViewBag.ubicacion
+                </span>
+            </h2>
             <p>Registro de entradas y salidas del estacionamiento</p>
         </div>
 
@@ -344,7 +349,7 @@
                         @* 2. Cámara solo para el valet responsable *@
                         @if (ingresos.id_valet == idUsuarioSesion &&
                                     !ingresos.foto_estacionamiento &&
-                                    ingresos.estado_servicio != "solicitado")
+                                    ingresos.estado_servicio != "solicitado" && idRol == 1 && ingresos.estado_servicio != "despachado")
                         {
                             <i class="fa-solid fa-camera btn-action"
                                     onclick="abrirModalFoto(this)"
@@ -357,7 +362,7 @@
                         @if(idUsuarioSesion == ingresos.id_valet){
 
                             @* 3. Pago *@
-                            @if (ingresos.id_valet != null && ingresos.foto_estacionamiento && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado")
+                            @if (ingresos.id_valet != null && ingresos.foto_estacionamiento && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado" || ingresos.estado_servicio == "despachado")
                             {
                                 <i class="fa-solid fa-credit-card btn-action"
                                         onclick="abrirModalPago(this)"
@@ -390,7 +395,7 @@
                         }
                         @* 4. Información *@
                         @if (ingresos.estado_pago == "pagado" &&
-                                    ingresos.estado_servicio == "finalizado")
+                                    ingresos.estado_servicio == "finalizado" && ingresos.foto_estacionamiento)
                         {
                             <i class="fa-solid fa-circle-info btn-action"
                                     title="Ver información">

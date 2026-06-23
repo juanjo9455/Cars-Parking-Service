@@ -3,7 +3,9 @@
     ViewData["Title"] = "Liquidacion";
     Layout = "~/Views/Shared/_LayoutLiquidacion.cshtml";
     var nombre = Context.Session.GetString("nombre") ?? "Usuario";
+    var idUsuario = Context.Session.GetInt32("id");
     var idRol = Context.Session.GetInt32("id_rol");
+    var registros = ViewBag.ingresosLiquidados;
 }
 
 <div class="page">
@@ -32,23 +34,22 @@
         </div>
     </div>
 
+    <!-- Total Ingresos -->
+    <div class="total-registros-filtro">
+        <i class="fa-solid fa-car-side"></i>
+        Total de Vehiculos:
+        <strong>@ViewBag.totalVehiculos</strong>
+    </div>
+
     <!-- Cards -->
     <div class="cards-row">
-
-        <div class="stat-card">
-            <div class="icon-wrap">
-                <i class="fa-solid fa-car"></i>
-            </div>
-            <div class="slabel">Vehículos liquidados</div>
-            <div class="sval">@ViewBag.totalVehiculos</div>
-        </div>
 
         <div class="stat-card">
             <div class="icon-wrap">
                 <i class="fa-solid fa-money-bill"></i>
             </div>
             <div class="slabel">Total efectivo</div>
-            <div class="sval">$@ViewBag.totalEfectivo</div>
+            <div class="sval">$@(((decimal)ViewBag.totalEfectivo).ToString("N0"))</div>
         </div>
 
         <div class="stat-card">
@@ -56,15 +57,7 @@
                 <i class="fa-solid fa-building-columns"></i>
             </div>
             <div class="slabel">Total transferencias</div>
-            <div class="sval">$@ViewBag.TotalTransferencia</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="icon-wrap">
-                <i class="fa-solid fa-coins"></i>
-            </div>
-            <div class="slabel">Total propinas</div>
-            <div class="sval">$@ViewBag.totalPropinas</div>
+            <div class="sval">$@(((decimal)ViewBag.TotalTransferencia).ToString("N0"))</div>
         </div>
 
         <div class="stat-card highlight">
@@ -72,7 +65,7 @@
                 <i class="fa-solid fa-file-invoice-dollar"></i>
             </div>
             <div class="slabel">Total general</div>
-            <div class="sval">$@ViewBag.totalGeneral</div>
+            <div class="sval">$@(((decimal)ViewBag.totalGeneral).ToString("N0"))</div>
         </div>
 
     </div>
@@ -102,83 +95,28 @@
             </thead>
 
             <tbody>
-
-                <!-- Ejemplo -->
-                <tr>
-                    <td>Nombre Valet</td>
-                    <td>0</td>
-                    <td>$0</td>
-                </tr>
-
+                @if (ViewBag.valets != null)
+                {
+                    foreach (var v in ViewBag.valets)
+                    {
+                        <tr>
+                            <td>@v.NombreCompleto</td>
+                            <td>@v.Vehiculos</td>
+                            <td>$@string.Format("{0:N0}", v.TotalEfectivo)</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="3">No hay valets con efectivo pendiente</td>
+                    </tr>
+                }
             </tbody>
         </table>
-
         <div class="valet-total">
             <span>Total efectivo pendiente por validar:</span>
-            <strong>$0</strong>
-        </div>
-
-    </div>
-
-    <!-- Registros -->
-    <div class="section">
-
-        <h2>
-            <i class="fa-solid fa-list"></i>
-            Registros incluidos en esta liquidación
-        </h2>
-
-        <table>
-
-            <thead>
-                <tr>
-                    <th>Placa</th>
-                    <th>Cliente</th>
-                    <th>Método de pago</th>
-                    <th>Valor servicio</th>
-                    <th>Propina</th>
-                    <th>Total</th>
-                    <th>Recibido por</th>
-                </tr>
-            </thead>
-
-            <tbody id="rows-visible">
-
-                <!-- Ejemplo -->
-                <tr>
-                    <td>ABC123</td>
-                    <td>Nombre Cliente</td>
-                    <td>
-                        <span class="badge-m bc">
-                            Efectivo
-                        </span>
-                    </td>
-                    <td>$0</td>
-                    <td>$0</td>
-                    <td>$0</td>
-                    <td>Nombre Usuario</td>
-                </tr>
-
-            </tbody>
-
-            <tbody id="rows-extra">
-            </tbody>
-
-        </table>
-
-        <div class="table-footer">
-
-            <span class="table-count">
-                Mostrando 0 de 0 registros
-            </span>
-
-            <button class="btn-show" id="toggleBtn">
-                <i class="fa-solid fa-chevron-down" id="toggleIcon"></i>
-                <span id="toggleLabel">
-                    Mostrar todos los registros
-                </span>
-            </button>
-
+            <strong>$@String.Format("{0:N0}", ViewBag.totalValetsEfectivo)</strong>
         </div>
 
     </div>
@@ -196,43 +134,37 @@
 
             <div class="ci">
                 <div class="cl">Vehículos</div>
-                <div class="cv">0</div>
+                <div class="cv">@ViewBag.totalVehiculos</div>
             </div>
 
             <div class="ci">
                 <div class="cl">Total efectivo</div>
-                <div class="cv">$0</div>
+                <div class="cv">$@(((decimal)ViewBag.totalEfectivo).ToString("N0"))</div>
             </div>
 
             <div class="ci">
                 <div class="cl">Transferencias</div>
-                <div class="cv">$0</div>
-            </div>
-
-            <div class="ci">
-                <div class="cl">Propinas</div>
-                <div class="cv">$0</div>
+                <div class="cv">$@(((decimal)ViewBag.TotalTransferencia).ToString("N0"))</div>
             </div>
 
             <div class="ci total-card">
                 <div class="cl">Total general</div>
-                <div class="cv">$0</div>
+                <div class="cv">$@(((decimal)ViewBag.totalGeneral).ToString("N0"))</div>
             </div>
 
         </div>
 
         <div class="btn-row">
 
-            <button class="btn btn-cancel">
+            <a class="btn btn-cancel" asp-controller="Home" asp-action="Index">
                 <i class="fa-solid fa-xmark"></i>
                 Cancelar
-            </button>
+            </a>
 
             <button class="btn btn-confirm" id="openModal">
                 <i class="fa-solid fa-check"></i>
                 Confirmar liquidación
             </button>
-
         </div>
 
     </div>
@@ -250,7 +182,7 @@
 <!-- Modal -->
 <div class="modal-wrap" id="modalWrap">
 
-    <div class="modal">
+    <div class="modal-confirmar">
 
         <div class="modal-hdr">
 
@@ -271,12 +203,12 @@
 
             <div class="mrow">
                 <span>Vehículos</span>
-                <span>0</span>
+                <span>@ViewBag.totalVehiculos</span>
             </div>
 
             <div class="mrow">
                 <span>Total general</span>
-                <span>$0</span>
+                <span>$@(((decimal)ViewBag.totalGeneral).ToString("N0"))</span>
             </div>
 
         </div>
@@ -287,7 +219,13 @@
                 Volver
             </button>
 
-            <button class="btn btn-confirm" id="doConfirm">
+            <button class="btn btn-confirm"
+                    id="doConfirm"
+                    data-id-usuario="@idUsuario"
+                    data-total-vehiculos="@ViewBag.totalVehiculos"
+                    data-total-efectivo="@ViewBag.totalEfectivo"
+                    data-total-transferencia="@ViewBag.TotalTransferencia"
+                    data-total-dinero="@ViewBag.totalGeneral">
                 Confirmar
             </button>
 

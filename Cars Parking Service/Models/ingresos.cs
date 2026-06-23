@@ -44,8 +44,9 @@ namespace CarsParkingService.Models
         public DateTime? fecha_expiracion_codigo { get; set; }
         public DateTime? fecha_entrega { get; set; }
         public bool foto_estacionamiento { get; set; }
-        public int usuario_cobro { get; set; }
-        public Boolean estado_liquidacion { get; set; }
+        public int? usuario_cobro { get; set; }
+        public bool? estado_liquidacion { get; set; }
+        public string? rol_cobrador { get; set; }
     }
 
     public class SolicitudDto

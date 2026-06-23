@@ -1,6 +1,7 @@
 ﻿@model IEnumerable<CarsParkingService.Models.ingresos>
 @{
     ViewData["Title"] = "Panel de Parqueadero (Key)";
+    Layout = "~/Views/Shared/_LayoutKey.cshtml";
 }
 
 <link rel="stylesheet" href="~/css/vistakey.css" />
@@ -122,6 +123,7 @@
 </div>
 
 <!-- Modal despacho -->
+<!-- Modal despacho -->
 <div class="modal fade" id="modalDespachoKey" tabindex="-1" aria-labelledby="modalDespachoKeyLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content modal-key">
@@ -129,9 +131,9 @@
             <!-- HEADER -->
             <div class="modal-header modal-key-header">
 
-                <div class="modal-header-info">
+                <div class="modal-header-content">
 
-                    <div class="modal-icon-box">
+                    <div class="modal-icon-wrap">
                         <i class="fa-solid fa-car-side"></i>
                     </div>
 
@@ -149,7 +151,8 @@
 
                 <button type="button"
                         class="btn-close btn-close-white"
-                        data-bs-dismiss="modal">
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
                 </button>
 
             </div>
@@ -157,33 +160,29 @@
             <!-- BODY -->
             <div class="modal-body modal-key-body">
 
-                <!-- CARD VEHICULO -->
-                <div class="vehicle-card">
-
-                    <div class="vehicle-icon">
-                        <i class="fa-solid fa-id-card"></i>
-                    </div>
-
-                    <div class="vehicle-info">
-                        <span class="vehicle-label">
-                            Placa del vehículo
-                        </span>
-
-                        <span class="vehicle-plate" id="modalPlacaKey">
-                            
-                        </span>
-                    </div>
-
-                </div>
-
                 <!-- ALERT -->
                 <div class="modal-alert">
 
                     <i class="fa-solid fa-circle-exclamation"></i>
 
                     <span>
-                        Antes de continuar verifica el valet que llevará el vehiculo hacia el cliente.
+                        Antes de continuar verifica el valet que llevará el vehículo hacia el cliente.
                     </span>
+
+                </div>
+
+                <!-- CARD PLACA -->
+                <div class="modal-summary-card">
+
+                    <div class="summary-top">
+                        <span class="summary-label">Placa del vehículo</span>
+                        <span class="summary-value" id="modalPlacaKey"></span>
+                    </div>
+
+                    <div class="summary-status">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        Listo para despacho
+                    </div>
 
                 </div>
 
@@ -201,19 +200,20 @@
                            value="despachado" />
 
                     <!-- SELECT -->
-                    <div class="form-section">
+                    <div class="modal-field">
 
-                        <label class="form-label-custom">
+                        <label class="form-label">
+                            <i class="fa-solid fa-user-tie"></i>
                             Valet asignado
                         </label>
 
                         <select name="id_valet"
                                 id="modalIdValetKey"
-                                class="form-select select-valet">
+                                class="form-select">
 
-                            @if (ViewBag.valets != null)
+                            @if (ViewBag.Valets != null)
                             {
-                                foreach (var valet in ViewBag.valets)
+                                foreach (var valet in ViewBag.Valets)
                                 {
                                     <option value="@valet.id_usuario">
                                         @valet.nombres
@@ -223,9 +223,10 @@
 
                         </select>
 
-                        <small class="form-hint">
+                        <div class="field-hint">
+                            <i class="fa-solid fa-circle-info"></i>
                             Selecciona el encargado del despacho.
-                        </small>
+                        </div>
 
                     </div>
 
@@ -235,17 +236,13 @@
                         <button type="button"
                                 class="btn-cancelar"
                                 data-bs-dismiss="modal">
-
                             Cancelar
-
                         </button>
 
                         <button type="submit"
                                 class="btn-despachar">
-
                             <i class="fa-solid fa-paper-plane"></i>
                             Confirmar despacho
-
                         </button>
 
                     </div>

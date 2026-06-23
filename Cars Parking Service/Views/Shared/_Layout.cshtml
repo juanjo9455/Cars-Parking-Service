@@ -59,14 +59,28 @@
                         <li><a asp-controller="Home" asp-action="Tabla_Vehiculos"><i class="fa-solid fa-table-list"></i>Tabla Ingresos</a></li>
     
                     }
-                    @if (idRol == 2)
+                    @if (idRol == 2 && (ViewBag.estadoLiquidacion ?? false) == false)
                     {
-                            
-                        <li><a asp-controller="Home" asp-action="Liquidacion"><i class="fa-solid fa-sack-dollar"></i>Liquidacion</a></li>
-
+                        <li>
+                            <a asp-controller="Liquidacion" asp-action="Liquidacion">
+                                <i class="fa-solid fa-sack-dollar"></i>Liquidación
+                            </a>
+                        </li>
                     }
 
-                    <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
+
+                    @if ((ViewBag.estadoLiquidacion ?? false) == false)
+                    {
+                      
+                        <li><a id="cerrar-sesion" onclick="abrirModalAlerta()"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
+
+                    }
+                    else
+                    {
+
+                        <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
+
+                    }
                 </ol>
             </div>
         </aside>

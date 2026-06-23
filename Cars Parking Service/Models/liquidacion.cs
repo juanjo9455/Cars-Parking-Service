@@ -20,8 +20,6 @@ namespace CarsParkingService.Models
 
         public decimal? total_transferencias { get; set; }
 
-        public decimal? total_propinas { get; set; }
-
         public decimal? total_liquidado { get; set; }
 
         // Navegación

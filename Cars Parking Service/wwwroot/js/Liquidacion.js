@@ -49,7 +49,7 @@
 
     if (openModal) {
         openModal.addEventListener('click', () => {
-            modalWrap.style.display = 'flex';
+            modalWrap.classList.add('active');
         });
     }
 
@@ -58,7 +58,7 @@
 
     if (closeModal) {
         closeModal.addEventListener('click', () => {
-            modalWrap.style.display = 'none';
+            modalWrap.classList.remove('active');
         });
     }
 
@@ -67,7 +67,13 @@
     const successBanner = document.getElementById('successBanner');
 
     if (doConfirm) {
-        doConfirm.addEventListener('click', () => {
+        const idUsuario = doConfirm.dataset.idUsuario;
+        const totalVehiculos = doConfirm.dataset.totalVehiculos;
+        const totalEfectivo = doConfirm.dataset.totalEfectivo;
+        const totalTransferencia = doConfirm.dataset.totalTransferencia;
+        const totalDinero = doConfirm.dataset.totalDinero;
+
+        doConfirm.addEventListener('click', async () => {
 
             modalWrap.style.display = 'none';
 
@@ -75,8 +81,44 @@
                 successBanner.classList.add('visible');
             }
 
-            // Aquí irá posteriormente la llamada AJAX o fetch
-            // para registrar la liquidación en el backend.
+            try {
+
+                const response = await fetch('/Liquidacion/GuardarLiquidacion', {
+                    method : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        idUsuario: parseInt(idUsuario),
+                        totalVehiculos: parseInt(totalVehiculos),
+                        totalEfectivo: parseFloat(totalEfectivo),
+                        totalTransferencia: parseFloat(totalTransferencia),
+                        totalDinero: parseFloat(totalDinero)
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al registrar la liquidación');
+                }
+
+                const resultado = await response.json();
+
+                if (resultado.success) {
+
+                    modalWrap.classList.remove('active');
+
+                    if (successBanner) {
+                        successBanner.classList.add('visible');
+                    }
+
+                    sessionStorage.setItem('mostrarAlertaLiquidacion', 'true');
+
+                    window.location.href = '/Home/Index';
+                }
+
+            } catch (error) {
+                console.error(error);
+            }
         });
     }
 

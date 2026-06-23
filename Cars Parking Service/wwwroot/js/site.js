@@ -1305,7 +1305,7 @@ function abrirModalPago(btn) {
                 <button type="button" class="btn btn-secondary" onclick="cerrarModalPago('${id}')" style="flex: 1;">
                     Cancelar
                 </button>
-                <button type="button" class="btn btn-primary" onclick="validarCodigoYAbrir('${id}', '${placa}', '${nombre_cliente}', '${metodo_pago}','modal-acciones')" style="flex: 1;">
+                <button type="button" class="btn btn-primary" onclick="validarCodigoYAbrir('${id}', '${placa}', '${nombre_cliente}', '${metodo_pago}','modal-acciones', '${estado_servicio}')" style="flex: 1;">
                     <i class="fa-solid fa-check"></i> Validar y Continuar
                 </button>
             </div>
@@ -1328,10 +1328,10 @@ function cerrarModalPago(idIngreso) {
 
 // Cerrar modal de finalización
 function cerrarModalFinalizacion(idIngreso) {
-    const modal = document.getElementById(`modal-${idIngreso}`);
+    const modalAcciones = document.getElementById('modal-acciones');
 
-    if (modal) {
-        modal.style.display = 'none';
+    if (modalAcciones) {
+        modalAcciones.style.display = 'none';
     }
 }
 
@@ -1538,7 +1538,7 @@ function eliminarCodigoSeguridad(idIngreso) {
 }
 
 // Validar código y abrir modal final
-function validarCodigoYAbrir(idIngreso, placa, nombre_cliente, metodo_pago, modalId) {
+function validarCodigoYAbrir(idIngreso, placa, nombre_cliente, metodo_pago, modalId, estado_servicio) {
 
     const codigoInput = document.getElementById(`codigo-validacion-${idIngreso}`);
 
@@ -1577,40 +1577,38 @@ function validarCodigoYAbrir(idIngreso, placa, nombre_cliente, metodo_pago, moda
 
                 document.getElementById("contenido-modal-acciones").innerHTML = `
 
-                    <div class="Card-Ingreso card-ingreso-vehiculos">
-                        <span class="close-btn" onclick="cerrarModalFinalizacion('${idIngreso}')">&times;</span>
-                        <h3>Finalizar Servicio de Vehículo</h3>
+                    <span class="close-btn" onclick="cerrarModalFinalizacion('${idIngreso}')">&times;</span>
+                    <h3>Finalizar Servicio de Vehículo</h3>
 
-                        <!-- Información del vehículo -->
-                        <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                            <p><strong>Placa:</strong> ${placa}</p>
-                            <p><strong>Cliente:</strong> ${nombre_cliente}</p>
-                            <p><strong>Método de Pago:</strong> <span id="metodo-pago-final-${idIngreso}">${metodo_pago ?? "No especificado"}</span></p>
-                            <p style="margin-bottom: 0;"><strong>Estado Actual:</strong> ${estado_servicio}</p>
-                        </div>
+                    <!-- Información del vehículo -->
+                    <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <p><strong>Placa:</strong> ${placa}</p>
+                        <p><strong>Cliente:</strong> ${nombre_cliente}</p>
+                        <p><strong>Método de Pago:</strong> <span id="metodo-pago-final-${idIngreso}">${metodo_pago ?? "No especificado"}</span></p>
+                        <p style="margin-bottom: 0;"><strong>Estado Actual:</strong> ${estado_servicio}</p>
+                    </div>
 
-                        <!-- Seleccionar estado final -->
-                        <div class="form-group-modal" style="margin-bottom: 20px;">
-                            <label>Estado del Servicio:</label>
-                            <select id="estado-servicio-${idIngreso}" style="width:100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                                <option value="finalizado">Finalizado</option>
-                            </select>
-                        </div>
+                    <!-- Seleccionar estado final -->
+                    <div class="form-group-modal" style="margin-bottom: 20px;">
+                        <label>Estado del Servicio:</label>
+                        <select id="estado-servicio-${idIngreso}" style="width:100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="finalizado">Finalizado</option>
+                        </select>
+                    </div>
 
-                        <!-- Mostrar estado de pago -->
-                        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                            <p style="margin: 0; color: #1976d2;"><strong>Estado de Pago: PAGADO ✓</strong></p>
-                        </div>
+                    <!-- Mostrar estado de pago -->
+                    <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <p style="margin: 0; color: #1976d2;"><strong>Estado de Pago: PAGADO ✓</strong></p>
+                    </div>
 
-                        <!-- Botones de acción -->
-                        <div class="modal-actions" style="display: flex; gap: 10px;">
-                            <button type="button" class="btn btn-secondary" onclick="cerrarModalFinalizacion('${idIngreso}')" style="flex: 1;">
-                                Cancelar
-                            </button>
-                            <button type="button" class="btn btn-success" onclick="finalizarServicio('${idIngreso}')" style="flex: 1;">
-                                <i class="fa-solid fa-check-circle"></i> Confirmar
-                            </button>
-                        </div>
+                    <!-- Botones de acción -->
+                    <div class="modal-actions" style="display: flex; gap: 10px;">
+                        <button type="button" class="btn btn-secondary" onclick="cerrarModalFinalizacion('${idIngreso}')" style="flex: 1;">
+                            Cancelar
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="finalizarServicio('${idIngreso}')" style="flex: 1;">
+                            <i class="fa-solid fa-check-circle"></i> Confirmar
+                        </button>
                     </div>
                 
                 `;
@@ -1701,4 +1699,46 @@ function finalizarServicio(idIngreso) {
                 btnConfirmar.innerHTML = '✓ Confirmar';
             }
         });
+}
+
+// Validamos la liquidacion
+
+function abrirModalAlerta() {
+
+    const mostrar = sessionStorage.getItem('mostrarAlertaLiquidacion');
+
+    const alerta = document.getElementById('liquidacionAlert');
+
+    if (alerta) {
+
+        alerta.innerHTML = `
+            <div class="liquidacion-alert-card">
+
+                <div class="alert-icon" style="background:#FFF3CD; color:#FF9800;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+
+                <h2>Liquidación pendiente</h2>
+
+                <p>
+                    Aún no has realizado la liquidación de tu turno.
+                    Debes completar la liquidación antes de cerrar sesión.
+                </p>
+
+                <button class="alert-btn" onclick="cerrarAlertaLiquidacion()">
+                    Entendido
+                </button>
+
+            </div>
+        `;
+
+        alerta.classList.add('show');
+    }
+
+}
+
+function cerrarModalNoLiquidado() {
+    document
+        .getElementById('modalNoLiquidado')
+        .classList.remove('show');
 }

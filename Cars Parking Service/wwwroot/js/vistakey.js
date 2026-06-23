@@ -1,9 +1,4 @@
-﻿// vistakey.js
-
-/**
- * Función sencilla para mostrar algo de información del vehículo
- */
-function verInfoExtra(btn) {
+﻿function verInfoExtra(btn) {
     const idIngreso = btn?.dataset?.idIngreso;
     const data = window.vistaKeyInfoMap?.[String(idIngreso)];
 

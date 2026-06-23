@@ -159,6 +159,62 @@
 
 </div>
 
+
+<!-- Alerta Liquidacion -->
+<div class="liquidacion-alert" id="liquidacionAlert">
+
+    <div class="liquidacion-alert-card">
+
+        <div class="alert-icon">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+
+        <h2>Liquidación completada</h2>
+
+        <p>
+            La liquidación se registró correctamente.
+            Puede retirarse de su puesto de trabajo.
+        </p>
+
+        <button class="alert-btn" onclick="cerrarAlertaLiquidacion()">
+            Entendido
+        </button>
+
+    </div>
+
+</div>
+
 @section Scripts {
     <script src="~/js/solicitudes.js" asp-append-version="true"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const mostrar = sessionStorage.getItem('mostrarAlertaLiquidacion');
+
+            console.log(mostrar); // debe imprimir "true"
+
+            if (mostrar === 'true') {
+
+                const alerta = document.getElementById('liquidacionAlert');
+
+                if (alerta) {
+                    alerta.classList.add('show');
+                }
+
+            sessionStorage.removeItem('mostrarAlertaLiquidacion');
+            }
+
+        });
+
+        function cerrarAlertaLiquidacion() {
+
+            const alerta = document.getElementById('liquidacionAlert');
+
+            if (alerta) {
+                alerta.classList.remove('show');
+            }
+        }
+    </script>
+
 }

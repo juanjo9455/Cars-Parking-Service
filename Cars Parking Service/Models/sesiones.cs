@@ -37,5 +37,7 @@ namespace CarsParkingService.Models
 
         // Fecha y hora de salida
         public DateTime? fecha_fin { get; set; }
+
+        public bool estado_liquidacion { get; set; }
     }
 }

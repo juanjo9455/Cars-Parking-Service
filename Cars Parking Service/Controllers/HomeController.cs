@@ -35,10 +35,16 @@ namespace CarsParkingService.Controllers
                                    join u in _context.ubicacion_servicios
                                    on s.id_ubicacion equals u.id_ubicacion
                                    where s.id_usuario == usuarioId
+                                         && s.fecha_fin == null
                                    select u.nombre_ubicacion)
                                   .FirstOrDefault();
 
             ViewBag.ubicacion = nombreUbicacion ?? "Ubicación no disponible";
+
+            ViewBag.estadoLiquidacion = _context.sesiones
+                .Where(s => s.id_usuario == usuarioId && s.fecha_fin == null)
+                .Select(s => (bool?)s.estado_liquidacion)
+                .FirstOrDefault() ?? false;
 
             return View();
 
@@ -52,7 +58,49 @@ namespace CarsParkingService.Controllers
 
         public IActionResult Liquidacion()
         {
-            return View();
+
+            var idUsuario = HttpContext.Session.GetInt32("id");
+            var idRol = HttpContext.Session.GetInt32("id_rol");
+
+            if (!idUsuario.HasValue || idRol != 2)
+            {
+                return Forbid();
+            }
+
+            var ingresos = _context.ingresos
+                .Where(i =>
+                       i.id_banco == idUsuario.Value &&
+                       i.estado_liquidacion == false &&
+                       i.estado_pago == "pagado")
+                    .ToList();
+
+            var totalVehiculos = ingresos.Count;
+
+            var totalEfectivo = ingresos
+                .Where(i =>
+                       i.metodo_pago == "efectivo")
+                .Sum(i => i.valor_servicio);
+
+            var totalTransferencia = ingresos
+                .Where(i =>
+                       i.metodo_pago == "transferencia")
+                .Sum(i => i.valor_servicio);
+
+            var totalPropinas = ingresos
+                .Sum(i => i.valor_propina ?? 0);
+
+            var totalGeneral =
+                totalEfectivo +
+                totalTransferencia +
+                totalPropinas;
+
+            ViewBag.totalVehiculos = totalVehiculos;
+            ViewBag.totalEfectivo = totalEfectivo;
+            ViewBag.TotalTransferencia = totalTransferencia;
+            ViewBag.totalPropinas = totalPropinas;
+            ViewBag.totalGeneral = totalGeneral;
+
+            return View(ingresos);
         }
 
         // =================== vista key =================== //
@@ -469,6 +517,22 @@ namespace CarsParkingService.Controllers
 
             int idUsuario = idUsuarioSesion.Value;
 
+            var ubicacionUsuario = (from s in _context.sesiones
+                                    join u in _context.ubicacion_servicios
+                                    on s.id_ubicacion equals u.id_ubicacion
+                                    where s.id_usuario == idUsuario
+                                          && s.fecha_fin == null
+                                    select u.nombre_ubicacion)
+           .FirstOrDefault();
+
+            ViewBag.ubicacion = ubicacionUsuario;
+
+            var idUbicacionUsuario = (from s in _context.sesiones
+                                      where s.id_usuario == idUsuario
+                                      && s.fecha_fin == null
+                                      select s.id_ubicacion)
+                                      .FirstOrDefault();
+
             // Convertir placa a mayúsculas
             string? placaUpper = !string.IsNullOrEmpty(placa) ? placa.Trim().ToUpper() : null;
             string? nombreUbicacion = !string.IsNullOrEmpty(lugar) ? lugar : null;
@@ -498,18 +562,32 @@ namespace CarsParkingService.Controllers
             };
 
             // 🔥 lógica de rol
+
+            int? idUbicacionFiltro = null;
+            object idUsuarioParam = DBNull.Value;
+
+            // Condicion cuando sea banco
+            if (rolUsuario == 2)
+            {
+
+                idUbicacionFiltro = idUbicacionUsuario;
+
+            }
+
+            // Condicion cuando no sea admin
             if (rolUsuario != 3)
             {
-                parametros.Add(new SqlParameter("@id_usuario", idUsuario));
+
+                idUsuarioParam = idUsuario;
+
             }
-            else
-            {
-                parametros.Add(new SqlParameter("@id_usuario", DBNull.Value));
-            }
+
+            parametros.Add(new SqlParameter("@id_usuario", idUsuarioParam));
+            parametros.Add(new SqlParameter("@id_ubicacion", idUbicacionFiltro ?? (object)DBNull.Value));
             
             // ✔ conversión a array (ESTO ES LO CLAVE)
             var ingresos = _context.ingresos.FromSqlRaw(
-                "EXEC sp_consultarRegistros @placa, @lugar, @estado_servicio, @estado_pago, @id_usuario, @parqueadero, @fecha_inicio, @fecha_fin", 
+                "EXEC sp_consultarRegistros @placa, @lugar, @estado_servicio, @estado_pago, @id_usuario, @parqueadero, @fecha_inicio, @fecha_fin, @id_ubicacion", 
                 parametros.ToArray()
             )
             .AsEnumerable()
@@ -700,6 +778,7 @@ namespace CarsParkingService.Controllers
                 obj_ingreso.fecha_salida = null;
                 obj_ingreso.fecha_fin_servicio = null;
                 obj_ingreso.estado_pago = "pendiente";
+                obj_ingreso.estado_liquidacion = false;
                 if (id_valet == 0) {
 
                     obj_ingreso.id_valet = null;
@@ -867,7 +946,7 @@ namespace CarsParkingService.Controllers
             var token = "EAAN1Ou7KFoABOxsr5ohcvViIX6kLd90FRB4gmnNUNFmyKqlOIfLGWN7XCFuy96Gk6l940v8mxzSU9z9ldvZCYSDhQ9hSlZBzoQsUZBRNEkeHkKqsjIhu7FUQ5i7bSd5tE9fxBZBZC9ar1DgPjGSazftOQjXPanTJDqLhom7aVZBpvcDnrScZCkZAamOTj19Ib7aI4gZDZD";
             var url = "https://graph.facebook.com/v22.0/625779610608874/messages";
 
-            string baseUrl = "http://143.198.163.1:5000//Payment/Estado_Servicio?idIngreso=";
+            string baseUrl = "http://143.198.163.1:5000/Payment/Estado_Servicio?idIngreso=";
             string linkPago = $"{baseUrl}{idIngreso}";
 
             var payload = new
@@ -1113,8 +1192,8 @@ namespace CarsParkingService.Controllers
 
                 var (codigoGenerado, fechaGeneracion) = codigosSeguridad[id];
 
-                // Validar que no haya expirado (5 minutos)
-                if ((DateTime.Now - fechaGeneracion).TotalMinutes > 5)
+                // Validar que no haya expirado (1 minuto)
+                if ((DateTime.Now - fechaGeneracion).TotalMinutes > 1)
                 {
                     codigosSeguridad.Remove(id);
                     return Json(new { success = false, message = "Código expirado" });
@@ -1140,6 +1219,9 @@ namespace CarsParkingService.Controllers
         [HttpPost]
         public IActionResult FinalizarServicio(int id, string estadoServicio)
         {
+            // Obtenemos usuario y rol
+            var idUsuario = HttpContext.Session.GetInt32("id");
+            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
             try
             {
                 var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id);
@@ -1155,6 +1237,27 @@ namespace CarsParkingService.Controllers
                 {
                     ingreso.fecha_salida = DateTime.Now;
                     ingreso.fecha_entrega = DateTime.Now;
+                    ingreso.usuario_cobro = idUsuario;
+                 
+                }
+
+                if (rolUsuario == 1)
+                {
+
+                    ingreso.rol_cobrador = "valet";
+
+                }
+                else if (rolUsuario == 2)
+                {
+
+                    ingreso.rol_cobrador = "banco";
+
+                }
+                else
+                {
+
+                    ingreso.rol_cobrador = "otro";
+
                 }
 
                 _context.SaveChanges();
