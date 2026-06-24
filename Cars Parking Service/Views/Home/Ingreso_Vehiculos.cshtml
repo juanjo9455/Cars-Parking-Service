@@ -248,7 +248,8 @@
 
             <!-- BOTÓN FOTO OBJETOS -->
             <div style="display: flex;">
-                <button type="button" class="photo-btn-2" id="tomarFotoBtn">
+                <button type="button" class="photo-btn-2" id="tomarFotoObjetosBtn">
+
                     <svg class="camera-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                         <circle cx="12" cy="13" r="4"></circle>
@@ -260,11 +261,14 @@
             <!-- Contenedor padre para fotos y el video -->
             <div class="Media-Preview">
                 <!-- Contenedor para preview de fotos -->
-                <div class="photos-preview" id="photosPreview"></div>
-
-                <!-- Contenedor para preview de video -->
-                <div id="videoPreviewContainer" style="margin-top: 12px;"></div>
+                <div class="photos-preview" id="photosPreviewObjetos"></div>
             </div>
+
+            <!-- Input oculto para invocar la cámara nativa del dispositivo SOLO para fotos -->
+            <input type="file" id="cameraInputObjetos" accept="image/*" capture style="display:none;">
+
+            <!-- Inputs ocultos para enviar los archivos como base64 -->
+            <div id="fotosObjetosBase64Container"></div>
 
         </div>
 
@@ -360,7 +364,7 @@
 </div>
 
 @section Scripts {
-    <script src="~/js/solicitudes.js" asp-append-version="true"></script>
+    <script src="~/js/solicitudes.js" asp-append-version="true" defer></script>
     <script src="~/js/ingreso-vehiculos.js" asp-append-version="true" defer></script>
     <script src="~/js/ingreso-vehiculos-camera.js" asp-append-version="true" defer></script>
 }

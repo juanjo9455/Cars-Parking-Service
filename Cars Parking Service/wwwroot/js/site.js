@@ -1538,7 +1538,130 @@ function eliminarCodigoSeguridad(idIngreso) {
 }
 
 // Validar código y abrir modal final
+
 function validarCodigoYAbrir(idIngreso, placa, nombre_cliente, metodo_pago, modalId, estado_servicio) {
+
+    const MODO_DEBUG = true; // 👈 activa/desactiva pruebas
+
+    if (MODO_DEBUG) {
+        cerrarModalPago(idIngreso);
+
+        const modalAcciones = document.getElementById(modalId);
+
+        document.getElementById("contenido-modal-acciones").innerHTML = `
+            <span class="close-btn" onclick="cerrarModalFinalizacion('${idIngreso}')">&times;</span>
+            <h3>Finalizar Servicio de Vehículo</h3>
+
+            <div class="info-auto" style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:20px;">
+                <p><strong>Placa:</strong> ${placa}</p>
+                <p><strong>Cliente:</strong> ${nombre_cliente}</p>
+                <p><strong>Método de Pago:</strong> ${metodo_pago ?? "No especificado"}</p>
+                <p><strong>Estado Actual:</strong> ${estado_servicio}</p>
+            </div>
+
+
+            ${metodo_pago == "Transferencia" ? `
+            
+
+                <!-- ========== FOTO DE LA TRANSACCION ========== -->
+                <div class="photo-section">
+                    <h4 class="photo-title">Foto De La Tranferencia</h4>
+
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button type="button" class="photo-btn" id="tomarFotoTransferenciaBtn">
+                            <svg class="camera-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                            Tomar Foto
+                        </button>
+                    </div>
+
+                    <p class="photo-counter" id="photoCounterTransferencia">0 fotos seleccionadas (max. 1)</p>
+                    
+                    <!-- Contenedor padre para fotos y el video -->
+                    <div class="Media-Preview">
+                        <!-- Contenedor para preview de fotos -->
+                        <div class="photos-preview" id="photosPreviewTransferencia"></div>
+                    </div>
+
+                    <!-- Input oculto para invocar la cámara nativa del dispositivo SOLO para fotos -->
+                    <input type="file" id="cameraInputTransferencia" accept="image/*" capture style="display:none;">
+
+                    <!-- Inputs ocultos para enviar los archivos como base64 -->
+                    <div id="fotosTransferenciaBase64Container"></div>
+                    <input type="hidden" name="videoBase64" id="videoBase64Input" />
+                    <div class="error-message" id="errorMediaTrnasferencia" style="display:none;"></div>
+                </div>
+            
+            
+            `: ''}
+
+
+            <div class="form-group-modal" style="margin-bottom:20px;">
+                <label>Estado del Servicio:</label>
+                <select id="estado-servicio-${idIngreso}" style="width:100%; padding:8px;">
+                    <option value="finalizado">Finalizado</option>
+                </select>
+            </div>
+
+            <div class="modal-actions" style="display:flex; gap:10px;">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalFinalizacion('${idIngreso}')">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-success" onclick="finalizarServicio('${idIngreso}')">
+                    Confirmar
+                </button>
+            </div>
+        `;
+
+        modalAcciones.style.display = 'flex';
+
+        if (metodo_pago == "Transferencia") {
+
+            inicializarCamaraTransferencia();
+
+        }
+
+
+        return;
+    }
+
+    // 🔽 flujo normal (con código)
+    const codigoInput = document.getElementById(`codigo-validacion-${idIngreso}`);
+    if (!codigoInput) return;
+
+    const codigoIngresado = codigoInput.value;
+
+    if (!codigoIngresado || codigoIngresado.length !== 6) {
+        alert('Ingresa un código válido de 6 dígitos');
+        return;
+    }
+
+    fetch(`/Home/ValidarCodigoSeguridad?id=${idIngreso}&codigo=${codigoIngresado}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+        .then(r => r.json())
+        .then(data => {
+
+            if (!data.success) {
+                alert(data.message || 'Código inválido');
+                return;
+            }
+
+            cerrarModalPago(idIngreso);
+
+            const modalAcciones = document.getElementById(modalId);
+
+            document.getElementById("contenido-modal-acciones").innerHTML = `...`;
+
+            modalAcciones.style.display = 'flex';
+        });
+}
+
+
+/*function validarCodigoYAbrir(idIngreso, placa, nombre_cliente, metodo_pago, modalId, estado_servicio) {
 
     const codigoInput = document.getElementById(`codigo-validacion-${idIngreso}`);
 
@@ -1638,7 +1761,7 @@ function validarCodigoYAbrir(idIngreso, placa, nombre_cliente, metodo_pago, moda
             }
         });
 }
-
+*/
 // Finalizar servicio
 function finalizarServicio(idIngreso) {
 

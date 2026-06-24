@@ -2,6 +2,9 @@
  * Lógica de cámara para tomar fotos y grabar video (usando cámara nativa del dispositivo)
  */
 document.addEventListener('DOMContentLoaded', () => {
+
+    // =============== Vehiculo Camara =============== //
+
     const tomarFotoBtn = document.getElementById('tomarFotoBtn');
     const grabarVideoBtn = document.getElementById('grabarVideoBtn');
     const cameraInput = document.getElementById('cameraInput');
@@ -14,15 +17,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorMedia = document.getElementById('errorMedia');
     const recordTimer = document.getElementById('recordTimer');
 
+    // =============== Objetos de valor Camara =============== //
+
+    const tomarFotoObjetosBtn =
+        document.getElementById('tomarFotoObjetosBtn');
+
+    const cameraInputObjetos =
+        document.getElementById('cameraInputObjetos');
+
+    const photosPreviewObjetos =
+        document.getElementById('photosPreviewObjetos');
+
+    const fotosObjetosBase64Container =
+        document.getElementById('fotosObjetosBase64Container');
+
+
+
     if (!tomarFotoBtn || !cameraInput || !photosPreview || !photoCounter || !fotosBase64Container || !grabarVideoBtn || !videoPreviewContainer || !videoBase64Input || !videoInput) {
         return;
     }
+
+
+    // Imagenes tomadas del vehiculo
 
     let archivosCapturados = [];
     const MAX_TOTAL = 10;
     let cameraInputClicking = false; // Previene doble click
     let videoBlob = null;
     let videoGrabado = false;
+
+
+    // Imagenes tomadas de los objetos de valor
+
+    let archivosObjetosCapturados = [];
+    let cameraInputObjetosClicking = false; // Previene doble click
+    const MAX_OBJETOS = 1;
 
     function actualizarContador() {
         const cantidad = archivosCapturados.length + (videoGrabado ? 1 : 0);
@@ -53,6 +82,120 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Sincronizamos inputs de los objetos de valor
+
+    function sincronizarInputsObjetosOcultos() {
+
+        // Limpiamos input
+        fotosObjetosBase64Container.innerHTML = '';
+
+        archivosObjetosCapturados.forEach((archivo, index) => {
+
+            const input = document.createElement('input');
+
+            input.type = 'hidden';
+            input.name = `fotosObjetos[${index}]`;
+
+            input.value = archivo.base64;
+
+            fotosObjetosBase64Container.appendChild(input);
+
+        });
+
+    }
+
+    // Renderizamos las imangenes de los objetos de valor
+
+    function renderPreviewObjetos() {
+
+        // Limpiamos input
+        photosPreviewObjetos.innerHTML = '';
+
+        archivosObjetosCapturados.forEach((archivo, index) => {
+
+            const previewDiv = document.createElement('div');
+
+            previewDiv.className = 'photo-item';
+
+            const img = document.createElement('img');
+
+            img.src = archivo.base64;
+            img.alt = `Objeto ${index + 1}`;
+
+            previewDiv.appendChild(img);
+
+            const removeBtn = document.createElement('button');
+
+            removeBtn.type = 'button';
+            removeBtn.className = 'delete-photo';
+            removeBtn.textContent = 'X';
+
+            removeBtn.addEventListener('click', () => {
+
+                archivosObjetosCapturados.splice(index, 1);
+
+                renderPreviewObjetos();
+
+                sincronizarInputsObjetosOcultos();
+
+            });
+
+            previewDiv.appendChild(removeBtn);
+
+            photosPreviewObjetos.appendChild(previewDiv)
+
+        });
+    }
+
+    // Evento del input
+
+    cameraInputObjetos.addEventListener('change', async (e) => {
+
+        cameraInputObjetosClicking = false;
+
+        const files = Array.from(e.target.files);
+
+        if (!files.length) return;
+
+        for (const file of files) {
+
+            if (!file.type.startsWith('image/')) continue;
+
+            const compressedBase64 = await compressImageToBase64(file);
+
+            archivosObjetosCapturados.push({
+                base64: compressedBase64,
+                type: 'image/jpeg'
+            });
+        }
+
+        renderPreviewObjetos();
+        sincronizarInputsObjetosOcultos();
+
+    });
+
+    // Evento para tomar la foto
+
+    tomarFotoObjetosBtn.addEventListener('click', function (e) {
+
+        if (cameraInputObjetosClicking) {
+
+            e.preventDefault();
+            return;
+
+        }
+
+        cameraInputObjetosClicking = true;
+
+        cameraInputObjetos.removeAttribute('multiple');
+        cameraInputObjetos.accept = 'image/*';
+        cameraInputObjetos.capture = 'enviroment';
+        cameraInputObjetos.value = '';
+
+        cameraInputObjetos.click();
+
+    })
+
     function renderPreview() {
         photosPreview.innerHTML = '';
         archivosCapturados.forEach((archivo, index) => {
@@ -76,51 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             previewDiv.appendChild(removeBtn);
             photosPreview.appendChild(previewDiv);
-        });
-    }
-
-    function fileToDataUrl(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = ev => resolve(ev.target.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    }
-
-    async function compressImageToBase64(file) {
-        const originalBase64 = await fileToDataUrl(file);
-
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-                const maxDimension = 1600;
-                let { width, height } = img;
-
-                if (width > height && width > maxDimension) {
-                    height = Math.round((height * maxDimension) / width);
-                    width = maxDimension;
-                } else if (height >= width && height > maxDimension) {
-                    width = Math.round((width * maxDimension) / height);
-                    height = maxDimension;
-                }
-
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                    resolve(originalBase64);
-                    return;
-                }
-
-                ctx.drawImage(img, 0, 0, width, height);
-                const compressed = canvas.toDataURL('image/jpeg', 0.75);
-                resolve(compressed || originalBase64);
-            };
-
-            img.onerror = () => resolve(originalBase64);
-            img.src = originalBase64;
         });
     }
 
@@ -451,3 +549,179 @@ document.addEventListener('DOMContentLoaded', () => {
 
     actualizarContador();
 });
+
+
+function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = ev => resolve(ev.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+async function compressImageToBase64(file) {
+    const originalBase64 = await fileToDataUrl(file);
+
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const maxDimension = 1600;
+            let { width, height } = img;
+
+            if (width > height && width > maxDimension) {
+                height = Math.round((height * maxDimension) / width);
+                width = maxDimension;
+            } else if (height >= width && height > maxDimension) {
+                width = Math.round((width * maxDimension) / height);
+                height = maxDimension;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                resolve(originalBase64);
+                return;
+            }
+
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL('image/jpeg', 0.75);
+            resolve(compressed || originalBase64);
+        };
+
+        img.onerror = () => resolve(originalBase64);
+        img.src = originalBase64;
+    });
+}
+
+
+// evento global para la foto de la transferencia
+
+window.inicializarCamaraTransferencia = function () {
+
+    const tomarFotoTransferenciaBtn =
+        document.getElementById('tomarFotoTransferenciaBtn');
+
+    const cameraInputTransferencia =
+        document.getElementById('cameraInputTransferencia');
+
+    const photosPreviewTransferencia =
+        document.getElementById('photosPreviewTransferencia');
+
+    const fotosTransferenciaBase64Container =
+        document.getElementById('fotosTransferenciaBase64Container');
+
+    const photoCounterTransferencia =
+        document.getElementById('photoCounterTransferencia');
+
+    if (!tomarFotoTransferenciaBtn ||
+        !cameraInputTransferencia ||
+        !photosPreviewTransferencia) return;
+
+    let archivosTransferenciaCapturados = [];
+    let cameraInputTransferenciaClicking = false;
+
+    function sincronizarInputsTransferenciaOcultos() {
+
+        fotosTransferenciaBase64Container.innerHTML = '';
+
+        archivosTransferenciaCapturados.forEach((archivo, index) => {
+
+            const input = document.createElement('input');
+
+            input.type = 'hidden';
+            input.name = `fotoTransferencia[${index}]`;
+            input.value = archivo.base64;
+
+            fotosTransferenciaBase64Container.appendChild(input);
+
+        });
+    }
+
+    function renderPreviewTransferencia() {
+
+        photosPreviewTransferencia.innerHTML = '';
+
+        archivosTransferenciaCapturados.forEach((archivo, index) => {
+
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'photo-item';
+
+            const img = document.createElement('img');
+            img.src = archivo.base64;
+
+            previewDiv.appendChild(img);
+
+            const removeBtn = document.createElement('button');
+
+            removeBtn.type = 'button';
+            removeBtn.className = 'delete-photo';
+            removeBtn.textContent = '✕';
+
+            removeBtn.onclick = () => {
+
+                archivosTransferenciaCapturados.splice(index, 1);
+
+                renderPreviewTransferencia();
+                sincronizarInputsTransferenciaOcultos();
+
+                photoCounterTransferencia.textContent =
+                    '0 fotos seleccionadas (max. 1)';
+            };
+
+            previewDiv.appendChild(removeBtn);
+            photosPreviewTransferencia.appendChild(previewDiv);
+        });
+    }
+
+    cameraInputTransferencia.addEventListener('change', async (e) => {
+
+        cameraInputTransferenciaClicking = false;
+
+        const files = Array.from(e.target.files);
+
+        if (!files.length) return;
+
+        archivosTransferenciaCapturados = [];
+
+        for (const file of files) {
+
+            if (!file.type.startsWith('image/')) continue;
+
+            const compressedBase64 =
+                await compressImageToBase64(file);
+
+            archivosTransferenciaCapturados.push({
+                base64: compressedBase64,
+                type: 'image/jpeg'
+            });
+        }
+
+        renderPreviewTransferencia();
+        sincronizarInputsTransferenciaOcultos();
+
+        photoCounterTransferencia.textContent =
+            '1 foto seleccionada (max. 1)';
+    });
+
+    tomarFotoTransferenciaBtn.addEventListener('click', function (e) {
+
+        if (cameraInputTransferenciaClicking) {
+
+            e.preventDefault();
+            return;
+        }
+
+        cameraInputTransferenciaClicking = true;
+
+        cameraInputTransferencia.removeAttribute('multiple');
+        cameraInputTransferencia.accept = 'image/*';
+        cameraInputTransferencia.capture = 'environment';
+        cameraInputTransferencia.value = '';
+
+        cameraInputTransferencia.click();
+    });
+
+};
