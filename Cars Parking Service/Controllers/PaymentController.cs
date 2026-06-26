@@ -88,6 +88,7 @@ namespace CarsParkingService.Controllers
 
             ingreso.estado_servicio = "solicitado";
             ingreso.fecha_fin_servicio = fechaFinServicio;
+            ingreso.lugar_entrega = data.lugarEntrega;
 
             _context.SaveChanges(); // ⚠️ te faltaba esto
 
@@ -113,8 +114,8 @@ namespace CarsParkingService.Controllers
                 success = true,
                 estadoPago = ingreso.estado_pago,
                 codigo = ingreso.codigo_seguridad,
-                // ← NUEVO: enviar fecha para restaurar el temporizador
-                fechaFinServicio = ingreso.fecha_fin_servicio?.ToString("O") // ISO 8601
+                fechaFinServicio = ingreso.fecha_fin_servicio?.ToString("O"), // ISO 8601
+                lugarEntrega = ingreso.lugar_entrega
             });
         }
         [HttpPost]
@@ -160,6 +161,44 @@ namespace CarsParkingService.Controllers
             {
                 System.Diagnostics.Debug.WriteLine($"Error guardando pago: {ex.Message}");
                 return BadRequest(new { success = false, message = "Error al guardar el pago" });
+            }
+        }
+
+        [HttpGet]
+        public IActionResult ObtenerUbicaciones()
+        {
+            try
+            {
+                var ubicaciones = _context.ubicacion_servicios
+                    .Select(u => new
+                    {
+                        id = u.id_ubicacion,
+                        nombre = u.nombre_ubicacion
+                    })
+                    .ToList();
+
+                return Json(new
+                {
+                    success = true,
+                    data = ubicaciones.Select(u => new
+                    {
+
+                        id = u.id,
+                        nombre = u.nombre
+
+                    })
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"Error obteniendo ubicaciones: {ex.Message}");
+
+                return Json(new
+                {
+                    success = false,
+                    message = "No fue posible obtener las ubicaciones."
+                });
             }
         }
     }

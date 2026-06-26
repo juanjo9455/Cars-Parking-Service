@@ -54,6 +54,10 @@
                     <p class="campo-label">Número Celular</p>
                     <h4 class="campo-valor">@Model?.telefono</h4>
                 </li>
+                <li id="lugar_entrega" style="display: none;">
+                    <p class="campo-label">Lugar Entrega</p>
+                    <h4 class="campo-valor" id="lugar_entrega_label">Sin Especificar</h4>
+                </li>
                 <li>
                     <p class="campo-label">Estado</p>
                     <h4 class="campo-valor" style="color:#e74c3c; display:flex; align-items:center; gap:6px;">
@@ -84,24 +88,8 @@
 <!-- ======= Modal Comfirmar Solicitud ======= -->
 <div class="modal-confirmacion" id="modal-confirmacion" style="display: none;">
     <div class="informacion-solicitud" id="confirmacion">
-        <div class="confirmacion">
-            <div class="confirmacion-header">
-                <div class="check-circle">✓</div>
-                <h2 class="confirmacion-titulo">¡Enviar Solicitud!</h2>
-                <p class="confirmacion-sub">
-                    Se notificará a nuestro equipo que has solicitado tu vehículo.
-                    En breve, será llevado hasta tu ubicación.
-                    <br/>
-                    Te avisaremos en cuanto esté listo para ti.
-                </p>
-
-                <p class="confirmacion-sub">
-                    Recuerda que el vehiculo llegara en 20 min
-                </p>
-            </div>
-            <button class="btn-confirmacion btn-pagar" id="btn-confirmacion">
-                Aceptar
-            </button>
+        <div class="confirmacion" id="confirmacion">
+            
         </div>
     </div>
 </div>

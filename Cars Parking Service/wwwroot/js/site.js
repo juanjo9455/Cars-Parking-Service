@@ -1539,131 +1539,10 @@ function eliminarCodigoSeguridad(idIngreso) {
 
 // Validar código y abrir modal final
 
-function validarCodigoYAbrir(idIngreso, placa, nombre_cliente, metodo_pago, modalId, estado_servicio) {
+function validarCodigoYAbrir(idIngreso,placa,nombre_cliente,metodo_pago,modalId,estado_servicio) {
 
-    const MODO_DEBUG = true; // 👈 activa/desactiva pruebas
-
-    if (MODO_DEBUG) {
-        cerrarModalPago(idIngreso);
-
-        const modalAcciones = document.getElementById(modalId);
-
-        document.getElementById("contenido-modal-acciones").innerHTML = `
-            <span class="close-btn" onclick="cerrarModalFinalizacion('${idIngreso}')">&times;</span>
-            <h3>Finalizar Servicio de Vehículo</h3>
-
-            <div class="info-auto" style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:20px;">
-                <p><strong>Placa:</strong> ${placa}</p>
-                <p><strong>Cliente:</strong> ${nombre_cliente}</p>
-                <p><strong>Método de Pago:</strong> ${metodo_pago ?? "No especificado"}</p>
-                <p><strong>Estado Actual:</strong> ${estado_servicio}</p>
-            </div>
-
-
-            ${metodo_pago == "Transferencia" ? `
-            
-
-                <!-- ========== FOTO DE LA TRANSACCION ========== -->
-                <div class="photo-section">
-                    <h4 class="photo-title">Foto De La Tranferencia</h4>
-
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button type="button" class="photo-btn" id="tomarFotoTransferenciaBtn">
-                            <svg class="camera-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                <circle cx="12" cy="13" r="4"></circle>
-                            </svg>
-                            Tomar Foto
-                        </button>
-                    </div>
-
-                    <p class="photo-counter" id="photoCounterTransferencia">0 fotos seleccionadas (max. 1)</p>
-                    
-                    <!-- Contenedor padre para fotos y el video -->
-                    <div class="Media-Preview">
-                        <!-- Contenedor para preview de fotos -->
-                        <div class="photos-preview" id="photosPreviewTransferencia"></div>
-                    </div>
-
-                    <!-- Input oculto para invocar la cámara nativa del dispositivo SOLO para fotos -->
-                    <input type="file" id="cameraInputTransferencia" accept="image/*" capture style="display:none;">
-
-                    <!-- Inputs ocultos para enviar los archivos como base64 -->
-                    <div id="fotosTransferenciaBase64Container"></div>
-                    <input type="hidden" name="videoBase64" id="videoBase64Input" />
-                    <div class="error-message" id="errorMediaTrnasferencia" style="display:none;"></div>
-                </div>
-            
-            
-            `: ''}
-
-
-            <div class="form-group-modal" style="margin-bottom:20px;">
-                <label>Estado del Servicio:</label>
-                <select id="estado-servicio-${idIngreso}" style="width:100%; padding:8px;">
-                    <option value="finalizado">Finalizado</option>
-                </select>
-            </div>
-
-            <div class="modal-actions" style="display:flex; gap:10px;">
-                <button type="button" class="btn btn-secondary" onclick="cerrarModalFinalizacion('${idIngreso}')">
-                    Cancelar
-                </button>
-                <button type="button" class="btn btn-success" onclick="finalizarServicio('${idIngreso}')">
-                    Confirmar
-                </button>
-            </div>
-        `;
-
-        modalAcciones.style.display = 'flex';
-
-        if (metodo_pago == "Transferencia") {
-
-            inicializarCamaraTransferencia();
-
-        }
-
-
-        return;
-    }
-
-    // 🔽 flujo normal (con código)
-    const codigoInput = document.getElementById(`codigo-validacion-${idIngreso}`);
-    if (!codigoInput) return;
-
-    const codigoIngresado = codigoInput.value;
-
-    if (!codigoIngresado || codigoIngresado.length !== 6) {
-        alert('Ingresa un código válido de 6 dígitos');
-        return;
-    }
-
-    fetch(`/Home/ValidarCodigoSeguridad?id=${idIngreso}&codigo=${codigoIngresado}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-    })
-        .then(r => r.json())
-        .then(data => {
-
-            if (!data.success) {
-                alert(data.message || 'Código inválido');
-                return;
-            }
-
-            cerrarModalPago(idIngreso);
-
-            const modalAcciones = document.getElementById(modalId);
-
-            document.getElementById("contenido-modal-acciones").innerHTML = `...`;
-
-            modalAcciones.style.display = 'flex';
-        });
-}
-
-
-/*function validarCodigoYAbrir(idIngreso, placa, nombre_cliente, metodo_pago, modalId, estado_servicio) {
-
-    const codigoInput = document.getElementById(`codigo-validacion-${idIngreso}`);
+    const codigoInput =
+        document.getElementById(`codigo-validacion-${idIngreso}`);
 
     if (!codigoInput) return;
 
@@ -1672,15 +1551,6 @@ function validarCodigoYAbrir(idIngreso, placa, nombre_cliente, metodo_pago, moda
     if (!codigoIngresado || codigoIngresado.length !== 6) {
         alert('Ingresa un código válido de 6 dígitos');
         return;
-    }
-
-    const btnValidar = document.querySelector(
-        `#modal-pago-${idIngreso} button[onclick*="validarCodigoYAbrir"]`
-    );
-
-    if (btnValidar) {
-        btnValidar.disabled = true;
-        btnValidar.innerHTML = 'Validando...';
     }
 
     fetch(`/Home/ValidarCodigoSeguridad?id=${idIngreso}&codigo=${codigoIngresado}`, {
@@ -1689,83 +1559,162 @@ function validarCodigoYAbrir(idIngreso, placa, nombre_cliente, metodo_pago, moda
             'Content-Type': 'application/json'
         }
     })
-        .then(response => response.json())
-        .then(data => {
+    .then(response => response.json())
+    .then(data => {
 
-            if (data.success) {
+        if (!data.success) {
+            alert(data.message || 'Código inválido');
+            return;
+        }
 
-                cerrarModalPago(idIngreso);
+        cerrarModalPago(idIngreso);
 
-                const modalAcciones = document.getElementById(modalId);
+        const modalAcciones =
+            document.getElementById(modalId);
 
-                document.getElementById("contenido-modal-acciones").innerHTML = `
+        document.getElementById(
+            "contenido-modal-acciones"
+        ).innerHTML = `
 
-                    <span class="close-btn" onclick="cerrarModalFinalizacion('${idIngreso}')">&times;</span>
-                    <h3>Finalizar Servicio de Vehículo</h3>
+        <span class="close-btn"
+                onclick="cerrarModalFinalizacion('${idIngreso}')">
+                &times;
+        </span>
 
-                    <!-- Información del vehículo -->
-                    <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                        <p><strong>Placa:</strong> ${placa}</p>
-                        <p><strong>Cliente:</strong> ${nombre_cliente}</p>
-                        <p><strong>Método de Pago:</strong> <span id="metodo-pago-final-${idIngreso}">${metodo_pago ?? "No especificado"}</span></p>
-                        <p style="margin-bottom: 0;"><strong>Estado Actual:</strong> ${estado_servicio}</p>
+        <h3>Finalizar Servicio de Vehículo</h3>
+
+        <div class="info-auto"
+                style="background:#f9f9f9;
+                    padding:15px;
+                    border-radius:8px;
+                    margin-bottom:20px;">
+
+            <p><strong>Placa:</strong> ${placa}</p>
+            <p><strong>Cliente:</strong> ${nombre_cliente}</p>
+            <p><strong>Método de Pago:</strong>
+                ${metodo_pago ?? "No especificado"}
+            </p>
+            <p><strong>Estado Actual:</strong>
+                ${estado_servicio}
+            </p>
+
+        </div>
+
+        ${metodo_pago === "Transferencia" ? `
+
+            <div class="photo-section">
+
+                <h4 class="photo-title">
+                    Foto de la Transferencia
+                </h4>
+
+                <button type="button"
+                        class="photo-btn"
+                        id="tomarFotoTransferenciaBtn">
+
+                    <svg class="camera-icon"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2">
+
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+
+                        <circle cx="12" cy="13" r="4"></circle>
+
+                    </svg>
+
+                    Tomar Foto
+
+                </button>
+
+                <p class="photo-counter"
+                    id="photoCounterTransferencia">
+
+                    0 fotos seleccionadas (max. 1)
+
+                </p>
+
+                <div class="Media-Preview">
+
+                    <div class="photos-preview"
+                            id="photosPreviewTransferencia">
                     </div>
 
-                    <!-- Seleccionar estado final -->
-                    <div class="form-group-modal" style="margin-bottom: 20px;">
-                        <label>Estado del Servicio:</label>
-                        <select id="estado-servicio-${idIngreso}" style="width:100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                            <option value="finalizado">Finalizado</option>
-                        </select>
-                    </div>
+                </div>
 
-                    <!-- Mostrar estado de pago -->
-                    <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                        <p style="margin: 0; color: #1976d2;"><strong>Estado de Pago: PAGADO ✓</strong></p>
-                    </div>
+                <input type="file"
+                        id="cameraInputTransferencia"
+                        accept="image/*"
+                        capture
+                        style="display:none;">
 
-                    <!-- Botones de acción -->
-                    <div class="modal-actions" style="display: flex; gap: 10px;">
-                        <button type="button" class="btn btn-secondary" onclick="cerrarModalFinalizacion('${idIngreso}')" style="flex: 1;">
-                            Cancelar
-                        </button>
-                        <button type="button" class="btn btn-success" onclick="finalizarServicio('${idIngreso}')" style="flex: 1;">
-                            <i class="fa-solid fa-check-circle"></i> Confirmar
-                        </button>
-                    </div>
-                
-                `;
+                <div id="fotosTransferenciaBase64Container"></div>
 
-                if (modalAcciones) { modalAcciones.style.display = 'flex'; }
+            </div>
 
-            } else {
+        ` : ''}
 
-                alert('Error: ' + (data.message || 'Código inválido o expirado'));
+        <div class="form-group-modal"
+                style="margin-bottom:20px;">
 
-                if (btnValidar) {
-                    btnValidar.disabled = false;
-                    btnValidar.innerHTML = '✓ Validar y Continuar';
-                }
-            }
+            <label>Estado del Servicio:</label>
 
-        })
-        .catch(error => {
+            <select id="estado-servicio-${idIngreso}"
+                    style="width:100%; padding:8px;">
 
-            console.error('Error:', error);
+                <option value="finalizado">
+                    Finalizado
+                </option>
 
-            alert('Error al validar el código');
+            </select>
 
-            if (btnValidar) {
-                btnValidar.disabled = false;
-                btnValidar.innerHTML = '✓ Validar y Continuar';
-            }
-        });
+        </div>
+
+        <div class="modal-actions"
+                style="display:flex; gap:10px;">
+
+            <button type="button"
+                    class="btn btn-secondary"
+                    onclick="cerrarModalFinalizacion('${idIngreso}')">
+
+                Cancelar
+
+            </button>
+
+            <button type="button"
+                    class="btn btn-success"
+                    onclick="finalizarServicio('${idIngreso}','${metodo_pago}')">
+
+                Confirmar
+
+            </button>
+
+        </div>
+    `;
+
+        modalAcciones.style.display = 'flex';
+
+        if (metodo_pago === "Transferencia") {
+            inicializarCamaraTransferencia();
+        }
+
+    })
+    .catch(error => {
+
+        console.error(error);
+        alert('Error al validar el código');
+
+    });
 }
-*/
-// Finalizar servicio
-function finalizarServicio(idIngreso) {
 
-    const estadoServicioSelect = document.getElementById(`estado-servicio-${idIngreso}`);
+// Finalizar servicio
+function finalizarServicio(idIngreso, metodoPago) {
+
+    const estadoServicioSelect =
+        document.getElementById(`estado-servicio-${idIngreso}`);
 
     if (!estadoServicioSelect) return;
 
@@ -1776,8 +1725,25 @@ function finalizarServicio(idIngreso) {
         return;
     }
 
+    // Obtener foto si el método es transferencia
+    let fotoBase64 = '';
+
+    if (metodoPago === 'Transferencia') {
+
+        const inputFoto = document.querySelector(
+            '#fotosTransferenciaBase64Container input[name^="fotoTransferencia"]'
+        );
+
+        if (!inputFoto || !inputFoto.value) {
+            alert('Debes capturar la foto de la transferencia');
+            return;
+        }
+
+        fotoBase64 = inputFoto.value;
+    }
+
     const btnConfirmar = document.querySelector(
-        `#modal-${idIngreso} button[onclick*="finalizarServicio"]`
+        '#modal-acciones .btn-success'
     );
 
     if (btnConfirmar) {
@@ -1785,43 +1751,50 @@ function finalizarServicio(idIngreso) {
         btnConfirmar.innerHTML = 'Procesando...';
     }
 
-    fetch(`/Home/FinalizarServicio?id=${idIngreso}&estadoServicio=${estadoServicio}`, {
+    fetch('/Home/FinalizarServicio', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
-        }
-    })
-        .then(response => response.json())
-        .then(data => {
-
-            if (data.success) {
-
-                alert('Servicio finalizado con éxito');
-
-                location.reload();
-
-            } else {
-
-                alert('Error: ' + (data.message || 'No se pudo finalizar el servicio'));
-
-                if (btnConfirmar) {
-                    btnConfirmar.disabled = false;
-                    btnConfirmar.innerHTML = '✓ Confirmar';
-                }
-            }
-
+        },
+        body: JSON.stringify({
+            id: idIngreso,
+            estadoServicio: estadoServicio,
+            fotoBase64: fotoBase64
         })
-        .catch(error => {
+    })
+    .then(response => response.json())
+    .then(data => {
 
-            console.error('Error:', error);
+        if (data.success) {
 
-            alert('Error al finalizar el servicio');
+            alert('Servicio finalizado con éxito');
+
+            location.reload();
+
+        } else {
+
+            alert(data.message ||
+                'No se pudo finalizar el servicio');
 
             if (btnConfirmar) {
                 btnConfirmar.disabled = false;
-                btnConfirmar.innerHTML = '✓ Confirmar';
+                btnConfirmar.innerHTML = 'Confirmar';
             }
-        });
+        }
+
+    })
+    .catch(error => {
+
+        console.error(error);
+
+        alert('Error al finalizar el servicio');
+
+        if (btnConfirmar) {
+            btnConfirmar.disabled = false;
+            btnConfirmar.innerHTML = 'Confirmar';
+        }
+
+    });
 }
 
 // Validamos la liquidacion

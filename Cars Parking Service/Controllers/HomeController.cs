@@ -1,15 +1,16 @@
 ﻿using AspNetCoreGeneratedDocument;
 using CarsParkingService.Data;
 using CarsParkingService.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.JSInterop.Infrastructure;
 using NuGet.Common;
 using System.Diagnostics;
 using System.Text;
-using Microsoft.AspNetCore.Http;
 
 namespace CarsParkingService.Controllers
 {
@@ -25,6 +26,14 @@ namespace CarsParkingService.Controllers
         {
             _context = context;
         }
+
+        public class FinalizarServicioDTO
+        {
+            public int Id { get; set; }
+            public string? EstadoServicio { get; set; }
+            public string? FotoBase64 { get; set; }
+        }
+
 
         public IActionResult Index()
         {
@@ -799,6 +808,17 @@ namespace CarsParkingService.Controllers
                 obj_ingreso.valor_propina = 0;
                 obj_ingreso.total_servicio = 0;
 
+                // buscamos ubicacion
+
+                var ubicacion = _context.ubicacion_servicios.FirstOrDefault(u => u.id_ubicacion == obj_ingreso.id_ubicacion);
+
+                if (ubicacion != null)
+                {
+
+                    obj_ingreso.lugar_entrega = ubicacion.nombre_ubicacion;
+
+                }
+
                 // Convertir la firma de base64 a byte[]
                 // Verificamos que la firma no llegue vacia
                 if (!string.IsNullOrEmpty(firmaBase64))
@@ -1217,57 +1237,102 @@ namespace CarsParkingService.Controllers
         }
 
         [HttpPost]
-        public IActionResult FinalizarServicio(int id, string estadoServicio)
+        public IActionResult FinalizarServicio([FromBody] FinalizarServicioDTO dto)
         {
-            // Obtenemos usuario y rol
             var idUsuario = HttpContext.Session.GetInt32("id");
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+
             try
             {
-                var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id);
-                if (ingreso == null)
+                if (dto == null)
                 {
-                    return Json(new { success = false, message = "Ingreso no encontrado" });
+                    return Json(new
+                    {
+                        success = false,
+                        message = "No se recibieron datos."
+                    });
                 }
 
-                ingreso.estado_servicio = estadoServicio;
+                var ingreso = _context.ingresos
+                    .FirstOrDefault(i => i.id_ingreso == dto.Id);
+
+                if (ingreso == null)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Ingreso no encontrado."
+                    });
+                }
+
+                // Si el método de pago es transferencia,
+                // la foto es obligatoria.
+                if (ingreso.metodo_pago == "Transferencia")
+                {
+                    if (string.IsNullOrWhiteSpace(dto.FotoBase64))
+                    {
+                        return Json(new
+                        {
+                            success = false,
+                            message = "Debe tomar la foto de la transferencia."
+                        });
+                    }
+
+                    try
+                    {
+                        string base64Limpio = dto.FotoBase64.Contains(",")
+                            ? dto.FotoBase64.Split(',')[1]
+                            : dto.FotoBase64;
+
+                        // Validar que realmente sea Base64 válido
+                        ingreso.foto_transferencia =
+                            Convert.FromBase64String(base64Limpio);
+                    }
+                    catch
+                    {
+                        return Json(new
+                        {
+                            success = false,
+                            message = "La imagen recibida no es válida."
+                        });
+                    }
+                }
+
+                ingreso.estado_servicio = dto.EstadoServicio;
                 ingreso.estado_pago = "pagado";
 
-                if (estadoServicio == "finalizado")
+                if (dto.EstadoServicio == "finalizado")
                 {
                     ingreso.fecha_salida = DateTime.Now;
                     ingreso.fecha_entrega = DateTime.Now;
                     ingreso.usuario_cobro = idUsuario;
-                 
                 }
 
-                if (rolUsuario == 1)
+                ingreso.rol_cobrador = rolUsuario switch
                 {
-
-                    ingreso.rol_cobrador = "valet";
-
-                }
-                else if (rolUsuario == 2)
-                {
-
-                    ingreso.rol_cobrador = "banco";
-
-                }
-                else
-                {
-
-                    ingreso.rol_cobrador = "otro";
-
-                }
+                    1 => "valet",
+                    2 => "banco",
+                    _ => "otro"
+                };
 
                 _context.SaveChanges();
 
-                return Json(new { success = true, message = "Servicio finalizado correctamente" });
+                return Json(new
+                {
+                    success = true,
+                    message = "Servicio finalizado correctamente."
+                });
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error finalizando servicio: {ex.Message}");
-                return Json(new { success = false, message = "Error al finalizar servicio" });
+                System.Diagnostics.Debug.WriteLine(
+                    $"Error finalizando servicio: {ex.Message}");
+
+                return Json(new
+                {
+                    success = false,
+                    message = "Error al finalizar el servicio."
+                });
             }
         }
 
@@ -1725,6 +1790,80 @@ namespace CarsParkingService.Controllers
             }
         }
 
+        [HttpPost]
+        public IActionResult fotoTransferencia(int id_ingreso, string fotoBase64)
+        {
+            var idUsuarioSesion = HttpContext.Session.GetInt32("id");
+            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
 
+            // Verificamos que llegue el id
+            if (id_ingreso <= 0)
+            {
+                TempData["Error"] = "El ingreso no es válido.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            // Verificamos que llegue la foto
+            if (string.IsNullOrWhiteSpace(fotoBase64))
+            {
+                TempData["Error"] = "Debe capturar una foto de la transferencia.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            var ingreso = _context.ingresos
+                .FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            if (ingreso == null)
+            {
+                TempData["Error"] = "No se encontró el ingreso.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            if (ingreso.foto_transferencia != null)
+            {
+                TempData["Error"] = "La evidencia de la transferencia ya fue registrada.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            try
+            {
+                // Si viene así:
+                // data:image/jpeg;base64,/9j/4AAQSk...
+
+                string base64Data = fotoBase64.Contains(",")
+                    ? fotoBase64.Split(',')[1]
+                    : fotoBase64;
+
+                // Validar que realmente sea Base64 válido
+                byte[] imagenBytes = Convert.FromBase64String(base64Data);
+
+                // Guardar el Base64 completo o solo la parte limpia
+                // Recomiendo guardar el Base64 completo para mostrarlo directamente en HTML
+
+                ingreso.foto_transferencia = imagenBytes;
+
+                _context.ingresos.Update(ingreso);
+                _context.SaveChanges();
+
+                TempData["Success"] = "Foto de la transferencia registrada correctamente.";
+
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+            catch (FormatException)
+            {
+                TempData["Error"] = "La imagen recibida no tiene un formato válido.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"Error en fotoTransferencia: {ex.Message}");
+
+                TempData["Error"] =
+                    "No fue posible guardar la foto de la transferencia.";
+
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+        }
     }
 }

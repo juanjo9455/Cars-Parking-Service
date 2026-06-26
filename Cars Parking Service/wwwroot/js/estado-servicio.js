@@ -41,6 +41,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 estadoActual = data.estadoPago;
 
+                if (data.lugarEntrega) {
+
+                    const LugarLI = document.getElementById('lugar_entrega');
+                    const LugarLabel = document.getElementById('lugar_entrega_label');
+
+                    if (LugarLI && LugarLabel) {
+
+                        LugarLI.style.display = "block";
+                        LugarLabel.innerHTML = data.lugarEntrega;
+
+                    }
+
+                }
+
                 if (data.estadoPago === "solicitado") {
 
                     // 1. Abrir el modal (quitar clase oculto)
@@ -79,26 +93,113 @@ document.addEventListener("DOMContentLoaded", function () {
             .catch(err => console.error("❌ Error cargando estado:", err));
     }
 
-    // ── Botón Solicitar Vehículo ──
     const btnSolicitar = document.getElementById('btn-solicitar');
-    const btn_confirmacion = document.getElementById('btn-confirmacion');
-    const confirmacion = document.getElementById('modal-confirmacion');
 
     if (btnSolicitar) {
-        btnSolicitar.addEventListener('click', function (e) {
-            e.preventDefault();
-            if (confirmacion) confirmacion.style.display = 'block';
-        });
-    }
 
-    if (btn_confirmacion) {
-        btn_confirmacion.addEventListener('click', function (e) {
+        btnSolicitar.addEventListener('click', function (e) {
+
             e.preventDefault();
-            if (btn_confirmacion.disabled) return;
-            btn_confirmacion.disabled = true;
-            btn_confirmacion.textContent = '⏳ Procesando...';
-            solicitarVehiculo();
+
+            if (confirmacion)
+                confirmacion.style.display = 'block';
+
+            if (contenidoConfirmacion) {
+
+                contenidoConfirmacion.innerHTML = `
+
+                <h2 class="confirmacion-titulo">
+                    ¡Ubicación De Entrega!
+                </h2>
+
+                <p class="confirmacion-sub">
+                    Por favor selecciona en qué lugar deseas
+                    recibir el vehículo.
+                    <br>
+                    Llevaremos el vehículo a esta ubicación.
+                </p>
+
+                <select id="lugar-entrega"
+                        name="lugar"
+                        style="width:100%;">
+
+                    <option value="">
+                        Cargando ubicaciones...
+                    </option>
+
+                </select>
+
+                <button class="btn-confirmacion btn-pagar"
+                        id="btn-confirmacion-lugar">
+
+                    Aceptar
+
+                </button>
+
+            `;
+
+                const btnConfirmacionLugar = document.getElementById('btn-confirmacion-lugar');
+
+                btnConfirmacionLugar.addEventListener('click', function (e) {
+
+                    e.preventDefault();
+
+                    if (btnConfirmacionLugar.disabled)
+                        return;
+
+                    btnConfirmacionLugar.disabled = true;
+                    btnConfirmacionLugar.textContent = ' Procesando...';
+
+                    solicitarVehiculo();
+
+                });
+            }
+
+            fetch('/Payment/ObtenerUbicaciones')
+
+                .then(response => response.json())
+
+                .then(data => {
+
+                    if (!data.success) {
+
+                        alert(data.message);
+                        return;
+                    }
+
+                    const select =
+                        document.getElementById('lugar-entrega');
+
+                    if (!select) return;
+
+                    select.innerHTML =
+                        '<option value="">Selecciona una ubicación</option>';
+
+                    data.data.forEach(u => {
+
+                        select.innerHTML += `
+                        <option value="${u.nombre}">
+                            ${u.nombre}
+                        </option>
+                    `;
+
+                    });
+
+                })
+
+            .catch(error => {
+
+                console.error(error);
+
+                alert('Error cargando las ubicaciones');
+
+            });
+
         });
+
+        const confirmacion = document.getElementById('modal-confirmacion');
+        const contenidoConfirmacion = document.getElementById('confirmacion');
+
     }
 
     // ── Botón Pagar ──
@@ -241,21 +342,72 @@ function formatearMoneda(cantidad) {
 // ============================================================
 
 function solicitarVehiculo() {
+
+    console.log("Evento agregado correctamente");
+
+    const contenidoConfirmacion = document.getElementById('confirmacion');
+
+    // Obtenemos lugar de entrega del vehiculo
+    const lugarEntrega = document.getElementById('lugar-entrega')?.value;
+    if (!lugarEntrega) {
+        alert('Por favor selecciona una ubicación de entrega.');
+        return;
+    }
+
+
+    contenidoConfirmacion.innerHTML = `
+
+        <div class="confirmacion-header">
+            <div class="check-circle">✓</div>
+            <h2 class="confirmacion-titulo">¡Enviar Solicitud!</h2>
+            <p class="confirmacion-sub">
+                Se notificará a nuestro equipo que has solicitado tu vehículo.
+                En breve, será llevado hasta tu ubicación.
+                <br/>
+                Te avisaremos en cuanto esté listo para ti.
+            </p>
+
+            <p class="confirmacion-sub">
+                Recuerda que el vehiculo llegara en 20 min
+            </p>
+        </div>
+        <button class="btn-confirmacion btn-pagar" id="btn-confirmacion">
+            Aceptar
+        </button>
+
+    `;
+
+
     const idIngreso = document.getElementById('idIngreso')?.value;
     const btnSolicitarActual = document.getElementById('btn-solicitar');
     const btnConfirmacionActual = document.getElementById('btn-confirmacion');
     const confirmacion = document.getElementById('modal-confirmacion');
+    const label_lugar = document.getElementById('lugar_entrega');
 
     if (btnSolicitarActual) {
         btnSolicitarActual.disabled = true;
         btnSolicitarActual.textContent = '⏳ Solicitando...';
-    }
 
-    fetch('/Payment/SolicitarVehiculo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idIngreso: parseInt(idIngreso) })
-    })
+        if (label_lugar) {
+
+
+            label_lugar.innerHTML = ``;
+            label_lugar.style.display = "block";
+            label_lugar.innerHTML = `
+
+                ${lugarEntrega}
+
+            `;
+        }
+
+        fetch('/Payment/SolicitarVehiculo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                idIngreso: parseInt(idIngreso),
+                lugarEntrega: lugarEntrega
+            })
+        })
         .then(response => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json(); })
         .then(data => {
             console.log('✅ Vehículo solicitado');
@@ -280,6 +432,7 @@ function solicitarVehiculo() {
                 btnConfirmacionActual.textContent = 'Aceptar';
             }
         });
+    }
 }
 
 // ============================================================

@@ -660,6 +660,12 @@ window.inicializarCamaraTransferencia = function () {
             removeBtn.className = 'delete-photo';
             removeBtn.textContent = '✕';
 
+            tomarFotoTransferenciaBtn.disabled = false;
+            tomarFotoTransferenciaBtn.style.backgroundColor = '';
+            tomarFotoTransferenciaBtn.style.cursor = '';
+            tomarFotoTransferenciaBtn.style.opacity = '';
+            cameraInputTransferenciaClicking = false;
+
             removeBtn.onclick = () => {
 
                 archivosTransferenciaCapturados.splice(index, 1);
@@ -713,6 +719,12 @@ window.inicializarCamaraTransferencia = function () {
             e.preventDefault();
             return;
         }
+
+        // Deshabilitar el botón y ponerlo gris
+        tomarFotoTransferenciaBtn.disabled = true;
+        tomarFotoTransferenciaBtn.style.backgroundColor = '#9e9e9e';
+        tomarFotoTransferenciaBtn.style.cursor = 'not-allowed';
+        tomarFotoTransferenciaBtn.style.opacity = '0.7';
 
         cameraInputTransferenciaClicking = true;
 

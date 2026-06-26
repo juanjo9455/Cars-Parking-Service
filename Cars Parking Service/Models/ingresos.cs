@@ -47,10 +47,14 @@ namespace CarsParkingService.Models
         public int? usuario_cobro { get; set; }
         public bool? estado_liquidacion { get; set; }
         public string? rol_cobrador { get; set; }
+        public byte[]? foto_transferencia { get; set; }
+        public string? lugar_entrega { get; set; }
     }
 
     public class SolicitudDto
     {
         public int idIngreso { get; set; }
+
+        public string? lugarEntrega { get; set; }
     }
 }
