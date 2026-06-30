@@ -34,9 +34,17 @@ namespace CarsParkingService.Controllers
             public string? FotoBase64 { get; set; }
         }
 
+        public class ParqueaderoDTO
+        {
+            public int idParqueadero { get; set; }
+        }
+
 
         public IActionResult Index()
         {
+
+            // Si existe un parqueadero seleccionado, lo eliminamos
+            HttpContext.Session.Remove("id_parqueadero_sesion");
 
             var usuarioId = HttpContext.Session.GetInt32("id");
 
@@ -121,12 +129,14 @@ namespace CarsParkingService.Controllers
         {
             var idUsuarioSesion = HttpContext.Session.GetInt32("id");
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+            var idParqueaderoSesion = HttpContext.Session.GetInt32("id_parqueadero_sesion");
 
             System.Diagnostics.Debug.WriteLine($"=== VistaKey GET ===");
             System.Diagnostics.Debug.WriteLine($"idUsuarioSesion: {idUsuarioSesion}");
             System.Diagnostics.Debug.WriteLine($"rolUsuario: {rolUsuario}");
 
-            if (!idUsuarioSesion.HasValue || (rolUsuario != 4))
+            if (!idUsuarioSesion.HasValue ||
+                (rolUsuario != 4 && rolUsuario != 1))
             {
                 System.Diagnostics.Debug.WriteLine($"Acceso denegado: no es rol Key");
                 return RedirectToAction("Login", "Auth");
@@ -162,16 +172,46 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("Login");
             }
 
-            var ingresos = query
-                .Where(i =>
-                    i.id_parqueadero == sesion.id_parqueadero &&
-                    i.estado_servicio != "finalizado" &&
-                    i.estado_servicio != "despachado" &&
-                    i.estado_pago != "pagado")
-                .AsEnumerable()
-                .OrderByDescending(i => i.estado_servicio?.Trim().ToLower() == "solicitado")
-                .ThenByDescending(i => i.fecha_ingreso)
-                .ToList();
+            List<ingresos> ingresos;
+
+            if (rolUsuario == 1)
+            {
+                if (!idParqueaderoSesion.HasValue)
+                {
+                    ViewBag.MostrarModal = true;
+                    ingresos = new List<ingresos>();
+                }
+                else
+                {
+                    ingresos = query
+                        .Where(i =>
+                            i.id_parqueadero == idParqueaderoSesion &&
+                            i.estado_servicio != "finalizado" &&
+                            i.estado_servicio != "despachado" &&
+                            i.estado_pago != "pagado")
+                        .AsEnumerable()
+                        .OrderByDescending(i => i.estado_servicio?.Trim().ToLower() == "solicitado")
+                        .ThenByDescending(i => i.fecha_ingreso)
+                        .ToList();
+
+                    ViewBag.MostrarModal = false;
+                }
+            }
+            else
+            {
+                ingresos = query
+                    .Where(i =>
+                        i.id_parqueadero == sesion.id_parqueadero &&
+                        i.estado_servicio != "finalizado" &&
+                        i.estado_servicio != "despachado" &&
+                        i.estado_pago != "pagado")
+                    .AsEnumerable()
+                    .OrderByDescending(i => i.estado_servicio?.Trim().ToLower() == "solicitado")
+                    .ThenByDescending(i => i.fecha_ingreso)
+                    .ToList();
+
+                ViewBag.MostrarModal = false;
+            }
 
             var parqueadero = _context.parqueaderos.FirstOrDefault(p => p.id_parqueadero == sesion.id_parqueadero);
 
@@ -209,6 +249,11 @@ namespace CarsParkingService.Controllers
             ViewData["NombreParqueadero"] = parqueadero?.nombre_parqueadero ?? "Parqueadero";
             ViewBag.valets = _context.usuarios.Where(v => v.id_rol == 1).ToList();
             ViewBag.VistaKeyInfoJson = System.Text.Json.JsonSerializer.Serialize(vistaKeyInfo);
+            ViewBag.idRol = rolUsuario;
+            ViewBag.EstaEnParqueadero = idParqueaderoSesion.HasValue;
+            ViewBag.Parqueaderos = _context.parqueaderos
+                .OrderBy(p => p.nombre_parqueadero)
+                .ToList();
 
             return View(ingresos);
         }
@@ -249,6 +294,18 @@ namespace CarsParkingService.Controllers
             return RedirectToAction("VistaKey");
         }
 
+        // Metodo para guardar parqueadero del valet
+        [HttpPost]
+        public IActionResult GuardarParqueaderoSesion(
+            [FromBody] ParqueaderoDTO data)
+        {
+            HttpContext.Session.SetInt32(
+                "id_parqueadero_sesion",
+                data.idParqueadero
+            );
+
+            return Json(new { success = true });
+        }
         // Metodo para obtener las solicitudes de ingresos de vehiculos en estado "solicitado" para el valet y banco
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

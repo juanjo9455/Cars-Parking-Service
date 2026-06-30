@@ -31,11 +31,21 @@ document.addEventListener("DOMContentLoaded", function () {
     // ── Recuperar estado real desde BD al cargar/recargar ──
     if (idIngreso) {
 
-        fetch(`/Payment/ObtenerEstadoIngreso?id=${idIngreso}`)
+        fetch(`/Payment/ObtenerEstadoIngreso?id=${idIngreso}&_=${Date.now()}`, {
+            cache: 'no-store'
+        })
             .then(res => res.json())
             .then(data => {
 
+                console.log("Respuesta completa:", data);
+
                 if (!data.success) return;
+
+                console.log("id ingreso:", idIngreso)
+                console.log("id ingreso consulta:", data.idConsulta)
+                console.log("Estado servicio:", data.estadoServicio);
+                console.log("Estado pago:", data.estadoPago);
+                console.log("Fecha fin:", data.fechaFinServicio);
 
                 console.log("📦 Estado BD:", data.estadoPago);
 
@@ -49,19 +59,16 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (LugarLI && LugarLabel) {
 
                         LugarLI.style.display = "block";
-                        LugarLabel.innerHTML = data.lugarEntrega;
+                        LugarLabel.innerHTML = `
+                        <strong>📍 Punto de entrega:</strong>
+                        ${data.lugarEntrega}
+`;
 
                     }
 
                 }
 
-                if (data.estadoPago === "solicitado") {
-
-                    // 1. Abrir el modal (quitar clase oculto)
-                    if (modal) modal.classList.remove('oculto');
-
-                    // 2. Mostrar pantalla 2 dentro del modal
-                    mostrarInformacion2(data.codigo);
+                if (data.estadoServicio === "solicitado") {
 
                     // 3. Restaurar el temporizador desde el servidor
                     if (data.fechaFinServicio) {
@@ -80,13 +87,25 @@ document.addEventListener("DOMContentLoaded", function () {
                         }
                     }
 
+                }
+
+                if (data.estadoPago === "solicitado") {
+
+                    console.log("Entro al if de solicitado");
+
+                    // 1. Abrir el modal (quitar clase oculto)
+                    if (modal) modal.classList.remove('oculto');
+
+                    // 2. Mostrar pantalla 2 dentro del modal
+                    mostrarInformacion2(data.codigo);
+
                     // 4. Iniciar verificación de código de seguridad
-                    iniciarVerificacionCodigo();
+                    //iniciarVerificacionCodigo();
 
                     // 5. Bloquear botón cerrar del modal
                     bloquearCierreModal();
 
-                } else {
+                } else if (data.estadoServicio !== "solicitado") {
                     mostrarInformacion1();
                 }
             })
@@ -129,7 +148,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 </select>
 
-                <button class="btn-confirmacion btn-pagar"
+                <button type="button" class="btn-confirmacion btn-pagar"
                         id="btn-confirmacion-lugar">
 
                     Aceptar
@@ -144,6 +163,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     e.preventDefault();
 
+                    const lugarEntrega = document.getElementById('lugar-entrega')?.value;
+
+                    if (!lugarEntrega) {
+                        alert('por favor selecciona una ubicacion de entrega.');
+                        return;
+                    }
+
                     if (btnConfirmacionLugar.disabled)
                         return;
 
@@ -157,35 +183,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
             fetch('/Payment/ObtenerUbicaciones')
 
-                .then(response => response.json())
+            .then(response => response.json())
 
-                .then(data => {
+            .then(data => {
 
-                    if (!data.success) {
+                if (!data.success) {
 
-                        alert(data.message);
-                        return;
-                    }
+                    alert(data.message);
+                    return;
+                }
 
-                    const select =
-                        document.getElementById('lugar-entrega');
+                const select =
+                    document.getElementById('lugar-entrega');
 
-                    if (!select) return;
+                if (!select) return;
 
-                    select.innerHTML =
-                        '<option value="">Selecciona una ubicación</option>';
+                select.innerHTML =
+                    '<option value="">Selecciona una ubicación</option>';
 
-                    data.data.forEach(u => {
+                data.data.forEach(u => {
 
-                        select.innerHTML += `
-                        <option value="${u.nombre}">
-                            ${u.nombre}
-                        </option>
-                    `;
+                    select.innerHTML += `
+                    <option value="${u.nombre}">
+                        ${u.nombre}
+                    </option>
+                `;
 
-                    });
+                });
 
-                })
+            })
 
             .catch(error => {
 
@@ -349,10 +375,6 @@ function solicitarVehiculo() {
 
     // Obtenemos lugar de entrega del vehiculo
     const lugarEntrega = document.getElementById('lugar-entrega')?.value;
-    if (!lugarEntrega) {
-        alert('Por favor selecciona una ubicación de entrega.');
-        return;
-    }
 
 
     contenidoConfirmacion.innerHTML = `
@@ -371,7 +393,7 @@ function solicitarVehiculo() {
                 Recuerda que el vehiculo llegara en 20 min
             </p>
         </div>
-        <button class="btn-confirmacion btn-pagar" id="btn-confirmacion">
+        <button type="button" class="btn-confirmacion btn-pagar" id="btn-confirmacion-final">
             Aceptar
         </button>
 
@@ -380,25 +402,13 @@ function solicitarVehiculo() {
 
     const idIngreso = document.getElementById('idIngreso')?.value;
     const btnSolicitarActual = document.getElementById('btn-solicitar');
-    const btnConfirmacionActual = document.getElementById('btn-confirmacion');
+    const btnConfirmacionFinal = document.getElementById('btn-confirmacion-final');
     const confirmacion = document.getElementById('modal-confirmacion');
-    const label_lugar = document.getElementById('lugar_entrega');
 
-    if (btnSolicitarActual) {
-        btnSolicitarActual.disabled = true;
-        btnSolicitarActual.textContent = '⏳ Solicitando...';
+    btnConfirmacionFinal.addEventListener('click', function () {
 
-        if (label_lugar) {
-
-
-            label_lugar.innerHTML = ``;
-            label_lugar.style.display = "block";
-            label_lugar.innerHTML = `
-
-                ${lugarEntrega}
-
-            `;
-        }
+        btnConfirmacionFinal.disabled = true;
+        btnConfirmacionFinal.textContent = '⏳ Solicitando...';
 
         fetch('/Payment/SolicitarVehiculo', {
             method: 'POST',
@@ -408,31 +418,56 @@ function solicitarVehiculo() {
                 lugarEntrega: lugarEntrega
             })
         })
-        .then(response => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json(); })
+        .then(response => {
+
+            if (!response.ok)
+                throw new Error(`HTTP ${response.status}`);
+
+            return response.json();
+        })
         .then(data => {
+
             console.log('✅ Vehículo solicitado');
-            if (confirmacion) confirmacion.style.display = 'none';
-            if (btnSolicitarActual) btnSolicitarActual.style.display = 'none';
-            renderizarBotonPagar();
-            iniciarTemporizadorDesdeAhora();
-            if (btnConfirmacionActual) {
-                btnConfirmacionActual.disabled = false;
-                btnConfirmacionActual.textContent = 'Aceptar';
+
+            // Actualizar estado localmente
+            estadoActual = 'solicitado';
+
+            // Mostrar ubicación seleccionada
+            const LugarLI = document.getElementById('lugar_entrega');
+            const LugarLabel = document.getElementById('lugar_entrega_label');
+
+            if (LugarLI && LugarLabel) {
+                LugarLI.style.display = "block";
+                LugarLabel.innerHTML = `
+            <strong>📍 Punto de entrega:</strong>
+            ${lugarEntrega}
+        `;
             }
+
+            // Cerrar modal de confirmación
+            if (confirmacion)
+                confirmacion.style.display = 'none';
+
+            // Ocultar botón solicitar
+            if (btnSolicitarActual)
+                btnSolicitarActual.style.display = 'none';
+
+            // Mostrar botón pagar
+            renderizarBotonPagar();
+
+            // Iniciar contador
+            iniciarTemporizadorDesdeAhora();
         })
         .catch(error => {
+
             console.error('❌ Error:', error);
-            alert('Error al solicitar vehículo: ' + error.message);
-            if (btnSolicitarActual) {
-                btnSolicitarActual.disabled = false;
-                btnSolicitarActual.textContent = '🚗 Solicitar Vehículo';
-            }
-            if (btnConfirmacionActual) {
-                btnConfirmacionActual.disabled = false;
-                btnConfirmacionActual.textContent = 'Aceptar';
-            }
+
+            btnConfirmacionFinal.disabled = false;
+            btnConfirmacionFinal.textContent = 'Aceptar';
+
+            alert('Error al solicitar vehículo');
         });
-    }
+    });
 }
 
 // ============================================================
@@ -487,7 +522,7 @@ function Pagar(informacion1, informacion2) {
                 bloquearCierreModal();
 
                 // Iniciar verificación de código
-                iniciarVerificacionCodigo();
+                //iniciarVerificacionCodigo();
 
             } else {
                 alert('Error al guardar pago: ' + data.message);
@@ -535,7 +570,17 @@ function ocultarTiempoEspera() {
 }
 
 function inicializarTemporizadorPersistente(fechaFinServicioServidor) {
+
+    console.log("fecha servidor: ", fechaFinServicioServidor);
+
     const fechaFin = new Date(fechaFinServicioServidor);
+
+    console.log("Ahora: ", new Date());
+
+    console.log("Diferencia segundos: ", Math.ceil((fechaFin.getTime() - Date.now()) / 1000));
+
+
+    //const fechaFin = new Date(fechaFinServicioServidor);
     if (!isNaN(fechaFin.getTime())) {
         const restante = Math.ceil((fechaFin.getTime() - Date.now()) / 1000);
         if (restante > 0) {

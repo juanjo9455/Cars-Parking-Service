@@ -89,6 +89,11 @@ namespace CarsParkingService.Controllers
                 .Select(s => s.id_ubicacion)
                 .FirstOrDefault();
 
+            ViewBag.UbicacionBanco = _context.ubicacion_servicios
+                .Where(u => u.id_ubicacion == idUbicacion)
+                .Select(u => u.nombre_ubicacion)
+                .FirstOrDefault();
+
             Console.WriteLine("\n========== DEBUG UBICACION ==========");
             Console.WriteLine($"ID Usuario: {idUsuario}");
             Console.WriteLine($"ID Rol: {idRol}");
@@ -98,6 +103,8 @@ namespace CarsParkingService.Controllers
             var resumenValets = _context.ingresos
                 .Where(i =>
                     i.id_ubicacion == idUbicacion &&
+                    i.estado_liquidacion == false &&
+                    i.id_banco == idUsuario &&
                     i.estado_pago == "pagado" &&
                     i.metodo_pago == "Efectivo" &&
                     i.rol_cobrador == "valet"

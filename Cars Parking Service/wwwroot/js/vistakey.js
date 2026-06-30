@@ -1,4 +1,41 @@
-﻿function verInfoExtra(btn) {
+﻿
+const btnAcceder = document.getElementById('btnAccederParqueadero');
+
+if (btnAcceder) {
+
+    btnAcceder.addEventListener('click', function () {
+
+        const idParqueadero =
+            document.getElementById('selectParqueadero').value;
+
+        if (!idParqueadero) {
+            alert('Selecciona un parqueadero');
+            return;
+        }
+
+        fetch('/Home/GuardarParqueaderoSesion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                idParqueadero: parseInt(idParqueadero)
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+
+            if (data.success) {
+                location.reload();
+            }
+
+        });
+
+    });
+
+}
+
+function verInfoExtra(btn) {
     const idIngreso = btn?.dataset?.idIngreso;
     const data = window.vistaKeyInfoMap?.[String(idIngreso)];
 

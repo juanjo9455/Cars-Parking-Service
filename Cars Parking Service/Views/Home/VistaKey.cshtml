@@ -6,6 +6,58 @@
 
 <link rel="stylesheet" href="~/css/vistakey.css" />
 
+
+@if (ViewBag.idRol == 1 && ViewBag.MostrarModal == true)
+{
+    <div class="modal-parqueadero-overlay">
+
+        <div class="modal-parqueadero">
+
+            <div class="modal-header">
+                <i class="fa-solid fa-square-parking"></i>
+                <h2>Seleccionar Parqueadero</h2>
+            </div>
+
+            <p class="modal-texto">
+                Selecciona el parqueadero al que deseas acceder para
+                visualizar y gestionar los vehículos.
+            </p>
+
+            <div class="campo-modal">
+                <label for="selectParqueadero">
+                    Parqueadero
+                </label>
+
+                <select id="selectParqueadero">
+
+                    <option value="" disabled selected hidden>
+                        Selecciona un parqueadero
+                    </option>
+                    @foreach (var parqueadero in ViewBag.Parqueaderos)
+                    {
+
+                        <option value="@parqueadero.id_parqueadero">
+                            @parqueadero.nombre_parqueadero
+                        </option>
+                    }
+
+                </select>
+            </div>
+
+            <button class="btn-acceder-parqueadero"
+                    id="btnAccederParqueadero">
+
+                <i class="fa-solid fa-right-to-bracket"></i>
+                Acceder al parqueadero
+
+            </button>
+
+        </div>
+
+    </div>
+}
+
+
 <div class="container mt-4">
     <div class="header">
         <div class="header-info">

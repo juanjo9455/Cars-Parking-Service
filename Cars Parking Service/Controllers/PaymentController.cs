@@ -86,11 +86,23 @@ namespace CarsParkingService.Controllers
                 return Ok(new { mensaje = "Ya estaba solicitado", fechaFinServicio = ingreso.fecha_fin_servicio });
             }
 
+            Console.WriteLine("ANTES DE GUARDAR:");
+            Console.WriteLine(ingreso.estado_servicio);
+
             ingreso.estado_servicio = "solicitado";
             ingreso.fecha_fin_servicio = fechaFinServicio;
             ingreso.lugar_entrega = data.lugarEntrega;
 
             _context.SaveChanges(); // ⚠️ te faltaba esto
+
+            Console.WriteLine("DESPUÉS DE GUARDAR:");
+            Console.WriteLine(ingreso.estado_servicio);
+
+            var verificacion = _context.ingresos
+                .FirstOrDefault(i => i.id_ingreso == ingreso.id_ingreso);
+
+            Console.WriteLine("LEIDO DESDE BD:");
+            Console.WriteLine(verificacion?.estado_servicio);
 
             return Ok(new { mensaje = "Actualizado correctamente", fechaFinServicio = ingreso.fecha_fin_servicio });
         }
@@ -112,6 +124,8 @@ namespace CarsParkingService.Controllers
             return Json(new
             {
                 success = true,
+                idConsulta = ingreso.id_ingreso,
+                estadoServicio = ingreso.estado_servicio,
                 estadoPago = ingreso.estado_pago,
                 codigo = ingreso.codigo_seguridad,
                 fechaFinServicio = ingreso.fecha_fin_servicio?.ToString("O"), // ISO 8601

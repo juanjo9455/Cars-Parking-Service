@@ -40,6 +40,14 @@
         </div>
         <div class="menu-lateral">
             <ol>
+
+                @if (ViewBag.idRol == 1 && ViewBag.EstaEnParqueadero == true)
+                {
+
+                    <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-key"></i>Vista Valet</a></li>
+
+                }
+
                 <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
             </ol>
         </div>

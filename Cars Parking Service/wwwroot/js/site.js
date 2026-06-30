@@ -1600,7 +1600,7 @@ function validarCodigoYAbrir(idIngreso,placa,nombre_cliente,metodo_pago,modalId,
 
         </div>
 
-        ${metodo_pago === "Transferencia" ? `
+        ${(metodo_pago === "Transferencia" || metodo_pago == "QR") ? `
 
             <div class="photo-section">
 
@@ -1697,7 +1697,7 @@ function validarCodigoYAbrir(idIngreso,placa,nombre_cliente,metodo_pago,modalId,
 
         modalAcciones.style.display = 'flex';
 
-        if (metodo_pago === "Transferencia") {
+        if (metodo_pago === "Transferencia" || metodo_pago == "QR" || metodo_pago == "Nequi") {
             inicializarCamaraTransferencia();
         }
 
