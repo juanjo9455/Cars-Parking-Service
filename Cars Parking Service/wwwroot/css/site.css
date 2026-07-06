@@ -3,6 +3,33 @@
 }
 
 /*==================== Inicio ====================*/
+
+/* ============ titulo admin ============ */
+.titulo-admin {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    margin: 25px 0 20px 0;
+    padding: 10px 18px;
+    background: #fff;
+    border-left: 5px solid #C62828;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,.08);
+}
+
+.titulo-admin i {
+    color: #D4AF37;
+    font-size: 1.2rem;
+}
+
+.titulo-admin h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #333;
+}
+
 .home-welcome {
     min-height: 100vh;
     display: flex;
@@ -231,6 +258,58 @@
         opacity: 1;
         transform: scale(1);
     }
+}
+
+/*==================== Volver Index ====================*/
+.btn-volver-index {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #C62828;
+    border-radius: 14px;
+    text-decoration: none;
+    overflow: hidden;
+    transition: .25s ease;
+    box-shadow: 0 6px 16px rgba(0,0,0,.18);
+}
+
+.btn-volver-index:hover {
+    background: #B71C1C;
+    transform: translateY(-2px);
+}
+
+.btn-volver-index i {
+    position: absolute;
+    color: white;
+    font-size: 22px;
+    transition: all .25s ease;
+}
+
+/* Estado inicial */
+.icon-home {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.icon-back {
+    opacity: 0;
+    transform: translateX(-18px);
+}
+
+/* Hover */
+.btn-volver-index:hover .icon-home {
+    opacity: 0;
+    transform: translateX(18px);
+}
+
+.btn-volver-index:hover .icon-back {
+    opacity: 1;
+    transform: translateX(0);
 }
 
 /*==================== Menu Lateral ====================*/

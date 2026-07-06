@@ -11,6 +11,7 @@ using Microsoft.JSInterop.Infrastructure;
 using NuGet.Common;
 using System.Diagnostics;
 using System.Text;
+using CarsParkingService.ViewModels;
 
 namespace CarsParkingService.Controllers
 {
@@ -45,6 +46,8 @@ namespace CarsParkingService.Controllers
 
             // Si existe un parqueadero seleccionado, lo eliminamos
             HttpContext.Session.Remove("id_parqueadero_sesion");
+
+            ViewBag.mostrarMenu = true;
 
             var usuarioId = HttpContext.Session.GetInt32("id");
 
@@ -119,6 +122,130 @@ namespace CarsParkingService.Controllers
 
             return View(ingresos);
         }
+
+        // =================== vista Estado Turno ===================== //
+
+        public IActionResult Estado_Turnos(DateTime? FechaSeleccionada) {
+
+            var model = new EstadoTurnosViewModel();
+
+            DateTime FechaConsulta;
+
+            if (FechaSeleccionada.HasValue)
+            {
+                FechaConsulta = FechaSeleccionada.Value.Date;
+            }
+            else
+            {
+                FechaConsulta = DateTime.Today;
+            }
+
+            model.FechaHoy = FechaConsulta;
+
+            model.Valets = (
+                from s in _context.sesiones
+                join u in _context.usuarios
+                    on s.id_usuario equals u.id_usuario
+
+                where s.id_rol == 1 &&
+                        s.fecha_inicio.Date == FechaConsulta
+
+                group new { s, u } by s.id_usuario into grupo
+
+                select new ValetActivoVM
+                {
+                    IdUsuario = grupo.Key,
+                    Nombres = grupo.First().u.nombres ?? "",
+                    Apellidos = grupo.First().u.apellidos ?? "",
+
+
+                    // Consultamos lo que debe el valet al banco
+                    Deuda = _context.ingresos
+                            .Where(i => i.rol_cobrador == "valet" &&
+                                        i.usuario_cobro == grupo.Key &&
+                                        i.metodo_pago == "Efectivo" &&
+                                        i.fecha_ingreso.HasValue &&
+                                        i.fecha_ingreso.Value.Date == FechaConsulta &&
+                                        i.estado_liquidacion == false)
+                            .Sum(i => (decimal?)i.valor_servicio) ?? 0,
+
+                    // Consultamos los vehiculos recibidos por ese valet
+                    VehiculosRecibidos = _context.ingresos
+                            .Count(i => i.id_valet == grupo.Key &&
+                                        i.fecha_ingreso.HasValue &&
+                                        i.fecha_ingreso.Value.Date == FechaConsulta),
+
+                    // Consultamos los vehiculos despachados por ese valet
+                    VehiculosDespachados = _context.ingresos
+                            .Count(i => i.valet_despacho == grupo.Key &&
+                                        i.fecha_ingreso.HasValue &&
+                                        i.fecha_ingreso.Value.Date == FechaConsulta)
+                }
+
+            ).ToList();
+
+            model.Bancos = (
+                from s in _context.sesiones
+                join u in _context.usuarios
+                    on s.id_usuario equals u.id_usuario
+
+                where s.id_rol == 2 &&
+                        s.fecha_inicio.Date == FechaConsulta
+
+                group new { s, u } by s.id_usuario into grupo
+
+                select new BancoActivoVM
+                {
+                    IdUsuario = grupo.Key,
+
+                    Nombres = grupo.First().u.nombres ?? "",
+                    Apellidos = grupo.First().u.nombres ?? "",
+
+                    LugarActual = grupo.First().s.Ubicacion.nombre_ubicacion ?? "Sin Ubicacion",
+
+                    VehiculosUbicacion = _context.ingresos.Count(i =>
+                        i.id_ubicacion == grupo.First().s.id_ubicacion &&
+                        i.estado_servicio != "despachado" &&
+                        i.estado_servicio != "finalizado" &&
+                        i.fecha_ingreso.HasValue &&
+                        i.fecha_ingreso.Value.Date == FechaConsulta),
+
+                    Liquidado = grupo.First().s.estado_liquidacion
+                }
+
+            ).ToList();
+
+            model.Keys = (
+                from s in _context.sesiones
+                join u in _context.usuarios
+                    on s.id_usuario equals u.id_usuario
+
+                where s.id_rol == 4 &&
+                        s.fecha_inicio.Date == FechaConsulta
+
+                group new { s , u } by s.id_usuario into grupo
+
+                select new KeyActivoVM
+                {
+                    IdUsuario = grupo.Key,
+
+                    Nombres = grupo.First().u.nombres ?? "",
+                    Apellidos = grupo.First().u.apellidos ?? "",
+
+                    Parqueadero = grupo.First().s.Parqueadero.nombre_parqueadero ?? "Sin Parqueadero",
+
+                    CarrosEstacionados = _context.ingresos.Count(i =>
+                        i.id_parqueadero == grupo.First().s.id_parqueadero &&
+                        i.estado_servicio != "despachado" &&
+                        i.estado_servicio != "finalizado")
+                }
+
+            ).ToList();
+
+            return View(model);
+        
+        }
+
 
         // =================== vista key =================== //
 
@@ -576,6 +703,8 @@ namespace CarsParkingService.Controllers
             var idUsuarioSesion = HttpContext.Session.GetInt32("id");
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
 
+            ViewBag.mostrarMenu = false;
+
             if (!idUsuarioSesion.HasValue)
             {
                 return RedirectToAction("Login", "Auth");
@@ -701,6 +830,8 @@ namespace CarsParkingService.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Ingreso_Vehiculos()
         {
+            ViewBag.mostrarMenu = false;
+
             CargarDatosFormulario();
             return View();
         }

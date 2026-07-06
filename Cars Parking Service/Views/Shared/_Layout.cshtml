@@ -21,63 +21,80 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/ingreso.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/solicitudes.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Estado_Turnos.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div class="page-wrapper">
-        <aside class="menu-lateral-container" id="menu-lateral">
-            <div class="div-cerrar-menu">
-                <i class="fa-solid fa-x" id="cerrar-menu-lateral"></i>
-            </div>
-            <div class="usuario" style="width: 2.8cm; height: 2.8cm;">
-                @if (!string.IsNullOrEmpty(imagenUsuario))
-                {
-                    <img src="@imagenUsuario" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />
-                }
-                else
-                {
-                    <i class="fa-solid fa-user"></i>
-                }
-            </div>
-            <div class="menu-lateral">
-                <ol>
-                    @if (idRol == 2 || idRol == 3 ){
-
-                        <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house"></i>Inicio</a></li>
-                        <li><a asp-controller="Home" asp-action="Tabla_Vehiculos"><i class="fa-solid fa-table-list"></i>Tabla Ingresos</a></li>
-                        <li><a asp-controller="Home" asp-action="Ingreso_Vehiculos"><i class="fa-solid fa-car-side"></i>Nuevo Ingreso</a></li>
-
-                    } 
-                    @if (idRol == 3){
-
-                        <li><a asp-controller="Home" asp-action="Administrador"><i class="fa-solid fa-gear"></i>Configuraciones Admin</a></li>
-
-                    }
-                    @if (idRol == 1){
-                                                
-                        <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house"></i>Inicio</a></li>
-                        <li><a asp-controller="Home" asp-action="Tabla_Vehiculos"><i class="fa-solid fa-table-list"></i>Tabla Ingresos</a></li>
-                        <li><a asp-controller="Home" asp-action="VistaKey"><i class="fa-solid fa-square-parking"></i>Parqueaderos</a></li>
-
-
-                    }
-                    @if (idRol == 2 && (ViewBag.estadoLiquidacion ?? false) == false)
+        @if (idRol == 1 || idRol == 3 || idRol == 4 || (idRol == 2 && (ViewBag.mostrarMenu ?? false)))
+        {
+                
+            <aside class="menu-lateral-container" id="menu-lateral">
+                <div class="div-cerrar-menu">
+                    <i class="fa-solid fa-x" id="cerrar-menu-lateral"></i>
+                </div>
+                <div class="usuario" style="width: 2.8cm; height: 2.8cm;">
+                    @if (!string.IsNullOrEmpty(imagenUsuario))
                     {
-                        <li>
-                            <a asp-controller="Liquidacion" asp-action="Liquidacion">
-                                <i class="fa-solid fa-sack-dollar"></i>Liquidación
-                            </a>
-                        </li>
+                        <img src="@imagenUsuario" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />
                     }
-
-                    @if(idRol == 2)
+                    else
                     {
-                            
-                        @if ((ViewBag.estadoLiquidacion ?? false) == false)
+                        <i class="fa-solid fa-user"></i>
+                    }
+                </div>
+
+                <div class="menu-lateral">
+                    <ol>
+                        @if (idRol == 2)
                         {
-                      
-                            <li><a id="cerrar-sesion" onclick="abrirModalAlerta()"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
 
+                            <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house"></i>Inicio</a></li>
+                            <li><a asp-controller="Home" asp-action="Tabla_Vehiculos"><i class="fa-solid fa-table-list"></i>Tabla Ingresos</a></li>
+                            <li><a asp-controller="Home" asp-action="Ingreso_Vehiculos"><i class="fa-solid fa-car-side"></i>Nuevo Ingreso</a></li>
+
+                        }
+                        @if (idRol == 3)
+                        {
+                            <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house"></i>Inicio</a></li>
+                            <li><a asp-controller="Home" asp-action="Tabla_Vehiculos"><i class="fa-solid fa-table-list"></i>Tabla Ingresos</a></li>
+                            <li><a asp-controller="Home" asp-action="Estado_Turnos"><i class="fa-solid fa-user"></i>Estado Turnos</a></li>
+                            <li><a asp-controller="Home" asp-action="Administrador"><i class="fa-solid fa-gear"></i>Configuraciones Admin</a></li>
+
+                        }
+                        @if (idRol == 1)
+                        {
+
+                            <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house"></i>Inicio</a></li>
+                            <li><a asp-controller="Home" asp-action="Tabla_Vehiculos"><i class="fa-solid fa-table-list"></i>Tabla Ingresos</a></li>
+                            <li><a asp-controller="Home" asp-action="VistaKey"><i class="fa-solid fa-square-parking"></i>Parqueaderos</a></li>
+
+
+                        }
+                        @if (idRol == 2 && (ViewBag.estadoLiquidacion ?? false) == false)
+                        {
+                            <li>
+                                <a asp-controller="Liquidacion" asp-action="Liquidacion">
+                                    <i class="fa-solid fa-sack-dollar"></i>Liquidación
+                                </a>
+                            </li>
+                        }
+
+                        @if (idRol == 2)
+                        {
+
+                            @if ((ViewBag.estadoLiquidacion ?? false) == false)
+                            {
+
+                                <li><a id="cerrar-sesion" onclick="abrirModalAlerta()"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
+
+                            }
+                            else
+                            {
+
+                                <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
+
+                            }
                         }
                         else
                         {
@@ -85,20 +102,30 @@
                             <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
 
                         }
-                    }
-                    else
-                    {
-                         
-                        <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
 
-                    }
-
-                </ol>
+                    </ol>
+                </div>
+            </aside>
+            <div class="div-abrir-menu" id="div-abrir-menu">
+                <i class="fa-solid fa-bars" id="abrir-menu-lateral"></i>
             </div>
-        </aside>
-        <div class="div-abrir-menu" id="div-abrir-menu">
-            <i class="fa-solid fa-bars" id="abrir-menu-lateral"></i>
-        </div>
+
+        } 
+        else
+        {
+         
+            <div class="div-abrir-menu" id="volver-index">
+                <a asp-controller="Home"
+                   asp-action="Index"
+                   class="btn-volver-index">
+
+                    <i class="fa-solid fa-house icon-home"></i>
+                    <i class="fa-solid fa-arrow-left icon-back"></i>
+
+                </a>
+            </div>
+            
+        }
 
         @RenderBody()
     </div>

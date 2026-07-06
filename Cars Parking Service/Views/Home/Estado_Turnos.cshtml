@@ -1,0 +1,421 @@
+﻿@model CarsParkingService.ViewModels.EstadoTurnosViewModel
+@{
+    ViewData["Title"] = "Administrador";
+}
+
+<div class="container mt-4 admin-container">
+    <!-- Header -->
+    <div class="header">
+        <div class="logo-container">
+            <img src="~/img/logo cars parking.png" alt="Logo Cars Parking" />
+        </div>
+
+        <div class="header-info" style="flex-grow: 1; padding-left: 15px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                <h2 style="margin: 0;">
+                    <i class="fa-solid fa-user-shield" style="color: #d32f2f;"></i> Panel de Control Administrativo
+                </h2>
+            </div>
+            <p>Gestión centralizada de usuarios, ubicaciones, parqueaderos y configuración del sistema</p>
+        </div>
+
+        <div class="header-actions text-end">
+            <span style="font-size: 12px; font-weight: bold; color: #d32f2f; background: rgba(211, 47, 47, 0.1); padding: 5px 12px; border-radius: 20px;">
+                <i class="fa-solid fa-circle-check"></i> Modo Administrador
+            </span>
+        </div>
+    </div>
+
+</div>
+
+<div class="container mt-4 admin-container">
+
+    @* ── Barra de fecha con dropdown ── *@
+    <div class="adm-fecha-bar">
+        <div class="adm-fecha-bar-left">
+            <i class="fa-solid fa-calendar-event"></i>
+            <span class="adm-fecha-label">Turno del día</span>
+        </div>
+
+        <div class="adm-fecha-dropdown-wrap">
+            <div class="adm-fecha-trigger" id="fechaTrigger"
+                 onclick="toggleFechaList()"
+                 role="button" aria-haspopup="listbox" aria-expanded="false">
+                <i class="fa-solid fa-calendar"></i>
+                <span id="fechaSelected">
+                    @Model.FechaHoy.ToString("dddd d 'de' MMMM 'de' yyyy",
+                        new System.Globalization.CultureInfo("es-CO"))
+                </span>
+                <i class="fa-solid fa-chevron-down adm-chevron"></i>
+            </div>
+
+            <div class="adm-fecha-list" id="fechaList"
+                 style="display:none" role="listbox">
+
+                <div class="adm-fecha-list-header">Últimos 7 días</div>
+
+                @for (int d = 0; d < 7; d++)
+                {
+                    var fecha = DateTime.Today.AddDays(-d);
+                    var fechaStr = fecha.ToString("yyyy-MM-dd");
+                    var esHoy = d == 0;
+                    var esActual = fecha.Date == Model.FechaHoy.Date;
+                    var label = esHoy
+                        ? "Hoy — " + fecha.ToString("dddd d MMM", new System.Globalization.CultureInfo("es-CO"))
+                        : fecha.ToString("dddd d MMM", new System.Globalization.CultureInfo("es-CO"));
+
+                    <a class="adm-fecha-list-item @(esActual ? "active" : "")"
+                       href="@Url.Action("Estado_Turnos", "Home", new { FechaSeleccionada = fechaStr })"
+                       role="option"
+                       aria-selected="@esActual.ToString().ToLower()">
+                        <span class="adm-item-fecha">@label</span>
+                        @if (esHoy)
+                        {
+                            <span class="adm-item-badge adm-badge-activo">Activo</span>
+                        }
+                        @if (esActual)
+                        {
+                            <i class="fa-solid fa-check adm-item-check"></i>
+                        }
+                    </a>
+                }
+
+                <div class="adm-fecha-divider"></div>
+                <div class="adm-fecha-list-header">Fecha específica</div>
+
+                <div class="adm-fecha-list-item" onclick="abrirInputFecha()" role="option" style="cursor:pointer">
+                    <span class="adm-item-fecha">
+                        <i class="fa-solid fa-calendar-days" style="margin-right:6px"></i>
+                        Elegir otra fecha...
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <span class="adm-fecha-badge @(Model.FechaHoy.Date == DateTime.Today ? "" : "adm-badge-historico")">
+            <i class="fa-solid fa-circle" style="font-size:8px"></i>
+            @(Model.FechaHoy.Date == DateTime.Today ? "Turno activo" : "Histórico")
+        </span>
+
+        <input type="date"
+               id="inputFechaOculto"
+               max="@DateTime.Today.ToString("yyyy-MM-dd")"
+               style="position:absolute;opacity:0;pointer-events:none"
+               onchange="irAFecha(this.value)" />
+    </div>
+
+    @* ── Tabs ── *@
+    <div class="adm-tabs">
+        <button class="adm-tab active"
+                onclick="admTab('valets', this)"
+                type="button">
+            <i class="fa-solid fa-user-check"></i>
+            Valets
+            <span class="adm-tab-badge">@Model.Valets.Count</span>
+        </button>
+        <button class="adm-tab"
+                onclick="admTab('bancos', this)"
+                type="button">
+            <i class="fa-solid fa-user"></i>
+            Bancos
+            <span class="adm-tab-badge">@Model.Bancos.Count</span>
+        </button>
+        <button class="adm-tab"
+                onclick="admTab('keys', this)"
+                type="button">
+            <i class="fa-solid fa-key"></i>
+            Keys
+            <span class="adm-tab-badge">@Model.Keys.Count</span>
+        </button>
+    </div>
+
+    @* ══════════════════════════════════════
+       PANEL VALETS
+    ══════════════════════════════════════ *@
+    <div class="adm-panel active" id="adm-valets">
+        <div class="adm-table-wrap">
+            <div class="adm-table-scroll">
+                <table class="adm-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre</th>
+                            <th>Apellidos</th>
+                            <th>Deuda con banco</th>
+                            <th>
+                                <i class="fa-solid fa-key"></i>
+                                Vehículos recibidos
+                            </th>
+                            <th>
+                                <i class="fa-solid fa-garage"></i>
+                                Vehículos despachados
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Valets.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="adm-empty">
+                                    <i class="fa-solid fa-user-slash"></i>
+                                    Sin valets activos hoy
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            int i = 1;
+                            foreach (var v in Model.Valets)
+                            {
+                                <tr>
+                                    <td class="adm-num-col">@(i++)</td>
+                                    <td>
+                                        <div class="adm-name-cell">
+                                            <span class="adm-avatar adm-av-valet">
+                                                @(v.Nombres?.Length > 0 ? v.Nombres[0].ToString().ToUpper() : "")@(v.Apellidos?.Length > 0 ? v.Apellidos[0].ToString().ToUpper() : "")
+                                            </span>
+                                            @v.Nombres
+                                        </div>
+                                    </td>
+                                    <td>@v.Apellidos</td>
+                                    <td>
+                                        @if (v.Deuda == 0)
+                                        {
+                                            <span class="adm-deuda-cero">$0</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="adm-deuda-neg">
+                                                - $@v.Deuda.ToString("N0")
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="adm-num-pill adm-pill-recibidos">
+                                            <i class="fa-solid fa-key"></i>
+                                            @v.VehiculosRecibidos  
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="adm-num-pill adm-pill-despachados">
+                                            <i class="fa-solid fa-warehouse"></i>
+                                            @v.VehiculosDespachados
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    
+    @* ══════════════════════════════════════
+       PANEL BANCOS
+    ══════════════════════════════════════ *@
+    <div class="adm-panel" id="adm-bancos">
+        <div class="adm-table-wrap">
+            <div class="adm-table-scroll">
+                <table class="adm-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre</th>
+                            <th>Apellidos</th>
+                            <th>Lugar actual</th>
+                            <th>
+                                <i class="fa-solid fa-car-side"></i>
+                                Vehículos en ubicación
+                            </th>
+                            <th>Liquidación del día</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Bancos.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="adm-empty">
+                                    <i class="fa-solid fa-user-slash"></i>
+                                    Sin bancos activos hoy
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            int i = 1;
+                            foreach (var b in Model.Bancos)
+                            {
+                                <tr>
+                                    <td class="adm-num-col">@(i++)</td>
+                                    <td>
+                                        <div class="adm-name-cell">
+                                            <span class="adm-avatar adm-av-banco">
+                                                @(b.Nombres?.Length > 0 ? b.Nombres[0].ToString().ToUpper() : "")@(b.Apellidos?.Length > 0 ? b.Apellidos[0].ToString().ToUpper() : "")
+                                            </span>
+                                            @b.Nombres
+                                        </div>
+                                    </td>
+                                    <td>@b.Apellidos</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(b.LugarActual))
+                                        {
+                                            <span class="adm-badge-lugar">
+                                                <i class="fa-solid fa-map-pin"></i>
+                                                @b.LugarActual
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="adm-text-muted">—</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="adm-num-pill adm-pill-ubicacion">
+                                            <i class="fa-solid fa-car-side"></i>
+                                            @b.VehiculosUbicacion
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (b.Liquidado)
+                                        {
+                                            <span class="adm-badge adm-badge-liquidado">
+                                                <i class="fa-solid fa-circle-check"></i>
+                                                Liquidado
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="adm-badge adm-badge-pendiente">
+                                                <i class="fa-solid fa-clock"></i>
+                                                Pendiente
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @* ══════════════════════════════════════
+       PANEL KEYS
+    ══════════════════════════════════════ *@
+    <div class="adm-panel" id="adm-keys">
+        <div class="adm-table-wrap">
+            <div class="adm-table-scroll">
+                <table class="adm-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre</th>
+                            <th>Apellidos</th>
+                            <th>Parqueadero asignado</th>
+                            <th>
+                                <i class="fa-solid fa-square-parking"></i>
+                                Carros estacionados
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Keys.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="adm-empty">
+                                    <i class="fa-solid fa-user-slash"></i>
+                                    Sin keys activos hoy
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            int i = 1;
+                            foreach (var k in Model.Keys)
+                            {
+                                <tr>
+                                    <td class="adm-num-col">@(i++)</td>
+                                    <td>
+                                        <div class="adm-name-cell">
+                                            <span class="adm-avatar adm-av-key">
+                                                @(k.Nombres?.Length > 0 ? k.Nombres[0].ToString().ToUpper() : "")@(k.Apellidos?.Length > 0 ? k.Apellidos[0].ToString().ToUpper() : "")
+                                            </span>
+                                            @k.Nombres
+                                        </div>
+                                    </td>
+                                    <td>@k.Apellidos</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(k.Parqueadero))
+                                        {
+                                            <span class="adm-badge-lugar">
+                                                <i class="fa-solid fa-building"></i>
+                                                @k.Parqueadero
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="adm-text-muted">Sin asignar</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="adm-num-pill adm-pill-estacionados">
+                                            <i class="fa-solid fa-square-parking"></i>
+                                            @k.CarrosEstacionados
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Script de tabs ── *@
+@section Scripts {
+    <script>
+        function admTab(id, btn) {
+            document.querySelectorAll('.adm-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.adm-tab').forEach(b => b.classList.remove('active'));
+            document.getElementById('adm-' + id).classList.add('active');
+            btn.classList.add('active');
+        }
+
+
+
+        function toggleFechaList() {
+            const list    = document.getElementById('fechaList');
+            const trigger = document.getElementById('fechaTrigger');
+            const open    = list.style.display === 'none';
+            list.style.display = open ? 'block' : 'none';
+            trigger.classList.toggle('open', open);
+            trigger.setAttribute('aria-expanded', open);
+        }
+
+        function abrirInputFecha() {
+            const inp = document.getElementById('inputFechaOculto');
+            inp.showPicker?.();
+            document.getElementById('fechaList').style.display = 'none';
+            document.getElementById('fechaTrigger').classList.remove('open');
+        }
+
+        function irAFecha(value) {
+            if (!value) return;
+            window.location.href = '/Home/Estado_Turnos?FechaSeleccionada=' + value;
+        }
+
+        document.addEventListener('click', e => {
+            const trigger = document.getElementById('fechaTrigger');
+            const list    = document.getElementById('fechaList');
+            if (!trigger?.contains(e.target) && !list?.contains(e.target)) {
+                if (list) list.style.display = 'none';
+                trigger?.classList.remove('open');
+            }
+        });
+    </script>
+}

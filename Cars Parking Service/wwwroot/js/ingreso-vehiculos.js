@@ -6,7 +6,7 @@
     const submitBtn = document.getElementById('acceder');
     const noValuablesBtn = document.getElementById('noValuablesBtn');
     const notasInput = document.getElementById('notas');
-    const btnObjetosImagenes = document.getElementById("tomarFotoBtn");
+    const btnObjetosImagenes = document.getElementById("tomarFotoObjetosBtn");
     const sinObjetosHidden = document.getElementById('sin_objetos_valor_hidden');
     let firmando = false;
     let firmaRealizada = false;
@@ -204,3 +204,4 @@
 
     console.log('✅ Evento submit del formulario configurado');
 });
+

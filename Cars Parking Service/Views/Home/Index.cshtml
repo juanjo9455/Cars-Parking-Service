@@ -7,6 +7,17 @@
 
 <section class="home-welcome">
     <div class="home-card">
+
+        @if ( idRol == 3)
+        {
+            <div class="titulo-admin">
+
+                <i class="fa-solid fa-crown"></i>
+                <h2>Administrador</h2>
+
+            </div>
+        }
+
         <div class="home-logo-wrap">
             <img src="~/img/logo cars parking.png" alt="Logo Cars Parking" class="home-logo" />
         </div>
@@ -27,7 +38,7 @@
         <p class="home-subtitle">Gestiona ingresos, movimientos y operación diaria de forma rápida y ordenada.</p>
 
         <div class="home-actions">
-            @if (idRol == 2 || idRol == 3)
+            @if (idRol == 2)
             {
 
                 <a asp-controller="Home" asp-action="Ingreso_Vehiculos" class="home-action-btn primary">
@@ -40,7 +51,7 @@
                 </a>
 
             }
-            @if(idRol == 1){
+            @if(idRol == 1 || idRol == 3){
                 
                 <a asp-controller="Home" asp-action="Tabla_Vehiculos" class="home-action-btn secondary">
                     <i class="fa-solid fa-table-list"></i>
@@ -158,7 +169,6 @@
     </div>
 
 </div>
-
 
 <!-- Alerta Liquidacion -->
 <div class="liquidacion-alert" id="liquidacionAlert">

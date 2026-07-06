@@ -129,15 +129,26 @@
     <div class="header">
         <div class="header-info">
             <h2>
-                Ingresos - Valet Parking -
-                <span style="color: #b00020; font-weight: 600;">
-                    @ViewBag.ubicacion
-                </span>
+                Ingresos - Valet Parking
+                @if (!string.IsNullOrEmpty(ViewBag.ubicacion))
+                {
+                    <span style="color: #b00020; font-weight: 600;">
+                        - @ViewBag.ubicacion
+                    </span>
+                }
+                else if (idRol == 3)
+                {
+                    <span style="color: #D4AF37; font-weight: 600;">
+                        <i class="fa-solid fa-crown"></i> Administrador
+                    </span>
+                }
+
+
             </h2>
             <p>Registro de entradas y salidas del estacionamiento</p>
         </div>
 
-        @if(idRol == 2 || idRol == 3){
+        @if(idRol == 2){
         
             <a asp-controller="Home" asp-action="Ingreso_Vehiculos" class="btn btn-nuevo">+ Nuevo Ingreso</a>
          
@@ -331,40 +342,43 @@
 
                     }      
                         
-                    <td data-label="Acción" class="cell-action">
+                    @if (idRol != 3)
+                        {
+                        <td data-label="Acción" class="cell-action">
 
                         
-                        @* 1. Tomar vehículo *@
-                        @if (ingresos.id_valet is null && idRol == 1)
-                        {
-                            <i class="fa-solid fa-car-side btn-action"
+                            @* 1. Tomar vehículo *@
+                            @if (ingresos.id_valet is null && idRol == 1)
+                            {
+                                <i class="fa-solid fa-car-side btn-action"
                                     onclick="abrirModalTomarVehiculo(this)"
                                     data-id="@ingresos.id_ingreso"
                                     data-placa="@ingresos.placa"
                                     data-cliente="@ingresos.nombre_cliente"
                                     style="cursor:pointer;">
-                            </i>
-                        }
+                                </i>
+                            }
 
-                        @* 2. Cámara solo para el valet responsable *@
-                        @if (ingresos.id_valet == idUsuarioSesion &&
-                                    !ingresos.foto_estacionamiento &&
-                                    ingresos.estado_servicio != "solicitado" && idRol == 1 && ingresos.estado_servicio != "despachado")
-                        {
-                            <i class="fa-solid fa-camera btn-action"
+                            @* 2. Cámara solo para el valet responsable *@
+                            @if (ingresos.id_valet == idUsuarioSesion &&
+                                        !ingresos.foto_estacionamiento &&
+                                        ingresos.estado_servicio != "solicitado" && idRol == 1 && ingresos.estado_servicio != "despachado")
+                            {
+                                <i class="fa-solid fa-camera btn-action"
                                     onclick="abrirModalFoto(this)"
                                     data-id-ingreso="@ingresos.id_ingreso"
                                     data-placa="@ingresos.placa"
                                     data-cliente="@ingresos.nombre_cliente"
                                     style="cursor:pointer;">
-                            </i>
-                        }
-                        @if(idUsuarioSesion == ingresos.id_valet){
-
-                            @* 3. Pago *@
-                            @if (ingresos.id_valet != null && ingresos.foto_estacionamiento && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado" || ingresos.estado_servicio == "despachado")
+                                </i>
+                            }
+                            @if (idUsuarioSesion == ingresos.id_valet)
                             {
-                                <i class="fa-solid fa-credit-card btn-action"
+
+                                @* 3. Pago *@
+                                @if (ingresos.id_valet != null && ingresos.foto_estacionamiento && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado" || ingresos.estado_servicio == "despachado")
+                                {
+                                    <i class="fa-solid fa-credit-card btn-action"
                                         onclick="abrirModalPago(this)"
                                         data-id="@ingresos.id_ingreso"
                                         data-placa="@ingresos.placa"
@@ -372,16 +386,16 @@
                                         data-metodo-pago="@(ingresos.metodo_pago ?? "No especificado")"
                                         data-estado-servicio="@(ingresos.estado_servicio ?? "No especificado")"
                                         style="cursor:pointer;">
-                                </i>
-                            }
+                                    </i>
+                                }
 
-                        }
-                        else
-                        {
-                            @* 3.1. Pago *@
+                            }
+                            else
+                            {
+                                @* 3.1. Pago *@
                                 @if (ingresos.id_valet != null && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado")
-                            {
-                                <i class="fa-solid fa-credit-card btn-action"
+                                {
+                                    <i class="fa-solid fa-credit-card btn-action"
                                         onclick="abrirModalPago(this)"
                                         data-id="@ingresos.id_ingreso"
                                         data-placa="@ingresos.placa"
@@ -389,20 +403,24 @@
                                         data-metodo-pago="@(ingresos.metodo_pago ?? "No especificado")"
                                         data-estado-servicio="@(ingresos.estado_servicio ?? "No especificado")"
                                         style="cursor:pointer;">
+                                    </i>
+                                }
+
+                            }
+                            @* 4. Información *@
+                            @if (ingresos.estado_pago == "pagado" &&
+                                        ingresos.estado_servicio == "finalizado" && ingresos.foto_estacionamiento)
+                            {
+                                <i class="fa-solid fa-circle-info btn-action"
+                                    title="Ver información">
                                 </i>
                             }
-
-                        }
-                        @* 4. Información *@
-                        @if (ingresos.estado_pago == "pagado" &&
-                                    ingresos.estado_servicio == "finalizado" && ingresos.foto_estacionamiento)
-                        {
-                            <i class="fa-solid fa-circle-info btn-action"
-                                    title="Ver información">
-                            </i>
-                        }
-                    </td>
-
+                        </td>
+                    }
+                    else
+                    {
+                        <td data-label="Acción" class="cell-action"></td>
+                    }
                 </tr>
             }
 
