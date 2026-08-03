@@ -3,6 +3,30 @@
     // Metodo para validar roles con parqueaderos y ubicaciones
     mostrarCamposRol();
 
+    // Guardar ubicacion en sesion
+    window.guardarUbicacionSesion = function (valorUbicacion) {
+        console.log("[guardarUbicacionSesion] Cambio detectado en la ubicación:", valorUbicacion);
+
+        fetch('/Home/GuardarUbicacionSesion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'Accept': 'application/json'
+            },
+            body: `id_ubicacion=${encodeURIComponent(valorUbicacion || '')}`
+        })
+            .then(response => {
+                console.log("[guardarUbicacionSesion] Respuesta HTTP:", response.status, response.statusText);
+                return response.json();
+            })
+            .then(data => {
+                console.log("[guardarUbicacionSesion] Respuesta JSON:", data);
+            })
+            .catch(error => {
+                console.error("[guardarUbicacionSesion] Error guardando la ubicación en sesión:", error);
+            });
+    };
+
     // Utilidades de validacion
     function showError(input, errorEl) {
         input.classList.add('input-error');
@@ -191,6 +215,7 @@
         });
 
     }*/
+
 
     // ===== Formulario de Registro =====
     var signUpForm = document.getElementById('signUpForm');

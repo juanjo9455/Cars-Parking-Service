@@ -412,7 +412,8 @@
                                         ingresos.estado_servicio == "finalizado" && ingresos.foto_estacionamiento)
                             {
                                 <i class="fa-solid fa-circle-info btn-action"
-                                    title="Ver información">
+                                    onclick="abrirModalInformacion(this)"
+                                    data-id="@ingresos.id_ingreso">
                                 </i>
                             }
                         </td>
@@ -436,6 +437,7 @@
                         <div id="contenido-modal-acciones">
                             
                         </div>
+
                     </div>
 
                 </div>

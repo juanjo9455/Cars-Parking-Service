@@ -433,6 +433,7 @@ namespace CarsParkingService.Controllers
 
             return Json(new { success = true });
         }
+
         // Metodo para obtener las solicitudes de ingresos de vehiculos en estado "solicitado" para el valet y banco
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -586,7 +587,7 @@ namespace CarsParkingService.Controllers
                 .Include(i => i.Banco)
                 .Where(i =>
                     i.estado_servicio != null &&
-                    i.estado_servicio.Trim().ToLower() == "despachado"
+                    i.estado_servicio.Trim().ToLower() == "esperando valet"
                 )
                 .AsQueryable();
 
@@ -2052,6 +2053,73 @@ namespace CarsParkingService.Controllers
 
                 return RedirectToAction("Tabla_Vehiculos");
             }
+        }
+
+
+        [HttpGet]
+        public IActionResult ObtenerImagenesIngreso()
+        {
+            System.Diagnostics.Debug.WriteLine("[ObtenerImagenesIngreso] Inicio de consulta global de imágenes.");
+            Console.WriteLine("[ObtenerImagenesIngreso] Inicio de consulta global de imágenes.");
+
+            System.Diagnostics.Debug.WriteLine("[ObtenerImagenesIngreso] Consultando todas las imágenes de tbl_imagenes sin filtrar por ingreso.");
+            Console.WriteLine("[ObtenerImagenesIngreso] Consultando todas las imágenes de tbl_imagenes sin filtrar por ingreso.");
+
+            var imagenes = _context.imagenes
+                .AsNoTracking()
+                .OrderBy(i => i.id_imagen)
+                .Select(i => new
+                {
+                    i.id_imagen,
+                    i.id_ingreso,
+                    src = i.dato_imagen == null
+                        ? null
+                        : $"data:image/jpeg;base64,{Convert.ToBase64String(i.dato_imagen)}"
+                })
+                .ToList();
+
+            System.Diagnostics.Debug.WriteLine($"[ObtenerImagenesIngreso] Imágenes totales encontradas: {imagenes.Count}");
+            Console.WriteLine($"[ObtenerImagenesIngreso] Imágenes totales encontradas: {imagenes.Count}");
+
+            return Json(new
+            {
+                success = true,
+                total = imagenes.Count,
+                imagenes
+            });
+        }
+
+        // Metodo para guardar la ubicacion del banco
+
+        [HttpPost]
+        public IActionResult GuardarUbicacionSesion(int? id_ubicacion)
+        {
+            System.Diagnostics.Debug.WriteLine($"[GuardarUbicacionSesion] Inicio. id_ubicacion={id_ubicacion}");
+            Console.WriteLine($"[GuardarUbicacionSesion] Inicio. id_ubicacion={id_ubicacion}");
+
+            if (id_ubicacion.HasValue && id_ubicacion.Value > 0)
+            {
+                HttpContext.Session.SetInt32("id_ubicacion", id_ubicacion.Value);
+                System.Diagnostics.Debug.WriteLine($"[GuardarUbicacionSesion] Ubicación guardada en sesión: {id_ubicacion.Value}");
+                Console.WriteLine($"[GuardarUbicacionSesion] Ubicación guardada en sesión: {id_ubicacion.Value}");
+
+                return Json(new
+                {
+                    success = true,
+                    id_ubicacion = id_ubicacion.Value,
+                    message = "Ubicación guardada en sesión."
+                });
+            }
+
+            HttpContext.Session.Remove("id_ubicacion");
+            System.Diagnostics.Debug.WriteLine("[GuardarUbicacionSesion] Se eliminó la ubicación de la sesión.");
+            Console.WriteLine("[GuardarUbicacionSesion] Se eliminó la ubicación de la sesión.");
+
+            return Json(new
+            {
+                success = false,
+                message = "No se recibió una ubicación válida."
+            });
         }
     }
 }

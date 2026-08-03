@@ -62,7 +62,10 @@
                      id="contenedorUbicacion"
                      style="display:none;">
 
-                    <select name="id_ubicacion" class="form-control">
+                    <select name="id_ubicacion"
+                            id="selectUbicacion"
+                            class="form-control"
+                            onchange="guardarUbicacionSesion(this.value)">
 
                         <option value="" disabled selected hidden>
                             Selecciona una ubicación
