@@ -1,5 +1,7 @@
 ﻿@{
     ViewData["Title"] = "Ingresar Vehiculo";
+
+    var idUbicacion = Context.Session.GetInt32("id_ubicacion");
 }
 
 <div id="client-error-container" style="display:none;position:fixed;top:10px;left:10px;right:10px;z-index:9999;background:#fee;border:1px solid #f99;padding:10px;border-radius:6px;color:#600;max-height:40vh;overflow:auto;"></div>
@@ -173,10 +175,6 @@
                     <option value="@valet.id_usuario">@valet.nombres @valet.apellidos</option>
                 }
                 
-                @if (ViewBag.UsuarioSesion?.usuario_rol == 2)
-                {
-                    <option value="@ViewBag.UsuarioSesion?.IdUsuario">@ViewBag.UsuarioSesion?.nombre @ViewBag.UsuarioSesion?.apellido (banco)</option>
-                }
             </select>
             <div class="error-message" id="errorValet">⚠️ Selecciona un valet</div>
         </div>
@@ -209,17 +207,7 @@
             <div class="error-message" id="errorParqueadero">⚠️ Selecciona un parqueadero</div>
         </div>
 
-        <!-- Selección de Ubicación -->
-        <!--<div class="input-group">
-                <select name="id_ubicacion" id="id_ubicacion" style="width:100%;" required>
-                <option value="">Selecciona una Ubicación</option>
-                    @foreach (var ubicacionesS in ViewBag.UbicacionesS)
-                    {
-                        <option value="@ubicacionesS.id_ubicacion">@ubicacionesS.nombre_ubicacion</option>
-                    }
-            </select>
-            <div class="error-message" id="errorUbicacion">⚠️ Selecciona una ubicación</div>
-        </div>-->
+        <input type="hidden" id="id_ubicacion" value="@idUbicacion" />
 
         <!-- Notas/Valuables -->
         <!--<div class="input-group notas-group">

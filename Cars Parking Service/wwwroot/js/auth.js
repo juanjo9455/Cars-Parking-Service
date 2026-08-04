@@ -7,7 +7,7 @@
     window.guardarUbicacionSesion = function (valorUbicacion) {
         console.log("[guardarUbicacionSesion] Cambio detectado en la ubicación:", valorUbicacion);
 
-        fetch('/Home/GuardarUbicacionSesion', {
+        fetch('/Auth/GuardarUbicacionSesion', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -15,8 +15,15 @@
             },
             body: `id_ubicacion=${encodeURIComponent(valorUbicacion || '')}`
         })
-            .then(response => {
+            .then(async response => {
                 console.log("[guardarUbicacionSesion] Respuesta HTTP:", response.status, response.statusText);
+
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    const texto = await response.text();
+                    throw new Error(`Respuesta no JSON. Primeros caracteres: ${texto.substring(0, 80)}`);
+                }
+
                 return response.json();
             })
             .then(data => {

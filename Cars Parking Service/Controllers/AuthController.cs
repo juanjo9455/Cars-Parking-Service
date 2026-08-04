@@ -484,6 +484,21 @@ namespace CarsParkingService.Controllers
             return RedirectToAction("Login");
         }
 
+        [HttpPost]
+        public IActionResult GuardarUbicacionSesion(int? id_ubicacion)
+        {
+            Debug.WriteLine($"[Auth.GuardarUbicacionSesion] id_ubicacion={id_ubicacion}");
+
+            if (id_ubicacion.HasValue && id_ubicacion.Value > 0)
+            {
+                HttpContext.Session.SetInt32("id_ubicacion", id_ubicacion.Value);
+                return Json(new { success = true, id_ubicacion = id_ubicacion.Value });
+            }
+
+            HttpContext.Session.Remove("id_ubicacion");
+            return Json(new { success = false, message = "Ubicación no válida" });
+        }
+
         private async Task EnviarCodigoRecuperacionAsync(string toEmail, string code, DateTime expirationUtc)
         {
             var smtpHost = _configuration["EmailSettings:SmtpHost"];

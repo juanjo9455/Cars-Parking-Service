@@ -927,10 +927,9 @@ namespace CarsParkingService.Controllers
 
                 bool enviarWhatsapp = true;
                 // ==============================
-                // OBTENER PARQUEADERO DE SESION
+                // OBTENER DATOS DE UBICACIÓN/PARQUEADERO DESDE SESIÓN
                 // ==============================
                 var idUsuarioSesion = HttpContext.Session.GetInt32("id");
-                var rolUsuarioSesion = HttpContext.Session.GetInt32("id_rol");
 
                 // Buscar sesión activa del usuario
                 var sesionUsuario = _context.sesiones
@@ -939,12 +938,24 @@ namespace CarsParkingService.Controllers
                         s.fecha_fin == null
                     );
 
-                // Si el usuario tiene una sesión con parqueadero (Valet o Banco con sesión),
-                // usar ese parqueadero en lugar del que viene del formulario
+                // Si hay parqueadero en sesión activa, usarlo en el ingreso
                 if (sesionUsuario != null && sesionUsuario.id_parqueadero.HasValue)
                 {
                     System.Diagnostics.Debug.WriteLine($"Asignando parqueadero de sesión: {sesionUsuario.id_parqueadero}");
                     obj_ingreso.id_parqueadero = sesionUsuario.id_parqueadero.Value;
+                }
+
+                // Ubicación: primero sesión activa, luego fallback a Session HTTP
+                int? idUbicacionSesion = sesionUsuario?.id_ubicacion;
+                if (!idUbicacionSesion.HasValue)
+                {
+                    idUbicacionSesion = HttpContext.Session.GetInt32("id_ubicacion");
+                }
+
+                if (idUbicacionSesion.HasValue)
+                {
+                    obj_ingreso.id_ubicacion = idUbicacionSesion.Value;
+                    System.Diagnostics.Debug.WriteLine($"Asignando ubicación de sesión: {obj_ingreso.id_ubicacion}");
                 }
 
                 // validar si el vehiculo ya esta en el parqueadero
@@ -997,15 +1008,16 @@ namespace CarsParkingService.Controllers
                 obj_ingreso.valor_propina = 0;
                 obj_ingreso.total_servicio = 0;
 
-                // buscamos ubicacion
+                // Traemos la Ubicacion de la sesion
+                var UbicacionSesion = HttpContext.Session.GetInt32("id_ubicacion");
 
-                var ubicacion = _context.ubicacion_servicios.FirstOrDefault(u => u.id_ubicacion == obj_ingreso.id_ubicacion);
+                // Buscar ubicación usando el id asignado desde sesión
+                var ubicacion = _context.ubicacion_servicios
+                    .FirstOrDefault(u => u.id_ubicacion == UbicacionSesion);
 
                 if (ubicacion != null)
                 {
-
                     obj_ingreso.lugar_entrega = ubicacion.nombre_ubicacion;
-
                 }
 
                 // Convertir la firma de base64 a byte[]
