@@ -2069,7 +2069,7 @@ namespace CarsParkingService.Controllers
 
 
         [HttpGet]
-        public IActionResult ObtenerImagenesIngreso()
+        public IActionResult ObtenerImagenesIngreso( int idIngreso)
         {
             System.Diagnostics.Debug.WriteLine("[ObtenerImagenesIngreso] Inicio de consulta global de imágenes.");
             Console.WriteLine("[ObtenerImagenesIngreso] Inicio de consulta global de imágenes.");

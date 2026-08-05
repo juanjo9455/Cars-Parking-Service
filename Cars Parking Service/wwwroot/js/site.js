@@ -1858,7 +1858,9 @@ function abrirModalInformacion(btn) {
     contenido.innerHTML = "<p class='texto-cargando'>Cargando imágenes...</p>";
     modalAcciones.style.display = 'flex';
 
-    fetch(`/Home/ObtenerImagenesIngreso`, {
+    const idIngreso = btn.dataset.idIngreso;
+
+    fetch(`/Home/ObtenerImagenesIngreso=${idIngreso}`, {
         headers: {
             'Accept': 'application/json'
         }
