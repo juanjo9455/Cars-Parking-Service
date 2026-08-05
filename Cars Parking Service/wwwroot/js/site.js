@@ -1841,7 +1841,8 @@ function cerrarModalNoLiquidado() {
 
 // =========================== Eventos para ver informacion del ingreso ============================ \\
 
-function abrirModalInformacion(btn) {
+async function abrirModalInformacion(btn) {
+
     console.log("[abrirModalInformacion] Se solicitó abrir el modal de información.");
 
     const modalAcciones = document.getElementById('modal-acciones');
@@ -1860,93 +1861,104 @@ function abrirModalInformacion(btn) {
 
     const idIngreso = btn.dataset.idIngreso;
 
-    fetch(`/Home/ObtenerImagenesIngreso=${idIngreso}`, {
-        headers: {
-            'Accept': 'application/json'
-        }
-    })
-        .then(response => {
-            console.log("[abrirModalInformacion] Respuesta HTTP recibida:", response.status, response.statusText);
+    try {
 
-            if (!response.ok) {
-                throw new Error(`La petición falló con estado ${response.status}`);
-            }
+        // Hacemos las consultas de las imagenes y videos
 
-            return response.json();
-        })
-        .then(data => {
-            console.log("[abrirModalInformacion] Respuesta JSON completa:", data);
+        const [respuestaImagenes, respuestaVideos] = await Promise.all([
+            fetch(`/Home/ObtenerImagenesIngreso?idIngreso=${idIngreso}`),
+            fetch(`/Home/ObtenerVideosIngreso?idIngreso=${idIngreso}`)
+        ]);
 
-            if (!data || !data.success) {
-                console.log("[abrirModalInformacion] El controlador respondió sin éxito.");
-                contenido.innerHTML = "<p>No se pudieron obtener las imágenes del vehículo.</p>";
-                return;
-            }
+        if (!respuestaImagenes.ok)
+            throw new Error("No fue posible obtener las imagenes.");
 
-            const imagenes = Array.isArray(data.imagenes) ? data.imagenes : [];
-            console.log("[abrirModalInformacion] Total de imágenes recibidas:", imagenes.length);
+        if (!respuestaVideos.ok)
+            throw new Error("No fue posible obtener los videos.");
 
-            contenido.innerHTML = "";
+        const dataImagenes = await respuestaImagenes.json();
+        const dataVideos = await respuestaVideos.json();
 
-            // Título general de todas las imágenes
-            contenido.innerHTML += `
-                <h2>Todas las imágenes registradas</h2>
-                <p><strong>Total:</strong> ${data.total ?? imagenes.length}</p>
-            `;
+        contenido.innerHTML = "";
 
-            if (imagenes.length === 0) {
-                console.log("[abrirModalInformacion] No llegaron imágenes registradas.");
-                contenido.innerHTML += "<p>No hay imágenes registradas.</p>";
-                return;
-            }
+        //========================
+        // IMÁGENES
+        //========================
 
-            // Contenedor en forma de cuadrícula para mostrar miniaturas pequeñas y ordenadas
+        contenido.innerHTML += `
+            <h2>📷 Imágenes</h2>
+        `;
+
+        if (dataImagenes.imagenes.length == 0) {
+
+            contenido.innerHTML += "<p>No hay imágenes registradas.</p>";
+
+        } else {
+
             const contenedorImagenes = document.createElement("div");
-            contenedorImagenes.className = "contenedor-imagenes";
+
             contenedorImagenes.style.display = "grid";
-            contenedorImagenes.style.gridTemplateColumns = "repeat(auto-fill, minmax(120px, 1fr))";
+            contenedorImagenes.style.gridTemplateColumns = "repeat(auto-fill, minmax(120px,1fr))";
             contenedorImagenes.style.gap = "10px";
-            contenedorImagenes.style.marginTop = "15px";
 
-            imagenes.forEach((imagen, index) => {
-                if (!imagen || !imagen.src) {
-                    console.log(`[abrirModalInformacion] Se omitió una imagen inválida en la posición ${index}.`);
-                    return;
-                }
-
-                console.log(`[abrirModalInformacion] Pintando imagen ${index + 1} con id_imagen=${imagen.id_imagen} e id_ingreso=${imagen.id_ingreso}.`);
-
-                const caja = document.createElement("div");
-                caja.style.width = "100%";
-                caja.style.height = "120px";
-                caja.style.overflow = "hidden";
-                caja.style.border = "1px solid #ddd";
-                caja.style.borderRadius = "10px";
-                caja.style.background = "#fff";
-                caja.style.boxShadow = "0 1px 4px rgba(0,0,0,0.08)";
-                caja.style.display = "flex";
-                caja.style.alignItems = "center";
-                caja.style.justifyContent = "center";
+            dataImagenes.imagenes.forEach(imagen => {
 
                 const img = document.createElement("img");
-                img.src = imagen.src;
-                img.alt = `Imagen ${index + 1} del ingreso ${data.ingreso}`;
-                img.style.width = "100%";
-                img.style.height = "100%";
-                img.style.objectFit = "cover";
-                img.style.display = "block";
 
-                caja.appendChild(img);
-                contenedorImagenes.appendChild(caja);
+                img.src = imagen.src;
+                img.style.width = "100%";
+                img.style.height = "120px";
+                img.style.objectFit = "cover";
+                img.style.borderRadius = "8px";
+
+                contenedorImagenes.appendChild(img);
+
             });
 
             contenido.appendChild(contenedorImagenes);
-            console.log("[abrirModalInformacion] Modal renderizado correctamente con miniaturas.");
-        })
-        .catch(error => {
-            console.error("[abrirModalInformacion] Error al obtener la información del vehículo:", error);
-            contenido.innerHTML = "<p>Ocurrió un error al obtener la información del vehículo.</p>";
-        });
+
+        }
+
+        //========================
+        // VIDEOS
+        //========================
+
+        contenido.innerHTML += `
+            <hr style="margin:25px 0;">
+            <h2>🎥 Videos</h2>
+        `;
+
+        if (dataVideos.videos.length == 0) {
+
+            contenido.innerHTML += "<p>No hay videos registrados.</p>";
+
+        } else {
+
+            dataVideos.videos.forEach(video => {
+
+                const reproductor = document.createElement("video");
+
+                reproductor.src = video.src;
+                reproductor.controls = true;
+                reproductor.style.width = "100%";
+                reproductor.style.marginBottom = "15px";
+                reproductor.style.borderRadius = "8px";
+
+                contenido.appendChild(reproductor);
+
+            });
+
+        }
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        contenido.innerHTML =
+            "<p>Ocurrió un error al obtener la información del vehículo.</p>";
+
+    }
 }
 
 function cerrarModalAcciones() {

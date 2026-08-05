@@ -35,54 +35,134 @@ if (btnAcceder) {
 
 }
 
-function verInfoExtra(btn) {
+async function abrirModalInformacionKey(btn) {
+
     const idIngreso = btn?.dataset?.idIngreso;
     const data = window.vistaKeyInfoMap?.[String(idIngreso)];
 
     if (!data) {
-        alert('No se encontró información del vehículo.');
+        alert("No se encontró información del vehículo.");
         return;
     }
 
-    const modal = document.getElementById('modalInfoKey');
-    const placa = document.getElementById('infoKeyPlaca');
-    const cliente = document.getElementById('infoKeyCliente');
-    const valet = document.getElementById('infoKeyValet');
-    const ubicacion = document.getElementById('infoKeyUbicacion');
-    const gallery = document.getElementById('infoKeyGallery');
-    const noPhotos = document.getElementById('infoKeyNoPhotos');
+    const modal = document.getElementById("modalInfoKey");
 
-    if (!modal || !placa || !cliente || !valet || !ubicacion || !gallery || !noPhotos) return;
+    const placa = document.getElementById("infoKeyPlaca");
+    const cliente = document.getElementById("infoKeyCliente");
+    const valet = document.getElementById("infoKeyValet");
+    const ubicacion = document.getElementById("infoKeyUbicacion");
 
-    placa.textContent = data.placa || 'N/A';
-    cliente.textContent = data.cliente || 'N/A';
-    valet.textContent = data.valet || 'N/A';
-    ubicacion.textContent = data.ubicacion || 'N/A';
+    const gallery = document.getElementById("infoKeyGallery");
+    const noPhotos = document.getElementById("infoKeyNoPhotos");
 
-    gallery.innerHTML = '';
-
-    const fotos = Array.isArray(data.fotos) ? data.fotos : [];
-    if (fotos.length === 0) {
-        noPhotos.style.display = 'block';
-    } else {
-        noPhotos.style.display = 'none';
-
-        fotos.forEach((foto, index) => {
-            const item = document.createElement('div');
-            item.className = 'info-key-photo-item';
-
-            const img = document.createElement('img');
-            img.src = foto;
-            img.alt = `Foto ${index + 1}`;
-            img.loading = 'lazy';
-
-            item.appendChild(img);
-            gallery.appendChild(item);
-        });
+    if (!modal || !placa || !cliente || !valet || !ubicacion || !gallery || !noPhotos) {
+        console.error("No se encontró el modal de información.");
+        return;
     }
 
-    modal.classList.add('show');
-    modal.setAttribute('aria-hidden', 'false');
+    //========================
+    // INFORMACIÓN DEL VEHÍCULO
+    //========================
+
+    placa.textContent = data.placa || "N/A";
+    cliente.textContent = data.cliente || "N/A";
+    valet.textContent = data.valet || "N/A";
+    ubicacion.textContent = data.ubicacion || "N/A";
+
+    //========================
+    // PREPARAR GALERÍA
+    //========================
+
+    gallery.innerHTML = "";
+    noPhotos.style.display = "none";
+
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
+
+    try {
+
+        const [respuestaImagenes, respuestaVideos] = await Promise.all([
+            fetch(`/Home/ObtenerImagenesIngreso?idIngreso=${idIngreso}`),
+            fetch(`/Home/ObtenerVideosIngreso?idIngreso=${idIngreso}`)
+        ]);
+
+        if (!respuestaImagenes.ok)
+            throw new Error("No fue posible obtener las imágenes.");
+
+        if (!respuestaVideos.ok)
+            throw new Error("No fue posible obtener los videos.");
+
+        const dataImagenes = await respuestaImagenes.json();
+        const dataVideos = await respuestaVideos.json();
+
+        //========================
+        // IMÁGENES
+        //========================
+
+        if (dataImagenes.imagenes.length > 0) {
+
+            dataImagenes.imagenes.forEach(imagen => {
+
+                const item = document.createElement("div");
+                item.className = "info-key-photo-item";
+
+                const img = document.createElement("img");
+
+                img.src = imagen.src;
+                img.alt = "Imagen del vehículo";
+                img.loading = "lazy";
+
+                item.appendChild(img);
+                gallery.appendChild(item);
+
+            });
+
+        }
+
+        //========================
+        // VIDEOS
+        //========================
+
+        if (dataVideos.videos.length > 0) {
+
+            dataVideos.videos.forEach(video => {
+
+                const item = document.createElement("div");
+                item.className = "info-key-photo-item";
+
+                const reproductor = document.createElement("video");
+
+                reproductor.src = video.src;
+                reproductor.controls = true;
+                reproductor.preload = "metadata";
+                reproductor.style.width = "100%";
+                reproductor.style.height = "100%";
+                reproductor.style.objectFit = "cover";
+
+                item.appendChild(reproductor);
+                gallery.appendChild(item);
+
+            });
+
+        }
+
+        if (
+            dataImagenes.imagenes.length === 0 &&
+            dataVideos.videos.length === 0
+        ) {
+            noPhotos.style.display = "block";
+        }
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        noPhotos.style.display = "block";
+        noPhotos.textContent = "Ocurrió un error al obtener la información del vehículo.";
+
+    }
+
 }
 
 function cerrarModalInfoKey() {

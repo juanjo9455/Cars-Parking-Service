@@ -2069,7 +2069,7 @@ namespace CarsParkingService.Controllers
 
 
         [HttpGet]
-        public IActionResult ObtenerImagenesIngreso( int idIngreso)
+        public IActionResult ObtenerImagenesIngreso(int idIngreso)
         {
             System.Diagnostics.Debug.WriteLine("[ObtenerImagenesIngreso] Inicio de consulta global de imágenes.");
             Console.WriteLine("[ObtenerImagenesIngreso] Inicio de consulta global de imágenes.");
@@ -2088,6 +2088,7 @@ namespace CarsParkingService.Controllers
                         ? null
                         : $"data:image/jpeg;base64,{Convert.ToBase64String(i.dato_imagen)}"
                 })
+                .Where(i => i.id_ingreso == idIngreso)
                 .ToList();
 
             System.Diagnostics.Debug.WriteLine($"[ObtenerImagenesIngreso] Imágenes totales encontradas: {imagenes.Count}");
@@ -2098,6 +2099,37 @@ namespace CarsParkingService.Controllers
                 success = true,
                 total = imagenes.Count,
                 imagenes
+            });
+        }
+
+        [HttpGet]
+        public IActionResult ObtenerVideosIngreso(int idIngreso)
+        {
+            System.Diagnostics.Debug.WriteLine("[ObtenerVideosIngreso] Inicio de consulta global de Videos.");
+            Console.WriteLine("[ObtenerVideosIngreso] Inicio de consulta global de Videos.");
+
+            var videos = _context.imagenes
+                .AsNoTracking()
+                .OrderBy(i => i.id_imagen)
+                .Select(i => new
+                {
+                    i.id_imagen,
+                    i.id_ingreso,
+                    src = i.dato_imagen == null
+                        ? null
+                        : $"data:video/mp4;base64,{Convert.ToBase64String(i.dato_imagen)}"
+                })
+                .Where(i => i.id_ingreso == idIngreso)
+                .ToList();
+
+            System.Diagnostics.Debug.WriteLine($"[ObtenerVideosIngreso] Videos totales encontrados: {videos.Count}");
+            Console.WriteLine($"[ObtenerVideosIngreso] Videos totales encontrados: {videos.Count}");
+
+            return Json(new
+            {
+                success = true,
+                total = videos.Count,
+                videos
             });
         }
 
