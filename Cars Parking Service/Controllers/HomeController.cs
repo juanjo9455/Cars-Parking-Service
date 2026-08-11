@@ -2071,28 +2071,35 @@ namespace CarsParkingService.Controllers
         [HttpGet]
         public IActionResult ObtenerImagenesIngreso(int idIngreso)
         {
-            System.Diagnostics.Debug.WriteLine("[ObtenerImagenesIngreso] Inicio de consulta global de imágenes.");
-            Console.WriteLine("[ObtenerImagenesIngreso] Inicio de consulta global de imágenes.");
-
-            System.Diagnostics.Debug.WriteLine("[ObtenerImagenesIngreso] Consultando todas las imágenes de tbl_imagenes sin filtrar por ingreso.");
-            Console.WriteLine("[ObtenerImagenesIngreso] Consultando todas las imágenes de tbl_imagenes sin filtrar por ingreso.");
+            System.Diagnostics.Debug.WriteLine("[ObtenerImagenesIngreso] Inicio de consulta de imágenes.");
+            Console.WriteLine("[ObtenerImagenesIngreso] Inicio de consulta de imágenes.");
 
             var imagenes = _context.imagenes
                 .AsNoTracking()
+                .Where(i =>
+                    i.id_ingreso == idIngreso &&
+                    i.dato_imagen != null &&
+                    i.dato_imagen.Length >= 3 &&
+                    i.dato_imagen[0] == 0xFF &&
+                    i.dato_imagen[1] == 0xD8 &&
+                    i.dato_imagen[2] == 0xFF
+                )
                 .OrderBy(i => i.id_imagen)
                 .Select(i => new
                 {
                     i.id_imagen,
                     i.id_ingreso,
-                    src = i.dato_imagen == null
-                        ? null
-                        : $"data:image/jpeg;base64,{Convert.ToBase64String(i.dato_imagen)}"
+                    src = $"data:image/jpeg;base64,{Convert.ToBase64String(i.dato_imagen)}"
                 })
-                .Where(i => i.id_ingreso == idIngreso)
                 .ToList();
 
-            System.Diagnostics.Debug.WriteLine($"[ObtenerImagenesIngreso] Imágenes totales encontradas: {imagenes.Count}");
-            Console.WriteLine($"[ObtenerImagenesIngreso] Imágenes totales encontradas: {imagenes.Count}");
+            System.Diagnostics.Debug.WriteLine(
+                $"[ObtenerImagenesIngreso] Imágenes encontradas: {imagenes.Count}"
+            );
+
+            Console.WriteLine(
+                $"[ObtenerImagenesIngreso] Imágenes encontradas: {imagenes.Count}"
+            );
 
             return Json(new
             {
@@ -2102,28 +2109,40 @@ namespace CarsParkingService.Controllers
             });
         }
 
+
         [HttpGet]
         public IActionResult ObtenerVideosIngreso(int idIngreso)
         {
-            System.Diagnostics.Debug.WriteLine("[ObtenerVideosIngreso] Inicio de consulta global de Videos.");
-            Console.WriteLine("[ObtenerVideosIngreso] Inicio de consulta global de Videos.");
+            System.Diagnostics.Debug.WriteLine("[ObtenerVideosIngreso] Inicio de consulta de videos.");
+            Console.WriteLine("[ObtenerVideosIngreso] Inicio de consulta de videos.");
 
             var videos = _context.imagenes
                 .AsNoTracking()
+                .Where(i =>
+                    i.id_ingreso == idIngreso &&
+                    i.dato_imagen != null &&
+                    i.dato_imagen.Length >= 4 &&
+                    i.dato_imagen[0] == 0x1A &&
+                    i.dato_imagen[1] == 0x45 &&
+                    i.dato_imagen[2] == 0xDF &&
+                    i.dato_imagen[3] == 0xA3
+                )
                 .OrderBy(i => i.id_imagen)
                 .Select(i => new
                 {
                     i.id_imagen,
                     i.id_ingreso,
-                    src = i.dato_imagen == null
-                        ? null
-                        : $"data:video/mp4;base64,{Convert.ToBase64String(i.dato_imagen)}"
+                    src = $"data:video/webm;base64,{Convert.ToBase64String(i.dato_imagen)}"
                 })
-                .Where(i => i.id_ingreso == idIngreso)
                 .ToList();
 
-            System.Diagnostics.Debug.WriteLine($"[ObtenerVideosIngreso] Videos totales encontrados: {videos.Count}");
-            Console.WriteLine($"[ObtenerVideosIngreso] Videos totales encontrados: {videos.Count}");
+            System.Diagnostics.Debug.WriteLine(
+                $"[ObtenerVideosIngreso] Videos encontrados: {videos.Count}"
+            );
+
+            Console.WriteLine(
+                $"[ObtenerVideosIngreso] Videos encontrados: {videos.Count}"
+            );
 
             return Json(new
             {
