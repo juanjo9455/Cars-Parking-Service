@@ -426,17 +426,42 @@
             }
 
                 <!-- Modal unificado para todas las acciones con los ingresos -->
-
                 <div id="modal-acciones" class="Editar-Ingreso" style="display:none;">
-                    
+
                     <div class="modal-overlay" onclick="cerrarModalAcciones()"></div>
 
                     <div class="Card-Ingreso card-ingreso-vehiculos">
-                        <span class="close-btn" onclick="cerrarModalAcciones()">&times;</span>
 
-                        <div id="contenido-modal-acciones">
-                            
-                        </div>
+                        <span class="close-btn" onclick="cerrarModalAcciones()">
+                            &times;
+                        </span>
+
+                        <div id="contenido-modal-acciones"></div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==========================================
+                     VISOR DE IMAGEN EN GRANDE
+                ========================================== -->
+
+                <div id="visor-imagen" class="visor-imagen" style="display:none;">
+
+                    <div class="visor-overlay" onclick="cerrarVisorImagen()"></div>
+
+                    <div class="visor-contenido">
+
+                        <button class="visor-cerrar"
+                                type="button"
+                                onclick="cerrarVisorImagen()">
+                            &times;
+                        </button>
+
+                        <img id="imagen-grande"
+                             src=""
+                             alt="Imagen ampliada">
 
                     </div>
 

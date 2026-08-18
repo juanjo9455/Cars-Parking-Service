@@ -124,7 +124,7 @@
         const idValet = document.getElementById('id_valet')?.value || '';
         const idBanco = document.querySelector('input[name="id_banco"]')?.value || '';
         const idParqueadero = document.getElementById('id_parqueadero')?.value || '';
-        const idUbicacion = document.getElementById('id_ubicacion')?.value || '';
+        //const idUbicacion = document.getElementById('id_ubicacion')?.value || '';
 
         console.log('=== VALIDACIÓN DE CAMPOS ===');
         console.log('Placa:', placa);
@@ -132,7 +132,7 @@
         console.log('ID Valet:', idValet);
         console.log('ID Banco:', idBanco);
         console.log('ID Parqueadero:', idParqueadero);
-        console.log('ID Ubicación:', idUbicacion);
+        //console.log('ID Ubicación:', idUbicacion);
 
         if (!placa || !/^[A-Z]{3}[0-9]{3}$/.test(placa)) {
             errores.push('Placa inválida');
@@ -164,11 +164,11 @@
             if (errorParqueadero) errorParqueadero.style.display = 'block';
         }
 
-        if (!idUbicacion) {
+        /*if (!idUbicacion) {
             errores.push('Ubicación requerida');
             const errorUbicacion = document.getElementById('errorUbicacion');
             if (errorUbicacion) errorUbicacion.style.display = 'block';
-        }
+        }*/
 
         // Validar firma
         console.log('=== VALIDACIÓN DE FIRMA ===');

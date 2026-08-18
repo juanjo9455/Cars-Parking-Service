@@ -1838,6 +1838,8 @@ tbody td:last-child {
     box-shadow: 0 2px 8px rgba(211,47,47,0.04);
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .input-group.notas-group textarea {
@@ -1942,6 +1944,19 @@ tbody td:last-child {
     gap: 12px;
     align-items: flex-start;
     flex-wrap: wrap;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+.photos-preview {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    box-sizing: border-box;
 }
 
 /* quita algunas margenes que quizas estorben */
@@ -2017,3 +2032,59 @@ tbody td:last-child {
     cursor: not-allowed;
 }
 
+/* =========================
+   VISOR DE IMÁGENES
+========================= */
+
+.visor-imagen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.visor-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+}
+
+.visor-contenido {
+    position: relative;
+    z-index: 2;
+    width: 90%;
+    height: 90%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#imagen-grande {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.6);
+}
+
+.visor-cerrar {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: #e53935;
+    color: white;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 3;
+}
+
+.visor-cerrar:hover {
+    transform: scale(1.1);
+}

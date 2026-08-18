@@ -1843,10 +1843,18 @@ function cerrarModalNoLiquidado() {
 
 async function abrirModalInformacion(btn) {
 
-    console.log("[abrirModalInformacion] Se solicitó abrir el modal de información.");
+    console.log("========================================");
+    console.log("[INFO] abrirModalInformacion() INICIADA");
+    console.log("========================================");
+
+    console.log("[INFO] Botón recibido:", btn);
 
     const modalAcciones = document.getElementById('modal-acciones');
     const contenido = document.getElementById('contenido-modal-acciones');
+
+    console.log("[INFO] modal-acciones encontrado:", modalAcciones);
+    console.log("[INFO] contenido-modal-acciones encontrado:", contenido);
+
     console.log("[abrirModalInformacion] Se abrirá el modal para mostrar todas las imágenes registradas.");
 
     if (!modalAcciones || !contenido) {
@@ -1854,16 +1862,30 @@ async function abrirModalInformacion(btn) {
         return;
     }
 
+
+    const idIngreso = btn.dataset.idIngreso;
+
+    console.log("[INFO] ID del ingreso:", idIngreso);
+
     // Marcador visual: estado inicial de carga
     console.log("[abrirModalInformacion] Consultando todas las imágenes en el controlador...");
     contenido.innerHTML = "<p class='texto-cargando'>Cargando imágenes...</p>";
+    console.log("[INFO] Mostrando modal-acciones...");
+
     modalAcciones.style.display = 'flex';
 
-    const idIngreso = btn.dataset.idIngreso;
+    console.log(
+        "[INFO] display actual de modal-acciones:",
+        modalAcciones.style.display
+    );
 
     try {
 
         // Hacemos las consultas de las imagenes y videos
+
+        console.log("========================================");
+        console.log("[FETCH] Iniciando consultas...");
+        console.log("========================================");
 
         const [respuestaImagenes, respuestaVideos] = await Promise.all([
             fetch(`/Home/ObtenerImagenesIngreso?idIngreso=${idIngreso}`),
@@ -1901,7 +1923,10 @@ async function abrirModalInformacion(btn) {
             contenedorImagenes.style.gridTemplateColumns = "repeat(auto-fill, minmax(120px,1fr))";
             contenedorImagenes.style.gap = "10px";
 
-            dataImagenes.imagenes.forEach(imagen => {
+            dataImagenes.imagenes.forEach((imagen, index) => {
+
+                console.log("[IMAGEN] Creando imagen:", index);
+                console.log("[IMAGEN] SRC:", imagen.src);
 
                 const img = document.createElement("img");
 
@@ -1910,10 +1935,15 @@ async function abrirModalInformacion(btn) {
                 img.style.height = "120px";
                 img.style.objectFit = "cover";
                 img.style.borderRadius = "8px";
+                img.style.cursor = "pointer";
+
+                // Identificamos que este elemento es una imagen de la galería
+                img.classList.add("imagen-galeria");
 
                 contenedorImagenes.appendChild(img);
 
             });
+
 
             contenido.appendChild(contenedorImagenes);
 
@@ -1962,17 +1992,110 @@ async function abrirModalInformacion(btn) {
 }
 
 function cerrarModalAcciones() {
-    console.log("[cerrarModalAcciones] Cerrando el modal de acciones.");
+
+    console.log("========================================");
+    console.log("[MODAL] cerrarModalAcciones()");
 
     const modalAcciones = document.getElementById('modal-acciones');
     const contenido = document.getElementById('contenido-modal-acciones');
 
+    console.log(
+        "[MODAL] modal encontrado:",
+        modalAcciones
+    );
+
+    console.log(
+        "[MODAL] contenido encontrado:",
+        contenido
+    );
+
     if (modalAcciones) {
         modalAcciones.style.display = 'none';
+
+        console.log(
+            "[MODAL] Modal ocultado."
+        );
     }
 
     if (contenido) {
         contenido.innerHTML = '';
+
+        console.log(
+            "[MODAL] Contenido limpiado."
+        );
     }
 }
 
+// ==========================================
+// ABRIR VISOR DE IMAGEN
+// ==========================================
+
+function abrirVisorImagen(src) {
+
+    console.log("=================================");
+    console.log("[VISOR] abrirVisorImagen() EJECUTADA");
+    console.log("[VISOR] SRC recibido:", src);
+
+    const visor = document.getElementById("visor-imagen");
+    const imagenGrande = document.getElementById("imagen-grande");
+
+    console.log("[VISOR] visor:", visor);
+    console.log("[VISOR] imagenGrande:", imagenGrande);
+
+    if (!visor) {
+        console.error("[VISOR] ❌ NO existe #visor-imagen");
+        return;
+    }
+
+    if (!imagenGrande) {
+        console.error("[VISOR] ❌ NO existe #imagen-grande");
+        return;
+    }
+
+    console.log("[VISOR] Asignando SRC a imagen grande...");
+
+    imagenGrande.src = src;
+
+    console.log("[VISOR] Mostrando visor...");
+
+    visor.style.display = "flex";
+
+    console.log("[VISOR] display actual:", visor.style.display);
+    console.log("=================================");
+}
+
+
+function cerrarVisorImagen() {
+
+    const visor = document.getElementById("visor-imagen");
+    const imagenGrande = document.getElementById("imagen-grande");
+
+    if (visor) {
+        visor.style.display = "none";
+    }
+
+    if (imagenGrande) {
+        imagenGrande.src = "";
+    }
+}
+
+// ==========================================
+// LISTENER DEL CONTENEDOR DE IMÁGENES
+// ==========================================
+
+document.addEventListener("click", function (event) {
+
+    console.log("[CLICK GLOBAL] Se detectó un click.");
+
+    const imagen = event.target.closest(".imagen-galeria");
+
+    if (!imagen) {
+        console.log("[CLICK GLOBAL] El elemento clickeado no es una imagen de la galería.");
+        return;
+    }
+
+    console.log("[CLICK GLOBAL] ¡SE CLICKEÓ UNA IMAGEN!");
+    console.log("[CLICK GLOBAL] SRC:", imagen.src);
+
+    abrirVisorImagen(imagen.src);
+});
