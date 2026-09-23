@@ -85,3 +85,67 @@
             </a>
         </div>
 </div>
+
+<script>
+    (function () {
+        const spinnerSvg = '<svg viewBox="25 25 50 50"><circle r="20" cy="50" cx="50"></circle></svg>';
+
+        const addSpinner = (el) => {
+            if (!el || el.querySelector('.btn-spinner')) return;
+            el.classList.add('btn-loading-target');
+            const spinner = document.createElement('span');
+            spinner.className = 'btn-spinner';
+            spinner.setAttribute('aria-hidden', 'true');
+            spinner.innerHTML = spinnerSvg;
+            el.appendChild(spinner);
+        };
+
+        const getSpinnerColor = (el) => {
+            const styles = window.getComputedStyle(el);
+            const bg = styles.backgroundColor;
+            const values = bg.match(/\d+(?:\.\d+)?/g);
+
+            if (!values || bg === 'transparent') {
+                return '#c62828';
+            }
+
+            const r = Number(values[0] || 0) / 255;
+            const g = Number(values[1] || 0) / 255;
+            const b = Number(values[2] || 0) / 255;
+            const luminance = (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
+
+            return luminance > 0.72 ? '#c62828' : '#ffffff';
+        };
+
+        const activate = (el) => {
+            if (!el) return;
+            addSpinner(el);
+            el.style.setProperty('--spinner-stroke', getSpinnerColor(el));
+            el.classList.add('btn-loading');
+            if (el.tagName === 'BUTTON') {
+                el.disabled = true;
+            }
+        };
+
+        const boot = () => {
+            document.querySelectorAll('button, a.btn, a.home-action-btn').forEach(addSpinner);
+
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', ev => {
+                    const submitter = ev.submitter || form.querySelector('button[type="submit"], button:not([type])');
+                    activate(submitter);
+                });
+            });
+
+            document.querySelectorAll('a.btn, a.home-action-btn').forEach(link => {
+                link.addEventListener('click', () => activate(link));
+            });
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', boot);
+        } else {
+            boot();
+        }
+    })();
+</script>
