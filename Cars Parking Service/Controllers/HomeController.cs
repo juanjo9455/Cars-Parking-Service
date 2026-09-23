@@ -2191,20 +2191,38 @@ namespace CarsParkingService.Controllers
         [HttpPost]
         public async Task<IActionResult> KeepAlive()
         {
-            var idSesion = HttpContext.Session.GetInt32("id_sesion");
-
-            if (idSesion.HasValue)
+            // 1. Validar si el usuario está autenticado en la cookie/Claims
+            if (User.Identity == null || !User.Identity.IsAuthenticated)
             {
-                var sesion = await _context.sesiones.FindAsync(idSesion.Value);
-                if (sesion != null && sesion.fecha_fin == null)
-                {
-                    sesion.ultima_actividad = DateTime.Now;
-                    await _context.SaveChangesAsync();
-                    return Ok();
-                }
+                return Unauthorized(new { success = false, message = "Sesión expirada" });
             }
 
-            return Unauthorized();
+            // 2. Obtener el ID del usuario desde la sesión o Claim
+            var idUsuarioStr = HttpContext.Session.GetString("IdUsuario"); // o id_usuario según tu variable
+            if (string.IsNullOrEmpty(idUsuarioStr) || !int.TryParse(idUsuarioStr, out int idUsuario))
+            {
+                return Unauthorized(new { success = false, message = "Identificador de usuario no válido" });
+            }
+
+            // 3. Buscar la sesión activa en la base de datos y actualizar ultima_actividad
+            var sesionActiva = await _context.TblSesiones
+                .FirstOrDefaultAsync(s => s.IdUsuario == idUsuario && s.Estado == "activa");
+
+            if (sesionActiva == null)
+            {
+                // Si el LimpiadorSesionesService ya la eliminó/inactivó
+                HttpContext.Session.Clear();
+                return Unauthorized(new { success = false, message = "Sesión finalizada por inactividad" });
+            }
+
+            // 4. Renovar el timestamp de última actividad
+            sesionActiva.UltimaActividad = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            // Opcional: Refrescar también la variable de sesión local
+            HttpContext.Session.SetString("UltimaActividad", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+
+            return Ok(new { success = true, message = "Sesión renovada" });
         }
     }
 }
