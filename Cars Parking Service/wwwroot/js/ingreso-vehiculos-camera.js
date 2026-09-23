@@ -26,6 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const fotosObjetosBase64Container =
         document.getElementById('fotosObjetosBase64Container');
 
+    const photoCounterObjetos =
+        document.getElementById('photoCounterObjetos');
+
     if (!photoCounter || !grabarVideoBtn || !videoPreviewContainer || !videoBase64Input || !errorMedia || !recordTimer) {
         return;
     }
@@ -35,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let archivosObjetosCapturados = [];
     let cameraInputObjetosClicking = false; // Previene doble click
+    const MAX_OBJETOS = 5; // Máximo de imágenes para objetos de valor
 
     function actualizarContador() {
         const cantidad = videoGrabado ? 1 : 0;
@@ -46,6 +50,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             grabarVideoBtn.classList.remove('disabled-photo-btn');
             grabarVideoBtn.disabled = false;
+        }
+    }
+
+    function actualizarContadorObjetos() {
+        const cantidad = archivosObjetosCapturados.length;
+        if (photoCounterObjetos) {
+            photoCounterObjetos.textContent = `${cantidad} imagen${cantidad === 1 ? '' : 'es'} seleccionada${cantidad === 1 ? '' : 's'} (max. ${MAX_OBJETOS})`;
         }
     }
 
@@ -101,6 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 sincronizarInputsObjetosOcultos();
 
+                actualizarContadorObjetos();
+
             });
 
             previewDiv.appendChild(removeBtn);
@@ -108,6 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
             photosPreviewObjetos.appendChild(previewDiv)
 
         });
+
+        actualizarContadorObjetos();
     }
 
     if (tomarFotoObjetosBtn && cameraInputObjetos && photosPreviewObjetos && fotosObjetosBase64Container) {
@@ -118,6 +133,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const files = Array.from(e.target.files);
 
             if (!files.length) return;
+
+            // Validar que no se exceda el máximo de imágenes
+            if (archivosObjetosCapturados.length + files.length > MAX_OBJETOS) {
+                alert(`Solo puedes subir hasta ${MAX_OBJETOS} imágenes para objetos de valor.`);
+                cameraInputObjetos.value = '';
+                return;
+            }
 
             for (const file of files) {
 
@@ -133,6 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             renderPreviewObjetos();
             sincronizarInputsObjetosOcultos();
+            actualizarContadorObjetos();
 
         });
 
@@ -143,6 +166,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 return;
 
+            }
+
+            // Validar que no se haya alcanzado el máximo antes de abrir la cámara
+            if (archivosObjetosCapturados.length >= MAX_OBJETOS) {
+                alert(`Ya has alcanzado el máximo de ${MAX_OBJETOS} imágenes para objetos de valor.`);
+                return;
             }
 
             cameraInputObjetosClicking = true;
