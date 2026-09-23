@@ -342,40 +342,39 @@
 
                     }      
                         
-                    @if (idRol != 3)
+                    <td data-label="Acción" class="cell-action">
+
+                        @* 1. Tomar vehículo (Solo para Valet / Rol 1) *@
+                        @if (ingresos.id_valet is null && idRol == 1)
                         {
-                        <td data-label="Acción" class="cell-action">
+                            <i class="fa-solid fa-car-side btn-action"
+                                onclick="abrirModalTomarVehiculo(this)"
+                                data-id="@ingresos.id_ingreso"
+                                data-placa="@ingresos.placa"
+                                data-cliente="@ingresos.nombre_cliente"
+                                style="cursor:pointer;">
+                            </i>
+                        }
 
-                        
-                            @* 1. Tomar vehículo *@
-                            @if (ingresos.id_valet is null && idRol == 1)
-                            {
-                                <i class="fa-solid fa-car-side btn-action"
-                                    onclick="abrirModalTomarVehiculo(this)"
-                                    data-id="@ingresos.id_ingreso"
-                                    data-placa="@ingresos.placa"
-                                    data-cliente="@ingresos.nombre_cliente"
-                                    style="cursor:pointer;">
-                                </i>
-                            }
+                        @* 2. Cámara solo para el valet responsable *@
+                        @if (ingresos.id_valet == idUsuarioSesion &&
+                            !ingresos.foto_estacionamiento &&
+                            ingresos.estado_servicio != "solicitado" && idRol == 1 && ingresos.estado_servicio != "despachado")
+                        {
+                            <i class="fa-solid fa-camera btn-action"
+                                onclick="abrirModalFoto(this)"
+                                data-id-ingreso="@ingresos.id_ingreso"
+                                data-placa="@ingresos.placa"
+                                data-cliente="@ingresos.nombre_cliente"
+                                style="cursor:pointer;">
+                            </i>
+                        }
 
-                            @* 2. Cámara solo para el valet responsable *@
-                            @if (ingresos.id_valet == idUsuarioSesion &&
-                                        !ingresos.foto_estacionamiento &&
-                                        ingresos.estado_servicio != "solicitado" && idRol == 1 && ingresos.estado_servicio != "despachado")
-                            {
-                                <i class="fa-solid fa-camera btn-action"
-                                    onclick="abrirModalFoto(this)"
-                                    data-id-ingreso="@ingresos.id_ingreso"
-                                    data-placa="@ingresos.placa"
-                                    data-cliente="@ingresos.nombre_cliente"
-                                    style="cursor:pointer;">
-                                </i>
-                            }
+                        @* 3. Opciones de Pago (Para todos excepto el Admin) *@
+                        @if (idRol != 3)
+                        {
                             @if (idUsuarioSesion == ingresos.id_valet)
                             {
-
-                                @* 3. Pago *@
                                 @if (ingresos.id_valet != null && ingresos.foto_estacionamiento && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado" || ingresos.estado_servicio == "despachado")
                                 {
                                     <i class="fa-solid fa-credit-card btn-action"
@@ -388,11 +387,9 @@
                                         style="cursor:pointer;">
                                     </i>
                                 }
-
                             }
                             else
                             {
-                                @* 3.1. Pago *@
                                 @if (ingresos.id_valet != null && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado")
                                 {
                                     <i class="fa-solid fa-credit-card btn-action"
@@ -405,36 +402,20 @@
                                         style="cursor:pointer;">
                                     </i>
                                 }
-
                             }
-                            @* 4. Información *@
-                            @if (ingresos.estado_pago == "pagado" &&
-                                        ingresos.estado_servicio == "finalizado")
-                            {
-                                <i class="fa-solid fa-circle-info btn-action"
-                                    onclick="abrirModalInformacion(this)"
-                                    data-id-ingreso="@ingresos.id_ingreso">
-                                </i>
-                            }
-                        </td>
-                    }
-                    else
-                    {
-                        <td data-label="Acción" class="cell-action">
+                        }
 
-                            @* 4. Información *@
-                            @if (ingresos.estado_pago == "pagado" &&
-                                        ingresos.estado_servicio == "finalizado")
-                            {
-                                <i class="fa-solid fa-circle-info btn-action"
-                                    onclick="abrirModalInformacion(this)"
-                                    data-id-ingreso="@ingresos.id_ingreso">
-                                </i>
-                            }
+                        @* 4. Información: Visible para Admin (idRol == 3) en TODOS los registros, o para otros roles solo si está pagado y finalizado *@
+                        @if (idRol == 3 || (ingresos.estado_pago == "pagado" && ingresos.estado_servicio == "finalizado"))
+                        {
+                            <i class="fa-solid fa-circle-info btn-action"
+                                onclick="abrirModalInformacion(this)"
+                                data-id-ingreso="@ingresos.id_ingreso"
+                                style="cursor:pointer;">
+                            </i>
+                        }
 
-
-                        </td>
-                    }
+                    </td>
                 </tr>
             }
 
