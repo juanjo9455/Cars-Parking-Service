@@ -420,7 +420,20 @@
                     }
                     else
                     {
-                        <td data-label="Acción" class="cell-action"></td>
+                        <td data-label="Acción" class="cell-action">
+
+                            @* 4. Información *@
+                            @if (ingresos.estado_pago == "pagado" &&
+                                        ingresos.estado_servicio == "finalizado")
+                            {
+                                <i class="fa-solid fa-circle-info btn-action"
+                                    onclick="abrirModalInformacion(this)"
+                                    data-id-ingreso="@ingresos.id_ingreso">
+                                </i>
+                            }
+
+
+                        </td>
                     }
                 </tr>
             }
