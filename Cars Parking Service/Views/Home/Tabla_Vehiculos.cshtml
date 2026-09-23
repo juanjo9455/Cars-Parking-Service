@@ -197,7 +197,10 @@
                         <option value="">Todos</option>
                         <option value="activo" selected="@(ViewData["FiltroEstadoServicio"]?.ToString() == "activo")">Activo</option>
                         <option value="finalizado" selected="@(ViewData["FiltroEstadoServicio"]?.ToString() == "finalizado")">Finalizado</option>
-                        <option value="cancelado" selected="@(ViewData["FiltroEstadoServicio"]?.ToString() == "cancelado")">Cancelado</option>
+                        <option value="despachado" selected="@(ViewData["FiltroEstadoServicio"]?.ToString() == "despachado")">Despachado</option>
+                        <option value="parqueado" selected="@(ViewData["FiltroEstadoServicio"]?.ToString() == "parqueado")">Parqueado</option>
+                        <option value="en curso" selected="@(ViewData["FiltroEstadoServicio"]?.ToString() == "en curso")">En Curso</option>
+                        <option value="solicitado" selected="@(ViewData["FiltroEstadoServicio"]?.ToString() == "solicitado")">Solicitado</option>
                     </select>
                 </div>
 
