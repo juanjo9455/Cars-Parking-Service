@@ -2064,7 +2064,6 @@ function abrirVisorImagen(src) {
     console.log("=================================");
 }
 
-
 function cerrarVisorImagen() {
 
     const visor = document.getElementById("visor-imagen");

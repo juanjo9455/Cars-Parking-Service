@@ -353,6 +353,30 @@
     </div>
 </div>
 
+<!-- ==========================================
+        VISOR DE IMAGEN EN GRANDE
+========================================== -->
+
+<div id="visor-imagen" class="visor-imagen" style="display:none;">
+
+    <div class="visor-overlay" onclick="cerrarVisorImagen()"></div>
+
+    <div class="visor-contenido">
+
+        <button class="visor-cerrar"
+                type="button"
+                onclick="cerrarVisorImagen()">
+            &times;
+        </button>
+
+        <img id="imagen-grande"
+             src=""
+             alt="Imagen ampliada">
+
+    </div>
+
+</div>
+
 <script>
     window.vistaKeyInfoMap = @Html.Raw(ViewBag.VistaKeyInfoJson ?? "{}");
 </script>

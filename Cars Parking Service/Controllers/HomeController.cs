@@ -148,7 +148,8 @@ namespace CarsParkingService.Controllers
                     on s.id_usuario equals u.id_usuario
 
                 where s.id_rol == 1 &&
-                        s.fecha_inicio.Date == FechaConsulta
+                        s.fecha_inicio.Date == FechaConsulta &&
+                        s.fecha_fin == null
 
                 group new { s, u } by s.id_usuario into grupo
 
@@ -190,7 +191,8 @@ namespace CarsParkingService.Controllers
                     on s.id_usuario equals u.id_usuario
 
                 where s.id_rol == 2 &&
-                        s.fecha_inicio.Date == FechaConsulta
+                        s.fecha_inicio.Date == FechaConsulta &&
+                        s.fecha_fin == null
 
                 group new { s, u } by s.id_usuario into grupo
 
@@ -221,7 +223,8 @@ namespace CarsParkingService.Controllers
                     on s.id_usuario equals u.id_usuario
 
                 where s.id_rol == 4 &&
-                        s.fecha_inicio.Date == FechaConsulta
+                        s.fecha_inicio.Date == FechaConsulta &&
+                        s.fecha_fin == null
 
                 group new { s , u } by s.id_usuario into grupo
 

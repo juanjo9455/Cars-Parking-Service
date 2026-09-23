@@ -112,6 +112,12 @@ async function abrirModalInformacionKey(btn) {
                 img.alt = "Imagen del vehículo";
                 img.loading = "lazy";
 
+                // -------------------------------------------------------------
+                // AGREGAR ESTA LÍNEA:
+                img.classList.add("imagen-galeria");
+                // De esta forma el listener event.target.closest(".imagen-galeria") la detectará
+                // -------------------------------------------------------------
+
                 item.appendChild(img);
                 gallery.appendChild(item);
 
@@ -164,6 +170,71 @@ async function abrirModalInformacionKey(btn) {
     }
 
 }
+
+// ==========================================
+// ABRIR VISOR DE IMAGEN
+// ==========================================
+
+function abrirVisorImagen(src) {
+
+    console.log("=================================");
+    console.log("[VISOR] abrirVisorImagen() EJECUTADA");
+    console.log("[VISOR] SRC recibido:", src);
+
+    const visor = document.getElementById("visor-imagen");
+    const imagenGrande = document.getElementById("imagen-grande");
+
+    console.log("[VISOR] visor:", visor);
+    console.log("[VISOR] imagenGrande:", imagenGrande);
+
+    if (!visor) {
+        console.error("[VISOR] ❌ NO existe #visor-imagen");
+        return;
+    }
+
+    if (!imagenGrande) {
+        console.error("[VISOR] ❌ NO existe #imagen-grande");
+        return;
+    }
+
+    console.log("[VISOR] Asignando SRC a imagen grande...");
+
+    imagenGrande.src = src;
+
+    console.log("[VISOR] Mostrando visor...");
+
+    visor.style.display = "flex";
+
+    console.log("[VISOR] display actual:", visor.style.display);
+    console.log("=================================");
+}
+
+function cerrarVisorImagen() {
+
+    const visor = document.getElementById("visor-imagen");
+    const imagenGrande = document.getElementById("imagen-grande");
+
+    if (visor) {
+        visor.style.display = "none";
+    }
+
+    if (imagenGrande) {
+        imagenGrande.src = "";
+    }
+}
+
+// ==========================================
+// LISTENER DEL CONTENEDOR DE IMÁGENES
+// ==========================================
+
+document.addEventListener("click", function (event) {
+    // Busca si es una etiqueta .imagen-galeria O si es una <img> dentro de la galería del modal
+    const imagen = event.target.closest(".imagen-galeria, .info-key-gallery img");
+
+    if (!imagen) return;
+
+    abrirVisorImagen(imagen.src);
+});
 
 function cerrarModalInfoKey() {
     const modal = document.getElementById('modalInfoKey');
