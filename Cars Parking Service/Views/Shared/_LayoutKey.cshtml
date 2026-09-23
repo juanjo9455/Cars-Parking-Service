@@ -58,7 +58,7 @@
 
     <script>
     setInterval(() => {
-        fetch('/Account/KeepAlive', { 
+        fetch('/Home/KeepAlive', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         }).catch(err => console.log('Error enviando latido:', err));
@@ -72,8 +72,6 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
-
-    <partial name="_KeepAliveScript" />
 </body>
 </html>
 

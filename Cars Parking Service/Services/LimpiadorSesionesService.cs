@@ -24,7 +24,7 @@ namespace CarsParkingService.Services
             _logger = logger;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken) 
         {
             _logger.LogInformation("Servicio de limpieza de sesiones con 'UltimaActividad' iniciado.");
 
@@ -34,7 +34,7 @@ namespace CarsParkingService.Services
                 {
                     using (var scope = _serviceProvider.CreateScope())
                     {
-                        var db = scope.ServiceProvider.GetRequiredService<MiDbContext>(); // Cambia por tu DbContext
+                        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(); // Cambia por tu DbContext
 
                         // Consideramos inactiva una sesión que no reporte actividad en 3 minutos
                         var limiteInactividad = DateTime.Now.AddMinutes(-3);

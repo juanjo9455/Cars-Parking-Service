@@ -45,6 +45,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseStaticFiles();
+
 app.UseRouting();
 
 // ⚠️ IMPORTANTE: UseSession() debe estar DESPUÉS de UseRouting() y ANTES de UseAuthorization()

@@ -2195,11 +2195,11 @@ namespace CarsParkingService.Controllers
 
             if (idSesion.HasValue)
             {
-                var sesion = await _db.TblSesiones.FindAsync(idSesion.Value);
+                var sesion = await _context.TblSesiones.FindAsync(idSesion.Value);
                 if (sesion != null && sesion.FechaFin == null)
                 {
                     sesion.UltimaActividad = DateTime.Now;
-                    await _db.SaveChangesAsync();
+                    await _context.SaveChangesAsync();
                     return Ok();
                 }
             }
