@@ -39,5 +39,8 @@ namespace CarsParkingService.Models
         public DateTime? fecha_fin { get; set; }
 
         public bool estado_liquidacion { get; set; }
+
+        // Campo para rastrear el último latido/actividad
+        public DateTime? ultima_actividad { get; set; }
     }
 }

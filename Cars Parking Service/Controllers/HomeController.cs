@@ -2191,14 +2191,14 @@ namespace CarsParkingService.Controllers
         [HttpPost]
         public async Task<IActionResult> KeepAlive()
         {
-            var idSesion = HttpContext.Session.GetInt32("id_sesion"); // Ajusta a la clave de sesión que uses
+            var idSesion = HttpContext.Session.GetInt32("id_sesion");
 
             if (idSesion.HasValue)
             {
-                var sesion = await _context.TblSesiones.FindAsync(idSesion.Value);
-                if (sesion != null && sesion.FechaFin == null)
+                var sesion = await _context.sesiones.FindAsync(idSesion.Value);
+                if (sesion != null && sesion.fecha_fin == null)
                 {
-                    sesion.UltimaActividad = DateTime.Now;
+                    sesion.ultima_actividad = DateTime.Now;
                     await _context.SaveChangesAsync();
                     return Ok();
                 }
