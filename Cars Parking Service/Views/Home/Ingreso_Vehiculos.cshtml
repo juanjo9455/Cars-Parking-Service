@@ -268,18 +268,11 @@
 
         </div>
 
-        <!-- ========== FOTOS Y VIDEO DEL VEHÍCULO ========== -->
+        <!-- ========== VIDEO DEL VEHÍCULO ========== -->
         <div class="photo-section">
-            <h4 class="photo-title">Fotos y Video del Vehiculo</h4>
+            <h4 class="photo-title">Video del Vehiculo</h4>
 
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button type="button" class="photo-btn" id="tomarFotoBtn">
-                    <svg class="camera-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                        <circle cx="12" cy="13" r="4"></circle>
-                    </svg>
-                    Tomar Foto
-                </button>
                 <button type="button" class="photo-btn" id="grabarVideoBtn">
                     <svg class="camera-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="7" width="15" height="10" rx="2" ry="2"></rect>
@@ -289,24 +282,14 @@
                 </button>
             </div>
 
-            <p class="photo-counter" id="photoCounter">0 fotos seleccionadas (max. 10)</p>
+            <p class="photo-counter" id="photoCounter">0 videos seleccionados (max. 1)</p>
 
-            <!-- Contenedor padre para fotos y el video -->
             <div class="Media-Preview">
-                <!-- Contenedor para preview de fotos -->
-                <div class="photos-preview" id="photosPreview"></div>
-
-                <!-- Contenedor para preview de video -->
                 <div id="videoPreviewContainer" style="margin-top: 12px;"></div>
             </div>
 
-            <!-- Input oculto para invocar la cámara nativa del dispositivo SOLO para fotos -->
-            <input type="file" id="cameraInput" accept="image/*" capture style="display:none;">
-            <!-- Input oculto para grabar video (sin capture para máxima compatibilidad móvil) -->
             <input type="file" id="videoInput" accept="video/*" style="display:none;">
 
-            <!-- Inputs ocultos para enviar los archivos como base64 -->
-            <div id="fotosBase64Container"></div>
             <input type="hidden" name="videoBase64" id="videoBase64Input" />
             <div class="error-message" id="errorMedia" style="display:none;"></div>
         </div>

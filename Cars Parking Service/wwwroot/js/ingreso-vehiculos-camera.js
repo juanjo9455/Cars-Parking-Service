@@ -1,18 +1,13 @@
 ﻿/**
- * Lógica de cámara para tomar fotos y grabar video (usando cámara nativa del dispositivo)
+ * Lógica de cámara para grabar video del vehículo y tomar fotos de objetos de valor
  */
 document.addEventListener('DOMContentLoaded', () => {
 
     // =============== Vehiculo Camara =============== //
 
-    const tomarFotoBtn = document.getElementById('tomarFotoBtn');
     const grabarVideoBtn = document.getElementById('grabarVideoBtn');
-    const cameraInput = document.getElementById('cameraInput');
-    const videoInput = document.getElementById('videoInput');
-    const photosPreview = document.getElementById('photosPreview');
     const videoPreviewContainer = document.getElementById('videoPreviewContainer');
     const photoCounter = document.getElementById('photoCounter');
-    const fotosBase64Container = document.getElementById('fotosBase64Container');
     const videoBase64Input = document.getElementById('videoBase64Input');
     const errorMedia = document.getElementById('errorMedia');
     const recordTimer = document.getElementById('recordTimer');
@@ -31,58 +26,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const fotosObjetosBase64Container =
         document.getElementById('fotosObjetosBase64Container');
 
-
-
-    if (!tomarFotoBtn || !cameraInput || !photosPreview || !photoCounter || !fotosBase64Container || !grabarVideoBtn || !videoPreviewContainer || !videoBase64Input || !videoInput) {
+    if (!photoCounter || !grabarVideoBtn || !videoPreviewContainer || !videoBase64Input || !errorMedia || !recordTimer) {
         return;
     }
 
-
-    // Imagenes tomadas del vehiculo
-
-    let archivosCapturados = [];
-    const MAX_TOTAL = 10;
-    let cameraInputClicking = false; // Previene doble click
     let videoBlob = null;
     let videoGrabado = false;
 
-
-    // Imagenes tomadas de los objetos de valor
-
     let archivosObjetosCapturados = [];
     let cameraInputObjetosClicking = false; // Previene doble click
-    const MAX_OBJETOS = 1;
 
     function actualizarContador() {
-        const cantidad = archivosCapturados.length + (videoGrabado ? 1 : 0);
-        photoCounter.textContent = `${cantidad} elemento${cantidad === 1 ? '' : 's'} (fotos y/o video) seleccionad${cantidad === 1 ? 'o' : 'os'} (max. ${MAX_TOTAL})`;
-        if (cantidad >= MAX_TOTAL) {
-            tomarFotoBtn.classList.add('disabled-photo-btn');
-            tomarFotoBtn.disabled = true;
+        const cantidad = videoGrabado ? 1 : 0;
+        photoCounter.textContent = `${cantidad} video${cantidad === 1 ? '' : 's'} seleccionado${cantidad === 1 ? '' : 's'} (max. 1)`;
+
+        if (videoGrabado) {
             grabarVideoBtn.classList.add('disabled-photo-btn');
             grabarVideoBtn.disabled = true;
         } else {
-            tomarFotoBtn.classList.remove('disabled-photo-btn');
-            tomarFotoBtn.disabled = false;
-            if (!videoGrabado) {
-                grabarVideoBtn.classList.remove('disabled-photo-btn');
-                grabarVideoBtn.disabled = false;
-            }
+            grabarVideoBtn.classList.remove('disabled-photo-btn');
+            grabarVideoBtn.disabled = false;
         }
     }
-
-    function sincronizarInputsOcultos() {
-        fotosBase64Container.innerHTML = '';
-        archivosCapturados.forEach((archivo, index) => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = `fotos[${index}]`;
-            input.value = archivo.base64;
-            fotosBase64Container.appendChild(input);
-        });
-    }
-
-    // Sincronizamos inputs de los objetos de valor
 
     function sincronizarInputsObjetosOcultos() {
 
@@ -103,8 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
     }
-
-    // Renderizamos las imangenes de los objetos de valor
 
     function renderPreviewObjetos() {
 
@@ -147,131 +110,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Evento del input
+    if (tomarFotoObjetosBtn && cameraInputObjetos && photosPreviewObjetos && fotosObjetosBase64Container) {
+        cameraInputObjetos.addEventListener('change', async (e) => {
 
-    cameraInputObjetos.addEventListener('change', async (e) => {
+            cameraInputObjetosClicking = false;
 
-        cameraInputObjetosClicking = false;
+            const files = Array.from(e.target.files);
 
-        const files = Array.from(e.target.files);
+            if (!files.length) return;
 
-        if (!files.length) return;
+            for (const file of files) {
 
-        for (const file of files) {
+                if (!file.type.startsWith('image/')) continue;
 
-            if (!file.type.startsWith('image/')) continue;
+                const compressedBase64 = await compressImageToBase64(file);
 
-            const compressedBase64 = await compressImageToBase64(file);
+                archivosObjetosCapturados.push({
+                    base64: compressedBase64,
+                    type: 'image/jpeg'
+                });
+            }
 
-            archivosObjetosCapturados.push({
-                base64: compressedBase64,
-                type: 'image/jpeg'
-            });
-        }
+            renderPreviewObjetos();
+            sincronizarInputsObjetosOcultos();
 
-        renderPreviewObjetos();
-        sincronizarInputsObjetosOcultos();
+        });
 
-    });
+        tomarFotoObjetosBtn.addEventListener('click', function (e) {
 
-    // Evento para tomar la foto
+            if (cameraInputObjetosClicking) {
 
-    tomarFotoObjetosBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                return;
 
-        if (cameraInputObjetosClicking) {
+            }
 
-            e.preventDefault();
-            return;
+            cameraInputObjetosClicking = true;
 
-        }
+            cameraInputObjetos.removeAttribute('multiple');
+            cameraInputObjetos.accept = 'image/*';
+            cameraInputObjetos.capture = 'enviroment';
+            cameraInputObjetos.value = '';
 
-        cameraInputObjetosClicking = true;
+            cameraInputObjetos.click();
 
-        cameraInputObjetos.removeAttribute('multiple');
-        cameraInputObjetos.accept = 'image/*';
-        cameraInputObjetos.capture = 'enviroment';
-        cameraInputObjetos.value = '';
-
-        cameraInputObjetos.click();
-
-    })
-
-    function renderPreview() {
-        photosPreview.innerHTML = '';
-        archivosCapturados.forEach((archivo, index) => {
-            const previewDiv = document.createElement('div');
-            previewDiv.className = 'photo-item';
-            const img = document.createElement('img');
-            img.src = archivo.base64;
-            img.alt = `Foto ${index + 1}`;
-            previewDiv.appendChild(img);
-            // Botón para eliminar foto
-            const removeBtn = document.createElement('button');
-            removeBtn.type = 'button';
-            removeBtn.className = 'delete-photo';
-            removeBtn.textContent = '✕';
-            removeBtn.addEventListener('click', () => {
-                archivosCapturados.splice(index, 1);
-                renderPreview();
-                actualizarContador();
-                sincronizarInputsOcultos();
-                errorMedia.style.display = 'none';
-            });
-            previewDiv.appendChild(removeBtn);
-            photosPreview.appendChild(previewDiv);
         });
     }
-
-    cameraInput.addEventListener('change', async (e) => {
-        cameraInputClicking = false;
-        const files = Array.from(e.target.files);
-        const total = archivosCapturados.length + (videoGrabado ? 1 : 0);
-        if (!files.length) return;
-        if (total + files.length > MAX_TOTAL) {
-            errorMedia.textContent = `Solo puedes subir hasta ${MAX_TOTAL} elementos (fotos y/o video).`;
-            errorMedia.style.display = 'block';
-            return;
-        } else {
-            errorMedia.style.display = 'none';
-        }
-
-        const filesToProcess = files.slice(0, MAX_TOTAL - total);
-
-        for (const file of filesToProcess) {
-            if (!file.type.startsWith('image/')) continue;
-
-            const compressedBase64 = await compressImageToBase64(file);
-            archivosCapturados.push({
-                base64: compressedBase64,
-                type: 'image/jpeg'
-            });
-
-            renderPreview();
-            actualizarContador();
-            sincronizarInputsOcultos();
-        }
-    });
-
-    tomarFotoBtn.addEventListener('click', function(e) {
-        if (cameraInputClicking) {
-            e.preventDefault();
-            return;
-        }
-        const total = archivosCapturados.length + (videoGrabado ? 1 : 0);
-        if (total >= MAX_TOTAL) {
-            errorMedia.textContent = `Solo puedes subir hasta ${MAX_TOTAL} elementos (fotos y/o video).`;
-            errorMedia.style.display = 'block';
-            return;
-        } else {
-            errorMedia.style.display = 'none';
-        }
-        cameraInputClicking = true;
-        cameraInput.removeAttribute('multiple');
-        cameraInput.accept = 'image/*';
-        cameraInput.capture = 'environment';
-        cameraInput.value = '';
-        cameraInput.click();
-    });
 
     // ================= VIDEO NATIVO =================
     function resetVideoPreview() {
