@@ -57,12 +57,21 @@
     </div>
 
     <script>
-    setInterval(() => {
-        fetch('/Home/KeepAlive', { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        }).catch(err => console.log('Error enviando latido:', err));
-    }, 60000);
+        setInterval(() => {
+        fetch('/Home/KeepAlive', {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin' // <-- Esta opción adjunta las cookies de sesión
+        })
+        .then(response => {
+        if (!response.ok) {
+        console.warn('KeepAlive falló con estado:', response.status);
+        }
+        })
+        .catch(error => console.error('Error en KeepAlive:', error));
+        }, 60000); // Frecuencia programada
     </script>
 
     @RenderBody()

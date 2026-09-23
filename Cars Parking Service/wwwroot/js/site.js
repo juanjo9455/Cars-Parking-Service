@@ -888,6 +888,19 @@
         if (filtroAdmin) filtroAdmin.style.display = 'none';
     };
 
+    // Event listener para toggle de filtros en Tabla_Vehiculos (mobile/desktop)
+    const filtersToggle = document.getElementById('filtersToggle');
+    if (filtersToggle) {
+        filtersToggle.addEventListener('click', function() {
+            const filtersWrapper = document.getElementById('filtersWrapper');
+            if (filtersWrapper) {
+                filtersWrapper.classList.toggle('open');
+                const isOpen = filtersWrapper.classList.contains('open');
+                this.setAttribute('aria-expanded', isOpen);
+            }
+        });
+    }
+
     // Event listener para toggle de filtros (mobile/desktop)
     const filtersAdminToggle = document.getElementById('filtersAdminToggle');
     if (filtersAdminToggle) {

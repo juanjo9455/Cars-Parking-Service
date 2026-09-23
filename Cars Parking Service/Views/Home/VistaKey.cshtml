@@ -386,7 +386,7 @@
         const spinnerSvg = '<svg viewBox="25 25 50 50"><circle r="20" cy="50" cx="50"></circle></svg>';
 
         const addSpinner = (el) => {
-            if (!el || el.querySelector('.btn-spinner')) return;
+            if (!el || el.dataset.noSpinner === 'true' || el.querySelector('.btn-spinner')) return;
             el.classList.add('btn-loading-target');
             const spinner = document.createElement('span');
             spinner.className = 'btn-spinner';
@@ -413,7 +413,7 @@
         };
 
         const activate = (el) => {
-            if (!el) return;
+            if (!el || el.dataset.noSpinner === 'true') return;
             addSpinner(el);
             el.style.setProperty('--spinner-stroke', getSpinnerColor(el));
             el.classList.add('btn-loading');
