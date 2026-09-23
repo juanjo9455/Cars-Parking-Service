@@ -89,16 +89,17 @@
 
 .cards-row {
     display: grid;
-    grid-template-columns: repeat(5,1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
     margin-bottom: 1.5rem;
 }
 
 .stat-card {
     margin-top: 15px;
-    border-radius: 10px; 
+    border-radius: 10px;
     background: #fff;
-    width: 11.1cm;
+    width: 100%; /* Cambiado de 11.1cm a 100% para ajustarse a su celda de la grilla */
+    box-sizing: border-box; /* Asegura que el padding no incremente el ancho */
     border: 0.5px solid #e0e0e0;
     padding: 1.25rem 1rem;
 }
@@ -356,7 +357,8 @@ tbody tr {
     border-radius: 8px;
     padding: 12px;
     text-align: center;
-    width: 7.9cm;
+    width: 100%; /* Cambiado de 7.9cm a 100% para evitar que desborde conf-summary */
+    box-sizing: border-box;
 }
 
 .ci .cl {
