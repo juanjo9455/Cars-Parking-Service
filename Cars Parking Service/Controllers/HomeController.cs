@@ -1170,7 +1170,7 @@ namespace CarsParkingService.Controllers
             var token = "EAAN1Ou7KFoABOxsr5ohcvViIX6kLd90FRB4gmnNUNFmyKqlOIfLGWN7XCFuy96Gk6l940v8mxzSU9z9ldvZCYSDhQ9hSlZBzoQsUZBRNEkeHkKqsjIhu7FUQ5i7bSd5tE9fxBZBZC9ar1DgPjGSazftOQjXPanTJDqLhom7aVZBpvcDnrScZCkZAamOTj19Ib7aI4gZDZD";
             var url = "https://graph.facebook.com/v22.0/625779610608874/messages";
 
-            string baseUrl = "http://143.198.163.1:5000/Payment/Estado_Servicio?idIngreso=";
+            string baseUrl = "http://143.198.163.1.sslip.io/Payment/Estado_Servicio?idIngreso=";
             string linkPago = $"{baseUrl}{idIngreso}";
 
             var payload = new
