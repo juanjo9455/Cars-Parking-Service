@@ -2187,5 +2187,24 @@ namespace CarsParkingService.Controllers
                 message = "No se recibió una ubicación válida."
             });
         }
+
+        [HttpPost]
+        public async Task<IActionResult> KeepAlive()
+        {
+            var idSesion = HttpContext.Session.GetInt32("id_sesion"); // Ajusta a la clave de sesión que uses
+
+            if (idSesion.HasValue)
+            {
+                var sesion = await _db.TblSesiones.FindAsync(idSesion.Value);
+                if (sesion != null && sesion.FechaFin == null)
+                {
+                    sesion.UltimaActividad = DateTime.Now;
+                    await _db.SaveChangesAsync();
+                    return Ok();
+                }
+            }
+
+            return Unauthorized();
+        }
     }
 }

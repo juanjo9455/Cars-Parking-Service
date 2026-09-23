@@ -23,12 +23,23 @@
 
     @RenderBody()
 
+    <script>
+    setInterval(() => {
+        fetch('/Account/KeepAlive', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        }).catch(err => console.log('Error enviando latido:', err));
+    }, 60000);
+    </script>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/pwa-register.js" asp-append-version="true"></script>
     <script src="~/js/Liquidacion.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
+
+    <partial name="_KeepAliveScript" />
 </body>
 </html>
 

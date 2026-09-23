@@ -56,6 +56,15 @@
         <i class="fa-solid fa-bars" id="abrir-menu-lateral"></i>
     </div>
 
+    <script>
+    setInterval(() => {
+        fetch('/Account/KeepAlive', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        }).catch(err => console.log('Error enviando latido:', err));
+    }, 60000);
+    </script>
+
     @RenderBody()
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -63,6 +72,8 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
+
+    <partial name="_KeepAliveScript" />
 </body>
 </html>
 

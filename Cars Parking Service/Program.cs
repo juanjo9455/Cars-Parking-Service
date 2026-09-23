@@ -1,8 +1,12 @@
-using Microsoft.EntityFrameworkCore;
 using CarsParkingService.Data;
+using CarsParkingService.Services;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Latido del servicio de limpieza de sesiones (BackgroundService)
+builder.Services.AddHostedService<LimpiadorSesionesService>();
 
 // Aumenta el límite de tamaño de carga para Kestrel (200 MB, ajustable)
 builder.WebHost.ConfigureKestrel(serverOptions =>
