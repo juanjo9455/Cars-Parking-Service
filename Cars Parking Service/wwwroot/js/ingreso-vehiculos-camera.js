@@ -29,6 +29,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const photoCounterObjetos =
         document.getElementById('photoCounterObjetos');
 
+    const mostrarError = (mensaje) => {
+        if (typeof window.mostrarAlertaServidor === 'function') {
+            window.mostrarAlertaServidor(mensaje, 'error');
+            return;
+        }
+
+        const containerId = 'customAlertContainer';
+        let container = document.getElementById(containerId);
+
+        if (!container) {
+            container = document.createElement('div');
+            container.id = containerId;
+            container.className = 'custom-alert-container';
+            document.body.appendChild(container);
+        }
+
+        const alerta = document.createElement('div');
+        alerta.className = 'custom-alert error';
+        alerta.innerHTML = '<div class="custom-alert-icon">!</div><div class="custom-alert-message"></div>';
+        alerta.querySelector('.custom-alert-message').textContent = mensaje;
+
+        container.appendChild(alerta);
+
+        setTimeout(() => {
+            alerta.classList.add('hide');
+            setTimeout(() => alerta.remove(), 380);
+        }, 3600);
+    };
+
     if (!photoCounter || !grabarVideoBtn || !videoPreviewContainer || !videoBase64Input || !errorMedia || !recordTimer) {
         return;
     }
@@ -136,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Validar que no se exceda el máximo de imágenes
             if (archivosObjetosCapturados.length + files.length > MAX_OBJETOS) {
-                alert(`Solo puedes subir hasta ${MAX_OBJETOS} imágenes para objetos de valor.`);
+                mostrarError(`Solo puedes subir hasta ${MAX_OBJETOS} imágenes para objetos de valor.`);
                 cameraInputObjetos.value = '';
                 return;
             }
@@ -170,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Validar que no se haya alcanzado el máximo antes de abrir la cámara
             if (archivosObjetosCapturados.length >= MAX_OBJETOS) {
-                alert(`Ya has alcanzado el máximo de ${MAX_OBJETOS} imágenes para objetos de valor.`);
+                mostrarError(`Ya has alcanzado el máximo de ${MAX_OBJETOS} imágenes para objetos de valor.`);
                 return;
             }
 
@@ -286,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             liveVideo.srcObject = stream;
                         })
                         .catch(err2 => {
-                            alert('No se pudo acceder a la cámara: ' + err2);
+                            mostrarError('No se pudo acceder a la cámara: ' + err2);
                             videoModal.style.display = 'none';
                         });
                 });

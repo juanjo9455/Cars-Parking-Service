@@ -5,11 +5,38 @@ document.addEventListener("DOMContentLoaded", function () {
     const photoCounter = document.querySelector('.photo-counter');
     const ingresoForm = document.getElementById('ingresoForm');
     const fotosContainer = document.getElementById('fotosBase64Container');
-    
+
+    const mostrarAlerta = (mensaje, tipo = 'error') => {
+        if (typeof window.mostrarAlertaServidor === 'function') {
+            window.mostrarAlertaServidor(mensaje, tipo);
+            return;
+        }
+
+        const containerId = 'customAlertContainer';
+        let container = document.getElementById(containerId);
+
+        if (!container) {
+            container = document.createElement('div');
+            container.id = containerId;
+            container.className = 'custom-alert-container';
+            document.body.appendChild(container);
+        }
+
+        const alerta = document.createElement('div');
+        alerta.className = `custom-alert ${tipo === 'success' ? 'success' : 'error'}`;
+        alerta.innerHTML = `<div class="custom-alert-icon">${tipo === 'success' ? '?' : '!'}</div><div class="custom-alert-message">${mensaje}</div>`;
+
+        container.appendChild(alerta);
+
+        setTimeout(() => {
+            alerta.classList.add('hide');
+            setTimeout(() => alerta.remove(), 380);
+        }, 3600);
+    };
+
     let fotosCapturadas = [];
     const MAX_FOTOS = 10;
 
-    // ===== Utilidades de validación =====
     function showError(input, errorEl) {
         input.classList.add('input-error');
         input.classList.remove('input-success');
@@ -39,7 +66,6 @@ document.addEventListener("DOMContentLoaded", function () {
         return /^[A-Z]{3}[0-9]{3}$/.test(value.trim());
     }
 
-    // ===== Validaciones en tiempo real =====
     function addValidation(inputId, errorId, validateFn) {
         var input = document.getElementById(inputId);
         var errorEl = document.getElementById(errorId);
@@ -72,14 +98,12 @@ document.addEventListener("DOMContentLoaded", function () {
         return validate;
     }
 
-    // Aplicar validaciones
     const validators = [
         addValidation('placa', 'errorPlaca', isValidPlaca),
         addValidation('dni', 'errorDNI', isValidDNI),
         addValidation('telefono', 'errorTelefono', isValidPhone)
     ];
 
-    // ===== Manejo del checkbox de valuables =====
     const noValuablesCheckbox = document.getElementById('no-valuables');
     const notasInput = document.getElementById('notas');
 
@@ -95,10 +119,9 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // ===== Manejo de la cámara =====
     tomarFotoBtn.addEventListener('click', function() {
         if (fotosCapturadas.length >= MAX_FOTOS) {
-            alert(`Solo se permiten maximo ${MAX_FOTOS} fotos`);
+            mostrarAlerta(`Solo se permiten un máximo de ${MAX_FOTOS} fotos.`, 'error');
             return;
         }
         cameraInput.click();
@@ -106,34 +129,34 @@ document.addEventListener("DOMContentLoaded", function () {
 
     cameraInput.addEventListener('change', function(e) {
         const files = Array.from(e.target.files);
-        
+
         files.forEach(file => {
             if (fotosCapturadas.length >= MAX_FOTOS) {
-                alert(`Solo se permiten maximo ${MAX_FOTOS} fotos`);
+                mostrarAlerta(`Solo se permiten un máximo de ${MAX_FOTOS} fotos.`, 'error');
                 return;
             }
 
             if (file && file.type.startsWith('image/')) {
                 const reader = new FileReader();
-                
+
                 reader.onload = function(event) {
                     const fotoData = {
                         src: event.target.result,
                         file: file,
                         id: Date.now() + Math.random()
                     };
-                    
+
                     fotosCapturadas.push(fotoData);
                     mostrarFoto(fotoData);
                     actualizarContador();
                     actualizarInputsOcultos();
                     actualizarEstadoBoton();
                 };
-                
+
                 reader.readAsDataURL(file);
             }
         });
-        
+
         cameraInput.value = '';
     });
 
@@ -141,7 +164,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const fotoDiv = document.createElement('div');
         fotoDiv.className = 'photo-item';
         fotoDiv.dataset.id = fotoData.id;
-        
+
         fotoDiv.innerHTML = `
             <img src="${fotoData.src}" alt="Foto del vehículo">
             <button type="button" class="delete-photo" data-id="${fotoData.id}">
@@ -151,9 +174,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 </svg>
             </button>
         `;
-        
+
         photosPreview.appendChild(fotoDiv);
-        
+
         const deleteBtn = fotoDiv.querySelector('.delete-photo');
         deleteBtn.addEventListener('click', function() {
             eliminarFoto(fotoData.id);
@@ -162,12 +185,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function eliminarFoto(id) {
         fotosCapturadas = fotosCapturadas.filter(foto => foto.id !== id);
-        
+
         const fotoElement = photosPreview.querySelector(`[data-id="${id}"]`);
         if (fotoElement) {
             fotoElement.remove();
         }
-        
+
         actualizarContador();
         actualizarInputsOcultos();
         actualizarEstadoBoton();
@@ -201,33 +224,23 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // ===== Validación del formulario =====
-    ingresoForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Validar todos los campos
+    ingresoForm.addEventListener('submit', function (e) {
         let isValid = true;
+
         validators.forEach(function (validate) {
             if (validate && !validate()) isValid = false;
         });
 
-        // Validar selects
-        const selects = ['id_valet', 'id_banco', 'id_parqueadero', 'id_ubicacion'];
-        selects.forEach(selectId => {
-            const select = document.getElementById(selectId);
-            const errorEl = document.getElementById('error' + selectId.split('_')[1].charAt(0).toUpperCase() + selectId.split('_')[1].slice(1));
-            if (select && select.value === '') {
-                showError(select, errorEl);
-                isValid = false;
-            }
-        });
+        const selectParqueadero = document.getElementById('id_parqueadero');
+        const errorParqueadero = document.getElementById('errorParqueadero');
+        if (selectParqueadero && selectParqueadero.value === '') {
+            showError(selectParqueadero, errorParqueadero);
+            isValid = false;
+        }
 
         if (!isValid) {
-            alert('Por favor, completa todos los campos requeridos correctamente');
-            return;
+            e.preventDefault();
+            mostrarAlerta('Por favor, completa todos los campos requeridos correctamente.', 'error');
         }
-        
-        // Enviar el formulario
-        this.submit();
     });
 });

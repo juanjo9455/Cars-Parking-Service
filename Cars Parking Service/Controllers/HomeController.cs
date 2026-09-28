@@ -856,7 +856,7 @@ namespace CarsParkingService.Controllers
         // Este atributo indica que este método responde a peticiones HTTP POST
         // Es decir, cuando el formulario de registro se envía (method="post")
         [HttpPost]
-        public async Task<IActionResult> IngresoVehiculos(ingresos obj_ingreso, int id_valet, int id_banco, string firmaBase64, bool sin_objetos_valor = false, List<string>? fotos = null, string? videoBase64 = null)
+        public async Task<IActionResult> IngresoVehiculos(ingresos obj_ingreso, int? id_valet, int id_banco, string? firmaBase64, bool sin_objetos_valor = false, List<string>? fotos = null, string? videoBase64 = null)
         {
             // DEBUG TEMPORAL
             System.Diagnostics.Debug.WriteLine("=== ENTRÓ AL POST ===");
@@ -865,6 +865,11 @@ namespace CarsParkingService.Controllers
             System.Diagnostics.Debug.WriteLine($"id_valet: {id_valet}");
             System.Diagnostics.Debug.WriteLine($"id_banco: {id_banco}");
             System.Diagnostics.Debug.WriteLine($"ModelState válido: {ModelState.IsValid}");
+
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "Por favor, completa correctamente todos los campos obligatorios.";
+            }
 
             CargarDatosFormulario();
 
@@ -1062,9 +1067,17 @@ namespace CarsParkingService.Controllers
                         : obj_ingreso.notas;
                 }
 
+                // 6. GUARDAR INGRESO EN BD
                 _context.ingresos.Add(obj_ingreso);
+                int filasIngreso = await _context.SaveChangesAsync();
 
-                // AGREGA ESTO:
+                if (filasIngreso <= 0)
+                {
+                    TempData["Error"] = "No se pudo registrar el ingreso en la base de datos.";
+                    CargarDatosFormulario();
+                    return View("Ingreso_Vehiculos", obj_ingreso);
+                }
+
                 System.Diagnostics.Debug.WriteLine($"=== ANTES DE GUARDAR ===");
                 System.Diagnostics.Debug.WriteLine($"Placa: {obj_ingreso.placa}");
                 System.Diagnostics.Debug.WriteLine($"id_parqueadero: {obj_ingreso.id_parqueadero}");
@@ -1089,9 +1102,16 @@ namespace CarsParkingService.Controllers
 
                     if (enviarWhatsapp)
                     {
+                        var resultadoWhatsapp = await EnviarWhatsAppIngreso(placa, nombreCliente, obj_ingreso.id_ingreso, telefonoCliente);
 
-                        await EnviarWhatsAppIngreso(placa, nombreCliente, obj_ingreso.id_ingreso, telefonoCliente);
-
+                        if (resultadoWhatsapp.exito)
+                        {
+                            TempData["WhatsAppExito"] = resultadoWhatsapp.mensaje;
+                        }
+                        else
+                        {
+                            TempData["WhatsAppError"] = resultadoWhatsapp.mensaje;
+                        }
                     }
 
                 }
@@ -1099,8 +1119,11 @@ namespace CarsParkingService.Controllers
                 {
 
                     System.Diagnostics.Debug.WriteLine($"Error enviado Whatsapp: {ex.Message}");
+                    TempData["WhatsAppError"] = "No se pudo enviar el WhatsApp al cliente.";
 
                 }
+
+                TempData["Exito"] = "¡Vehículo registrado exitosamente!";
 
                 // Guardamos las fotos en la tabla imagenes
                 if (fotos != null && fotos.Any())
@@ -1137,7 +1160,7 @@ namespace CarsParkingService.Controllers
                     _context.SaveChanges();
                 }
 
-                // Verificar rol del usuario
+                // Verificar rol del usuario    
                 var rolUsuario = HttpContext.Session.GetInt32("id_rol");
                 
                 // Key (rol 4) va a VistaKey, todos los demás van a Tabla_Vehiculos
@@ -1153,6 +1176,7 @@ namespace CarsParkingService.Controllers
                 System.Diagnostics.Debug.WriteLine($"DbUpdateException: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Inner Exception: {ex.InnerException?.Message}");
                 ViewBag.Error = "Error al registrar el vehiculo. verifica que todos los datos sean correctos.";
+                TempData["Error"] = "Error al registrar el vehiculo. verifica que todos los datos sean correctos.: " + ex.Message;
                 return View("Ingreso_Vehiculos");
             }
             catch (Exception ex)
@@ -1160,13 +1184,19 @@ namespace CarsParkingService.Controllers
                 System.Diagnostics.Debug.WriteLine($"Exception: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
                 ViewBag.Error = "Ocurrio un error inesperado. Por favor, intenta nuevamente.";
+                TempData["Error"] = "Ocurrio un error inesperado. Por favor, intenta nuevamente.: " + ex.Message;
                 return View("Ingreso_Vehiculos");
             }
         }
 
         // Metodo para enviar mensaje al whatsapp para solicitar vehiculo y pagar servicio
-        private async Task EnviarWhatsAppIngreso(string placa, string nombre, int idIngreso, string telefono)
+        private async Task<(bool exito, string mensaje)> EnviarWhatsAppIngreso(string placa, string nombre, int idIngreso, string telefono)
         {
+            if (string.IsNullOrWhiteSpace(telefono))
+            {
+                return (false, "No se pudo enviar WhatsApp: el número del cliente está vacío.");
+            }
+
             var token = "EAAN1Ou7KFoABOxsr5ohcvViIX6kLd90FRB4gmnNUNFmyKqlOIfLGWN7XCFuy96Gk6l940v8mxzSU9z9ldvZCYSDhQ9hSlZBzoQsUZBRNEkeHkKqsjIhu7FUQ5i7bSd5tE9fxBZBZC9ar1DgPjGSazftOQjXPanTJDqLhom7aVZBpvcDnrScZCkZAamOTj19Ib7aI4gZDZD";
             var url = "https://graph.facebook.com/v22.0/625779610608874/messages";
 
@@ -1238,21 +1268,19 @@ namespace CarsParkingService.Controllers
                 var result = await response.Content.ReadAsStringAsync();
                 System.Diagnostics.Debug.WriteLine($"=== WHATSAPP STATUS: {response.StatusCode} ===");
                 System.Diagnostics.Debug.WriteLine($"=== WHATSAPP RESPONSE: {result} ===");
-                //var result = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                 {
                     System.Diagnostics.Debug.WriteLine("? ERROR WHATSAPP:");
                     System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
                     System.Diagnostics.Debug.WriteLine(result);
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("? WhatsApp enviado correctamente");
-                    System.Diagnostics.Debug.WriteLine(result);
+                    return (false, $"No se pudo enviar WhatsApp. Estado: {(int)response.StatusCode} {response.StatusCode}.");
                 }
 
+                System.Diagnostics.Debug.WriteLine("? WhatsApp enviado correctamente");
+                System.Diagnostics.Debug.WriteLine(result);
                 System.Diagnostics.Debug.WriteLine($"WhatsApp response: {result}");
+                return (true, "WhatsApp enviado correctamente al cliente.");
             }
         }
 

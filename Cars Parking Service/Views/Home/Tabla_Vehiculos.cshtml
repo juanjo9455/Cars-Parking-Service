@@ -2,10 +2,14 @@
 @{
     ViewData["Title"] = "Tabla Vehiculos";
     var modalError = TempData["Error"] as string;
+    var mensajeExito = TempData["Exito"] as string;
+    var whatsappExito = TempData["WhatsAppExito"] as string;
+    var whatsappError = TempData["WhatsAppError"] as string;
     var modalErrorIngresoId = TempData["ErrorIngresoId"]?.ToString();
     var idRol = Context.Session.GetInt32("id_rol");
     var idUsuarioSesion = Context.Session.GetInt32("id");
 }
+
 
 <style>
     .card-ingreso-vehiculos {
@@ -473,6 +477,52 @@
     <script src="~/js/solicitudes.js" asp-append-version="true"></script>
     <script src="~/js/ingreso-vehiculos-camera.js" asp-append-version="true" defer></script>
     <script src="~/js/pago.js" asp-append-version="true"></script>
+
+    @if (!string.IsNullOrWhiteSpace(mensajeExito) || !string.IsNullOrWhiteSpace(modalError) || !string.IsNullOrWhiteSpace(whatsappExito) || !string.IsNullOrWhiteSpace(whatsappError))
+    {
+        <script>
+            (function () {
+                if (typeof window.mostrarAlertaServidor !== 'function') {
+                    window.mostrarAlertaServidor = function (mensaje, tipo) {
+                        const containerId = 'customAlertContainer';
+                        let container = document.getElementById(containerId);
+
+                        if (!container) {
+                            container = document.createElement('div');
+                            container.id = containerId;
+                            container.className = 'custom-alert-container';
+                            document.body.appendChild(container);
+                        }
+
+                        const alerta = document.createElement('div');
+                        alerta.className = `custom-alert ${tipo === 'success' ? 'success' : 'error'}`;
+                        alerta.innerHTML = `<div class="custom-alert-icon">${tipo === 'success' ? '✓' : '!'}</div><div class="custom-alert-message"></div>`;
+                        alerta.querySelector('.custom-alert-message').textContent = mensaje;
+
+                        container.appendChild(alerta);
+
+                        setTimeout(() => {
+                            alerta.classList.add('hide');
+                            setTimeout(() => alerta.remove(), 380);
+                        }, 3600);
+                    };
+                }
+            })();
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const exitoGeneral = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(mensajeExito ?? string.Empty));
+                const errorGeneral = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(modalError ?? string.Empty));
+                const exitoWhatsapp = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(whatsappExito ?? string.Empty));
+                const errorWhatsapp = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(whatsappError ?? string.Empty));
+
+                if (exitoGeneral) window.mostrarAlertaServidor(exitoGeneral, 'success');
+                if (exitoWhatsapp) window.mostrarAlertaServidor(exitoWhatsapp, 'success');
+                if (errorGeneral) window.mostrarAlertaServidor(errorGeneral, 'error');
+                if (errorWhatsapp) window.mostrarAlertaServidor(errorWhatsapp, 'error');
+            });
+        </script>
+    }
+
     <!--<script>
         document.addEventListener('DOMContentLoaded', function () {
             const fechaInicio = document.getElementById('fechaInicio');

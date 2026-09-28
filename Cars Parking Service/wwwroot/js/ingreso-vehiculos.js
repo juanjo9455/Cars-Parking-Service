@@ -11,6 +11,35 @@
     let firmando = false;
     let firmaRealizada = false;
 
+    const mostrarAlerta = (mensaje, tipo = 'error') => {
+        if (typeof window.mostrarAlertaServidor === 'function') {
+            window.mostrarAlertaServidor(mensaje, tipo);
+            return;
+        }
+
+        const containerId = 'customAlertContainer';
+        let container = document.getElementById(containerId);
+
+        if (!container) {
+            container = document.createElement('div');
+            container.id = containerId;
+            container.className = 'custom-alert-container';
+            document.body.appendChild(container);
+        }
+
+        const alerta = document.createElement('div');
+        alerta.className = `custom-alert ${tipo === 'success' ? 'success' : 'error'}`;
+        alerta.innerHTML = `<div class="custom-alert-icon">${tipo === 'success' ? '✓' : '!'}</div><div class="custom-alert-message"></div>`;
+        alerta.querySelector('.custom-alert-message').textContent = mensaje;
+
+        container.appendChild(alerta);
+
+        setTimeout(() => {
+            alerta.classList.add('hide');
+            setTimeout(() => alerta.remove(), 380);
+        }, 3600);
+    };
+
     if (noValuablesBtn && notasInput && sinObjetosHidden) {
         const aplicarEstadoNotas = (activo) => {
 
@@ -111,7 +140,15 @@
     // Este script SOLO valida los campos del formulario
     // NO previene el envío a menos que haya errores de validación
     // El controlador maneja todo lo demás (redirecciones, respuestas, etc)
-    
+
+    if (submitBtn && form) {
+        submitBtn.addEventListener('click', function () {
+            if (!form.checkValidity()) {
+                mostrarAlerta('Por favor, completa todos los campos requeridos correctamente.', 'error');
+            }
+        });
+    }
+
     form.addEventListener('submit', function(e) {
         console.log('📝 Validando formulario...');
         
@@ -193,6 +230,7 @@
         if (errores.length > 0) {
             console.error('❌ ERRORES DE VALIDACIÓN:', errores);
             e.preventDefault();
+            mostrarAlerta('Por favor, completa todos los campos requeridos correctamente.', 'error');
             return false;
         }
 
