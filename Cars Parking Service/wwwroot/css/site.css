@@ -2181,3 +2181,137 @@ tbody td:last-child {
         transform: translateX(46px) scale(.97);
     }
 }
+
+/* ==================== Modal WhatsApp Reenvío ==================== */
+
+#formReenviarWhatsapp {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+#formReenviarWhatsapp .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+#formReenviarWhatsapp label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1f2937;
+    display: block;
+}
+
+#formReenviarWhatsapp input[type="text"],
+#formReenviarWhatsapp input[type="tel"] {
+    padding: 11px 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.25s ease;
+    background: #fff;
+}
+
+#formReenviarWhatsapp input[type="text"]:focus,
+#formReenviarWhatsapp input[type="tel"]:focus {
+    outline: none;
+    border-color: #d32f2f;
+    background: #fef2f2;
+    box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.08);
+}
+
+#formReenviarWhatsapp input::placeholder {
+    color: #9ca3af;
+}
+
+#formReenviarWhatsapp .error-message {
+    font-size: 0.85rem;
+    color: #dc2626;
+    display: none;
+    margin-top: -4px;
+    font-weight: 500;
+}
+
+#formReenviarWhatsapp .error-message.visible {
+    display: block;
+    animation: slideDown 0.25s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#formReenviarWhatsapp .btn-submit {
+    padding: 13px 24px;
+    background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+    color: #fff;
+    border: none;
+    border-radius: 11px;
+    font-size: 0.98rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 14px rgba(211, 47, 47, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+#formReenviarWhatsapp .btn-submit:hover {
+    background: linear-gradient(135deg, #b71c1c 0%, #a01010 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(211, 47, 47, 0.35);
+}
+
+#formReenviarWhatsapp .btn-submit:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(211, 47, 47, 0.25);
+}
+
+#modal-acciones #contenido-modal-acciones {
+    animation: slideInCenter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#modal-acciones #contenido-modal-acciones h2 {
+    margin: 0 0 10px;
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#modal-acciones #contenido-modal-acciones h2::before {
+    content: "💬";
+    font-size: 1.5rem;
+}
+
+#modal-acciones #contenido-modal-acciones > p {
+    margin: 0 0 24px;
+    color: #6b7280;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+@keyframes slideInCenter {
+    from {
+        opacity: 0;
+        transform: scale(0.92) translateY(-15px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}

@@ -128,6 +128,41 @@
     animation: num-bump .3s ease forwards;
 }
 
+/* ── BURBUJA OVALADA ── */
+.bubble-whatsapp {
+    position: fixed;
+    top: 2cm;
+    right: 16px;
+    height: 50px;
+    min-width: 50px;
+    border-radius: 25px;
+    background: #C0392B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    cursor: pointer;
+    border: 2.5px solid #fff;
+    z-index: 1000;
+    padding: 0 16px 0 13px;
+    transition: transform .15s, background .2s, min-width .3s;
+}
+
+.bubble-whatsapp:hover {
+    transform: scale(1.05);
+    background: #A93226;
+}
+
+.bubble-whatsapp:active {
+    transform: scale(0.94);
+}
+
+.bubble-whatsapp i {
+    font-size: 24px;
+    color: #fff;
+    flex-shrink: 0;
+}
+
 /* ── NOTIFICACIÓN ESTILO ANDROID ── */
 .android-notif {
     position: fixed;

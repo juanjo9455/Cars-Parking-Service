@@ -12,6 +12,7 @@ using NuGet.Common;
 using System.Diagnostics;
 using System.Text;
 using CarsParkingService.ViewModels;
+using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 
 namespace CarsParkingService.Controllers
 {
@@ -1281,6 +1282,71 @@ namespace CarsParkingService.Controllers
                 System.Diagnostics.Debug.WriteLine(result);
                 System.Diagnostics.Debug.WriteLine($"WhatsApp response: {result}");
                 return (true, "WhatsApp enviado correctamente al cliente.");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ReenviarWhatsApp(string placa, string? telefono)
+        {
+
+            // Buscamos el vehiculo
+            if (string.IsNullOrWhiteSpace(placa))
+            {
+
+                return Json(new { success = false, message = "La placa es obligatoria." });
+
+            }
+
+            var ingreso = await _context.ingresos
+                .Where(i => i.placa.ToUpper() == placa.ToUpper().Trim())
+                .OrderByDescending(i => i.fecha_ingreso)
+                .FirstOrDefaultAsync();
+
+            if (ingreso == null)
+            {
+
+                return Json(new { succes = false, message = "El ingreso no existe." });
+
+            }
+
+            if (!string.IsNullOrWhiteSpace(telefono))
+            {
+
+                ingreso.telefono = telefono.Trim();
+                int lineasAfectadas = await _context.SaveChangesAsync();
+
+                if (lineasAfectadas <= 0)
+                {
+                    return Json(new { success = false, message = "Error al actualizar el número de teléfono en la base de datos." });
+                }
+
+            }
+
+            string numeroEnvio = !string.IsNullOrWhiteSpace(ingreso.telefono) ? ingreso.telefono : telefono;
+
+            var (exito, mensaje) = await EnviarWhatsAppIngreso(ingreso.placa, ingreso.nombre_cliente, ingreso.id_ingreso, numeroEnvio);
+
+            if (exito)
+            {
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"Notificación reenviada con éxito al número {numeroEnvio}."
+                });
+
+            }
+            else
+            {
+
+                return Json(new
+                {
+
+                    success = false,
+                    message = $"No se pudo reenviar el mensaje: {mensaje}"
+
+                });
+
             }
         }
 

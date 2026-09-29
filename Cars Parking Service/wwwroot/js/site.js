@@ -2111,3 +2111,146 @@ document.addEventListener("click", function (event) {
 
     abrirVisorImagen(imagen.src);
 });
+
+// ============ Evento para modal de reenviar whatsApp con la burbuja ============ //
+
+function mostrarAlertaWhatsApp(mensaje, tipo = 'error') {
+    const containerId = 'customAlertContainer';
+    let container = document.getElementById(containerId);
+
+    if (!container) {
+        container = document.createElement('div');
+        container.id = containerId;
+        container.className = 'custom-alert-container';
+        document.body.appendChild(container);
+    }
+
+    const alerta = document.createElement('div');
+    alerta.className = `custom-alert ${tipo === 'success' ? 'success' : 'error'}`;
+    alerta.innerHTML = `<div class="custom-alert-icon">${tipo === 'success' ? '✓' : '!'}</div><div class="custom-alert-message"></div>`;
+    alerta.querySelector('.custom-alert-message').textContent = mensaje;
+
+    container.appendChild(alerta);
+
+    setTimeout(() => {
+        alerta.classList.add('hide');
+        setTimeout(() => alerta.remove(), 380);
+    }, 3600);
+}
+
+function validarPlacaWhatsApp(placa) {
+    return /^[A-Z]{3}[0-9]{3}$/.test(placa.replace('-', ''));
+}
+
+function abrirModalWhatsApp() {
+
+    const modalAcciones = document.getElementById('modal-acciones');
+    const contenedor = document.getElementById('contenido-modal-acciones');
+
+    if (modalAcciones) { modalAcciones.style.display = "flex"; }
+    if (contenedor) {
+        contenedor.innerHTML = `
+
+
+            <h2>Reenviar Comprobante por WhatsApp</h2>
+            <p>Ingresa la placa del vehículo para reenviar la notificación.</p>
+
+            <form id="formReenviarWhatsapp">
+                <div class="input-group">
+                    <label for="placaReenvio">Placa del Vehículo:</label>
+                    <input type="text" id="placaReenvio" name="placa" placeholder="ABC123" maxlength="6" style="text-transform: uppercase;" required>
+                    <div class="error-message" id="errorPlacaReenvio">⚠️ La placa es obligatoria (Formato: ABC123)</div>
+                </div>
+
+                <!-- Opcional: Permitir actualizar el número si quedó mal digitado -->
+                <div class="input-group">
+                    <label for="telefonoNuevo">WhatsApp (opcional, si cambió o estuvo mal):</label>
+                    <input type="tel" id="telefonoNuevo" name="telefonoNuevo" placeholder="Dejar en blanco para usar el registrado">
+                </div>
+
+                <button type="submit" class="btn-submit" onclick="">
+                    🚀 Reenviar WhatsApp
+                </button>
+            </form>
+
+        `
+
+        // Agregar validación y manejo del formulario
+        const formReenviar = document.getElementById('formReenviarWhatsapp');
+        const placaInput = document.getElementById('placaReenvio');
+        const errorPlacaEl = document.getElementById('errorPlacaReenvio');
+
+        if (placaInput) {
+            placaInput.addEventListener('input', function () {
+                this.value = this.value.toUpperCase();
+                if (this.value.trim() === '') {
+                    errorPlacaEl.classList.add('visible');
+                } else if (!validarPlacaWhatsApp(this.value)) {
+                    errorPlacaEl.classList.add('visible');
+                } else {
+                    errorPlacaEl.classList.remove('visible');
+                }
+            });
+
+            placaInput.addEventListener('blur', function () {
+                if (this.value.trim() === '') {
+                    errorPlacaEl.classList.add('visible');
+                }
+            });
+        }
+
+        if (formReenviar) {
+            formReenviar.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const placa = placaInput.value.trim().toUpperCase();
+
+                // Validar placa
+                if (!placa) {
+                    mostrarAlertaWhatsApp('❌ La placa es obligatoria', 'error');
+                    errorPlacaEl.classList.add('visible');
+                    return;
+                }
+
+                if (!validarPlacaWhatsApp(placa)) {
+                    mostrarAlertaWhatsApp('❌ Formato de placa inválido (ABC123)', 'error');
+                    errorPlacaEl.classList.add('visible');
+                    return;
+                }
+
+                errorPlacaEl.classList.remove('visible');
+
+                // Enviar solicitud al servidor
+                const telefonoNuevo = document.getElementById('telefonoNuevo').value.trim();
+
+                const datos = new FormData();
+                datos.append('placa', placa);
+                if (telefonoNuevo) {
+                    datos.append('telefonoNuevo', telefonoNuevo);
+                }
+
+                fetch('/Home/ReenviarWhatsApp', {
+                    method: 'POST',
+                    body: datos
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        mostrarAlertaWhatsApp('✅ ' + data.message, 'success');
+                        setTimeout(() => {
+                            cerrarModalAcciones();
+                        }, 2000);
+                    } else {
+                        mostrarAlertaWhatsApp('❌ ' + (data.message || 'Error al reenviar'), 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mostrarAlertaWhatsApp('❌ Error al procesar la solicitud', 'error');
+                });
+            });
+        }
+    }
+
+}
+
