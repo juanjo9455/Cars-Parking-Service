@@ -2200,6 +2200,28 @@ function abrirModalWhatsApp() {
         }
 
         if (formReenviar) {
+            const submitBtn = formReenviar.querySelector('button[type="submit"]');
+            const setButtonLoading = (button, isLoading) => {
+                if (!button) return;
+
+                if (isLoading) {
+                    if (!button.querySelector('.btn-spinner')) {
+                        const spinner = document.createElement('span');
+                        spinner.className = 'btn-spinner';
+                        spinner.setAttribute('aria-hidden', 'true');
+                        spinner.innerHTML = '<svg viewBox="25 25 50 50"><circle r="20" cy="50" cx="50"></circle></svg>';
+                        button.appendChild(spinner);
+                    }
+
+                    button.classList.add('btn-loading-target');
+                    button.classList.add('btn-loading');
+                    button.disabled = true;
+                } else {
+                    button.classList.remove('btn-loading');
+                    button.disabled = false;
+                }
+            };
+
             formReenviar.addEventListener('submit', function (e) {
                 e.preventDefault();
 
@@ -2219,6 +2241,7 @@ function abrirModalWhatsApp() {
                 }
 
                 errorPlacaEl.classList.remove('visible');
+                setButtonLoading(submitBtn, true);
 
                 // Enviar solicitud al servidor
                 const telefonoNuevo = document.getElementById('telefonoNuevo').value.trim();
@@ -2247,6 +2270,9 @@ function abrirModalWhatsApp() {
                 .catch(error => {
                     console.error('Error:', error);
                     mostrarAlertaWhatsApp('❌ Error al procesar la solicitud', 'error');
+                })
+                .finally(() => {
+                    setButtonLoading(submitBtn, false);
                 });
             });
         }

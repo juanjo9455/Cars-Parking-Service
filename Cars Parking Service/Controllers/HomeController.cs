@@ -1148,6 +1148,7 @@ namespace CarsParkingService.Controllers
                     _context.SaveChanges();
                 }
 
+
                 // Guardar el video si existe
                 if (!string.IsNullOrEmpty(videoBase64))
                 {

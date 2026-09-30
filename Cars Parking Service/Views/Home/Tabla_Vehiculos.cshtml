@@ -616,38 +616,6 @@
         });
     </script>
 
-    <!-- Mostrar alertas de TempData al cargar la página -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            @if (!string.IsNullOrEmpty(mensajeExito))
-            {
-                <text>
-                    mostrarAlertaWhatsApp('@Html.Raw(mensajeExito.Replace("'", "\\'"))', 'success');
-                </text>
-            }
-
-            @if (!string.IsNullOrEmpty(modalError))
-            {
-                <text>
-                    mostrarAlertaWhatsApp('@Html.Raw(modalError.Replace("'", "\\'"))', 'error');
-                </text>
-            }
-
-            @if (!string.IsNullOrEmpty(whatsappExito))
-            {
-                <text>
-                    mostrarAlertaWhatsApp('@Html.Raw(whatsappExito.Replace("'", "\\'"))', 'success');
-                </text>
-            }
-
-            @if (!string.IsNullOrEmpty(whatsappError))
-            {
-                <text>
-                    mostrarAlertaWhatsApp('@Html.Raw(whatsappError.Replace("'", "\\'"))', 'error');
-                </text>
-            }
-        });
-    </script>
 
     <script>
         (function () {

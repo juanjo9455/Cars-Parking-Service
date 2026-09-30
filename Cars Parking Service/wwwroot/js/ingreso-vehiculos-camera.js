@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const input = document.createElement('input');
 
             input.type = 'hidden';
-            input.name = `fotosObjetos[${index}]`;
+            input.name = `fotos[${index}]`;
 
             input.value = archivo.base64;
 
