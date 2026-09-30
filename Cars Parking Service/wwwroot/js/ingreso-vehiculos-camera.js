@@ -89,6 +89,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    window.limpiarObjetosValorSeleccionados = function () {
+        archivosObjetosCapturados = [];
+
+        if (photosPreviewObjetos) {
+            photosPreviewObjetos.innerHTML = '';
+        }
+
+        if (fotosObjetosBase64Container) {
+            fotosObjetosBase64Container.innerHTML = '';
+        }
+
+        if (cameraInputObjetos) {
+            cameraInputObjetos.value = '';
+        }
+
+        cameraInputObjetosClicking = false;
+        actualizarContadorObjetos();
+    };
+
     function sincronizarInputsObjetosOcultos() {
 
         // Limpiamos input

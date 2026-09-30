@@ -53,6 +53,10 @@
 
                 btnObjetosImagenes.classList.add('inactivo');
 
+                if (typeof window.limpiarObjetosValorSeleccionados === 'function') {
+                    window.limpiarObjetosValorSeleccionados();
+                }
+
                 sinObjetosHidden.value = 'true';
 
             } else {
