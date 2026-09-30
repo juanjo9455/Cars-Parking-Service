@@ -582,6 +582,40 @@
         }
     </script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.body.classList.add('tabla-vehiculos-page');
+
+            const ajustarCapasBurbujas = () => {
+                const bubblePrincipal = document.querySelector('.bubble');
+                const bubbleWhatsapp = document.querySelector('.bubble-whatsapp');
+                const btnNuevo = document.querySelector('.btn-nuevo:not(.hidden)');
+
+                if (!bubblePrincipal || !bubbleWhatsapp || !btnNuevo) return;
+
+                const arribaDelTodo = window.scrollY <= 5;
+
+                if (arribaDelTodo) {
+                    const rect = btnNuevo.getBoundingClientRect();
+                    const topPrincipal = Math.max(16, rect.bottom + 8);
+                    const topWhatsapp = topPrincipal + bubblePrincipal.offsetHeight + 10;
+
+                    document.body.classList.add('bubbles-respect-btn');
+                    document.documentElement.style.setProperty('--bubble-top-main', `${topPrincipal}px`);
+                    document.documentElement.style.setProperty('--bubble-top-whatsapp', `${topWhatsapp}px`);
+                } else {
+                    document.body.classList.remove('bubbles-respect-btn');
+                    document.documentElement.style.removeProperty('--bubble-top-main');
+                    document.documentElement.style.removeProperty('--bubble-top-whatsapp');
+                }
+            };
+
+            ajustarCapasBurbujas();
+            window.addEventListener('scroll', ajustarCapasBurbujas, { passive: true });
+            window.addEventListener('resize', ajustarCapasBurbujas);
+        });
+    </script>
+
     <!-- Mostrar alertas de TempData al cargar la página -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
