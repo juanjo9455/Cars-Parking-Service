@@ -2,10 +2,14 @@
 @{
     ViewData["Title"] = "Tabla Vehiculos";
     var modalError = TempData["Error"] as string;
+    var mensajeExito = TempData["Exito"] as string;
+    var whatsappExito = TempData["WhatsAppExito"] as string;
+    var whatsappError = TempData["WhatsAppError"] as string;
     var modalErrorIngresoId = TempData["ErrorIngresoId"]?.ToString();
     var idRol = Context.Session.GetInt32("id_rol");
     var idUsuarioSesion = Context.Session.GetInt32("id");
 }
+
 
 <style>
     .card-ingreso-vehiculos {
@@ -41,6 +45,14 @@
      aria-label="Solicitudes de vehículo">
     <i class="fa-solid fa-car-side"></i>
     <span class="bubble-count" id="bubbleCount"></span>
+</div>
+
+<!-- Burbuja ovalada WhatsApp-->
+<div class="bubble-whatsapp" id="vehiculoBubble"
+     onclick="abrirModalWhatsApp()"
+     role="button" tabindex="0"
+     aria-label="Reenviar WhatsApp">
+    <i class="fa-brands fa-whatsapp"></i>
 </div>
 
 <!-- Panel principal -->
@@ -122,7 +134,6 @@
     </div>
 
 </div>
-
 
 <div class="container">
     <!-- Header -->
@@ -473,6 +484,52 @@
     <script src="~/js/solicitudes.js" asp-append-version="true"></script>
     <script src="~/js/ingreso-vehiculos-camera.js" asp-append-version="true" defer></script>
     <script src="~/js/pago.js" asp-append-version="true"></script>
+
+    @if (!string.IsNullOrWhiteSpace(mensajeExito) || !string.IsNullOrWhiteSpace(modalError) || !string.IsNullOrWhiteSpace(whatsappExito) || !string.IsNullOrWhiteSpace(whatsappError))
+    {
+        <script>
+            (function () {
+                if (typeof window.mostrarAlertaServidor !== 'function') {
+                    window.mostrarAlertaServidor = function (mensaje, tipo) {
+                        const containerId = 'customAlertContainer';
+                        let container = document.getElementById(containerId);
+
+                        if (!container) {
+                            container = document.createElement('div');
+                            container.id = containerId;
+                            container.className = 'custom-alert-container';
+                            document.body.appendChild(container);
+                        }
+
+                        const alerta = document.createElement('div');
+                        alerta.className = `custom-alert ${tipo === 'success' ? 'success' : 'error'}`;
+                        alerta.innerHTML = `<div class="custom-alert-icon">${tipo === 'success' ? '✓' : '!'}</div><div class="custom-alert-message"></div>`;
+                        alerta.querySelector('.custom-alert-message').textContent = mensaje;
+
+                        container.appendChild(alerta);
+
+                        setTimeout(() => {
+                            alerta.classList.add('hide');
+                            setTimeout(() => alerta.remove(), 380);
+                        }, 3600);
+                    };
+                }
+            })();
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const exitoGeneral = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(mensajeExito ?? string.Empty));
+                const errorGeneral = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(modalError ?? string.Empty));
+                const exitoWhatsapp = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(whatsappExito ?? string.Empty));
+                const errorWhatsapp = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(whatsappError ?? string.Empty));
+
+                if (exitoGeneral) window.mostrarAlertaServidor(exitoGeneral, 'success');
+                if (exitoWhatsapp) window.mostrarAlertaServidor(exitoWhatsapp, 'success');
+                if (errorGeneral) window.mostrarAlertaServidor(errorGeneral, 'error');
+                if (errorWhatsapp) window.mostrarAlertaServidor(errorWhatsapp, 'error');
+            });
+        </script>
+    }
+
     <!--<script>
         document.addEventListener('DOMContentLoaded', function () {
             const fechaInicio = document.getElementById('fechaInicio');
@@ -524,6 +581,41 @@
             });
         }
     </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.body.classList.add('tabla-vehiculos-page');
+
+            const ajustarCapasBurbujas = () => {
+                const bubblePrincipal = document.querySelector('.bubble');
+                const bubbleWhatsapp = document.querySelector('.bubble-whatsapp');
+                const btnNuevo = document.querySelector('.btn-nuevo:not(.hidden)');
+
+                if (!bubblePrincipal || !bubbleWhatsapp || !btnNuevo) return;
+
+                const arribaDelTodo = window.scrollY <= 5;
+
+                if (arribaDelTodo) {
+                    const rect = btnNuevo.getBoundingClientRect();
+                    const topPrincipal = Math.max(16, rect.bottom + 8);
+                    const topWhatsapp = topPrincipal + bubblePrincipal.offsetHeight + 10;
+
+                    document.body.classList.add('bubbles-respect-btn');
+                    document.documentElement.style.setProperty('--bubble-top-main', `${topPrincipal}px`);
+                    document.documentElement.style.setProperty('--bubble-top-whatsapp', `${topWhatsapp}px`);
+                } else {
+                    document.body.classList.remove('bubbles-respect-btn');
+                    document.documentElement.style.removeProperty('--bubble-top-main');
+                    document.documentElement.style.removeProperty('--bubble-top-whatsapp');
+                }
+            };
+
+            ajustarCapasBurbujas();
+            window.addEventListener('scroll', ajustarCapasBurbujas, { passive: true });
+            window.addEventListener('resize', ajustarCapasBurbujas);
+        });
+    </script>
+
 
     <script>
         (function () {

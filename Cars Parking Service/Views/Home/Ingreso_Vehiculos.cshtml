@@ -4,6 +4,7 @@
     var idUbicacion = Context.Session.GetInt32("id_ubicacion");
 }
 
+
 <div id="client-error-container" style="display:none;position:fixed;top:10px;left:10px;right:10px;z-index:9999;background:#fee;border:1px solid #f99;padding:10px;border-radius:6px;color:#600;max-height:40vh;overflow:auto;"></div>
 
 <!-- Notificación estilo Android -->
@@ -121,14 +122,15 @@
 
     <h1 class="ingreso-title">Ingresar Vehiculo</h1>
 
-    @if (TempData["ModelStateErrors"] != null)
+    @if (TempData["Error"] != null)
     {
         <div class="error-credenciales">
-            <span class="error-text">⚠️ Errores de validación: @TempData["ModelStateErrors"]</span>
+            <span class="error-text">⚠️ @TempData["Error"]</span>
         </div>
     }
 
-    @if (ViewBag.Error != null) {
+    @if (ViewBag.Error != null)
+    {
         <div class="error-credenciales">
             <span class="error-text">⚠️ @ViewBag.Error</span>
         </div>
@@ -147,6 +149,7 @@
             <div class="error-message" id="errorPlaca">⚠️ La Placa es obligatoria (Formato: ABC123)</div>
         </div>
 
+        <!-- Nombre Cliente -->
         <div class="input-group">
             <input type="text"
                    name="nombre_cliente"
@@ -156,6 +159,7 @@
                    required>
         </div>
 
+        <!-- Teléfono / WhatsApp -->
         <div class="input-group">
             <input type="tel"
                    name="telefono"
@@ -166,48 +170,50 @@
             <div class="error-message" id="errorTelefono">⚠️ El WhatsApp es obligatorio</div>
         </div>
 
-        <!-- Selección de Valet -->
+        <!-- Selección de Valet (Opcional, valor 0 envía 'Aún sin valet') -->
         <div class="input-group">
-                <select name="id_valet" id="id_valet" style="width:100%;" required>
-                <option value="">Selecciona un valet</option>
-                <option value="">Aun sin valet</option>
-                @foreach(var valet in ViewBag.Valets){
-                    <option value="@valet.id_usuario">@valet.nombres @valet.apellidos</option>
+            <select name="id_valet" id="id_valet" style="width:100%;">
+                <option value="0">Aún sin valet</option>
+                @if (ViewBag.Valets != null)
+                {
+                    foreach (var valet in ViewBag.Valets)
+                    {
+                        <option value="@valet.id_usuario">@valet.nombres @valet.apellidos</option>
+                    }
                 }
-                
             </select>
-            <div class="error-message" id="errorValet">⚠️ Selecciona un valet</div>
         </div>
 
-        <!-- Banco (Usuario en sesión - no editable) -->
+        <!-- Banco / Cajero (Informativo, envía el ID oculto) -->
         <div class="input-group">
             <input type="text"
-                    id="banco_display"
-                    value="@ViewBag.UsuarioSesion?.nombre @ViewBag.UsuarioSesion?.apellido"
-                    placeholder="Banco/Cajero"
-                    readonly
-                    style="background-color: #f5f5f5; cursor: not-allowed;">
+                   id="banco_display"
+                   value="@ViewBag.UsuarioSesion?.nombre @ViewBag.UsuarioSesion?.apellido"
+                   placeholder="Banco/Cajero"
+                   readonly
+                   style="background-color: #f5f5f5; cursor: not-allowed;">
 
             <input type="hidden"
-                    name="id_banco"
-                    value="@ViewBag.UsuarioSesion?.IdUsuario">
-
-            <div class="error-message" id="errorBanco">⚠️ No hay un banco en sesión</div>
+                   name="id_banco"
+                   value="@ViewBag.UsuarioSesion?.IdUsuario">
         </div>
 
         <!-- Selección de Parqueadero -->
         <div class="input-group">
-                <select name="id_parqueadero" id="id_parqueadero" style="width:100%;" required>
+            <select name="id_parqueadero" id="id_parqueadero" style="width:100%;" required>
                 <option value="">Selecciona un Parqueadero</option>
-                    @foreach (var parqueadero in ViewBag.Parqueaderos)
+                @if (ViewBag.Parqueaderos != null)
+                {
+                    foreach (var parqueadero in ViewBag.Parqueaderos)
                     {
                         <option value="@parqueadero.id_parqueadero">@parqueadero.nombre_parqueadero</option>
                     }
+                }
             </select>
             <div class="error-message" id="errorParqueadero">⚠️ Selecciona un parqueadero</div>
         </div>
 
-        <input type="hidden" id="id_ubicacion" value="@idUbicacion" />
+        <input type="hidden" id="id_ubicacion" name="id_ubicacion" value="@idUbicacion" />
 
         <!-- Notas/Valuables -->
         <!--<div class="input-group notas-group">
@@ -219,6 +225,7 @@
             </button>
         </div>-->
         <!-- Notas/Valuables -->
+
         <div class="input-group notas-group" style="gap:0">
 
             <textarea name="notas"
@@ -345,6 +352,50 @@
     </div>
 </div>
 
+@if (TempData["Exito"] != null || TempData["Error"] != null || TempData["WhatsAppExito"] != null || TempData["WhatsAppError"] != null)
+{
+    <script>
+        (function () {
+            if (typeof window.mostrarAlertaServidor !== 'function') {
+                window.mostrarAlertaServidor = function (mensaje, tipo) {
+                    const containerId = 'customAlertContainer';
+                    let container = document.getElementById(containerId);
+
+                    if (!container) {
+                        container = document.createElement('div');
+                        container.id = containerId;
+                        container.className = 'custom-alert-container';
+                        document.body.appendChild(container);
+                    }
+
+                    const alerta = document.createElement('div');
+                    alerta.className = `custom-alert ${tipo === 'success' ? 'success' : 'error'}`;
+                    alerta.innerHTML = `<div class="custom-alert-icon">${tipo === 'success' ? '✓' : '!'}</div><div class="custom-alert-message"></div>`;
+                    alerta.querySelector('.custom-alert-message').textContent = mensaje;
+
+                    container.appendChild(alerta);
+
+                    setTimeout(() => {
+                        alerta.classList.add('hide');
+                        setTimeout(() => alerta.remove(), 380);
+                    }, 3600);
+                };
+            }
+        })();
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const mensajeExito = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["Exito"]?.ToString() ?? string.Empty));
+            const mensajeError = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["Error"]?.ToString() ?? string.Empty));
+            const mensajeWhatsappExito = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["WhatsAppExito"]?.ToString() ?? string.Empty));
+            const mensajeWhatsappError = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["WhatsAppError"]?.ToString() ?? string.Empty));
+
+            if (mensajeExito) window.mostrarAlertaServidor(mensajeExito, 'success');
+            if (mensajeWhatsappExito) window.mostrarAlertaServidor(mensajeWhatsappExito, 'success');
+            if (mensajeError) window.mostrarAlertaServidor(mensajeError, 'error');
+            if (mensajeWhatsappError) window.mostrarAlertaServidor(mensajeWhatsappError, 'error');
+        });
+    </script>
+}
 
 @section Scripts {
     <script src="~/js/solicitudes.js" asp-append-version="true" defer></script>
@@ -392,12 +443,26 @@
                 }
             };
 
+            const deactivate = (el) => {
+                if (!el) return;
+                el.classList.remove('btn-loading');
+                if (el.tagName === 'BUTTON') {
+                    el.disabled = false;
+                }
+            };
+
             document.querySelectorAll('button, a.btn, a.home-action-btn').forEach(addSpinner);
 
             document.querySelectorAll('form').forEach(form => {
                 form.addEventListener('submit', ev => {
                     const submitter = ev.submitter || form.querySelector('button[type="submit"], button:not([type])');
                     activate(submitter);
+
+                    setTimeout(() => {
+                        if (ev.defaultPrevented) {
+                            deactivate(submitter);
+                        }
+                    }, 0);
                 });
             });
 
