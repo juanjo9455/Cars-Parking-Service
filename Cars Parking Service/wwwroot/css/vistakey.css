@@ -1,4 +1,53 @@
 
+/* ===================== ALERTAS DEBUG ===================== */
+
+.debug-alert-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 100000;
+    width: min(420px, calc(100vw - 32px));
+}
+
+.debug-alert {
+    background: #ffffff;
+    border-left: 5px solid #1565c0;
+    border-radius: 14px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+    padding: 14px 16px;
+    opacity: 0;
+    transform: translateX(24px);
+    transition: opacity .25s ease, transform .25s ease;
+}
+
+.debug-alert.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.debug-alert.server {
+    border-left-color: #2e7d32;
+}
+
+.debug-alert-title {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.debug-alert-message {
+    font-size: 13px;
+    line-height: 1.45;
+    color: #111827;
+    word-break: break-word;
+}
+
 /* ===================== MODAL ACCEDER AL PARQUEADERO ===================== */
 
 .modal-parqueadero-overlay {

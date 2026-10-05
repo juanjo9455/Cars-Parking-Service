@@ -382,6 +382,10 @@
 </script>
 
 <script>
+    window.debugVistaKeyController = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["DebugVistaKey"]?.ToString() ?? string.Empty));
+</script>
+
+<script>
     (function () {
         const spinnerSvg = '<svg viewBox="25 25 50 50"><circle r="20" cy="50" cx="50"></circle></svg>';
 
@@ -438,3 +442,10 @@
 </script>
 
 <script src="~/js/vistakey.js?v=@DateTime.Now.Ticks"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.debugVistaKeyController && typeof window.mostrarDebugKeyAlerta === 'function') {
+            window.mostrarDebugKeyAlerta(window.debugVistaKeyController, 'server');
+        }
+    });
+</script>
