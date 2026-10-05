@@ -165,6 +165,7 @@
         const idValet = document.getElementById('id_valet')?.value || '';
         const idBanco = document.querySelector('input[name="id_banco"]')?.value || '';
         const idParqueadero = document.getElementById('id_parqueadero')?.value || '';
+        const videoBase64 = document.getElementById('videoBase64Input')?.value || '';
         //const idUbicacion = document.getElementById('id_ubicacion')?.value || '';
 
         console.log('=== VALIDACIÓN DE CAMPOS ===');
@@ -173,6 +174,7 @@
         console.log('ID Valet:', idValet);
         console.log('ID Banco:', idBanco);
         console.log('ID Parqueadero:', idParqueadero);
+        console.log('Video capturado:', !!videoBase64);
         //console.log('ID Ubicación:', idUbicacion);
 
         if (!placa || !/^[A-Z]{3}[0-9]{3}$/.test(placa)) {
@@ -211,10 +213,24 @@
             if (errorUbicacion) errorUbicacion.style.display = 'block';
         }*/
 
+        const videoEsValido = typeof window.videoVehiculoEsValido === 'function'
+            ? window.videoVehiculoEsValido()
+            : !!videoBase64;
+
+        if (!videoEsValido) {
+            errores.push('Video obligatorio de mínimo 15 segundos');
+            const errorMedia = document.getElementById('errorMedia');
+            if (errorMedia) errorMedia.style.display = 'block';
+            mostrarAlerta('Debes grabar y guardar un video de mínimo 15 segundos antes de ingresar el vehículo.', 'error');
+        } else {
+            const errorMedia = document.getElementById('errorMedia');
+            if (errorMedia) errorMedia.style.display = 'none';
+        }
+
         // Validar firma
         console.log('=== VALIDACIÓN DE FIRMA ===');
         console.log('Firma realizada:', firmaRealizada);
-        
+
         if (!firmaRealizada) {
             errores.push('Firma requerida');
             const errorFirma = document.getElementById('errorFirma');
@@ -234,7 +250,9 @@
         if (errores.length > 0) {
             console.error('❌ ERRORES DE VALIDACIÓN:', errores);
             e.preventDefault();
-            mostrarAlerta('Por favor, completa todos los campos requeridos correctamente.', 'error');
+            if (!errores.includes('Video obligatorio de 30 segundos')) {
+                mostrarAlerta('Por favor, completa todos los campos requeridos correctamente.', 'error');
+            }
             return false;
         }
 

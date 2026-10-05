@@ -64,6 +64,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let videoBlob = null;
     let videoGrabado = false;
+    let videoCompletoYConfirmado = false;
+
+    window.videoVehiculoEsValido = function () {
+        return videoCompletoYConfirmado && !!videoBase64Input.value;
+    };
 
     let archivosObjetosCapturados = [];
     let cameraInputObjetosClicking = false; // Previene doble click
@@ -240,6 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
         videoBase64Input.value = '';
         videoBlob = null;
         videoGrabado = false;
+        videoCompletoYConfirmado = false;
         actualizarContador();
     }
 
@@ -305,11 +311,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let recordedChunks = [];
     let timerInterval = null;
     let secondsElapsed = 0;
+    let descartarGrabacionActual = false;
+    const MIN_SECONDS = 15;
     const MAX_SECONDS = 30;
 
     if (typeof grabarVideoBtn !== 'undefined' && grabarVideoBtn) {
         grabarVideoBtn.addEventListener('click', function() {
             if (videoGrabado) return; // Solo un video permitido
+            videoCompletoYConfirmado = false;
             videoModal.style.display = 'flex';
             videoReviewSection.style.display = 'none';
             startRecordingBtn.style.display = '';
@@ -345,6 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
         startRecordingBtn.addEventListener('click', function() {
             if (!mediaStream) return;
             recordedChunks = [];
+            descartarGrabacionActual = false;
             mediaRecorder = new MediaRecorder(mediaStream, { mimeType: 'video/webm;codecs=vp8,opus' });
             mediaRecorder.ondataavailable = e => {
                 if (e.data.size > 0) recordedChunks.push(e.data);
@@ -361,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 recordProgressBar.style.width = `${(secondsElapsed / MAX_SECONDS) * 100}%`;
                 recordTimer.textContent = `00:${secondsElapsed.toString().padStart(2, '0')}`;
                 if (secondsElapsed >= MAX_SECONDS) {
-                    stopRecording();
+                    stopRecording(true);
                 }
             }, 1000);
         });
@@ -371,7 +381,14 @@ document.addEventListener('DOMContentLoaded', () => {
         stopRecordingBtn.addEventListener('click', stopRecording);
     }
 
-    function stopRecording() {
+        function stopRecording(forzado = false) {
+        if (!forzado && secondsElapsed < MIN_SECONDS) {
+            mostrarError('Debes grabar y completar al menos 15 segundos de video antes de continuar.');
+            return;
+        }
+
+        descartarGrabacionActual = false;
+
         if (mediaRecorder && mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
         }
@@ -383,12 +400,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof closeVideoModalBtn !== 'undefined' && closeVideoModalBtn) {
         closeVideoModalBtn.addEventListener('click', function() {
             if (mediaRecorder && mediaRecorder.state === 'recording') {
+                descartarGrabacionActual = true;
                 mediaRecorder.stop();
             }
             if (mediaStream) {
                 mediaStream.getTracks().forEach(track => track.stop());
                 mediaStream = null;
             }
+            videoCompletoYConfirmado = false;
             videoModal.style.display = 'none';
             liveVideo.srcObject = null;
             clearInterval(timerInterval);
@@ -400,6 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteVideoBtn.addEventListener('click', function() {
             // Cierra el modal completamente, igual que la X principal
             if (mediaRecorder && mediaRecorder.state === 'recording') {
+                descartarGrabacionActual = true;
                 mediaRecorder.stop();
             }
             if (mediaStream) {
@@ -419,6 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
             grabarVideoBtn.classList.remove('disabled-photo-btn');
             grabarVideoBtn.disabled = false;
             videoGrabado = false;
+            videoCompletoYConfirmado = false;
         });
     }
 
@@ -427,6 +448,22 @@ document.addEventListener('DOMContentLoaded', () => {
             mediaStream.getTracks().forEach(track => track.stop());
             mediaStream = null;
         }
+
+        if (descartarGrabacionActual || secondsElapsed < MIN_SECONDS) {
+            descartarGrabacionActual = false;
+            recordedChunks = [];
+            recordedVideo.src = '';
+            videoReviewSection.style.display = 'none';
+            acceptVideoBtn.style.display = 'none';
+            if (deleteVideoBtn) deleteVideoBtn.style.display = 'none';
+            videoCompletoYConfirmado = false;
+            videoGrabado = false;
+            grabarVideoBtn.classList.remove('disabled-photo-btn');
+            grabarVideoBtn.disabled = false;
+            return;
+        }
+
+        videoCompletoYConfirmado = false;
         const blob = new Blob(recordedChunks, { type: 'video/webm' });
         const url = URL.createObjectURL(blob);
         liveVideo.style.display = 'none';
@@ -473,6 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 grabarVideoBtn.classList.remove('disabled-photo-btn');
                 grabarVideoBtn.disabled = false;
                 videoGrabado = false;
+                videoCompletoYConfirmado = false;
             };
 
             wrapper.appendChild(removeBtn);
@@ -481,6 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const reader = new FileReader();
             reader.onload = function(ev) {
                 videoBase64Input.value = ev.target.result;
+                videoCompletoYConfirmado = true;
             };
             reader.readAsDataURL(blob);
 
@@ -505,6 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
             grabarVideoBtn.classList.remove('disabled-photo-btn');
             grabarVideoBtn.disabled = false;
             videoGrabado = false;
+            videoCompletoYConfirmado = false;
         };
     }
 

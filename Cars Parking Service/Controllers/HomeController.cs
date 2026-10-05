@@ -394,10 +394,11 @@ namespace CarsParkingService.Controllers
         public IActionResult ActualizarEstadoKey(int id_ingreso, string nuevo_estado, int? id_valet = null)
         {
             var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
             if (ingreso != null)
             {
                 ingreso.estado_servicio = nuevo_estado;
-                
+
                 // Si llegó un id_valet (p. ej. desde el modal de despacho) lo guardamos en valet_despacho
                 if (id_valet.HasValue)
                 {
@@ -419,6 +420,23 @@ namespace CarsParkingService.Controllers
                 }
 
                 _context.SaveChanges();
+
+                TempData["DebugVistaKey"] = nuevo_estado switch
+                {
+                    "parqueado" when ingreso.estado_servicio == "parqueado" => "Parqueado con éxito.",
+                    "parqueado" => "Error al parquear.",
+                    "despachado" when ingreso.estado_servicio == "despachado" => "Despachado con éxito.",
+                    "despachado" => "Error al despachar.",
+                    _ => "Estado actualizado."
+                };
+            }
+            else
+            {
+                TempData["DebugVistaKey"] = nuevo_estado == "parqueado"
+                    ? "Error al parquear."
+                    : nuevo_estado == "despachado"
+                        ? "Error al despachar."
+                        : "No se encontró el ingreso.";
             }
 
             // Lo retornamos a la vista
