@@ -1038,8 +1038,8 @@ function confirmarGuardarUsuario() {
 
 // =========================== Ubicacion =========================== \\
 
-// Modal para editar en tabla usbicaciones
-// Abrir modal y cargar datos del usuario en los inputs
+// Modal para editar en tabla ubicaciones
+// Abrir modal y cargar datos de la ubicacion en los inputs
 function abrirModalEditarUbicacion(id, nombre_ubicacion, direccion, ciudad, valor_servicio) {
     document.getElementById('edit_id_ubicacion').value = id;
     document.getElementById('edit_nombre_ubicacion').value = nombre_ubicacion;
@@ -1063,13 +1063,50 @@ function confirmarGuardarUbicacion() {
     }
 }
 
-// Alerta de confirmacion para eliminar usuario
-function confirmarEliminarUbicacion(id) {
-    const confirmacion = confirm("⚠️ ADVERTENCIA: ¿Estás seguro de que deseas eliminar permanentemente a esta ubicacion del sistema? Esta acción no se puede deshacer.");
+// Alerta de confirmacion para deshabilitar ubicacion
+function confirmarDeshabilitarUbicacion(id) {
+    const confirmacion = confirm("⚠️ ADVERTENCIA: ¿Estás seguro de que deseas deshabilitar permanentemente a esta ubicacion del sistema? Esta acción no se puede deshacer.");
     if (confirmacion) {
-        // Pasar el Id al form oculto enviar 
-        document.getElementById('delete_id_ubicacion').value = id;
-        document.getElementById('formEliminarUbicacion').submit();
+        // Pasar el Id al form oculto enviar
+        document.getElementById('deshabilitar_id_ubicacion').value = id;
+        document.getElementById('formDeshabilitarUbicacion').submit();
+    }
+}
+
+// =========================== Parqueadero =========================== \\
+
+// Modal para editar en tabla parqueaderos
+// Abrir modal y cargar datos del parqueadero en los inputs
+function abrirModalEditarParqueadero(id, nombre_parqueadero, direccion, ciudad, tarifa) {
+    document.getElementById('edit_id_parqueadero').value = id;
+    document.getElementById('edit_nombre_parqueadero').value = nombre_parqueadero;
+    document.getElementById('edit_direccion_parqueadero').value = direccion;
+    document.getElementById('edit_ciudad_parqueadero').value = ciudad;
+    document.getElementById('edit_tarifa_parqueadero').value = tarifa;
+
+    document.getElementById('ModalEditarParqueadero').style.display = 'flex';
+}
+
+function cerrarModalEditarParqueadero() {
+    document.getElementById('ModalEditarParqueadero').style.display = 'none';
+}
+
+// Alerta de confirmacion para guardar cambios
+function confirmarGuardarParqueadero() {
+    const confirmacion = confirm("¿Estás seguro de que deseas guardar los cambios realizados en este parqueadero?");
+    if (confirmacion) {
+        // Enviar al formulario si el admnistrador acepta
+        document.getElementById("formEditarParqueadero").submit();
+    }
+}
+
+// Alerta de confirmacion para deshabilitar parqueadero
+function confirmarDeshabilitarParqueadero(id) {
+    const confirmacion = confirm("⚠️ ADVERTENCIA: ¿Estás seguro de que deseas deshabilitar permanentemente a este parqueadero del sistema? Esta acción no se puede deshacer.");
+    if (confirmacion) {
+        // Pasar el Id al form oculto enviar
+        document.getElementById('delete_id_parqueadero').value = id;
+        document.getElementById('formDeshabilitarParqueadero').submit();
     }
 }
 
