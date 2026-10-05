@@ -401,7 +401,7 @@
                                     <!-- Formateamos el valor para no mostrar los decimales (,0000) -->
                                     <td>@ubicacion.valor_servicio.ToString("0")</td>
                                     <td class="text-center">
-                                        @if (ubicacion.estado == "activo")
+                                        @if (ubicacion.estado == "activo" || ubicacion.estado == "Activo" || ubicacion.estado == "ACTIVO")
                                         {
                                             <span class="status-badge" style="background: #4CAF50; color: white;"><i class="fa-solid fa-check"></i> Activo</span>
                                         }
@@ -528,7 +528,7 @@
                                     <td>@parqueadero.ciudad</td>
                                     <td>@parqueadero.tarifa.ToString("0")</td>
                                     <td class="text-center">
-                                        @if (parqueadero.estado == "activo")
+                                        @if (parqueadero.estado == "activo" || parqueadero.estado == "Activo" || parqueadero.estado == "ACTIVO")
                                         {
                                             <span class="status-badge" style="background: #4CAF50; color: white;"><i class="fa-solid fa-check"></i> Activo</span>
                                         }
