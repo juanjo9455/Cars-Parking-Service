@@ -112,83 +112,102 @@ document.addEventListener("DOMContentLoaded", function () {
             .catch(err => console.error("❌ Error cargando estado:", err));
     }
 
-    const btnSolicitar = document.getElementById('btn-solicitar');
+const btnSolicitar = document.getElementById('btn-solicitar');
+
+if (btnSolicitar) {
 
     btnSolicitar.addEventListener('click', function (e) {
-    e.preventDefault();
+        e.preventDefault();
 
-    if (confirmacion) confirmacion.style.display = 'block';
+        // 1. Obtener las referencias del modal PRIMERO
+        const confirmacion = document.getElementById('modal-confirmacion');
+        const contenidoConfirmacion = document.getElementById('confirmacion');
 
-    if (contenidoConfirmacion) {
-        contenidoConfirmacion.innerHTML = `
-            <h2 class="confirmacion-titulo">¡Ubicación De Entrega!</h2>
-            <p class="confirmacion-sub">
-                Por favor selecciona en qué lugar deseas recibir el vehículo.<br>
-                Llevaremos el vehículo a esta ubicación.
-            </p>
-            <select id="lugar-entrega" name="lugar" style="width:100%;">
-                <option value="">Cargando ubicaciones...</option>
-            </select>
-            <button type="button" class="btn-confirmacion btn-pagar" id="btn-confirmacion-lugar">
-                Aceptar
-            </button>
-        `;
+        // 2. Mostrar el modal si existe
+        if (confirmacion) {
+            confirmacion.style.display = 'block';
+        }
 
-        const btnConfirmacionLugar = document.getElementById('btn-confirmacion-lugar');
-        if (btnConfirmacionLugar) {
-            btnConfirmacionLugar.addEventListener('click', function (e) {
-                e.preventDefault();
+        // 3. Renderizar la vista de selección de ubicación
+        if (contenidoConfirmacion) {
 
-                const lugarEntrega = document.getElementById('lugar-entrega')?.value;
+            contenidoConfirmacion.innerHTML = `
+                <h2 class="confirmacion-titulo">
+                    ¡Ubicación De Entrega!
+                </h2>
 
-                if (!lugarEntrega) {
-                    alert('Por favor selecciona una ubicación de entrega.');
+                <p class="confirmacion-sub">
+                    Por favor selecciona en qué lugar deseas recibir el vehículo.
+                    <br>
+                    Llevaremos el vehículo a esta ubicación.
+                </p>
+
+                <select id="lugar-entrega" name="lugar" style="width:100%;">
+                    <option value="">Cargando ubicaciones...</option>
+                </select>
+
+                <button type="button" class="btn-confirmacion btn-pagar" id="btn-confirmacion-lugar">
+                    Aceptar
+                </button>
+            `;
+
+            const btnConfirmacionLugar = document.getElementById('btn-confirmacion-lugar');
+
+            if (btnConfirmacionLugar) {
+                btnConfirmacionLugar.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    const lugarEntrega = document.getElementById('lugar-entrega')?.value;
+
+                    if (!lugarEntrega) {
+                        alert('Por favor selecciona una ubicación de entrega.');
+                        return;
+                    }
+
+                    if (btnConfirmacionLugar.disabled) return;
+
+                    btnConfirmacionLugar.disabled = true;
+                    btnConfirmacionLugar.textContent = 'Procesando...';
+
+                    solicitarVehiculo();
+                });
+            }
+        }
+
+        // 4. Cargar las ubicaciones activas desde la BD (evitando caché en móviles)
+        fetch(`/Payment/ObtenerUbicaciones?_=${Date.now()}`, { cache: 'no-store' })
+            .then(response => response.json())
+            .then(data => {
+
+                if (!data.success) {
+                    alert(data.message);
                     return;
                 }
 
-                if (btnConfirmacionLugar.disabled) return;
+                const select = document.getElementById('lugar-entrega');
+                if (!select) return;
 
-                btnConfirmacionLugar.disabled = true;
-                btnConfirmacionLugar.textContent = 'Procesando...';
+                select.innerHTML = '<option value="">Selecciona una ubicación</option>';
 
-                solicitarVehiculo();
+                const fragment = document.createDocumentFragment();
+                data.data.forEach(u => {
+                    const option = document.createElement('option');
+                    option.value = u.nombre;
+                    option.textContent = u.nombre;
+                    fragment.appendChild(option);
+                });
+
+                select.appendChild(fragment);
+
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Error cargando las ubicaciones');
             });
-        }
-    }
 
-    // Petición con parámetro anti-caché para móviles
-    fetch(`/Payment/ObtenerUbicaciones?_=${Date.now()}`, {
-        cache: 'no-store'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (!data.success) {
-            alert(data.message);
-            return;
-        }
-
-        const select = document.getElementById('lugar-entrega');
-        if (!select) return;
-
-        // Limpiar opciones previas
-        select.innerHTML = '<option value="">Selecciona una ubicación</option>';
-
-        // Insertar elementos de manera segura
-        const fragment = document.createDocumentFragment();
-        data.data.forEach(u => {
-            const option = document.createElement('option');
-            option.value = u.nombre;
-            option.textContent = u.nombre;
-            fragment.appendChild(option);
-        });
-
-        select.appendChild(fragment);
-    })
-    .catch(error => {
-        console.error('Error cargando ubicaciones:', error);
-        alert('Error cargando las ubicaciones');
     });
-});
+
+}
 
     // ── Botón Pagar ──
     const btnPagar = document.getElementById('btn-pagar');
