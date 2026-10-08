@@ -132,6 +132,7 @@ namespace CarsParkingService.Controllers
                 lugarEntrega = ingreso.lugar_entrega
             });
         }
+
         [HttpPost]
         [AllowAnonymous]
         public IActionResult GuardarPago(int idIngreso, decimal tarifa, decimal propina, string metodoPago)
@@ -184,7 +185,7 @@ namespace CarsParkingService.Controllers
             try
             {
                 var ubicaciones = _context.ubicacion_servicios
-                    .Where(u => u.estado == "activo")
+                    .Where(u => u.estado != null && u.estado.Trim().ToLower() == "activo")
                     .Select(u => new
                     {
                         id = u.id_ubicacion,
@@ -200,8 +201,7 @@ namespace CarsParkingService.Controllers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(
-                    $"Error obteniendo ubicaciones: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error obteniendo ubicaciones: {ex.Message}");
 
                 return Json(new
                 {
