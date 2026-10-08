@@ -46,10 +46,12 @@
                         </option>
                         @foreach (var parqueadero in ViewBag.Parqueaderos)
                         {
-
-                            <option value="@parqueadero.id_parqueadero">
-                                @parqueadero.nombre_parqueadero
-                            </option>
+                            @if(parqueadero.estado == "activo")
+                            {
+                                <option value="@parqueadero.id_parqueadero">
+                                    @parqueadero.nombre_parqueadero
+                                </option>
+                            }
                         }
 
                     </select>
@@ -72,9 +74,14 @@
                         </option>
                         @foreach (var ubicacion in ViewBag.Ubicaciones)
                         {
-                            <option value="@ubicacion.id_ubicacion">
-                                @ubicacion.nombre_ubicacion
-                            </option>
+                            @if (ubicacion.estado == "activo")
+                            {
+                                
+                                <option value="@ubicacion.id_ubicacion">
+                                    @ubicacion.nombre_ubicacion
+                                </option>
+
+                            }
                         }
 
                     </select>
