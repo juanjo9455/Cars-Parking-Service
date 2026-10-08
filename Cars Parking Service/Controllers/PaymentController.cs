@@ -184,6 +184,7 @@ namespace CarsParkingService.Controllers
             try
             {
                 var ubicaciones = _context.ubicacion_servicios
+                    .Where(u => u.estado == "activo")
                     .Select(u => new
                     {
                         id = u.id_ubicacion,
@@ -194,13 +195,7 @@ namespace CarsParkingService.Controllers
                 return Json(new
                 {
                     success = true,
-                    data = ubicaciones.Select(u => new
-                    {
-
-                        id = u.id,
-                        nombre = u.nombre
-
-                    })
+                    data = ubicaciones
                 });
             }
             catch (Exception ex)
