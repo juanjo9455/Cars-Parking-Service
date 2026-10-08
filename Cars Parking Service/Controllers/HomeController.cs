@@ -1328,6 +1328,10 @@ namespace CarsParkingService.Controllers
 
             }
 
+            string? numeroEnvio = !string.IsNullOrWhiteSpace(telefono)
+                ? telefono.Trim()
+                : ingreso.telefono;
+
             if (!string.IsNullOrWhiteSpace(telefono))
             {
 
@@ -1340,8 +1344,6 @@ namespace CarsParkingService.Controllers
                 }
 
             }
-
-            string numeroEnvio = !string.IsNullOrWhiteSpace(ingreso.telefono) ? ingreso.telefono : telefono;
 
             var (exito, mensaje) = await EnviarWhatsAppIngreso(ingreso.placa, ingreso.nombre_cliente, ingreso.id_ingreso, numeroEnvio);
 

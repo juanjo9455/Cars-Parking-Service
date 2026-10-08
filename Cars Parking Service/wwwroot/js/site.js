@@ -2286,7 +2286,7 @@ function abrirModalWhatsApp() {
                 const datos = new FormData();
                 datos.append('placa', placa);
                 if (telefonoNuevo) {
-                    datos.append('telefonoNuevo', telefonoNuevo);
+                    datos.append('telefono', telefonoNuevo);
                 }
 
                 fetch('/Home/ReenviarWhatsApp', {
