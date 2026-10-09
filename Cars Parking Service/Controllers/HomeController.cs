@@ -548,20 +548,16 @@ namespace CarsParkingService.Controllers
             // Filtrado por rol
             if (idUsuario.HasValue)
             {
-                // Valet
-                if (rolUsuario == 1)
-                {
-                    query = query.Where(i => i.id_valet == idUsuario.Value);
-                }
+                // Valet: ve todos los despachados, sin filtro
 
                 // Banco
-                else if (rolUsuario == 2)
+                if (rolUsuario == 2)
                 {
                     query = query.Where(i => i.id_banco == idUsuario.Value);
                 }
 
                 // Otros roles
-                else if (rolUsuario != 3)
+                else if (rolUsuario != 3 && rolUsuario != 1)
                 {
                     query = query.Where(i =>
                         i.id_valet == idUsuario.Value ||
@@ -792,8 +788,8 @@ namespace CarsParkingService.Controllers
 
             }
 
-            // Condicion cuando no sea admin
-            if (rolUsuario != 3)
+            // Condicion cuando no sea admin ni valet (el valet ve todos los ingresos)
+            if (rolUsuario != 3 && rolUsuario != 1)
             {
 
                 idUsuarioParam = idUsuario;
