@@ -427,10 +427,9 @@
 }
 
 .menu-lateral ol li {
-    width: 100%;
+    width: 95%;
     margin-bottom: 10px;
 }
-
 .menu-lateral ol li a {
     display: flex;
     align-items: center;
@@ -581,16 +580,18 @@
     background: rgba(0, 0, 0, 0.28);
 }
 
-.menu-lateral .switch-flotante{
-
+.menu-lateral .switch-flotante {
     position: absolute;
     left: calc(100% + 10px);
     width: 220px;
-    background: rgba(255, 255, 255, 1);
+    background: #b71c1c;
     border-radius: 8px;
     padding: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
     z-index: 1100;
+    top: 0px;
+    overflow-y: auto;
+    max-height: 90vh;
 }
 
 
