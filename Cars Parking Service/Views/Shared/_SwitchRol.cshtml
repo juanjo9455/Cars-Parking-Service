@@ -1,0 +1,155 @@
+@using Microsoft.AspNetCore.Http
+@inject CarsParkingService.Data.ApplicationDbContext _context
+@{
+
+    var ubicacion = Context.Session.GetInt32("id_ubicacion");
+    var parqueadero = Context.Session.GetInt32("id_parqueadero");
+    var idRol = Context.Session.GetInt32("id_rol");
+
+    var ubicacionesActivas = _context.ubicacion_servicios
+        .Where(u => u.estado == "activo");
+
+    var parqueaderosActivos = _context.parqueaderos
+        .Where(p => p.estado == "activo");
+}
+
+@if(idRol != 3 && idRol.HasValue)
+{
+    <li>Cambiar a:</li>        
+    @if(idRol == 1)
+    {
+        <li>
+
+            <details>
+
+                <summary>Banco</summary>
+                
+                @foreach (var u in ubicacionesActivas)
+                {
+                    <form method="post" asp-controller="Auth" asp-action="cambiarRol">
+                        <input type="hidden" name="id_rol" value="2" />
+                        <input type="hidden" name="id_ubicacion" value="@u.id_ubicacion" />
+                        <button type="submit">@u.nombre_ubicacion</button>
+                    </form>
+                }
+
+            </details>
+
+        </li>
+        <li>
+
+            <details>
+
+                <summary>Key</summary>
+
+                @foreach (var p in parqueaderosActivos)
+                {
+                    <form method="post" asp-controller="Auth" asp-action="cambiarRol">
+                        <input type="hidden" name="id_rol" value="4" />
+                        <input type="hidden" name="id_parqueadero" value="@p.id_parqueadero" />
+                        <button type="submit">@p.nombre_parqueadero</button>
+                    </form>
+                }
+
+            </details>
+
+        </li>
+        
+    }
+    @if(idRol == 2)
+    {
+        <li>
+
+            <form method="post" asp-controller="Auth" asp-action="cambiarRol">
+                <input type="hidden" name="id_rol" value="1" />
+                <button type="submit">Valet</button>
+            </form>
+
+        </li>
+
+        <li>
+
+            <details>
+
+                <summary>Key</summary>
+
+                @foreach (var p in parqueaderosActivos)
+                {
+                    <form method="post" asp-controller="Auth" asp-action="cambiarRol">
+                        <input type="hidden" name="id_rol" value="4" />
+                        <input type="hidden" name="id_parqueadero" value="@p.id_parqueadero" />
+                        <button type="submit">@p.nombre_parqueadero</button>
+                    </form>
+                }
+
+            </details>
+
+        </li>
+
+        <li>    
+
+            <details>
+
+                <summary>Ubicaciones</summary>
+
+                @foreach (var u in ubicacionesActivas.Where(u => u.id_ubicacion != ubicacion))
+                {
+                    <form method="post" asp-controller="Auth" asp-action="cambiarRol">
+                        <input type="hidden" name="id_rol" value="2" />
+                        <input type="hidden" name="id_ubicacion" value="@u.id_ubicacion" />
+                        <button type="submit">@u.nombre_ubicacion</button>
+                    </form>
+                }
+
+            </details>
+
+        </li>
+
+    }
+    @if(idRol == 4)
+    {
+        <li>
+
+            <form method="post" asp-controller="Auth" asp-action="cambiarRol">
+                <input type="hidden" name="id_rol" value="1" />
+                <button type="submit">Valet</button>
+            </form>
+
+        </li>
+
+        <li>
+            <details>
+
+                <summary>Banco</summary>
+
+                @foreach (var u in ubicacionesActivas)
+                {
+                    <form method="post" asp-controller="Auth" asp-action="cambiarRol">
+                        <input type="hidden" name="id_rol" value="2" />
+                        <input type="hidden" name="id_ubicacion" value="@u.id_ubicacion" />
+                        <button type="submit">@u.nombre_ubicacion</button>
+                    </form>
+                }
+
+            </details>
+        </li>
+
+        <li>
+            <details>
+
+                <summary>Parqueaderos</summary>
+
+                @foreach (var p in parqueaderosActivos.Where(p => p.id_parqueadero != parqueadero))
+                {
+                    <form method="post" asp-controller="Auth" asp-action="cambiarRol">
+                        <input type="hidden" name="id_rol" value="4" />
+                        <input type="hidden" name="id_parqueadero" value="@p.id_parqueadero" />
+                        <button type="submit">@p.nombre_parqueadero</button>
+                    </form>
+                }
+
+            </details>
+        </li>
+    }
+
+}
