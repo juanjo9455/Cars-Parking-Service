@@ -1,3 +1,53 @@
+/* ===================== VISTA KEY ===================== */
+/*======= Titulo =======*/
+
+.titulo-rol {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    width: fit-content;
+    margin: 10px auto 28px auto;
+    padding: 14px 32px;
+    background: #fff;
+    border-bottom: 4px solid #C62828;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.08);
+}
+
+.titulo-rol i {
+    color: #D4AF37;
+    font-size: 2rem;
+}
+
+.titulo-rol svg {
+    width: 36px;
+    height: 36px;
+    color: #C62828;
+}
+
+.titulo-rol h2 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1f2937;
+    letter-spacing: .5px;
+}
+
+
+@media (max-width: 768px) {
+    
+    .titulo-rol h2 {
+        font-size: 1.5rem;
+    }
+
+    .titulo-rol svg,
+    .titulo-rol i {
+        width: 28px;
+        height: 28px;
+        font-size: 1.5rem;
+    }
+}
 
 /* ===================== ALERTAS DEBUG ===================== */
 
