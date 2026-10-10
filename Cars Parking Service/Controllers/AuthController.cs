@@ -338,7 +338,8 @@ namespace CarsParkingService.Controllers
         [HttpPost]
         public IActionResult cambiarRol(int id_rol, int? id_parqueadero, int? id_ubicacion)
         {
-            var userId = HttpContext.Session.GetInt32("id_usuario");
+            var userId = HttpContext.Session.GetInt32("id_usuario") ??
+                         HttpContext.Session.GetInt32("id");
 
             if (userId == null)
             {
