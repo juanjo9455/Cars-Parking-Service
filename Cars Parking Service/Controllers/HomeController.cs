@@ -968,11 +968,16 @@ namespace CarsParkingService.Controllers
                     obj_ingreso.id_parqueadero = sesionUsuario.id_parqueadero.Value;
                 }
 
-                // Ubicación: primero sesión activa, luego fallback a Session HTTP
+                // Ubicación: Buscamos la ubicacion de la sesion activa
                 int? idUbicacionSesion = sesionUsuario?.id_ubicacion;
                 if (!idUbicacionSesion.HasValue)
                 {
-                    idUbicacionSesion = HttpContext.Session.GetInt32("id_ubicacion");
+                    ViewBag.Error = "No se encontró ubicación en la sesión activa del usuario.";
+                    return View("Ingreso_Vehiculos");
+                }
+                else
+                {
+                    ViewBag.Response = $"Ubicación de sesión encontrada: {idUbicacionSesion.Value}";
                 }
 
                 if (idUbicacionSesion.HasValue)
@@ -1031,12 +1036,9 @@ namespace CarsParkingService.Controllers
                 obj_ingreso.valor_propina = 0;
                 obj_ingreso.total_servicio = 0;
 
-                // Traemos la Ubicacion de la sesion
-                var UbicacionSesion = HttpContext.Session.GetInt32("id_ubicacion");
-
                 // Buscar ubicación usando el id asignado desde sesión
                 var ubicacion = _context.ubicacion_servicios
-                    .FirstOrDefault(u => u.id_ubicacion == UbicacionSesion);
+                    .FirstOrDefault(u => u.id_ubicacion == obj_ingreso.id_ubicacion);
 
                 if (ubicacion != null)
                 {
