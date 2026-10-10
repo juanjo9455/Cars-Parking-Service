@@ -37,14 +37,18 @@
 
                         <summary>Banco</summary>
                         
-                        @foreach (var u in ubicacionesActivas)
-                        {
-                            <form method="post" asp-controller="Auth" asp-action="cambiarRol">
-                                <input type="hidden" name="id_rol" value="2" />
-                                <input type="hidden" name="id_ubicacion" value="@u.id_ubicacion" />
-                                <button type="submit">@u.nombre_ubicacion</button>
-                            </form>
-                        }
+                        <div class="switch-flotante">
+
+                            @foreach (var u in ubicacionesActivas)
+                            {
+                                <form method="post" asp-controller="Auth" asp-action="cambiarRol">
+                                    <input type="hidden" name="id_rol" value="2" />
+                                    <input type="hidden" name="id_ubicacion" value="@u.id_ubicacion" />
+                                    <button type="submit">@u.nombre_ubicacion</button>
+                                </form>
+                            }
+
+                        </div>
 
                     </details>
 
@@ -55,14 +59,18 @@
 
                         <summary>Key</summary>
 
-                        @foreach (var p in parqueaderosActivos)
-                        {
-                            <form method="post" asp-controller="Auth" asp-action="cambiarRol">
-                                <input type="hidden" name="id_rol" value="4" />
-                                <input type="hidden" name="id_parqueadero" value="@p.id_parqueadero" />
-                                <button type="submit">@p.nombre_parqueadero</button>
-                            </form>
-                        }
+                        <div class="switch-flotante">
+
+                            @foreach (var p in parqueaderosActivos)
+                            {
+                                <form method="post" asp-controller="Auth" asp-action="cambiarRol">
+                                    <input type="hidden" name="id_rol" value="4" />
+                                    <input type="hidden" name="id_parqueadero" value="@p.id_parqueadero" />
+                                    <button type="submit">@p.nombre_parqueadero</button>
+                                </form>
+                            }
+
+                        </div>
 
                     </details>
 
@@ -71,54 +79,58 @@
         }
                 @if(idRol == 2)
                 {
-                <li>
+                    <li>
 
-                    <form method="post" asp-controller="Auth" asp-action="cambiarRol">
-                        <input type="hidden" name="id_rol" value="1" />
-                        <button type="submit">Valet</button>
-                    </form>
+                        <form method="post" asp-controller="Auth" asp-action="cambiarRol">
+                            <input type="hidden" name="id_rol" value="1" />
+                            <button type="submit">Valet</button>
+                        </form>
 
-                </li>
+                    </li>
 
-                <li>
+                    <li>
 
-                    <details>
+                        <details>
 
-                        <summary>Key</summary>
+                            <summary>Key</summary>
 
-                        @foreach (var p in parqueaderosActivos)
-                        {
-                            <form method="post" asp-controller="Auth" asp-action="cambiarRol">
-                                <input type="hidden" name="id_rol" value="4" />
-                                <input type="hidden" name="id_parqueadero" value="@p.id_parqueadero" />
-                                <button type="submit">@p.nombre_parqueadero</button>
-                            </form>
-                        }
+                            <div class="switch-flotante">
+                                @foreach (var p in parqueaderosActivos)
+                                {
+                                    <form method="post" asp-controller="Auth" asp-action="cambiarRol">
+                                        <input type="hidden" name="id_rol" value="4" />
+                                        <input type="hidden" name="id_parqueadero" value="@p.id_parqueadero" />
+                                        <button type="submit">@p.nombre_parqueadero</button>
+                                    </form>
+                                }
+                            </div>
 
-                    </details>
+                        </details>
 
-                </li>
+                    </li>
 
-                <li>    
+                    <li>    
 
-                    <details>
+                        <details>
 
-                        <summary>Ubicaciones</summary>
+                            <summary>Ubicaciones</summary>
 
-                        @foreach (var u in ubicacionesActivas.Where(u => u.id_ubicacion != ubicacion))
-                        {
-                            <form method="post" asp-controller="Auth" asp-action="cambiarRol">
-                                <input type="hidden" name="id_rol" value="2" />
-                                <input type="hidden" name="id_ubicacion" value="@u.id_ubicacion" />
-                                <button type="submit">@u.nombre_ubicacion</button>
-                            </form>
-                        }
+                            <div class="switch-flotante">
+                                @foreach (var u in ubicacionesActivas.Where(u => u.id_ubicacion != ubicacion))
+                                {
+                                    <form method="post" asp-controller="Auth" asp-action="cambiarRol">
+                                        <input type="hidden" name="id_rol" value="2" />
+                                        <input type="hidden" name="id_ubicacion" value="@u.id_ubicacion" />
+                                        <button type="submit">@u.nombre_ubicacion</button>
+                                    </form>
+                                }
+                            </div>
 
-                    </details>
+                        </details>
 
-                </li>
+                    </li>
 
-        }
+                }
                 @if(idRol == 4)
                 {
                     <li>
@@ -135,14 +147,16 @@
 
                             <summary>Parqueaderos</summary>
 
-                            @foreach (var p in parqueaderosActivos.Where(p => p.id_parqueadero != parqueadero))
-                            {
-                                <form method="post" asp-controller="Auth" asp-action="cambiarRol">
-                                    <input type="hidden" name="id_rol" value="4" />
-                                    <input type="hidden" name="id_parqueadero" value="@p.id_parqueadero" />
-                                    <button type="submit">@p.nombre_parqueadero</button>
-                                </form>
-                            }
+                            <div class="switch-flotante">
+                                @foreach (var p in parqueaderosActivos.Where(p => p.id_parqueadero != parqueadero))
+                                {
+                                    <form method="post" asp-controller="Auth" asp-action="cambiarRol">
+                                        <input type="hidden" name="id_rol" value="4" />
+                                        <input type="hidden" name="id_parqueadero" value="@p.id_parqueadero" />
+                                        <button type="submit">@p.nombre_parqueadero</button>
+                                    </form>
+                                }
+                            </div>
 
                         </details>
                     </li>

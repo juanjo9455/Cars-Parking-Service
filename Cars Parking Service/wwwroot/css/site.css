@@ -581,6 +581,18 @@
     background: rgba(0, 0, 0, 0.28);
 }
 
+.menu-lateral .switch-flotante{
+
+    position: absolute;
+    left: calc(100% + 10px);
+    width: 220px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+    z-index: 1100;
+}
+
 
 /*==================== Fin Menu Lateral ====================*/
 
