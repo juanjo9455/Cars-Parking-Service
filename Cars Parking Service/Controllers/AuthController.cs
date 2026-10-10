@@ -354,11 +354,38 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("Login");
             }
 
-            // Actualizamos el rol actual del usuario
-            user.id_rol = id_rol;
+            // Validamos que no lleguen solicitudes de cambio de rol no permitidas
+
+            if (user.id_rol == 3 && id_rol != 3)
+            {
+                
+                return RedirectToAction("Login");
+
+            }
+
+            if (user.id_rol != 3 && id_rol != 1 && id_rol != 4 && id_rol != 2)
+            {
+                
+                return RedirectToAction("Login");
+
+            }
+
+            if (id_rol == 2 && (!id_ubicacion.HasValue || id_ubicacion.Value <= 0))
+            {
+                
+                return RedirectToAction("Login");
+
+            }
+
+            if (id_rol == 4 && (!id_parqueadero.HasValue || id_parqueadero.Value <= 0))
+            {
+                
+                return RedirectToAction("Login");
+
+            }
 
             // ==============================
-            // CREAR REGISTRO DE SESIÓN
+            // CREAR REGISTRO DE SESION
             // ==============================
 
             // Buscar sesiones abiertas del usuario
@@ -402,7 +429,7 @@ namespace CarsParkingService.Controllers
             _context.SaveChanges();
 
             // ==============================
-            // SESIÓN DEL SISTEMA
+            // SESION DEL SISTEMA
             // ==============================
 
             HttpContext.Session.SetInt32("id", user.id_usuario);
@@ -413,22 +440,25 @@ namespace CarsParkingService.Controllers
             HttpContext.Session.SetString("apellido", user.apellidos ?? "");
             HttpContext.Session.SetString("correo", user.correo ?? "");
 
-            // Guardar lugar de trabajo solo si existen valores
+            // Limpiamos llaves de parqueadero y ubicacion
 
-            if (id_parqueadero.HasValue)
+            HttpContext.Session.Remove("id_parqueadero");
+            HttpContext.Session.Remove("id_ubicacion");
+
+            // Guardamos parqueadero si es Key
+            if (id_rol == 4 && id_parqueadero.HasValue)
             {
-                HttpContext.Session.SetInt32(
-                    "id_parqueadero",
-                    id_parqueadero.Value
-                );
+
+                HttpContext.Session.SetInt32("id_parqueadero", id_parqueadero.Value);
+
             }
 
-            if (id_ubicacion.HasValue)
+            // Guardamos ubicacion si es Banco
+            if (id_rol == 2 && id_ubicacion.HasValue)
             {
-                HttpContext.Session.SetInt32(
-                    "id_ubicacion",
-                    id_ubicacion.Value
-                );
+
+                HttpContext.Session.SetInt32("id_ubicacion", id_ubicacion.Value);
+
             }
 
             // Imagen
