@@ -475,6 +475,113 @@
     background-color: #efdedd;
 }
 
+/* ==================== Switch de rol ==================== */
+
+/* Si los desplegables crecen, el menú hace scroll en vez de salirse */
+.menu-lateral {
+    overflow-y: auto;
+}
+
+/* Quitar el triángulo que el navegador pone en todos los desplegables */
+.menu-lateral .switch-grupo summary {
+    list-style: none;
+    cursor: pointer;
+}
+
+.menu-lateral .switch-grupo summary::-webkit-details-marker {
+    display: none;
+}
+
+/* "Cambiar Rol": igual a los botones del menú (Inicio, Tabla Ingresos...) */
+.menu-lateral .switch-grupo > summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 15px 20px;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fffaf9;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.menu-lateral .switch-grupo > summary:hover {
+    background: rgba(255, 255, 255, 0.28);
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+}
+
+.menu-lateral .switch-grupo > summary i {
+    width: 18px;
+    text-align: center;
+}
+
+/* Flechita a la derecha, gira al abrir */
+.menu-lateral .switch-flecha {
+    margin-left: auto;
+    transition: transform 0.3s ease;
+}
+
+.menu-lateral .switch-grupo[open] > summary .switch-flecha {
+    transform: rotate(180deg);
+}
+
+/* Lista de roles (dentro de "Cambiar Rol") */
+.menu-lateral .switch-roles {
+    list-style: none;
+    margin: 0;
+    padding: 8px 0 0 15px;
+}
+
+.menu-lateral .switch-roles li {
+    margin-bottom: 8px;
+}
+
+/* Botón Valet y títulos Banco / Key / Ubicaciones / Parqueaderos */
+.menu-lateral .switch-roles > li > form > button,
+.menu-lateral .switch-roles summary {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fffaf9;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.menu-lateral .switch-roles > li > form > button:hover,
+.menu-lateral .switch-roles summary:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Opciones de adentro: cada ubicación o parqueadero */
+.menu-lateral .switch-roles details form {
+    margin: 6px 0 0 15px;
+}
+
+.menu-lateral .switch-roles details button {
+    width: 100%;
+    text-align: left;
+    padding: 8px 14px;
+    background: rgba(0, 0, 0, 0.15);
+    color: #fffaf9;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.menu-lateral .switch-roles details button:hover {
+    background: rgba(0, 0, 0, 0.28);
+}
+
+
 /*==================== Fin Menu Lateral ====================*/
 
 /*==================== Registrar Vehiculos ====================*/
@@ -522,7 +629,8 @@
     font-size: 16px;
     background: white;
     color: var(--ui-input-text);
-    border: 1px border-radius: var(--ui-radius-sm) !important;
+    border: 1px solid var(--ui-input-border);
+    border-radius: var(--ui-radius-sm) !important;
     transition: all 0.3s ease;
 }
 

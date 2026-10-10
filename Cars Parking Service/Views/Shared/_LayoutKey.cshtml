@@ -48,7 +48,9 @@
 
                 }
 
-                <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
+                <partial name="_SwitchRol" />
+
+                <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesiï¿½n</a></li>
             </ol>
         </div>
     </aside>
@@ -63,11 +65,11 @@
         headers: {
         'Content-Type': 'application/json'
         },
-        credentials: 'same-origin' // <-- Esta opción adjunta las cookies de sesión
+        credentials: 'same-origin' // <-- Esta opciï¿½n adjunta las cookies de sesiï¿½n
         })
         .then(response => {
         if (!response.ok) {
-        console.warn('KeepAlive falló con estado:', response.status);
+        console.warn('KeepAlive fallï¿½ con estado:', response.status);
         }
         })
         .catch(error => console.error('Error en KeepAlive:', error));
