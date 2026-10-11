@@ -1850,38 +1850,13 @@ function finalizarServicio(idIngreso, metodoPago) {
 // Validamos la liquidacion
 
 function abrirModalAlerta() {
-
-    const mostrar = sessionStorage.getItem('mostrarAlertaLiquidacion');
-
-    const alerta = document.getElementById('liquidacionAlert');
+    const alerta = document.getElementById('alertaPendiente');
 
     if (alerta) {
-
-        alerta.innerHTML = `
-            <div class="liquidacion-alert-card">
-
-                <div class="alert-icon" style="background:#FFF3CD; color:#FF9800;">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                </div>
-
-                <h2>Liquidación pendiente</h2>
-
-                <p>
-                    Aún no has realizado la liquidación de tu turno.
-                    Debes completar la liquidación antes de cerrar sesión.
-                </p>
-
-                <button class="alert-btn" onclick="cerrarAlertaLiquidacion()">
-                    Entendido
-                </button>
-
-            </div>
-        `;
-
         alerta.classList.add('show');
     }
-
 }
+
 
 function cerrarModalNoLiquidado() {
     document

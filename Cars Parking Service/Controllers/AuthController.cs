@@ -9,6 +9,7 @@ using CarsParkingService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop.Infrastructure;
 using AspNetCoreGeneratedDocument;
+using CarsParkingService.Helpers;
 
 namespace CarsParkingService.Controllers
 {
@@ -492,6 +493,13 @@ namespace CarsParkingService.Controllers
             if (userId == null)
             {
                 return RedirectToAction("Login");
+            }
+
+            // No deja salir si tienen cobros sin liquidar
+            if (LiquidacionReglas.PorLiquidar(_context, userId.Value).Any())
+            {
+                TempData["PendienteLiquidar"] = true;
+                return RedirectToAction("Index", "Home");
             }
 
             // Buscar sesión activa del usuario

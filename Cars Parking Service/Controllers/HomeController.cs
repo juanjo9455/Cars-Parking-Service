@@ -63,9 +63,14 @@ namespace CarsParkingService.Controllers
 
             ViewBag.ubicacion = nombreUbicacion ?? "Ubicación no disponible";
 
-            // true = no tiene nada por liquidar, puede cerrar sesión
-            ViewBag.estadoLiquidacion = !usuarioId.HasValue ||
-                !LiquidacionReglas.PorLiquidar(_context, usuarioId.Value).Any();
+            // Lo que este usuario tiene pagado sin liquidar (una ubicación por cada vehículo)
+            var pendientes = usuarioId.HasValue
+                ? LiquidacionReglas.PorLiquidar(_context, usuarioId.Value).Select(i => i.id_ubicacion).ToList()
+                : new List<int>();
+
+            ViewBag.estadoLiquidacion = pendientes.Count == 0;   // true = puede cerrar sesión
+            ViewBag.pendientesVehiculos = pendientes.Count;
+            ViewBag.pendientesUbicaciones = pendientes.Distinct().Count();
 
             return View();
 

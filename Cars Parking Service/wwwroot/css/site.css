@@ -2471,3 +2471,16 @@ body.tabla-vehiculos-page:not(.bubbles-respect-btn) .bubble,
 body.tabla-vehiculos-page:not(.bubbles-respect-btn) .bubble-whatsapp {
     z-index: 1000;
 }
+
+/* Botones de los modales de liquidación (le ganan al .alert-btn de la campanita) */
+.liquidacion-alert-card .alert-btn {
+    display: block;
+    width: 100%;
+    padding: .9rem;
+    background: #198754;
+    border-radius: 14px;
+    text-align: center;
+    text-decoration: none;
+    color: #fff;
+    animation: none;
+}

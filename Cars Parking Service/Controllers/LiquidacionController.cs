@@ -129,75 +129,79 @@ namespace CarsParkingService.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> GuardarLiquidacion([FromBody] LiquidacionDTO liquidacion) {
+        public async Task<IActionResult> GuardarLiquidacion()
+        {
+            // El banco sale de la sesión, no de lo que mande el navegador
+            var idUsuario = HttpContext.Session.GetInt32("id");
+
+            if (!idUsuario.HasValue)
+            {
+                return Json(new { success = false, mensaje = "Sesión expirada, vuelve a iniciar sesión." });
+            }
+
+            // Mismos ingresos que muestra la pantalla de liquidación
+            var ingresos = await LiquidacionReglas.PorLiquidar(_context, idUsuario.Value).ToListAsync();
+
+            if (ingresos.Count == 0)
+            {
+                return Json(new { success = false, mensaje = "No hay servicios pendientes por liquidar." });
+            }
+
+            // Totales calculados en el servidor
+            var totalEfectivo = ingresos
+                .Where(i => i.metodo_pago == "Efectivo")
+                .Sum(i => i.valor_servicio ?? 0);
+
+            var totalTransferencia = ingresos
+                .Where(i => i.metodo_pago != "Efectivo")
+                .Sum(i => i.valor_servicio ?? 0);
+
+            // O se guarda todo, o no se guarda nada
+            using var transaccion = await _context.Database.BeginTransactionAsync();
 
             try
             {
                 var nuevaLiquidacion = new liquidacion
                 {
-
-                    id_usuario = liquidacion.IdUsuario,
-                    total_vehiculos = liquidacion.TotalVehiculos,
-                    total_efectivo = liquidacion.TotalEfectivo,
-                    total_transferencias = liquidacion.TotalTransferencia,
-                    total_liquidado = liquidacion.TotalDinero,
+                    id_usuario = idUsuario.Value,
+                    total_vehiculos = ingresos.Count,
+                    total_efectivo = totalEfectivo,
+                    total_transferencias = totalTransferencia,
+                    total_liquidado = totalEfectivo + totalTransferencia,
                     fecha = DateTime.Now
-
                 };
 
                 _context.liquidaciones.Add(nuevaLiquidacion);
+                await _context.SaveChangesAsync();   // aquí la BD le asigna su id_liquidacion
+
+                // Marcamos exactamente los ingresos que se sumaron
+                foreach (var ingreso in ingresos)
+                {
+                    ingreso.estado_liquidacion = true;
+                    ingreso.id_liquidacion = nuevaLiquidacion.id_liquidacion;
+                }
+
+                // Estado Turnos usa esta marca para mostrar el turno como liquidado
+                var sesionAbierta = await _context.sesiones
+                    .FirstOrDefaultAsync(s => s.id_usuario == idUsuario.Value && s.fecha_fin == null);
+
+                if (sesionAbierta != null)
+                {
+                    sesionAbierta.estado_liquidacion = true;
+                }
 
                 await _context.SaveChangesAsync();
+                await transaccion.CommitAsync();
 
-                // Buscamos los ingresos a liquidar 
-
-                await _context.ingresos
-                    .Where(i =>
-                           i.id_banco == liquidacion.IdUsuario &&
-                           i.estado_liquidacion == false &&
-                           i.estado_pago == "pagado" &&
-                           i.fecha_entrega != null)
-                    .ExecuteUpdateAsync(setters => setters
-                        .SetProperty(i => i.estado_liquidacion, true)
-                    );
-
-                await _context.sesiones
-                    .Where(s => s.id_usuario == liquidacion.IdUsuario && s.estado_liquidacion == false && s.fecha_fin == null)
-                    .ExecuteUpdateAsync(setters => setters
-                        .SetProperty(s => s.estado_liquidacion, true)
-                    );
-
-                var ingresosActualizados = await _context.ingresos
-                .Where(i =>
-                       i.id_banco == liquidacion.IdUsuario &&
-                       i.estado_liquidacion == false &&
-                       i.estado_pago == "pagado" &&
-                       i.fecha_entrega != null)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(i => i.estado_liquidacion, true)
-                );
-
-                Console.WriteLine($"Ingresos liquidados: {ingresosActualizados}");
-
-                return Json(new
-                {
-
-                    success = true,
-                    mensaje = "Liquidación guardada correctamente"
-
-                });
-
+                return Json(new { success = true, mensaje = "Liquidación guardada correctamente" });
             }
             catch (Exception ex)
             {
-                return Json(new
-                {
-                    success = false,
-                    mensaje = ex.Message
-                });
+                await transaccion.RollbackAsync();
+                return Json(new { success = false, mensaje = ex.Message });
             }
-
         }
+
 
     }
 }

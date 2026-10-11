@@ -221,6 +221,37 @@
 
 </div>
 
+<!-- Alerta: liquidación pendiente antes de cerrar sesión -->
+<div class="liquidacion-alert @(TempData["PendienteLiquidar"] != null ? "show" : "")" id="alertaPendiente">
+
+    <div class="liquidacion-alert-card">
+
+        <div class="alert-icon" style="background:#FFF3CD; color:#FF9800;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+
+        <h2>Liquidación pendiente</h2>
+
+        <p>
+            Tienes <strong>@ViewBag.pendientesVehiculos</strong> vehículo(s) sin liquidar
+            en <strong>@ViewBag.pendientesUbicaciones</strong> ubicación(es).
+            Debes liquidar antes de cerrar sesión.
+        </p>
+
+        <a class="alert-btn" asp-controller="Liquidacion" asp-action="Liquidacion">
+            Ir a liquidar
+        </a>
+
+        <button class="alert-btn" style="background:#9e9e9e; margin-top:10px;"
+                onclick="document.getElementById('alertaPendiente').classList.remove('show')">
+            Cerrar
+        </button>
+
+    </div>
+
+</div>
+
+
 @section Scripts {
     <script src="~/js/solicitudes.js" asp-append-version="true"></script>
 
