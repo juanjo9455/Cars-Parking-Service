@@ -9,6 +9,7 @@ using CarsParkingService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop.Infrastructure;
 using AspNetCoreGeneratedDocument;
+using CarsParkingService.Helpers;
 
 namespace CarsParkingService.Controllers
 {
@@ -41,34 +42,28 @@ namespace CarsParkingService.Controllers
         {
 
             var idUsuario = HttpContext.Session.GetInt32("id");
-            var idRol = HttpContext.Session.GetInt32("id_rol");
 
             // buscamos el total de vehiculos, efectivo y transferencia para este banco
 
-            if (!idUsuario.HasValue || idRol != 2)
+            if (!idUsuario.HasValue || !LiquidacionReglas.PorLiquidar(_context, idUsuario.Value).Any())
             {
-                return Forbid();
+                return RedirectToAction("Index", "Home");
             }
 
-            var ingresos = _context.ingresos
-                .Where(i =>
-                       i.id_banco == idUsuario.Value &&
-                       i.estado_liquidacion == false &&
-                       i.estado_pago == "pagado" &&
-                       i.fecha_entrega != null)
-                    .ToList();
+            var ingresos = LiquidacionReglas.PorLiquidar(_context, idUsuario.Value)
+                .Include(i => i.Ubicacion).ToList();
 
             var totalVehiculos = ingresos.Count;
 
             var totalEfectivo = ingresos
                 .Where(i =>
                        i.metodo_pago == "Efectivo")
-                .Sum(i => i.valor_servicio);
+                .Sum(i => i.valor_servicio ?? 0);
 
             var totalTransferencia = ingresos
                 .Where(i =>
-                       i.metodo_pago == "Transferencia")
-                .Sum(i => i.valor_servicio);
+                       i.metodo_pago != "Efectivo")
+                .Sum(i => i.valor_servicio ?? 0);
 
             var totalPropinas = ingresos
                 .Sum(i => i.valor_propina ?? 0);
@@ -77,65 +72,57 @@ namespace CarsParkingService.Controllers
                 totalEfectivo +
                 totalTransferencia;
 
+            var idsCobro = ingresos.Select(i => i.usuario_cobro).Distinct().ToList();
+
+            var nombres = _context.usuarios
+                .Where(u => idsCobro.Contains(u.id_usuario))
+                .ToDictionary(u => u.id_usuario, u => u.nombres + " " + u.apellidos);  
+
             ViewBag.totalVehiculos = totalVehiculos;
             ViewBag.totalEfectivo = totalEfectivo;
             ViewBag.TotalTransferencia = totalTransferencia;
             ViewBag.totalGeneral = totalGeneral;
 
-            // Buscamos lo que los valet le deben al banco
-
-            var idUbicacion = _context.sesiones
-                .Where(s => s.id_usuario == idUsuario.Value && s.fecha_fin == null)
-                .Select(s => s.id_ubicacion)
-                .FirstOrDefault();
-
-            ViewBag.UbicacionBanco = _context.ubicacion_servicios
-                .Where(u => u.id_ubicacion == idUbicacion)
-                .Select(u => u.nombre_ubicacion)
-                .FirstOrDefault();
-
-            Console.WriteLine("\n========== DEBUG UBICACION ==========");
-            Console.WriteLine($"ID Usuario: {idUsuario}");
-            Console.WriteLine($"ID Rol: {idRol}");
-            Console.WriteLine($"ID Ubicacion: {idUbicacion}");
-            Console.WriteLine("=====================================\n");
-
-            var resumenValets = _context.ingresos
-                .Where(i =>
-                    i.id_ubicacion == idUbicacion &&
-                    i.estado_liquidacion == false &&
-                    i.id_banco == idUsuario &&
-                    i.estado_pago == "pagado" &&
-                    i.metodo_pago == "Efectivo" &&
-                    i.rol_cobrador == "valet"
-                )
-                .Join(
-                    _context.usuarios,
-                    ingreso => ingreso.usuario_cobro,
-                    usuario => usuario.id_usuario,
-                    (ingreso, usuario) => new
-                    {
-                        usuario.id_usuario,
-                        usuario.nombres,
-                        usuario.apellidos,
-                        ingreso.valor_servicio
-                    }
-                )
-                .GroupBy(x => new { x.id_usuario, x.nombres, x.apellidos })
+            // Desglose por ubicacion: subtotal y vehiculos de cada una
+            
+            var porUbicacion = ingresos
+                .GroupBy(i => i.Ubicacion?.nombre_ubicacion ?? "Sin Ubicacion")
                 .Select(g => new
                 {
-                    IdUsuario = g.Key.id_usuario,
-                    NombreCompleto = g.Key.nombres + " " + g.Key.apellidos,
+                    Ubicacion = g.Key,
                     Vehiculos = g.Count(),
-                    TotalEfectivo = g.Sum(x => x.valor_servicio)
+                    Total = g.Sum(i => i.valor_servicio ?? 0),
+                    Detalle = g
+                        .OrderBy(i => i.fecha_entrega)
+                        .Select(i => new
+                        {
+                            Placa = i.placa,
+                            Hora = i.fecha_entrega,
+                            Cobro = nombres.GetValueOrDefault(i.usuario_cobro ?? 0, "Desconocido")
+                                    + " (" + i.rol_cobrador +")",
+                            Metodo = i.metodo_pago,
+                            Valor = i.valor_servicio ?? 0
+                        })
+                        .ToList()
                 })
                 .ToList();
 
-            var totalValetsEfectivo = resumenValets.Sum(v => v.TotalEfectivo);
+            ViewBag.porUbicacion = porUbicacion;
+            
+            // Efectivo que cada valet debe entregar al banco
+                       var resumenValets = ingresos
+                .Where(i => i.rol_cobrador == "valet" && i.metodo_pago == "Efectivo")
+                .GroupBy(i => i.usuario_cobro ?? 0)
+                .Select(g => new
+                {
+                    IdUsuario = g.Key,
+                    NombreCompleto = nombres.GetValueOrDefault(g.Key, "Desconocido"),
+                    Vehiculos = g.Count(),
+                    TotalEfectivo = g.Sum(i => i.valor_servicio ?? 0)
+                })
+                .ToList();
 
-            ViewBag.totalValetsEfectivo = totalValetsEfectivo;
-            ViewBag.valets = resumenValets;
-
+            ViewBag.totalValetsEfectivo = resumenValets.Sum(v => v.TotalEfectivo);
             ViewBag.valets = resumenValets;
 
             return View(ingresos);
