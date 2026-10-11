@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.Text;
 using CarsParkingService.ViewModels;
 using Microsoft.DotNet.Scaffolding.Shared.Messaging;
+using CarsParkingService.Helpers;
 
 namespace CarsParkingService.Controllers
 {
@@ -62,10 +63,9 @@ namespace CarsParkingService.Controllers
 
             ViewBag.ubicacion = nombreUbicacion ?? "Ubicación no disponible";
 
-            ViewBag.estadoLiquidacion = _context.sesiones
-                .Where(s => s.id_usuario == usuarioId && s.fecha_fin == null)
-                .Select(s => (bool?)s.estado_liquidacion)
-                .FirstOrDefault() ?? false;
+            // true = no tiene nada por liquidar, puede cerrar sesión
+            ViewBag.estadoLiquidacion = !usuarioId.HasValue ||
+                !LiquidacionReglas.PorLiquidar(_context, usuarioId.Value).Any();
 
             return View();
 
