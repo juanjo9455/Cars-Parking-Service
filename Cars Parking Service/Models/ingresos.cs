@@ -46,6 +46,9 @@ namespace CarsParkingService.Models
         public bool foto_estacionamiento { get; set; }
         public int? usuario_cobro { get; set; }
         public bool? estado_liquidacion { get; set; }
+        public int? id_liquidacion { get; set; }
+        [ForeignKey("id_liquidacion")]
+        public liquidacion? Liquidacion { get; set; }
         public string? rol_cobrador { get; set; }
         public byte[]? foto_transferencia { get; set; }
         public string? lugar_entrega { get; set; }
