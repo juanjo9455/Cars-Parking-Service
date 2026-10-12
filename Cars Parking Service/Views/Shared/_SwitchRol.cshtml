@@ -1,10 +1,11 @@
 @using Microsoft.AspNetCore.Http
 @inject CarsParkingService.Data.ApplicationDbContext _context
 @{
-
     var ubicacion = Context.Session.GetInt32("id_ubicacion");
     var parqueadero = Context.Session.GetInt32("id_parqueadero");
     var idRol = Context.Session.GetInt32("id_rol");
+    var parqueaderoAdmin = Context.Session.GetInt32("id_parqueadero_sesion");
+    var enVistaKey = ViewContext.RouteData.Values["action"]?.ToString() == "VistaKey";
 
     var ubicacionesActivas = _context.ubicacion_servicios
         .Where(u => u.estado == "activo");
@@ -199,4 +200,29 @@
 
     </li>   
 
+}
+@if (idRol == 3 && enVistaKey)
+{
+    <li>
+        <details class="switch-grupo">
+
+            <summary>
+                <i class="fa-solid fa-square-parking"></i>Cambiar Parqueadero
+                <i class="fa-solid fa-chevron-down switch-flecha"></i>
+            </summary>
+
+            <ul class="switch-roles">
+                @foreach (var p in parqueaderosActivos.Where(p => p.id_parqueadero != parqueaderoAdmin))
+                {
+                    <li>
+                        <form method="post" asp-controller="Home" asp-action="CambiarParqueaderoAdmin">
+                            <input type="hidden" name="id_parqueadero" value="@p.id_parqueadero" />
+                            <button type="submit">@p.nombre_parqueadero</button>
+                        </form>
+                    </li>
+                }
+            </ul>
+
+        </details>
+    </li>
 }

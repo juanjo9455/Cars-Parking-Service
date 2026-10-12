@@ -216,26 +216,46 @@
             <div class="error-message" id="errorParqueadero">⚠️ Selecciona un parqueadero</div>
         </div>
 
-        @if (idRol == 3)
-        {
-            <!-- El admin elige en qué ubicación registra el vehículo -->
-            <div class="input-group">
-                <select name="id_ubicacion" id="id_ubicacion" style="width:100%;" required>
-                    <option value="">Selecciona una Ubicación</option>
-                    @if (ViewBag.UbicacionesS != null)
+        <!-- Ubicación: obligatoria para todos. Al banco le llega seleccionada la de su turno -->
+        <div class="input-group">
+            <select name="id_ubicacion" id="id_ubicacion" style="width:100%;" required
+                    data-actual="@(idRol == 2 ? idUbicacion : null)">
+                <option value="">Selecciona una Ubicación</option>
+                @if (ViewBag.UbicacionesS != null)
+                {
+                    foreach (var u in ViewBag.UbicacionesS)
                     {
-                        foreach (var u in ViewBag.UbicacionesS)
-                        {
-                            <option value="@u.id_ubicacion">@u.nombre_ubicacion</option>
-                        }
+                        <option value="@u.id_ubicacion" selected="@(u.id_ubicacion == idUbicacion)">@u.nombre_ubicacion</option>
                     }
-                </select>
-            </div>
-        }
-        else
-        {
-            <input type="hidden" id="id_ubicacion" name="id_ubicacion" value="@idUbicacion" />
-        }
+                }
+            </select>
+
+                <script>
+                    (function () {
+                        const select = document.getElementById('id_ubicacion');
+                        const actual = select.dataset.actual;
+
+                        // Solo avisa al banco (los demás no tienen ubicación de turno)
+                        if (!actual) return;
+
+                        select.addEventListener('change', function () {
+                            if (!select.value || select.value === actual) return;
+
+                            const nombreActual = select.querySelector('option[value="' + actual + '"]').textContent;
+                            const nombreNuevo = select.options[select.selectedIndex].textContent;
+
+                            const ok = confirm('Vas a cambiar tu ubicación de "' + nombreActual + '" a "' + nombreNuevo +
+                                            '".\nTu turno pasará a esa ubicación. ¿Continuar?');
+
+                            if (!ok) {
+                                select.value = actual;   // se arrepintió: vuelve a su ubicación
+                            }
+                        });
+                    })();
+                </script>
+
+        </div>
+
 
         <!-- Notas/Valuables -->
         <!--<div class="input-group notas-group">

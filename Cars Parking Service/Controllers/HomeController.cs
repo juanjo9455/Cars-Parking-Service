@@ -461,6 +461,27 @@ namespace CarsParkingService.Controllers
             return Json(new { success = true });
         }
 
+                // El admin cambia de parqueadero desde el menú de la vista Key
+        [HttpPost]
+        public IActionResult CambiarParqueaderoAdmin(int id_parqueadero)
+        {
+            if (HttpContext.Session.GetInt32("id_rol") != 3)
+            {
+                return Forbid();
+            }
+
+            bool existe = _context.parqueaderos
+                .Any(p => p.id_parqueadero == id_parqueadero && p.estado == "activo");
+
+            if (existe)
+            {
+                HttpContext.Session.SetInt32("id_parqueadero_sesion", id_parqueadero);
+            }
+
+            return RedirectToAction("VistaKey");
+        }
+
+
         // Metodo para obtener las solicitudes de ingresos de vehiculos en estado "solicitado" para el valet y banco
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -973,29 +994,22 @@ namespace CarsParkingService.Controllers
                     obj_ingreso.id_parqueadero = sesionUsuario.id_parqueadero.Value;
                 }
 
-                // Ubicación: Buscamos la ubicacion de la sesion activa
-                                // Ubicación: el admin la elige en el formulario; los demás la toman de su sesión activa
-                bool esAdmin = HttpContext.Session.GetInt32("id_rol") == 3;
+                // Ubicación: viene del formulario para todos (campo obligatorio)
+                bool ubicacionValida = obj_ingreso.id_ubicacion > 0 &&
+                    _context.ubicacion_servicios.Any(u => u.id_ubicacion == obj_ingreso.id_ubicacion && u.estado == "activo");
 
-                int? idUbicacionSesion = esAdmin
-                    ? (obj_ingreso.id_ubicacion > 0 ? obj_ingreso.id_ubicacion : null)
-                    : sesionUsuario?.id_ubicacion;
-
-                if (!idUbicacionSesion.HasValue)
+                if (!ubicacionValida)
                 {
-                    ViewBag.Error = "Selecciona una ubicación válida o vuelve a elegir tu ubicación.";
+                    ViewBag.Error = "Selecciona una ubicación válida.";
+                    CargarDatosFormulario();
                     return View("Ingreso_Vehiculos");
                 }
-                else
-                {
-                    ViewBag.Response = $"Ubicación de sesión encontrada: {idUbicacionSesion.Value}";
-                }
 
-                if (idUbicacionSesion.HasValue)
-                {
-                    obj_ingreso.id_ubicacion = idUbicacionSesion.Value;
-                    System.Diagnostics.Debug.WriteLine($"Asignando ubicación de sesión: {obj_ingreso.id_ubicacion}");
-                }
+                // Si es banco y eligió otra ubicación, su turno se moverá allá (después de guardar el ingreso)
+                bool moverTurno = HttpContext.Session.GetInt32("id_rol") == 2 &&
+                                  idUsuarioSesion.HasValue &&
+                                  sesionUsuario?.id_ubicacion != obj_ingreso.id_ubicacion;
+
 
                 // validar si el vehiculo ya esta en el parqueadero
                 if (ingresoActivo != null)
@@ -1105,6 +1119,13 @@ namespace CarsParkingService.Controllers
                     CargarDatosFormulario();
                     return View("Ingreso_Vehiculos", obj_ingreso);
                 }
+
+                // El ingreso ya quedó guardado: si el banco eligió otra ubicación, su turno pasa a esa ubicación
+                if (moverTurno)
+                {
+                    SesionTurno.AbrirTurno(_context, HttpContext, idUsuarioSesion.Value, 2, obj_ingreso.id_ubicacion, null);
+                }
+
 
                 System.Diagnostics.Debug.WriteLine($"=== ANTES DE GUARDAR ===");
                 System.Diagnostics.Debug.WriteLine($"Placa: {obj_ingreso.placa}");
@@ -1385,7 +1406,7 @@ namespace CarsParkingService.Controllers
             ViewBag.Valets = _context.usuarios.Where(u => u.id_rol == 1 && u.estado == true).ToList();
             ViewBag.Bancos = _context.usuarios.Where(u => u.id_rol == 2 && u.estado == true).ToList();
             ViewBag.Parqueaderos = _context.parqueaderos.ToList();
-            ViewBag.UbicacionesS = _context.ubicacion_servicios.ToList();
+            ViewBag.UbicacionesS = _context.ubicacion_servicios.Where(u => u.estado == "activo").ToList();
 
             // Obtener el usuario de la sesion
             var nombres = HttpContext.Session.GetString("nombre");

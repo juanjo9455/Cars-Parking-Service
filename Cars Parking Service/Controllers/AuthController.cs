@@ -385,82 +385,16 @@ namespace CarsParkingService.Controllers
 
             }
 
-            // ==============================
-            // CREAR REGISTRO DE SESION
-            // ==============================
+            // Cierra el turno anterior y abre el nuevo (tbl_sesiones + sesión web)
+            SesionTurno.AbrirTurno(_context, HttpContext, user.id_usuario, id_rol, id_ubicacion, id_parqueadero);
 
-            // Buscar sesiones abiertas del usuario
-            var sesionesAbiertas = _context.sesiones
-                .Where(s =>
-                    s.id_usuario == user.id_usuario &&
-                    s.fecha_fin == null)
-                .ToList();
-
-            // Cerrarlas
-            foreach (var s in sesionesAbiertas)
-            {
-                s.fecha_fin = DateTime.Now;
-            }
-
-            var sesion = new sesiones
-            {
-                id_usuario = user.id_usuario,
-                id_rol = id_rol,
-
-                // Si es Key guardamos parqueadero
-                id_parqueadero = id_rol == 4
-                    ? id_parqueadero
-                    : null,
-
-                // Si es Banco guardamos ubicación
-                id_ubicacion = id_rol == 2
-                    ? id_ubicacion
-                    : null,
-
-                fecha_inicio = DateTime.Now,
-
-                // Aún no termina turno
-                fecha_fin = null
-            };
-
-            // Agregamos a la BD
-            _context.sesiones.Add(sesion);
-
-            // Guardamos TODO
-            _context.SaveChanges();
-
-            // ==============================
-            // SESION DEL SISTEMA
-            // ==============================
-
+            // Datos del usuario en la sesión web
             HttpContext.Session.SetInt32("id", user.id_usuario);
-            HttpContext.Session.SetInt32("id_rol", id_rol);
-
             HttpContext.Session.SetString("dni", user.dni ?? "");
             HttpContext.Session.SetString("nombre", user.nombres ?? "");
             HttpContext.Session.SetString("apellido", user.apellidos ?? "");
             HttpContext.Session.SetString("correo", user.correo ?? "");
 
-            // Limpiamos llaves de parqueadero y ubicacion
-
-            HttpContext.Session.Remove("id_parqueadero");
-            HttpContext.Session.Remove("id_ubicacion");
-
-            // Guardamos parqueadero si es Key
-            if (id_rol == 4 && id_parqueadero.HasValue)
-            {
-
-                HttpContext.Session.SetInt32("id_parqueadero", id_parqueadero.Value);
-
-            }
-
-            // Guardamos ubicacion si es Banco
-            if (id_rol == 2 && id_ubicacion.HasValue)
-            {
-
-                HttpContext.Session.SetInt32("id_ubicacion", id_ubicacion.Value);
-
-            }
 
             // Imagen
             if (!string.IsNullOrEmpty(user.imagen_usuario))
