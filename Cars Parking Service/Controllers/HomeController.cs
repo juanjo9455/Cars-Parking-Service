@@ -272,7 +272,7 @@ namespace CarsParkingService.Controllers
             System.Diagnostics.Debug.WriteLine($"rolUsuario: {rolUsuario}");
 
             if (!idUsuarioSesion.HasValue ||
-                (rolUsuario != 4 && rolUsuario != 1))
+                (rolUsuario != 4 && rolUsuario != 1 && rolUsuario != 3))
             {
                 System.Diagnostics.Debug.WriteLine($"Acceso denegado: no es rol Key");
                 return RedirectToAction("Login", "Auth");
@@ -333,7 +333,7 @@ namespace CarsParkingService.Controllers
                     ViewBag.MostrarModal = false;
                 }
             }
-            else
+            else if (rolUsuario == 4)
             {
                 ingresos = query
                     .Where(i =>
@@ -347,6 +347,21 @@ namespace CarsParkingService.Controllers
                     .ToList();
 
                 ViewBag.MostrarModal = false;
+            }
+            else {
+
+                ingresos = query
+                    .Where(i =>
+                        i.estado_servicio != "finalizado" &&
+                        i.estado_servicio != "despachado" &&
+                        i.estado_pago != "pagado")
+                    .AsEnumerable()
+                    .OrderByDescending(i => i.estado_servicio?.Trim().ToLower() == "solicitado")
+                    .ThenByDescending(i => i.fecha_ingreso)
+                    .ToList();
+
+                ViewBag.MostrarModal = false;
+
             }
 
             var parqueadero = _context.parqueaderos.FirstOrDefault(p => p.id_parqueadero == sesion.id_parqueadero);
@@ -974,10 +989,16 @@ namespace CarsParkingService.Controllers
                 }
 
                 // Ubicación: Buscamos la ubicacion de la sesion activa
-                int? idUbicacionSesion = sesionUsuario?.id_ubicacion;
+                                // Ubicación: el admin la elige en el formulario; los demás la toman de su sesión activa
+                bool esAdmin = HttpContext.Session.GetInt32("id_rol") == 3;
+
+                int? idUbicacionSesion = esAdmin
+                    ? (obj_ingreso.id_ubicacion > 0 ? obj_ingreso.id_ubicacion : null)
+                    : sesionUsuario?.id_ubicacion;
+
                 if (!idUbicacionSesion.HasValue)
                 {
-                    ViewBag.Error = "No se encontró ubicación en la sesión activa del usuario.";
+                    ViewBag.Error = "Selecciona una ubicación válida o vuelve a elegir tu ubicación.";
                     return View("Ingreso_Vehiculos");
                 }
                 else
@@ -1634,6 +1655,7 @@ namespace CarsParkingService.Controllers
                 {
                     1 => "valet",
                     2 => "banco",
+                    3 => "admin",
                     _ => "otro"
                 };
 
@@ -1983,10 +2005,10 @@ namespace CarsParkingService.Controllers
             System.Diagnostics.Debug.WriteLine($"idUsuarioSesion: {idUsuarioSesion}");
             System.Diagnostics.Debug.WriteLine($"rolUsuario: {rolUsuario}");
 
-            // Verificar que sea rol Key (4)
-            if (!idUsuarioSesion.HasValue || (rolUsuario != 4))
+            // Verificar que sea rol Key (4) o rol Admin (3)
+            if (!idUsuarioSesion.HasValue || (rolUsuario != 4 && rolUsuario != 3))
             {
-                System.Diagnostics.Debug.WriteLine($"Acceso denegado: no es rol Key");
+                System.Diagnostics.Debug.WriteLine($"Acceso denegado: no es rol Key o Admin");
                 return Unauthorized();
             }
 
@@ -2014,7 +2036,7 @@ namespace CarsParkingService.Controllers
                 .Include(i => i.Valet)
                 .Include(i => i.Banco)
                 .Where(i =>
-                    i.id_parqueadero == sesion.id_parqueadero &&
+                    (rolUsuario == 3 || i.id_parqueadero == sesion.id_parqueadero) &&
                     i.estado_servicio != "finalizado" &&
                     i.estado_servicio != "despachado" &&
                     i.estado_pago != "pagado")
@@ -2055,7 +2077,7 @@ namespace CarsParkingService.Controllers
             var idUsuarioSesion = HttpContext.Session.GetInt32("id");
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
 
-            if (!idUsuarioSesion.HasValue || rolUsuario != 1)
+            if (!idUsuarioSesion.HasValue || rolUsuario != 1 && rolUsuario != 3)
             {
                 return Forbid();
             }

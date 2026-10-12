@@ -159,7 +159,7 @@
             <p>Registro de entradas y salidas del estacionamiento</p>
         </div>
 
-        @if(idRol == 2){
+        @if(idRol == 2 || idRol == 3){
         
             <a asp-controller="Home" asp-action="Ingreso_Vehiculos" class="btn btn-nuevo">+ Nuevo Ingreso</a>
          
@@ -297,7 +297,7 @@
 
                 <tr class="@claseAlerta">
 
-                    @if (ingresos.estado_servicio == "esperando valet" && idRol == 1)
+                    @if (ingresos.estado_servicio == "esperando valet" && (idRol == 1 || idRol == 3))
                     {
 
                         <td data-label="Placa">@ingresos.placa</td>
@@ -359,7 +359,7 @@
                     <td data-label="Acción" class="cell-action">
 
                         @* 1. Tomar vehículo (Solo para Valet / Rol 1) *@
-                        @if (ingresos.id_valet is null && idRol == 1)
+                        @if (ingresos.id_valet is null && (idRol == 1 || idRol == 3))
                         {
                             <i class="fa-solid fa-car-side btn-action"
                                 onclick="abrirModalTomarVehiculo(this)"
@@ -374,7 +374,7 @@
                         @if (ingresos.id_valet == idUsuarioSesion &&
                             !ingresos.foto_estacionamiento &&
                             ingresos.estado_servicio != "solicitado" &&
-                            idRol == 1 && ingresos.estado_servicio != "despachado")
+                            (idRol == 1 || idRol == 3) && ingresos.estado_servicio != "despachado")
                         {
                             <i class="fa-solid fa-camera btn-action"
                                 onclick="abrirModalFoto(this)"
@@ -385,9 +385,8 @@
                             </i>
                         }
 
-                        @* 3. Opciones de Pago (Para todos excepto el Admin) *@
-                        @if (idRol != 3)
-                        {
+                        @* 3. Opciones de Pago para todos *@
+
                             @if (idUsuarioSesion == ingresos.id_valet)
                             {
                                 @if (ingresos.id_valet != null && ingresos.foto_estacionamiento && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado" || ingresos.estado_servicio == "despachado")
@@ -418,7 +417,6 @@
                                     </i>
                                 }
                             }
-                        }
 
                         @* 4. Información: Visible para Admin (idRol == 3) en TODOS los registros, o para otros roles solo si está pagado y finalizado *@
                         @if (idRol == 3 || (ingresos.estado_pago == "pagado" && ingresos.estado_servicio == "finalizado"))

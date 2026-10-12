@@ -65,7 +65,7 @@
         <p class="home-subtitle">Gestiona ingresos, movimientos y operación diaria de forma rápida y ordenada.</p>
 
         <div class="home-actions">
-            @if (idRol == 2)
+            @if (idRol == 2 || idRol == 3)
             {
 
                 <a asp-controller="Home" asp-action="Ingreso_Vehiculos" class="home-action-btn primary">
@@ -78,7 +78,7 @@
                 </a>
 
             }
-            @if(idRol == 1 || idRol == 3){
+            @if(idRol == 1){
                 
                 <a asp-controller="Home" asp-action="Tabla_Vehiculos" class="home-action-btn secondary">
                     <i class="fa-solid fa-table-list"></i>
