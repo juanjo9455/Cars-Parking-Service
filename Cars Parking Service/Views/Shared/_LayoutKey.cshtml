@@ -47,6 +47,11 @@
                     <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-key"></i>Vista Valet</a></li>
 
                 }
+                @if (ViewBag.idRol == 3)
+                {
+                    <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-crown"></i>Panel Admin</a></li>
+                }
+
 
                 <partial name="_SwitchRol" />
 

@@ -310,7 +310,7 @@ namespace CarsParkingService.Controllers
 
             List<ingresos> ingresos;
 
-            if (rolUsuario == 1)
+            if (rolUsuario == 1 || rolUsuario == 3)
             {
                 if (!idParqueaderoSesion.HasValue)
                 {
@@ -333,7 +333,7 @@ namespace CarsParkingService.Controllers
                     ViewBag.MostrarModal = false;
                 }
             }
-            else if (rolUsuario == 4)
+            else
             {
                 ingresos = query
                     .Where(i =>
@@ -348,23 +348,8 @@ namespace CarsParkingService.Controllers
 
                 ViewBag.MostrarModal = false;
             }
-            else {
 
-                ingresos = query
-                    .Where(i =>
-                        i.estado_servicio != "finalizado" &&
-                        i.estado_servicio != "despachado" &&
-                        i.estado_pago != "pagado")
-                    .AsEnumerable()
-                    .OrderByDescending(i => i.estado_servicio?.Trim().ToLower() == "solicitado")
-                    .ThenByDescending(i => i.fecha_ingreso)
-                    .ToList();
-
-                ViewBag.MostrarModal = false;
-
-            }
-
-            var parqueadero = _context.parqueaderos.FirstOrDefault(p => p.id_parqueadero == sesion.id_parqueadero);
+            var parqueadero = _context.parqueaderos.FirstOrDefault(p => p.id_parqueadero ==(idParqueaderoSesion ?? sesion.id_parqueadero));
 
             var idsIngresos = ingresos.Select(i => i.id_ingreso).ToList();
 
@@ -2031,12 +2016,16 @@ namespace CarsParkingService.Controllers
                 return Unauthorized();
             }
 
+            // El admin usa el parqueadero que eligió en el modal; el Key, el de su sesión
+            var idParqueaderoSesion = HttpContext.Session.GetInt32("id_parqueadero_sesion");
+            var idParqueaderoFiltro = rolUsuario == 4 ? sesion.id_parqueadero : idParqueaderoSesion;
+
             // Obtener ingresos del parqueadero actual
             var ingresos = _context.ingresos
                 .Include(i => i.Valet)
                 .Include(i => i.Banco)
                 .Where(i =>
-                    (rolUsuario == 3 || i.id_parqueadero == sesion.id_parqueadero) &&
+                    (i.id_parqueadero == idParqueaderoFiltro) &&
                     i.estado_servicio != "finalizado" &&
                     i.estado_servicio != "despachado" &&
                     i.estado_pago != "pagado")
