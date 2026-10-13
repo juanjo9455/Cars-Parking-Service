@@ -2476,6 +2476,26 @@ i.btn-info-ingreso {
     color: #fff;
 }
 
+/* Botón de cobrar en la tabla: mismo círculo que el de información, en verde */
+i.btn-pago-ingreso {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    line-height: 1;
+    border-radius: 50%;
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-size: 15px;
+    box-shadow: 0 2px 6px rgba(46, 125, 50, 0.15);
+}
+
+.btn-pago-ingreso:hover {
+    background: #2e7d32;
+    color: #fff;
+}
+
 .info-panel {
     display: flex;
     flex-direction: column;
@@ -2503,12 +2523,6 @@ i.btn-info-ingreso {
     border: 3px solid #1f2937;
     border-radius: 8px;
     padding: 4px 14px;
-}
-
-.info-chips {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
 }
 
 .info-chip {

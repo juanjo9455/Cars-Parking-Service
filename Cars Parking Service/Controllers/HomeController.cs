@@ -2463,7 +2463,7 @@ namespace CarsParkingService.Controllers
                 fotoTransferencia = ingreso.foto_transferencia != null
                     ? Url.Action(nameof(FotoTransferenciaIngreso), new { idIngreso = ingreso.id_ingreso })
                     : null,
-                puedeSolicitar = PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio)
+                puedeSolicitar = PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio, ingreso.estado_pago)
             });
         }
 
@@ -2486,12 +2486,15 @@ namespace CarsParkingService.Controllers
         }
 
         // Valet, banco o admin pueden solicitar el vehículo solo si está activo o parqueado
-        private static bool PuedeSolicitarOperador(int? rol, string? estadoServicio)
+        // y todavía no está pagado (un vehículo pagado nunca se vuelve a solicitar)
+        private static bool PuedeSolicitarOperador(int? rol, string? estadoServicio, string? estadoPago)
         {
             var estado = estadoServicio?.Trim().ToLower();
+            var pago = estadoPago?.Trim().ToLower();
 
             return (rol == 1 || rol == 2 || rol == 3) &&
-                   (estado == "activo" || estado == "parqueado");
+                   (estado == "activo" || estado == "parqueado") &&
+                   pago != "pagado";
         }
 
         // El operador solicita el vehículo cuando el cliente llama y no lo pidió desde su enlace
@@ -2506,7 +2509,7 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("Tabla_Vehiculos");
             }
 
-            if (!PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio))
+            if (!PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio, ingreso.estado_pago))
             {
                 TempData["Error"] = "El vehículo no se puede solicitar en su estado actual o no tienes permiso.";
                 return RedirectToAction("Tabla_Vehiculos");

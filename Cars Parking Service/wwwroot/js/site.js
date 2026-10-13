@@ -1864,7 +1864,6 @@ async function abrirModalInformacion(btn) {
             : `<span class="info-valor info-vacio">${vacio}</span>`;
 
         const sinValet = "El valet no ha sido asignado al vehículo";
-        const claseChipPago = info.estadoPago === "pagado" ? "chip-ok" : "chip-pendiente";
         const cambioLugar = info.lugarEntrega && info.lugarIngreso && info.lugarEntrega !== info.lugarIngreso;
 
         // Celular: con un toque se llama desde el celular
@@ -1923,10 +1922,6 @@ async function abrirModalInformacion(btn) {
 
                 <div class="info-header">
                     <span class="info-placa">${info.placa ?? "—"}</span>
-                    <div class="info-chips">
-                        <span class="info-chip">${info.estadoServicio ?? "—"}</span>
-                        <span class="info-chip ${claseChipPago}">${info.estadoPago ?? "—"}</span>
-                    </div>
                 </div>
 
                 ${botonSolicitar}

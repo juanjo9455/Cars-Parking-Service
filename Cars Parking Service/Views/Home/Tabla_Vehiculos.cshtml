@@ -295,22 +295,25 @@
                 <tr class="@claseAlerta">
 
                     <td data-label="Placa">@ingresos.placa</td>
+                    @* Chips de estado: mismos colores que tenía el panel de información *@
                     <td data-label="Estado Pago">
                         @if (ingresos.estado_pago == "pagado")
                         {
-                            <span class="status-badge status-pagado">Pagado</span>
+                            <span class="info-chip chip-ok">Pagado</span>
                         }
                         else if (ingresos.estado_pago == "solicitado")
                         {
-                            <span class="status-badge status-pendiente">Solicitado</span>
+                            <span class="info-chip chip-pendiente">Solicitado</span>
                         }
                         else
                         {
-                            <span class="status-badge status-pendiente">Pendiente</span>
+                            <span class="info-chip chip-pendiente">Pendiente</span>
                         }
                     </td>
 
-                    <td data-label="Estado Servicio">@ingresos.estado_servicio</td>
+                    <td data-label="Estado Servicio">
+                        <span class="info-chip">@(string.IsNullOrWhiteSpace(ingresos.estado_servicio) ? "—" : ingresos.estado_servicio)</span>
+                    </td>
 
                     <td data-label="Acción" class="cell-action">
 
@@ -365,7 +368,7 @@
                             {
                                 @if (ingresos.id_valet != null && ingresos.foto_estacionamiento && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado" || ingresos.estado_servicio == "despachado")
                                 {
-                                    <i class="fa-solid fa-credit-card btn-action"
+                                    <i class="fa-solid fa-credit-card btn-action btn-pago-ingreso" title="Cobrar"
                                         onclick="abrirModalPago(this)"
                                         data-id="@ingresos.id_ingreso"
                                         data-placa="@ingresos.placa"
@@ -380,7 +383,7 @@
                             {
                                 @if (ingresos.id_valet != null && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado")
                                 {
-                                    <i class="fa-solid fa-credit-card btn-action"
+                                    <i class="fa-solid fa-credit-card btn-action btn-pago-ingreso" title="Cobrar"
                                         onclick="abrirModalPago(this)"
                                         data-id="@ingresos.id_ingreso"
                                         data-placa="@ingresos.placa"
