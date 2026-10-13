@@ -251,6 +251,14 @@
     let estadoUbicaciones = "principal";
     let estadoParqueaderos = "principal";
 
+    // La card de WhatsApp se muestra/oculta igual que la de Usuarios (menú principal)
+    const whatsappCard = document.getElementById("CardWhatsApp");
+    if (whatsappCard && usuariosCard) {
+        new MutationObserver(() => {
+            whatsappCard.style.display = usuariosCard.style.display === "none" ? "none" : "";
+        }).observe(usuariosCard, { attributes: true, attributeFilter: ["style"] });
+    }
+
     // =========================== Usuario =========================== \\
 
     //const CardU1 = document.getElementById("CardU1");

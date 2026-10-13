@@ -1401,6 +1401,61 @@ namespace CarsParkingService.Controllers
             }
         }
 
+        // Registro de WhatsApp enviados (solo administrador)
+        [HttpGet]
+        public IActionResult WhatsAppEnviados(DateTime? desde, DateTime? hasta, string? placa, string? estado, string? tipo)
+        {
+            if (HttpContext.Session.GetInt32("id_rol") != 3)
+            {
+                return RedirectToAction("Index");
+            }
+
+            // Por defecto, solo lo de hoy
+            var fechaDesde = (desde ?? DateTime.Today).Date;
+            var fechaHasta = (hasta ?? DateTime.Today).Date.AddDays(1);
+
+            var consulta = _context.whatsapp_enviados
+                .AsNoTracking()
+                .Include(w => w.Usuario)
+                .Where(w => w.fecha_envio >= fechaDesde && w.fecha_envio < fechaHasta);
+
+            if (!string.IsNullOrWhiteSpace(placa))
+            {
+                var placaFiltro = placa.Trim().ToUpper();
+                consulta = consulta.Where(w => w.placa == placaFiltro);
+            }
+
+            if (estado == "exitoso") consulta = consulta.Where(w => w.exito);
+            if (estado == "fallido") consulta = consulta.Where(w => !w.exito);
+
+            if (tipo == "ingreso" || tipo == "reenvio")
+            {
+                consulta = consulta.Where(w => w.tipo == tipo);
+            }
+
+            // Resumen del período filtrado
+            int total = consulta.Count();
+            int exitosos = consulta.Count(w => w.exito);
+
+            ViewBag.Total = total;
+            ViewBag.Exitosos = exitosos;
+            ViewBag.Fallidos = total - exitosos;
+
+            // Máximo 500 filas para que la página no se vuelva pesada
+            var registros = consulta
+                .OrderByDescending(w => w.fecha_envio)
+                .Take(500)
+                .ToList();
+
+            ViewData["FiltroDesde"] = fechaDesde;
+            ViewData["FiltroHasta"] = fechaHasta.AddDays(-1);
+            ViewData["FiltroPlaca"] = placa;
+            ViewData["FiltroEstado"] = estado;
+            ViewData["FiltroTipo"] = tipo;
+
+            return View(registros);
+        }
+
         [HttpPost]
         public async Task<IActionResult> ReenviarWhatsApp(string placa, string? telefono)
         {

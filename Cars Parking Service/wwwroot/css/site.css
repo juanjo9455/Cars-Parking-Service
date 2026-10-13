@@ -2831,3 +2831,69 @@ i.btn-info-ingreso {
     font-size: 13px;
     color: #4b5563;
 }
+
+/* ==================== Registro de WhatsApp enviados (admin) ==================== */
+
+/* Resumen del período: total, exitosos y fallidos */
+.wa-resumen {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 18px 0;
+}
+
+.wa-resumen-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 14px;
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 12px;
+}
+
+.wa-resumen-num {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1f2937;
+}
+
+.wa-resumen-lbl {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.wa-resumen-item.wa-ok {
+    background: #f0fdf4;
+    border-color: #86efac;
+}
+
+.wa-resumen-item.wa-ok .wa-resumen-num {
+    color: #166534;
+}
+
+.wa-resumen-item.wa-error {
+    background: #fef2f2;
+    border-color: #fca5a5;
+}
+
+.wa-resumen-item.wa-error .wa-resumen-num {
+    color: #b91c1c;
+}
+
+/* Estado fallido en la tabla (el error completo va en el title) */
+.wa-badge-error {
+    background: #fdecea;
+    color: #b71c1c;
+    cursor: help;
+}
+
+.wa-aviso {
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: #7a5200;
+}
