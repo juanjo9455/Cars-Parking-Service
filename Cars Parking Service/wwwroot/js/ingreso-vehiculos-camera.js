@@ -329,15 +329,18 @@ document.addEventListener('DOMContentLoaded', () => {
             recordedVideo.style.display = 'none';
             acceptVideoBtn.style.display = 'none';
             if(deleteVideoBtn) deleteVideoBtn.style.display = 'none';
+            // Se pide 720p: sin esto el navegador graba a 640x480 y los rayones no se ven bien
+            const resolucionVideo = { width: { ideal: 1280 }, height: { ideal: 720 } };
+
             // Cámara trasera preferida, SIN AUDIO
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: 'environment' } }, audio: false })
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: 'environment' }, ...resolucionVideo }, audio: false })
                 .then(stream => {
                     mediaStream = stream;
                     liveVideo.srcObject = stream;
                 })
                 .catch(err => {
                     // fallback a cualquier cámara si la trasera no está disponible
-                    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                    navigator.mediaDevices.getUserMedia({ video: resolucionVideo, audio: false })
                         .then(stream => {
                             mediaStream = stream;
                             liveVideo.srcObject = stream;
@@ -355,7 +358,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!mediaStream) return;
             recordedChunks = [];
             descartarGrabacionActual = false;
-            mediaRecorder = new MediaRecorder(mediaStream, { mimeType: 'video/webm;codecs=vp8,opus' });
+            // VP9 da la misma nitidez que VP8 con mucho menos peso (sube más rápido con datos).
+            // Siempre en WebM: el servidor reconoce los videos por ese formato.
+            // Si el celular no soporta VP9 (por ejemplo iPhone), se graba en VP8 con tope de calidad:
+            // sin el tope, Safari grababa ~10 veces más pesado que Android (videos de 20-30 MB).
+            const opcionesGrabacion = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+                ? { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 1500000 }
+                : { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 };
+
+            mediaRecorder = new MediaRecorder(mediaStream, opcionesGrabacion);
             mediaRecorder.ondataavailable = e => {
                 if (e.data.size > 0) recordedChunks.push(e.data);
             };
