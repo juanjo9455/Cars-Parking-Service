@@ -20,11 +20,12 @@ namespace CarsParkingService.Controllers
     public class HomeController : Controller
     {
         private readonly ApplicationDbContext _context;
-        
+        private readonly IConfiguration _configuration;
 
-        public HomeController(ApplicationDbContext context)
+        public HomeController(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         public class FinalizarServicioDTO
@@ -1244,10 +1245,16 @@ namespace CarsParkingService.Controllers
                 return (false, "No se pudo enviar WhatsApp: el número del cliente está vacío.");
             }
 
-            var token = "EAAN1Ou7KFoABOxsr5ohcvViIX6kLd90FRB4gmnNUNFmyKqlOIfLGWN7XCFuy96Gk6l940v8mxzSU9z9ldvZCYSDhQ9hSlZBzoQsUZBRNEkeHkKqsjIhu7FUQ5i7bSd5tE9fxBZBZC9ar1DgPjGSazftOQjXPanTJDqLhom7aVZBpvcDnrScZCkZAamOTj19Ib7aI4gZDZD";
-            var url = "https://graph.facebook.com/v22.0/625779610608874/messages";
+            // Datos de la API desde la configuración (el token va en secretos de usuario o variable de entorno)
+            var token = _configuration["WhatsApp:Token"];
+            var url = _configuration["WhatsApp:ApiUrl"];
 
-            string baseUrl = "http://143.198.163.1.sslip.io/Payment/Estado_Servicio?idIngreso=";
+            if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(url))
+            {
+                return (false, "No se pudo enviar WhatsApp: la API de WhatsApp no está configurada.");
+            }
+
+            string baseUrl = _configuration["WhatsApp:LinkEstadoServicio"] ?? string.Empty;
             string linkPago = $"{baseUrl}{idIngreso}";
 
             var payload = new
@@ -1257,7 +1264,7 @@ namespace CarsParkingService.Controllers
                 type = "template",
                 template = new
                 {
-                    name = "prueba_cars6",
+                    name = _configuration["WhatsApp:Plantilla"],
                     language = new { code = "en_US" },
                     components = new object[]
                     {
@@ -1274,7 +1281,7 @@ namespace CarsParkingService.Controllers
 
                             image = new
                             {
-                                link = "https://archivos.crmgrupoge.com:8085/logo_cars_parking.jpg"
+                                link = _configuration["WhatsApp:LogoUrl"]
                             }
                         }
                     }
