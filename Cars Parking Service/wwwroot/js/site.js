@@ -1938,19 +1938,90 @@ async function abrirModalInformacion(btn) {
         //========================
 
         const info = await respuestaInfo.json();
+
+        // Muestra el dato, o un texto gris cuando no existe
+        const valor = (texto, vacio) => texto
+            ? `<span class="info-valor">${texto}</span>`
+            : `<span class="info-valor info-vacio">${vacio}</span>`;
+
         const sinValet = "El valet no ha sido asignado al vehículo";
+        const claseChipPago = info.estadoPago === "pagado" ? "chip-ok" : "chip-pendiente";
+        const cambioLugar = info.lugarEntrega && info.lugarIngreso && info.lugarEntrega !== info.lugarIngreso;
+
+        // Celular: con un toque se llama desde el celular
+        const celular = info.telefono
+            ? `<a class="info-valor info-tel" href="tel:${info.telefono}"><i class="fa-solid fa-phone"></i> ${info.telefono}</a>`
+            : valor(null, "Sin número registrado");
+
+        const firma = info.firma
+            ? `<div class="info-firma"><img src="${info.firma}" alt="Firma del cliente" /></div>`
+            : valor(null, "El cliente no firmó");
 
         contenido.innerHTML += `
-            <h2>ℹ️ Información ${info.placa ?? ""}</h2>
-            <div class="info-auto">
-                <p><strong>Fecha de ingreso:</strong> ${info.fechaIngreso ?? "—"}</p>
-                <p><strong>Fecha de salida:</strong> ${info.fechaSalida ?? "Aún no ha salido"}</p>
-                <p><strong>Valet que lo ingresó:</strong> ${info.valetIngreso ?? sinValet}</p>
-                <p><strong>Valet que lo trae:</strong> ${info.valetDespacho ?? sinValet}</p>
-                <p><strong>Lugar de entrega:</strong> ${info.lugarEntrega ?? "—"}</p>
+            <div class="info-panel">
+
+                <div class="info-header">
+                    <span class="info-placa">${info.placa ?? "—"}</span>
+                    <div class="info-chips">
+                        <span class="info-chip">${info.estadoServicio ?? "—"}</span>
+                        <span class="info-chip ${claseChipPago}">${info.estadoPago ?? "—"}</span>
+                    </div>
+                </div>
+
+                <h3 class="info-seccion"><i class="fa-solid fa-user"></i> Cliente</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Nombre</span>
+                        ${valor(info.nombreCliente, "Sin nombre registrado")}
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Celular</span>
+                        ${celular}
+                    </div>
+                </div>
+
+                <h3 class="info-seccion"><i class="fa-regular fa-clock"></i> Tiempos</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Ingreso</span>
+                        ${valor(info.fechaIngreso, "—")}
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Salida</span>
+                        ${valor(info.fechaSalida, "Aún no ha salido")}
+                    </div>
+                </div>
+
+                <h3 class="info-seccion"><i class="fa-solid fa-user-tie"></i> Valets</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Lo ingresó</span>
+                        ${valor(info.valetIngreso, sinValet)}
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Lo trae</span>
+                        ${valor(info.valetDespacho, sinValet)}
+                    </div>
+                </div>
+
+                <h3 class="info-seccion"><i class="fa-solid fa-location-dot"></i> Lugares</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Lugar de ingreso</span>
+                        ${valor(info.lugarIngreso, "—")}
+                    </div>
+                    <div class="info-item ${cambioLugar ? "info-destacado" : ""}">
+                        <span class="info-label">Lugar de entrega${cambioLugar ? " (cambió)" : ""}</span>
+                        ${valor(info.lugarEntrega, "—")}
+                    </div>
+                </div>
+
+                <h3 class="info-seccion"><i class="fa-solid fa-signature"></i> Firma del cliente</h3>
+                ${firma}
+
             </div>
-            <hr style="margin:25px 0;">
         `;
+
 
 
         //========================
@@ -1958,7 +2029,7 @@ async function abrirModalInformacion(btn) {
         //========================
 
         contenido.innerHTML += `
-            <h2>📷 Imágenes</h2>
+            <h3 class="info-seccion"><i class="fa-solid fa-images"></i> Imágenes</h3>
         `;
 
         if (dataImagenes.imagenes.length == 0) {
@@ -2005,7 +2076,7 @@ async function abrirModalInformacion(btn) {
 
         contenido.innerHTML += `
             <hr style="margin:25px 0;">
-            <h2>🎥 Videos</h2>
+            <h3 class="info-seccion"><i class="fa-solid fa-video"></i> Videos</h3>
         `;
 
         if (dataVideos.videos.length == 0) {

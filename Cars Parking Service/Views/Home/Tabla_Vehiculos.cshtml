@@ -275,7 +275,6 @@
             <thead>
                 <tr>
                     <th>Placa</th>
-                    <th>Lugar</th>
                     <th>Estado Pago</th>
                     <th>Estado Servicio</th>
                     <th></th>
@@ -296,8 +295,6 @@
                 <tr class="@claseAlerta">
 
                     <td data-label="Placa">@ingresos.placa</td>
-                    <td data-label="Lugar">@ingresos.Ubicacion?.nombre_ubicacion</td>
-
                     <td data-label="Estado Pago">
                         @if (ingresos.estado_pago == "pagado")
                         {
@@ -396,7 +393,7 @@
                             }
 
                         @* 4. Información: siempre visible *@
-                        <i class="fa-solid fa-circle-info btn-action"
+                        <i class="fa-solid fa-info btn-action btn-info-ingreso" title="Ver Informacion"
                             onclick="abrirModalInformacion(this)"
                             data-id-ingreso="@ingresos.id_ingreso"
                             style="cursor:pointer;">

@@ -2476,3 +2476,168 @@ body.tabla-vehiculos-page:not(.bubbles-respect-btn) .bubble-whatsapp {
     color: #fff;
     animation: none;
 }
+
+/* ==================== Panel de información del ingreso ==================== */
+
+/* Botón de información en la tabla: círculo rojo suave */
+.btn-info-ingreso {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #fdecea;
+    color: #c62828;
+    font-size: 15px;
+    box-shadow: 0 2px 6px rgba(198, 40, 40, 0.15);
+}
+
+.btn-info-ingreso:hover {
+    background: #c62828;
+    color: #fff;
+}
+
+.info-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Encabezado: placa + estados */
+.info-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid #f3f3f3;
+}
+
+/* Placa con aspecto de placa de carro */
+.info-placa {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: #1f2937;
+    background: #ffd54f;
+    border: 3px solid #1f2937;
+    border-radius: 8px;
+    padding: 4px 14px;
+}
+
+.info-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.info-chip {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+    background: #eef2f7;
+    color: #334155;
+}
+
+.info-chip.chip-ok {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.info-chip.chip-pendiente {
+    background: #fff8e1;
+    color: #b26a00;
+}
+
+/* Títulos de sección (le ganan al h3 grande del modal) */
+.Card-Ingreso .info-seccion {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 18px 0 8px;
+    padding-bottom: 0;
+    border-bottom: none;
+    font-size: 13px;
+    font-weight: 700;
+    color: #b71c1c;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+/* Tarjetas de datos en dos columnas */
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 10px;
+}
+
+.info-label {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.info-valor {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.info-vacio {
+    font-weight: 400;
+    font-style: italic;
+    color: #9ca3af;
+}
+
+/* Lugar de entrega distinto al de ingreso */
+.info-destacado {
+    background: #fffbeb;
+    border-color: #f9a825;
+}
+
+/* En celular, una sola columna */
+@media (max-width: 480px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Celular del cliente: enlace para llamar */
+.info-tel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #c62828;
+    text-decoration: none;
+}
+
+.info-tel:hover {
+    text-decoration: underline;
+}
+
+/* Firma del cliente sobre fondo blanco, como en el papel */
+.info-firma {
+    padding: 10px;
+    background: #fff;
+    border: 1px dashed #d0d0d0;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.info-firma img {
+    max-width: 100%;
+    max-height: 160px;
+}

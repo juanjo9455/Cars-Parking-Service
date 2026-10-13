@@ -2250,7 +2250,15 @@ namespace CarsParkingService.Controllers
                 fechaSalida = ingreso.fecha_salida?.ToString("dd/MM/yyyy HH:mm"),
                 valetIngreso = ingreso.id_valet.HasValue ? nombres.GetValueOrDefault(ingreso.id_valet.Value) : null,
                 valetDespacho = ingreso.valet_despacho.HasValue ? nombres.GetValueOrDefault(ingreso.valet_despacho.Value) : null,
-                lugarEntrega = ingreso.lugar_entrega ?? ingreso.Ubicacion?.nombre_ubicacion
+                lugarEntrega = ingreso.lugar_entrega ?? ingreso.Ubicacion?.nombre_ubicacion,
+                lugarIngreso = ingreso.Ubicacion?.nombre_ubicacion,
+                estadoPago = ingreso.estado_pago,
+                estadoServicio = ingreso.estado_servicio,
+                nombreCliente = ingreso.nombre_cliente,
+                telefono = ingreso.telefono,
+                firma = ingreso.firma != null
+                    ? "data:image/pbg;base64," + Convert.ToBase64String(ingreso.firma)
+                    : null
             });
         }
 
