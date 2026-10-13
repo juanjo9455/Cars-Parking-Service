@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+        <!-- En desarrollo, correr con dotnet.exe (firmado) para que Smart App Control no bloquee el .exe -->
+    <UseAppHost Condition="'$(Configuration)' == 'Debug'">false</UseAppHost>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>CarsParkingService</RootNamespace>
