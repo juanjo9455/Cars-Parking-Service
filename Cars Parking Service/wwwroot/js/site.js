@@ -1995,12 +1995,16 @@ async function abrirModalInformacion(btn) {
                 <h3 class="info-seccion"><i class="fa-solid fa-user-tie"></i> Valets</h3>
                 <div class="info-grid">
                     <div class="info-item">
-                        <span class="info-label">Lo ingresó</span>
+                        <span class="info-label">Valet parqueo</span>
                         ${valor(info.valetIngreso, sinValet)}
                     </div>
                     <div class="info-item">
-                        <span class="info-label">Lo trae</span>
+                        <span class="info-label">Valet despacho</span>
                         ${valor(info.valetDespacho, sinValet)}
+                    </div>
+                    <div class="info-item info-item-completo">
+                        <span class="info-label">Banco ingreso</span>
+                        ${valor(info.banco, "Sin banco registrado")}
                     </div>
                 </div>
 

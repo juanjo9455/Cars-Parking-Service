@@ -2586,6 +2586,11 @@ i.btn-info-ingreso {
     border-radius: 10px;
 }
 
+/* Dato que ocupa todo el ancho del bloque (ej. banco) */
+.info-item-completo {
+    grid-column: 1 / -1;
+}
+
 .info-label {
     font-size: 12px;
     color: #6b7280;

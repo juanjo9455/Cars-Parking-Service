@@ -2233,8 +2233,8 @@ namespace CarsParkingService.Controllers
                 return NotFound();
             }
 
-            // Nombres del valet que lo ingresó y del que lo trae de vuelta
-            var idsValets = new[] { ingreso.id_valet, ingreso.valet_despacho }
+            // Nombres del valet que lo ingresó, del que lo trae de vuelta y del banco
+            var idsValets = new int?[] { ingreso.id_valet, ingreso.valet_despacho, ingreso.id_banco }
                 .Where(id => id.HasValue)
                 .Select(id => id.Value)
                 .ToList();
@@ -2250,6 +2250,7 @@ namespace CarsParkingService.Controllers
                 fechaSalida = ingreso.fecha_salida?.ToString("dd/MM/yyyy HH:mm"),
                 valetIngreso = ingreso.id_valet.HasValue ? nombres.GetValueOrDefault(ingreso.id_valet.Value) : null,
                 valetDespacho = ingreso.valet_despacho.HasValue ? nombres.GetValueOrDefault(ingreso.valet_despacho.Value) : null,
+                banco = nombres.GetValueOrDefault(ingreso.id_banco),
                 lugarEntrega = ingreso.lugar_entrega ?? ingreso.Ubicacion?.nombre_ubicacion,
                 lugarIngreso = ingreso.Ubicacion?.nombre_ubicacion,
                 estadoPago = ingreso.estado_pago,
@@ -2257,7 +2258,7 @@ namespace CarsParkingService.Controllers
                 nombreCliente = ingreso.nombre_cliente,
                 telefono = ingreso.telefono,
                 firma = ingreso.firma != null
-                    ? "data:image/pbg;base64," + Convert.ToBase64String(ingreso.firma)
+                    ? "data:image/png;base64," + Convert.ToBase64String(ingreso.firma)
                     : null
             });
         }
