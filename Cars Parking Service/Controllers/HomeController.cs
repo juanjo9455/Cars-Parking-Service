@@ -2226,6 +2226,7 @@ namespace CarsParkingService.Controllers
         {
             var ingreso = _context.ingresos
                 .Include(i => i.Ubicacion)
+                .Include(i => i.Parqueadero)
                 .FirstOrDefault(i => i.id_ingreso == idIngreso);
 
             if (ingreso == null)
@@ -2253,6 +2254,7 @@ namespace CarsParkingService.Controllers
                 banco = nombres.GetValueOrDefault(ingreso.id_banco),
                 lugarEntrega = ingreso.lugar_entrega ?? ingreso.Ubicacion?.nombre_ubicacion,
                 lugarIngreso = ingreso.Ubicacion?.nombre_ubicacion,
+                parqueadero = ingreso.Parqueadero?.nombre_parqueadero,
                 estadoPago = ingreso.estado_pago,
                 estadoServicio = ingreso.estado_servicio,
                 nombreCliente = ingreso.nombre_cliente,

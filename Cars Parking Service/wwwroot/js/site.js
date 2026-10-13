@@ -2065,6 +2065,10 @@ async function abrirModalInformacion(btn) {
                         <span class="info-label">Lugar de entrega${cambioLugar ? " (cambió)" : ""}</span>
                         ${valor(info.lugarEntrega, "—")}
                     </div>
+                    <div class="info-item info-item-completo">
+                        <span class="info-label">Parqueadero</span>
+                        ${valor(info.parqueadero, "Sin parqueadero asignado")}
+                    </div>
                 </div>
 
                 <h3 class="info-seccion"><i class="fa-solid fa-signature"></i> Firma del cliente</h3>
