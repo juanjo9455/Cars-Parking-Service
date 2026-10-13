@@ -1149,7 +1149,7 @@ namespace CarsParkingService.Controllers
 
                     if (enviarWhatsapp)
                     {
-                        var resultadoWhatsapp = await EnviarWhatsAppIngreso(placa, nombreCliente, obj_ingreso.id_ingreso, telefonoCliente);
+                        var resultadoWhatsapp = await EnviarWhatsAppIngreso(placa, nombreCliente, obj_ingreso.id_ingreso, telefonoCliente, "ingreso");
 
                         if (resultadoWhatsapp.exito)
                         {
@@ -1238,10 +1238,12 @@ namespace CarsParkingService.Controllers
         }
 
         // Metodo para enviar mensaje al whatsapp para solicitar vehiculo y pagar servicio
-        private async Task<(bool exito, string mensaje)> EnviarWhatsAppIngreso(string placa, string nombre, int idIngreso, string telefono)
+        // tipo: "ingreso" o "reenvio" (queda en el registro de WhatsApp enviados)
+        private async Task<(bool exito, string mensaje)> EnviarWhatsAppIngreso(string placa, string nombre, int idIngreso, string telefono, string tipo)
         {
             if (string.IsNullOrWhiteSpace(telefono))
             {
+                RegistrarWhatsApp(idIngreso, placa, telefono, tipo, false, null, null, "Número vacío");
                 return (false, "No se pudo enviar WhatsApp: el número del cliente está vacío.");
             }
 
@@ -1251,6 +1253,7 @@ namespace CarsParkingService.Controllers
 
             if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(url))
             {
+                RegistrarWhatsApp(idIngreso, placa, telefono, tipo, false, null, null, "API de WhatsApp no configurada");
                 return (false, "No se pudo enviar WhatsApp: la API de WhatsApp no está configurada.");
             }
 
@@ -1318,8 +1321,22 @@ namespace CarsParkingService.Controllers
                 var json = System.Text.Json.JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await client.PostAsync(url, content);
-                var result = await response.Content.ReadAsStringAsync();
+                HttpResponseMessage response;
+                string result;
+
+                try
+                {
+                    response = await client.PostAsync(url, content);
+                    result = await response.Content.ReadAsStringAsync();
+                }
+                catch (Exception ex)
+                {
+                    // Sin conexión con Meta: se registra y se responde sin romper la pantalla
+                    System.Diagnostics.Debug.WriteLine($"Error de conexión WhatsApp: {ex.Message}");
+                    RegistrarWhatsApp(idIngreso, placa, telefono, tipo, false, null, null, $"Sin conexión con Meta: {ex.Message}");
+                    return (false, "No se pudo enviar WhatsApp: no hubo conexión con el servicio.");
+                }
+
                 System.Diagnostics.Debug.WriteLine($"=== WHATSAPP STATUS: {response.StatusCode} ===");
                 System.Diagnostics.Debug.WriteLine($"=== WHATSAPP RESPONSE: {result} ===");
 
@@ -1328,13 +1345,59 @@ namespace CarsParkingService.Controllers
                     System.Diagnostics.Debug.WriteLine("? ERROR WHATSAPP:");
                     System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
                     System.Diagnostics.Debug.WriteLine(result);
+                    RegistrarWhatsApp(idIngreso, placa, telefono, tipo, false, (int)response.StatusCode, null, result);
                     return (false, $"No se pudo enviar WhatsApp. Estado: {(int)response.StatusCode} {response.StatusCode}.");
                 }
 
                 System.Diagnostics.Debug.WriteLine("? WhatsApp enviado correctamente");
                 System.Diagnostics.Debug.WriteLine(result);
                 System.Diagnostics.Debug.WriteLine($"WhatsApp response: {result}");
+
+                // Id del mensaje en Meta (messages[0].id), útil para soporte
+                string? idMensajeMeta = null;
+                try
+                {
+                    using var respuestaJson = System.Text.Json.JsonDocument.Parse(result);
+                    idMensajeMeta = respuestaJson.RootElement.GetProperty("messages")[0].GetProperty("id").GetString();
+                }
+                catch
+                {
+                    // Si Meta cambia el formato, el envío igual cuenta como exitoso
+                }
+
+                RegistrarWhatsApp(idIngreso, placa, telefono, tipo, true, (int)response.StatusCode, idMensajeMeta, null);
                 return (true, "WhatsApp enviado correctamente al cliente.");
+            }
+        }
+
+        // Guarda el registro del envío; si falla, no afecta el envío ni el ingreso
+        private void RegistrarWhatsApp(int idIngreso, string placa, string? telefono, string tipo,
+                                       bool exito, int? codigoRespuesta, string? idMensajeMeta, string? error)
+        {
+            var registro = new whatsapp_enviados
+            {
+                id_ingreso = idIngreso,
+                placa = placa,
+                telefono = telefono,
+                tipo = tipo,
+                exito = exito,
+                codigo_respuesta = codigoRespuesta,
+                id_mensaje_meta = idMensajeMeta,
+                error = error?.Length > 500 ? error[..500] : error,
+                id_usuario = HttpContext.Session.GetInt32("id"),
+                fecha_envio = DateTime.Now
+            };
+
+            try
+            {
+                _context.whatsapp_enviados.Add(registro);
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                // Se suelta el registro para que no haga fallar el siguiente guardado
+                _context.Entry(registro).State = EntityState.Detached;
+                System.Diagnostics.Debug.WriteLine($"No se pudo registrar el WhatsApp: {ex.Message}");
             }
         }
 
@@ -1379,7 +1442,7 @@ namespace CarsParkingService.Controllers
 
             }
 
-            var (exito, mensaje) = await EnviarWhatsAppIngreso(ingreso.placa, ingreso.nombre_cliente, ingreso.id_ingreso, numeroEnvio);
+            var (exito, mensaje) = await EnviarWhatsAppIngreso(ingreso.placa, ingreso.nombre_cliente, ingreso.id_ingreso, numeroEnvio, "reenvio");
 
             if (exito)
             {
