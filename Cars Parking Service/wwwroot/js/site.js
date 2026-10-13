@@ -142,103 +142,6 @@
         });
     }
 
-    // =============== Firma del cliente (Canvas robusto y retina) =============== //
-    var firmaCanvas = document.getElementById("firmaCanvas");
-    if (firmaCanvas) {
-        // Ajuste para pantallas retina
-        function resizeCanvas() {
-            const ratio = window.devicePixelRatio || 1;
-            firmaCanvas.width = firmaCanvas.offsetWidth * ratio;
-            firmaCanvas.height = firmaCanvas.offsetHeight * ratio;
-            ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
-            ctx.scale(ratio, ratio);
-        }
-
-        var ctx = firmaCanvas.getContext("2d");
-        var firmando = false;
-        var haFirmado = false;
-        var lastPos = null;
-
-        ctx.strokeStyle = "#333";
-        ctx.lineWidth = 2;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-
-        function getPos(e) {
-            var rect = firmaCanvas.getBoundingClientRect();
-            if (e.touches && e.touches.length > 0) {
-                return {
-                    x: e.touches[0].clientX - rect.left,
-                    y: e.touches[0].clientY - rect.top
-                };
-            } else if (e.changedTouches && e.changedTouches.length > 0) {
-                return {
-                    x: e.changedTouches[0].clientX - rect.left,
-                    y: e.changedTouches[0].clientY - rect.top
-                };
-            } else {
-                return {
-                    x: e.clientX - rect.left,
-                    y: e.clientY - rect.top
-                };
-            }
-        }
-
-        function startDraw(e) {
-            e.preventDefault();
-            firmando = true;
-            haFirmado = true;
-            lastPos = getPos(e);
-        }
-
-        function draw(e) {
-            if (!firmando) return;
-            e.preventDefault();
-            var pos = getPos(e);
-            if (lastPos) {
-                ctx.beginPath();
-                ctx.moveTo(lastPos.x, lastPos.y);
-                ctx.lineTo(pos.x, pos.y);
-                ctx.stroke();
-            }
-            lastPos = pos;
-        }
-
-        function endDraw(e) {
-            if (firmando) {
-                e.preventDefault();
-                firmando = false;
-                lastPos = null;
-                var errorFirma = document.getElementById("errorFirma");
-                if (errorFirma) errorFirma.classList.remove("visible");
-            }
-        }
-
-        // Mouse events
-        firmaCanvas.addEventListener("mousedown", startDraw);
-        firmaCanvas.addEventListener("mousemove", draw);
-        window.addEventListener("mouseup", endDraw);
-
-        // Touch events
-        firmaCanvas.addEventListener("touchstart", startDraw, {passive: false});
-        firmaCanvas.addEventListener("touchmove", draw, {passive: false});
-        window.addEventListener("touchend", endDraw, {passive: false});
-
-        // Limpiar firma
-        var limpiarBtn = document.getElementById("limpiarFirma");
-        if (limpiarBtn) {
-            limpiarBtn.addEventListener("click", function () {
-                ctx.clearRect(0, 0, firmaCanvas.width, firmaCanvas.height);
-                haFirmado = false;
-            });
-        }
-
-        window.firmaValida = function () { return haFirmado; };
-    }
-
     // ============================  Funciones para las acciones del admin ============================ //
 
     // Cards Principales para activar las funciones del admin
@@ -250,6 +153,14 @@
     let estadoUsuarios = "principal";
     let estadoUbicaciones = "principal";
     let estadoParqueaderos = "principal";
+
+    // La card de WhatsApp se muestra/oculta igual que la de Usuarios (menú principal)
+    const whatsappCard = document.getElementById("CardWhatsApp");
+    if (whatsappCard && usuariosCard) {
+        new MutationObserver(() => {
+            whatsappCard.style.display = usuariosCard.style.display === "none" ? "none" : "";
+        }).observe(usuariosCard, { attributes: true, attributeFilter: ["style"] });
+    }
 
     // =========================== Usuario =========================== \\
 
@@ -1340,23 +1251,28 @@ function abrirModalPago(btn) {
                 style="margin-top:10px; color:red; font-weight:bold;">
         </p>
 
-        <!-- Ingresar código de validación (OCULTO INICIALMENTE) -->
+        <!-- Código para comparar con el cliente (OCULTO INICIALMENTE) -->
         <div id="validacion-contenedor-${id}" style="display:none; margin-bottom: 20px;">
-            <div class="form-group-modal" style="margin-bottom: 20px;">
-                <label>Ingresa el código que el cliente confirmó:</label>
-                <input type="text" id="codigo-validacion-${id}" placeholder="Ej: 123456" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 16px; letter-spacing: 5px;" maxlength="6">
-                <button type="button" id="OtroCodigo" class="btn btn-link" onclick="generarCodigoSeguridad('${id}')" style="margin-top: 10px; color: #2e7d32; text-decoration: underline;">
+            <div class="codigo-operador">
+                <span class="codigo-operador-label">Código de seguridad</span>
+                <span class="codigo-operador-valor" id="codigo-valor-${id}">------</span>
+                <p class="codigo-operador-ayuda">Pídale al cliente que le muestre este mismo código en su celular.</p>
+                <button type="button" class="btn btn-link" onclick="generarCodigoSeguridad('${id}')" style="color: #2e7d32; text-decoration: underline;">
                     Generar otro código
                 </button>
             </div>
 
-            <!-- Botones de validación -->
+            <!-- Confirmar con el cliente o continuar sin él (sin celular / no solicitó) -->
+            <button type="button" class="btn btn-primary" onclick="validarCodigoYAbrir('${id}', '${placa}', '${nombre_cliente}', '${metodo_pago}','modal-acciones', '${estado_servicio}')" style="width: 100%; margin-bottom: 10px;">
+                <i class="fa-solid fa-check"></i> Código confirmado
+            </button>
+            <button type="button" class="btn btn-outline-secondary" onclick="abrirModalFinalizacion('${id}', '${placa}', '${nombre_cliente}', '${metodo_pago}','modal-acciones', '${estado_servicio}')" style="width: 100%; margin-bottom: 10px;">
+                Continuar sin el cliente
+            </button>
+
             <div class="modal-actions" style="display: flex; gap: 10px;">
                 <button type="button" class="btn btn-secondary" onclick="cerrarModalPago('${id}')" style="flex: 1;">
                     Cancelar
-                </button>
-                <button type="button" class="btn btn-primary" onclick="validarCodigoYAbrir('${id}', '${placa}', '${nombre_cliente}', '${metodo_pago}','modal-acciones', '${estado_servicio}')" style="flex: 1;">
-                    <i class="fa-solid fa-check"></i> Validar y Continuar
                 </button>
             </div>
         </div>
@@ -1387,12 +1303,6 @@ function cerrarModalFinalizacion(idIngreso) {
 
 // Limpiar modal de pago
 function limpiarModalPago(idIngreso) {
-
-    const codigoValidacion = document.getElementById(`codigo-validacion-${idIngreso}`);
-
-    if (codigoValidacion) {
-        codigoValidacion.value = '';
-    }
 
     const codigoGenerado = document.getElementById(`codigo-generado-${idIngreso}`);
 
@@ -1427,6 +1337,9 @@ function limpiarModalPago(idIngreso) {
     }
 }
 
+// Contador de expiración activo por ingreso
+const intervalosCodigo = {};
+
 // Generar código de seguridad
 function generarCodigoSeguridad(idIngreso) {
 
@@ -1443,13 +1356,6 @@ function generarCodigoSeguridad(idIngreso) {
 
     const btnContenedor = document.getElementById(`btn-generar-contenedor-${idIngreso}`);
     const btnGenerar = btnContenedor?.querySelector('button');
-    const otroCodigo = document.getElementById("OtroCodigo");
-
-    if (otroCodigo) {
-
-        otroCodigo.style
-
-    }
 
     if (btnGenerar) {
         btnGenerar.disabled = true;
@@ -1498,7 +1404,10 @@ function generarCodigoSeguridad(idIngreso) {
 
             let tiempoRestante = 60;
 
-            const intervalo = setInterval(() => {
+            // Si se generó otro código, el contador anterior no debe borrar el nuevo
+            clearInterval(intervalosCodigo[idIngreso]);
+
+            intervalosCodigo[idIngreso] = setInterval(() => {
 
                 contadorElemento.textContent =
                     `El código expira en ${tiempoRestante}s`;
@@ -1507,7 +1416,7 @@ function generarCodigoSeguridad(idIngreso) {
 
                 if (tiempoRestante < 0) {
 
-                    clearInterval(intervalo);
+                    clearInterval(intervalosCodigo[idIngreso]);
 
                    eliminarCodigoSeguridad(idIngreso);
 
@@ -1587,23 +1496,21 @@ function eliminarCodigoSeguridad(idIngreso) {
         });
 }
 
-// Validar código y abrir modal final
+// Validar código (el que el operador ve y comparó con el cliente) y abrir modal final
 
 function validarCodigoYAbrir(idIngreso,placa,nombre_cliente,metodo_pago,modalId,estado_servicio) {
 
-    const codigoInput =
-        document.getElementById(`codigo-validacion-${idIngreso}`);
+    const codigoValor =
+        document.getElementById(`codigo-valor-${idIngreso}`);
 
-    if (!codigoInput) return;
+    const codigo = codigoValor?.textContent.trim();
 
-    const codigoIngresado = codigoInput.value;
-
-    if (!codigoIngresado || codigoIngresado.length !== 6) {
-        alert('Ingresa un código válido de 6 dígitos');
+    if (!codigo || codigo.length !== 6) {
+        alert('El código expiró. Genera otro código o continúa sin el cliente.');
         return;
     }
 
-    fetch(`/Home/ValidarCodigoSeguridad?id=${idIngreso}&codigo=${codigoIngresado}`, {
+    fetch(`/Home/ValidarCodigoSeguridad?id=${idIngreso}&codigo=${codigo}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1616,6 +1523,23 @@ function validarCodigoYAbrir(idIngreso,placa,nombre_cliente,metodo_pago,modalId,
             alert(data.message || 'Código inválido');
             return;
         }
+
+        abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, modalId, estado_servicio);
+
+    })
+    .catch(error => {
+
+        console.error(error);
+        alert('Error al validar el código');
+
+    });
+}
+
+// Modal final del cobro (con código confirmado o sin el cliente)
+function abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, modalId, estado_servicio) {
+
+        // Se usa el método elegido en el modal (pudo cambiar al generar el código)
+        metodo_pago = document.getElementById(`metodo-pago-${idIngreso}`)?.value || metodo_pago;
 
         cerrarModalPago(idIngreso);
 
@@ -1750,14 +1674,6 @@ function validarCodigoYAbrir(idIngreso,placa,nombre_cliente,metodo_pago,modalId,
         if (metodo_pago === "Transferencia" || metodo_pago == "QR" || metodo_pago == "Nequi") {
             inicializarCamaraTransferencia();
         }
-
-    })
-    .catch(error => {
-
-        console.error(error);
-        alert('Error al validar el código');
-
-    });
 }
 
 // Finalizar servicio
@@ -1775,10 +1691,10 @@ function finalizarServicio(idIngreso, metodoPago) {
         return;
     }
 
-    // Obtener foto si el método es transferencia
+    // Obtener foto si el método es transferencia o QR
     let fotoBase64 = '';
 
-    if (metodoPago === 'Transferencia') {
+    if (metodoPago === 'Transferencia' || metodoPago === 'QR') {
 
         const inputFoto = document.querySelector(
             '#fotosTransferenciaBase64Container input[name^="fotoTransferencia"]'
@@ -1850,38 +1766,13 @@ function finalizarServicio(idIngreso, metodoPago) {
 // Validamos la liquidacion
 
 function abrirModalAlerta() {
-
-    const mostrar = sessionStorage.getItem('mostrarAlertaLiquidacion');
-
-    const alerta = document.getElementById('liquidacionAlert');
+    const alerta = document.getElementById('alertaPendiente');
 
     if (alerta) {
-
-        alerta.innerHTML = `
-            <div class="liquidacion-alert-card">
-
-                <div class="alert-icon" style="background:#FFF3CD; color:#FF9800;">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                </div>
-
-                <h2>Liquidación pendiente</h2>
-
-                <p>
-                    Aún no has realizado la liquidación de tu turno.
-                    Debes completar la liquidación antes de cerrar sesión.
-                </p>
-
-                <button class="alert-btn" onclick="cerrarAlertaLiquidacion()">
-                    Entendido
-                </button>
-
-            </div>
-        `;
-
         alerta.classList.add('show');
     }
-
 }
+
 
 function cerrarModalNoLiquidado() {
     document
@@ -1917,9 +1808,12 @@ async function abrirModalInformacion(btn) {
 
     console.log("[INFO] ID del ingreso:", idIngreso);
 
+    // Siempre abre en la vista de información, no en la de solicitud
+    contenido.classList.remove("modo-solicitud");
+
     // Marcador visual: estado inicial de carga
     console.log("[abrirModalInformacion] Consultando todas las imágenes en el controlador...");
-    contenido.innerHTML = "<p class='texto-cargando'>Cargando imágenes...</p>";
+    contenido.innerHTML = "<p class='texto-cargando'>Cargando informacion...</p>";
     console.log("[INFO] Mostrando modal-acciones...");
 
     modalAcciones.style.display = 'flex';
@@ -1937,10 +1831,15 @@ async function abrirModalInformacion(btn) {
         console.log("[FETCH] Iniciando consultas...");
         console.log("========================================");
 
-        const [respuestaImagenes, respuestaVideos] = await Promise.all([
+        const [respuestaInfo, respuestaImagenes, respuestaVideos] = await Promise.all([
+            fetch(`/Home/ObtenerInfoIngreso?idIngreso=${idIngreso}`, { cache: 'no-store' }),
             fetch(`/Home/ObtenerImagenesIngreso?idIngreso=${idIngreso}`),
             fetch(`/Home/ObtenerVideosIngreso?idIngreso=${idIngreso}`)
         ]);
+
+        if (!respuestaInfo.ok)
+            throw new Error("No fue posible obtener la información del vehículo.");
+
 
         if (!respuestaImagenes.ok)
             throw new Error("No fue posible obtener las imagenes.");
@@ -1954,12 +1853,198 @@ async function abrirModalInformacion(btn) {
         contenido.innerHTML = "";
 
         //========================
+        // INFORMACIÓN
+        //========================
+
+        const info = await respuestaInfo.json();
+
+        // Muestra el dato, o un texto gris cuando no existe
+        const valor = (texto, vacio) => texto
+            ? `<span class="info-valor">${texto}</span>`
+            : `<span class="info-valor info-vacio">${vacio}</span>`;
+
+        const sinValet = "El valet no ha sido asignado al vehículo";
+        const cambioLugar = info.lugarEntrega && info.lugarIngreso && info.lugarEntrega !== info.lugarIngreso;
+
+        // Celular: con un toque se llama desde el celular
+        const celular = info.telefono
+            ? `<a class="info-valor info-tel" href="tel:${info.telefono}"><i class="fa-solid fa-phone"></i> ${info.telefono}</a>`
+            : valor(null, "Sin número registrado");
+
+        const firma = info.firma
+            ? `<div class="info-firma"><img src="${info.firma}" alt="Firma del cliente" /></div>`
+            : valor(null, "El cliente no firmó");
+
+        // Solicitud por el operador cuando el cliente llama (el servidor decide si se puede)
+        const botonSolicitar = info.puedeSolicitar
+            ? `<button type="button" class="info-btn-solicitar" onclick="mostrarSolicitudOperador()">
+                   <i class="fa-solid fa-bell-concierge"></i> Solicitar vehículo por el cliente
+               </button>`
+            : "";
+
+        const panelSolicitud = info.puedeSolicitar
+            ? `<form class="solicitud-panel" method="post" action="/Home/SolicitarVehiculoOperador"
+                     onsubmit="return enviarSolicitudOperador(this)">
+                   <h3>Solicitar vehículo</h3>
+
+                   <div class="solicitud-datos">
+                       <p><strong>Placa:</strong> ${info.placa ?? "—"}</p>
+                       <p><strong>Cliente:</strong> ${info.nombreCliente ?? "Sin nombre registrado"}</p>
+                   </div>
+
+                   <p class="solicitud-nota">
+                       <i class="fa-solid fa-phone"></i> El cliente llamó y no lo solicitó desde su enlace.
+                   </p>
+
+                   <input type="hidden" name="id_ingreso" value="${idIngreso}" />
+
+                   <label for="solicitud-lugar">Lugar de entrega</label>
+                   <select id="solicitud-lugar" name="lugar_entrega" required
+                           data-preseleccion="${info.lugarIngreso ?? ""}">
+                       <option value="">Cargando ubicaciones...</option>
+                   </select>
+
+                   <div class="solicitud-acciones">
+                       <button type="button" class="btn btn-secondary" onclick="cancelarSolicitudOperador()">
+                           Cancelar
+                       </button>
+                       <button type="submit" class="btn btn-primary">
+                           <i class="fa-solid fa-bell-concierge"></i> Solicitar vehículo
+                       </button>
+                   </div>
+               </form>`
+            : "";
+
+        contenido.innerHTML += `
+            ${panelSolicitud}
+
+            <div class="info-panel">
+
+                <div class="info-header">
+                    <span class="info-placa">${info.placa ?? "—"}</span>
+                </div>
+
+                ${botonSolicitar}
+
+                <h3 class="info-seccion"><i class="fa-solid fa-user"></i> Cliente</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Nombre</span>
+                        ${valor(info.nombreCliente, "Sin nombre registrado")}
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Celular</span>
+                        ${celular}
+                    </div>
+                </div>
+
+                <h3 class="info-seccion"><i class="fa-regular fa-clock"></i> Tiempos</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Ingreso</span>
+                        ${valor(info.fechaIngreso, "—")}
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Salida</span>
+                        ${valor(info.fechaSalida, "Aún no ha salido")}
+                    </div>
+                </div>
+
+                <h3 class="info-seccion"><i class="fa-solid fa-user-tie"></i> Valets</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Valet parqueo</span>
+                        ${valor(info.valetIngreso, sinValet)}
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Valet despacho</span>
+                        ${valor(info.valetDespacho, sinValet)}
+                    </div>
+                    <div class="info-item info-item-completo">
+                        <span class="info-label">Banco ingreso</span>
+                        ${valor(info.banco, "Sin banco registrado")}
+                    </div>
+                </div>
+
+                <h3 class="info-seccion"><i class="fa-solid fa-location-dot"></i> Lugares</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Lugar de ingreso</span>
+                        ${valor(info.lugarIngreso, "—")}
+                    </div>
+                    <div class="info-item ${cambioLugar ? "info-destacado" : ""}">
+                        <span class="info-label">Lugar de entrega${cambioLugar ? " (cambió)" : ""}</span>
+                        ${valor(info.lugarEntrega, "—")}
+                    </div>
+                    <div class="info-item info-item-completo">
+                        <span class="info-label">Parqueadero</span>
+                        ${valor(info.parqueadero, "Sin parqueadero asignado")}
+                    </div>
+                </div>
+
+                <h3 class="info-seccion"><i class="fa-solid fa-signature"></i> Firma del cliente</h3>
+                ${firma}
+
+            </div>
+        `;
+
+
+
+        //========================
         // IMÁGENES
         //========================
 
+        // Objetos de valor que se anotaron en el ingreso (texto libre, se escapa)
+        const textoObjetos = (info.objetosValor ?? "").trim();
+        const sinObjetos = textoObjetos.toLowerCase() === "sin objetos de valor";
+
+        const objetosEscapados = textoObjetos
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+
+        let objetosValor;
+
+        if (!textoObjetos) {
+            objetosValor = `
+                <div class="info-objetos info-objetos-vacio">
+                    <i class="fa-regular fa-circle-question"></i>
+                    <span>No se registraron objetos de valor</span>
+                </div>`;
+        } else if (sinObjetos) {
+            objetosValor = `
+                <div class="info-objetos info-objetos-ninguno">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>El vehículo se recibió sin objetos de valor</span>
+                </div>`;
+        } else {
+            objetosValor = `
+                <div class="info-objetos">
+                    <i class="fa-solid fa-gem"></i>
+                    <div>
+                        <span class="info-objetos-titulo">Objetos que dejó el cliente</span>
+                        <p class="info-objetos-texto">${objetosEscapados}</p>
+                    </div>
+                </div>`;
+        }
+
         contenido.innerHTML += `
-            <h2>📷 Imágenes</h2>
+            <h3 class="info-seccion"><i class="fa-solid fa-images"></i> Imágenes</h3>
+            <span class="info-label">Objetos de valor</span>
+            ${objetosValor}
         `;
+
+        // Comprobante de pago (transferencia / QR), del mismo tamaño que las imágenes
+        if (info.fotoTransferencia) {
+            contenido.innerHTML += `
+                <span class="info-label">Comprobante de pago</span>
+                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px,1fr)); gap:10px; margin:4px 0 12px;">
+                    <img src="${info.fotoTransferencia}" alt="Comprobante de pago" loading="lazy"
+                         class="imagen-galeria"
+                         style="width:100%; height:120px; object-fit:cover; border-radius:8px; cursor:pointer;" />
+                </div>
+            `;
+        }
 
         if (dataImagenes.imagenes.length == 0) {
 
@@ -2005,7 +2090,7 @@ async function abrirModalInformacion(btn) {
 
         contenido.innerHTML += `
             <hr style="margin:25px 0;">
-            <h2>🎥 Videos</h2>
+            <h3 class="info-seccion"><i class="fa-solid fa-video"></i> Videos</h3>
         `;
 
         if (dataVideos.videos.length == 0) {
@@ -2014,19 +2099,32 @@ async function abrirModalInformacion(btn) {
 
         } else {
 
+            // Miniaturas del mismo tamaño que las imágenes; el video solo se descarga al reproducirlo
+            const contenedorVideos = document.createElement("div");
+
+            contenedorVideos.style.display = "grid";
+            contenedorVideos.style.gridTemplateColumns = "repeat(auto-fill, minmax(120px,1fr))";
+            contenedorVideos.style.gap = "10px";
+
             dataVideos.videos.forEach(video => {
 
                 const reproductor = document.createElement("video");
 
                 reproductor.src = video.src;
                 reproductor.controls = true;
+                reproductor.preload = "metadata";
+                reproductor.playsInline = true;
                 reproductor.style.width = "100%";
-                reproductor.style.marginBottom = "15px";
+                reproductor.style.height = "120px";
+                reproductor.style.objectFit = "cover";
                 reproductor.style.borderRadius = "8px";
+                reproductor.style.background = "#000";
 
-                contenido.appendChild(reproductor);
+                contenedorVideos.appendChild(reproductor);
 
             });
+
+            contenido.appendChild(contenedorVideos);
 
         }
 
@@ -2039,6 +2137,69 @@ async function abrirModalInformacion(btn) {
             "<p>Ocurrió un error al obtener la información del vehículo.</p>";
 
     }
+}
+
+// ======================================================
+// SOLICITUD DEL VEHÍCULO POR EL OPERADOR (cliente llamó)
+// ======================================================
+
+// Cambia el modal de información al panel de confirmación
+function mostrarSolicitudOperador() {
+
+    const contenido = document.getElementById('contenido-modal-acciones');
+    const select = document.getElementById('solicitud-lugar');
+
+    if (!contenido || !select) return;
+
+    contenido.classList.add('modo-solicitud');
+
+    // Las ubicaciones se cargan una sola vez
+    if (select.dataset.cargado === 'true') return;
+
+    fetch(`/Payment/ObtenerUbicaciones?_=${Date.now()}`, { cache: 'no-store' })
+        .then(response => response.json())
+        .then(data => {
+
+            if (!data.success) throw new Error(data.message);
+
+            select.innerHTML = '<option value="">Selecciona una ubicación</option>';
+
+            // Se preselecciona el lugar donde se ingresó el vehículo
+            data.data.forEach(u => {
+                const option = document.createElement('option');
+                option.value = u.nombre;
+                option.textContent = u.nombre;
+                option.selected = u.nombre === select.dataset.preseleccion;
+                select.appendChild(option);
+            });
+
+            select.dataset.cargado = 'true';
+        })
+        .catch(error => {
+            console.error('[SOLICITUD] Error cargando ubicaciones:', error);
+            select.innerHTML = '<option value="">No se pudieron cargar las ubicaciones</option>';
+        });
+}
+
+// Vuelve a la información sin enviar nada
+function cancelarSolicitudOperador() {
+
+    const contenido = document.getElementById('contenido-modal-acciones');
+
+    if (contenido) contenido.classList.remove('modo-solicitud');
+}
+
+// Evita el doble envío mientras se procesa
+function enviarSolicitudOperador(form) {
+
+    const boton = form.querySelector('button[type="submit"]');
+
+    if (boton.disabled) return false;
+
+    boton.disabled = true;
+    boton.textContent = 'Solicitando...';
+
+    return true;
 }
 
 function cerrarModalAcciones() {
@@ -2069,6 +2230,7 @@ function cerrarModalAcciones() {
 
     if (contenido) {
         contenido.innerHTML = '';
+        contenido.classList.remove('modo-solicitud');
 
         console.log(
             "[MODAL] Contenido limpiado."

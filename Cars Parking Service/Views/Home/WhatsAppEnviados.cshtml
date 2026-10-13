@@ -1,0 +1,156 @@
+﻿@model List<CarsParkingService.Models.whatsapp_enviados>
+@{
+    ViewData["Title"] = "WhatsApp Enviados";
+    var filtroEstado = ViewData["FiltroEstado"]?.ToString();
+    var filtroTipo = ViewData["FiltroTipo"]?.ToString();
+}
+
+<div class="container mt-4 admin-container">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-info" style="flex-grow: 1;">
+            <h2 style="margin: 0;">
+                <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> WhatsApp Enviados
+            </h2>
+            <p>Registro de los mensajes enviados a los clientes al ingresar el vehículo y al reenviar</p>
+        </div>
+
+        <a asp-controller="Home" asp-action="Administrador" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Volver al panel
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-wrapper" id="filtersWrapper">
+        <button type="button" class="filters-toggle" id="filtersToggle" aria-expanded="false" aria-controls="filtersPanel" data-no-spinner="true">
+            <span><i class="fa-solid fa-filter"></i> Filtros</span>
+            <i class="fa-solid fa-chevron-down filters-chevron"></i>
+        </button>
+
+        <div class="search-section filters-panel" id="filtersPanel">
+            <form method="get" asp-action="WhatsAppEnviados" class="row">
+                <div class="form-group col-md-3 mb-3">
+                    <label>Desde</label>
+                    <input type="date" name="desde" class="form-control"
+                           value="@(((DateTime?)ViewData["FiltroDesde"])?.ToString("yyyy-MM-dd"))">
+                </div>
+
+                <div class="form-group col-md-3 mb-3">
+                    <label>Hasta</label>
+                    <input type="date" name="hasta" class="form-control"
+                           value="@(((DateTime?)ViewData["FiltroHasta"])?.ToString("yyyy-MM-dd"))">
+                </div>
+
+                <div class="form-group col-md-2 mb-3">
+                    <label>Placa</label>
+                    <input type="text" name="placa" value="@ViewData["FiltroPlaca"]" placeholder="Buscar por placa"
+                           class="form-control" style="text-transform: uppercase;">
+                </div>
+
+                <div class="form-group col-md-2 mb-3">
+                    <label>Estado</label>
+                    <select name="estado" style="width:100%;">
+                        <option value="">Todos</option>
+                        <option value="exitoso" selected="@(filtroEstado == "exitoso")">Exitosos</option>
+                        <option value="fallido" selected="@(filtroEstado == "fallido")">Fallidos</option>
+                    </select>
+                </div>
+
+                <div class="form-group col-md-2 mb-3">
+                    <label>Tipo</label>
+                    <select name="tipo" style="width:100%;">
+                        <option value="">Todos</option>
+                        <option value="ingreso" selected="@(filtroTipo == "ingreso")">Ingreso</option>
+                        <option value="reenvio" selected="@(filtroTipo == "reenvio")">Reenvío</option>
+                    </select>
+                </div>
+
+                <div class="col-12 mt-2 d-flex justify-content-end gap-2">
+                    <button type="submit" class="btn btn-primary px-4">Buscar</button>
+                    <a asp-action="WhatsAppEnviados" class="btn btn-secondary px-4">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resumen del período -->
+    <div class="wa-resumen">
+        <div class="wa-resumen-item">
+            <span class="wa-resumen-num">@ViewBag.Total</span>
+            <span class="wa-resumen-lbl">Total</span>
+        </div>
+        <div class="wa-resumen-item wa-ok">
+            <span class="wa-resumen-num"><i class="fa-solid fa-check"></i> @ViewBag.Exitosos</span>
+            <span class="wa-resumen-lbl">Exitosos</span>
+        </div>
+        <div class="wa-resumen-item wa-error">
+            <span class="wa-resumen-num"><i class="fa-solid fa-xmark"></i> @ViewBag.Fallidos</span>
+            <span class="wa-resumen-lbl">Fallidos</span>
+        </div>
+    </div>
+
+    @if (Model.Count >= 500)
+    {
+        <p class="wa-aviso">
+            <i class="fa-solid fa-circle-info"></i>
+            Se muestran los 500 envíos más recientes. Usa los filtros para acotar la búsqueda.
+        </p>
+    }
+
+    <!-- Tabla -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha y hora</th>
+                    <th>Placa</th>
+                    <th>Teléfono</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Envió</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" style="text-align:center; color:#9ca3af;">
+                            No hay WhatsApp enviados en este período
+                        </td>
+                    </tr>
+                }
+
+                @foreach (var w in Model)
+                {
+                    <tr>
+                        <td data-label="Fecha y hora">@w.fecha_envio.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td data-label="Placa">@w.placa</td>
+                        <td data-label="Teléfono">@(string.IsNullOrWhiteSpace(w.telefono) ? "—" : w.telefono)</td>
+                        <td data-label="Tipo">@(w.tipo == "reenvio" ? "Reenvío" : "Ingreso")</td>
+                        <td data-label="Estado">
+                            @if (w.exito)
+                            {
+                                <span class="status-badge status-pagado"><i class="fa-solid fa-check"></i> Enviado</span>
+                            }
+                            else
+                            {
+                                // Motivo corto en la tabla; el error completo al pasar el mouse
+                                var motivo = w.codigo_respuesta.HasValue
+                                    ? $"Error {w.codigo_respuesta}"
+                                    : (w.error ?? "Error");
+
+                                <span class="status-badge wa-badge-error" title="@w.error">
+                                    <i class="fa-solid fa-xmark"></i> @(motivo.Length > 40 ? motivo[..40] + "…" : motivo)
+                                </span>
+                            }
+                        </td>
+                        <td data-label="Envió">
+                            @(w.Usuario != null ? $"{w.Usuario.nombres} {w.Usuario.apellidos}" : "—")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

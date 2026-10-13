@@ -13,20 +13,19 @@ using System.Diagnostics;
 using System.Text;
 using CarsParkingService.ViewModels;
 using Microsoft.DotNet.Scaffolding.Shared.Messaging;
+using CarsParkingService.Helpers;
 
 namespace CarsParkingService.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ApplicationDbContext _context;
-        
-        // Diccionario para almacenar códigos de seguridad generados
-        // Key: id_ingreso, Value: (código, fecha_generación)
-        private static Dictionary<int, (string codigo, DateTime fechaGeneracion)> codigosSeguridad = new();
+        private readonly IConfiguration _configuration;
 
-        public HomeController(ApplicationDbContext context)
+        public HomeController(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         public class FinalizarServicioDTO
@@ -62,10 +61,14 @@ namespace CarsParkingService.Controllers
 
             ViewBag.ubicacion = nombreUbicacion ?? "Ubicación no disponible";
 
-            ViewBag.estadoLiquidacion = _context.sesiones
-                .Where(s => s.id_usuario == usuarioId && s.fecha_fin == null)
-                .Select(s => (bool?)s.estado_liquidacion)
-                .FirstOrDefault() ?? false;
+            // Lo que este usuario tiene pagado sin liquidar (una ubicación por cada vehículo)
+            var pendientes = usuarioId.HasValue
+                ? LiquidacionReglas.PorLiquidar(_context, usuarioId.Value).Select(i => i.id_ubicacion).ToList()
+                : new List<int>();
+
+            ViewBag.estadoLiquidacion = pendientes.Count == 0;   // true = puede cerrar sesión
+            ViewBag.pendientesVehiculos = pendientes.Count;
+            ViewBag.pendientesUbicaciones = pendientes.Distinct().Count();
 
             return View();
 
@@ -128,6 +131,12 @@ namespace CarsParkingService.Controllers
 
         public IActionResult Estado_Turnos(DateTime? FechaSeleccionada) {
 
+            // Muestra dinero de todos los turnos: solo el administrador
+            if (HttpContext.Session.GetInt32("id_rol") != 3)
+            {
+                return RedirectToAction("Index");
+            }
+
             var model = new EstadoTurnosViewModel();
 
             DateTime FechaConsulta;
@@ -162,12 +171,14 @@ namespace CarsParkingService.Controllers
 
 
                     // Consultamos lo que debe el valet al banco
+                    // (por fecha de entrega, igual que la regla de liquidación)
                     Deuda = _context.ingresos
                             .Where(i => i.rol_cobrador == "valet" &&
                                         i.usuario_cobro == grupo.Key &&
                                         i.metodo_pago == "Efectivo" &&
-                                        i.fecha_ingreso.HasValue &&
-                                        i.fecha_ingreso.Value.Date == FechaConsulta &&
+                                        i.estado_pago == "pagado" &&
+                                        i.fecha_entrega.HasValue &&
+                                        i.fecha_entrega.Value.Date == FechaConsulta &&
                                         i.estado_liquidacion == false)
                             .Sum(i => (decimal?)i.valor_servicio) ?? 0,
 
@@ -202,7 +213,7 @@ namespace CarsParkingService.Controllers
                     IdUsuario = grupo.Key,
 
                     Nombres = grupo.First().u.nombres ?? "",
-                    Apellidos = grupo.First().u.nombres ?? "",
+                    Apellidos = grupo.First().u.apellidos ?? "",
 
                     LugarActual = grupo.First().s.Ubicacion.nombre_ubicacion ?? "Sin Ubicacion",
 
@@ -246,8 +257,69 @@ namespace CarsParkingService.Controllers
 
             ).ToList();
 
+            // Liquidaciones del día, desde tbl_liquidacion (aunque el banco ya haya cerrado sesión)
+            var inicioDia = FechaConsulta;
+            var finDia = FechaConsulta.AddDays(1);
+
+            model.Liquidaciones = _context.liquidaciones
+                .AsNoTracking()
+                .Where(l => l.fecha >= inicioDia && l.fecha < finDia)
+                .OrderBy(l => l.fecha)
+                .Select(l => new LiquidacionDiaVM
+                {
+                    IdLiquidacion = l.id_liquidacion,
+                    Fecha = l.fecha,
+                    Usuario = l.Usuario != null ? l.Usuario.nombres + " " + l.Usuario.apellidos : "—",
+                    TotalVehiculos = l.total_vehiculos ?? 0,
+                    TotalEfectivo = l.total_efectivo ?? 0,
+                    TotalTransferencias = l.total_transferencias ?? 0,
+                    TotalLiquidado = l.total_liquidado ?? 0
+                })
+                .ToList();
+
             return View(model);
-        
+
+        }
+
+        // Vehículos que forman una liquidación (botón "Ver detalle" de Estado Turnos)
+        [HttpGet]
+        public IActionResult DetalleLiquidacion(int id)
+        {
+            if (HttpContext.Session.GetInt32("id_rol") != 3)
+            {
+                return Json(new { success = false, message = "No tienes permiso para ver liquidaciones." });
+            }
+
+            var vehiculos = (
+                from i in _context.ingresos.AsNoTracking()
+                where i.id_liquidacion == id
+                join u in _context.usuarios on i.usuario_cobro equals (int?)u.id_usuario into cobradores
+                from u in cobradores.DefaultIfEmpty()
+                orderby i.fecha_entrega
+                select new
+                {
+                    placa = i.placa,
+                    entrega = i.fecha_entrega,
+                    cobro = u != null ? u.nombres + " " + u.apellidos : "—",
+                    rol = i.rol_cobrador,
+                    metodo = i.metodo_pago,
+                    valor = i.valor_servicio ?? 0,
+                    ubicacion = i.Ubicacion != null ? i.Ubicacion.nombre_ubicacion : "—"
+                }
+            )
+            .ToList()
+            .Select(v => new
+            {
+                v.placa,
+                entrega = v.entrega?.ToString("dd/MM HH:mm") ?? "—",
+                v.cobro,
+                v.rol,
+                v.metodo,
+                v.valor,
+                v.ubicacion
+            });
+
+            return Json(new { success = true, vehiculos });
         }
 
 
@@ -267,7 +339,7 @@ namespace CarsParkingService.Controllers
             System.Diagnostics.Debug.WriteLine($"rolUsuario: {rolUsuario}");
 
             if (!idUsuarioSesion.HasValue ||
-                (rolUsuario != 4 && rolUsuario != 1))
+                (rolUsuario != 4 && rolUsuario != 1 && rolUsuario != 3))
             {
                 System.Diagnostics.Debug.WriteLine($"Acceso denegado: no es rol Key");
                 return RedirectToAction("Login", "Auth");
@@ -305,7 +377,7 @@ namespace CarsParkingService.Controllers
 
             List<ingresos> ingresos;
 
-            if (rolUsuario == 1)
+            if (rolUsuario == 1 || rolUsuario == 3)
             {
                 if (!idParqueaderoSesion.HasValue)
                 {
@@ -344,7 +416,7 @@ namespace CarsParkingService.Controllers
                 ViewBag.MostrarModal = false;
             }
 
-            var parqueadero = _context.parqueaderos.FirstOrDefault(p => p.id_parqueadero == sesion.id_parqueadero);
+            var parqueadero = _context.parqueaderos.FirstOrDefault(p => p.id_parqueadero ==(idParqueaderoSesion ?? sesion.id_parqueadero));
 
             var idsIngresos = ingresos.Select(i => i.id_ingreso).ToList();
 
@@ -455,6 +527,27 @@ namespace CarsParkingService.Controllers
 
             return Json(new { success = true });
         }
+
+                // El admin cambia de parqueadero desde el menú de la vista Key
+        [HttpPost]
+        public IActionResult CambiarParqueaderoAdmin(int id_parqueadero)
+        {
+            if (HttpContext.Session.GetInt32("id_rol") != 3)
+            {
+                return Forbid();
+            }
+
+            bool existe = _context.parqueaderos
+                .Any(p => p.id_parqueadero == id_parqueadero && p.estado == "activo");
+
+            if (existe)
+            {
+                HttpContext.Session.SetInt32("id_parqueadero_sesion", id_parqueadero);
+            }
+
+            return RedirectToAction("VistaKey");
+        }
+
 
         // Metodo para obtener las solicitudes de ingresos de vehiculos en estado "solicitado" para el valet y banco
         [HttpGet]
@@ -968,18 +1061,22 @@ namespace CarsParkingService.Controllers
                     obj_ingreso.id_parqueadero = sesionUsuario.id_parqueadero.Value;
                 }
 
-                // Ubicación: primero sesión activa, luego fallback a Session HTTP
-                int? idUbicacionSesion = sesionUsuario?.id_ubicacion;
-                if (!idUbicacionSesion.HasValue)
+                // Ubicación: viene del formulario para todos (campo obligatorio)
+                bool ubicacionValida = obj_ingreso.id_ubicacion > 0 &&
+                    _context.ubicacion_servicios.Any(u => u.id_ubicacion == obj_ingreso.id_ubicacion && u.estado == "activo");
+
+                if (!ubicacionValida)
                 {
-                    idUbicacionSesion = HttpContext.Session.GetInt32("id_ubicacion");
+                    ViewBag.Error = "Selecciona una ubicación válida.";
+                    CargarDatosFormulario();
+                    return View("Ingreso_Vehiculos");
                 }
 
-                if (idUbicacionSesion.HasValue)
-                {
-                    obj_ingreso.id_ubicacion = idUbicacionSesion.Value;
-                    System.Diagnostics.Debug.WriteLine($"Asignando ubicación de sesión: {obj_ingreso.id_ubicacion}");
-                }
+                // Si es banco y eligió otra ubicación, su turno se moverá allá (después de guardar el ingreso)
+                bool moverTurno = HttpContext.Session.GetInt32("id_rol") == 2 &&
+                                  idUsuarioSesion.HasValue &&
+                                  sesionUsuario?.id_ubicacion != obj_ingreso.id_ubicacion;
+
 
                 // validar si el vehiculo ya esta en el parqueadero
                 if (ingresoActivo != null)
@@ -1031,12 +1128,9 @@ namespace CarsParkingService.Controllers
                 obj_ingreso.valor_propina = 0;
                 obj_ingreso.total_servicio = 0;
 
-                // Traemos la Ubicacion de la sesion
-                var UbicacionSesion = HttpContext.Session.GetInt32("id_ubicacion");
-
                 // Buscar ubicación usando el id asignado desde sesión
                 var ubicacion = _context.ubicacion_servicios
-                    .FirstOrDefault(u => u.id_ubicacion == UbicacionSesion);
+                    .FirstOrDefault(u => u.id_ubicacion == obj_ingreso.id_ubicacion);
 
                 if (ubicacion != null)
                 {
@@ -1093,6 +1187,13 @@ namespace CarsParkingService.Controllers
                     return View("Ingreso_Vehiculos", obj_ingreso);
                 }
 
+                // El ingreso ya quedó guardado: si el banco eligió otra ubicación, su turno pasa a esa ubicación
+                if (moverTurno)
+                {
+                    SesionTurno.AbrirTurno(_context, HttpContext, idUsuarioSesion.Value, 2, obj_ingreso.id_ubicacion, null);
+                }
+
+
                 System.Diagnostics.Debug.WriteLine($"=== ANTES DE GUARDAR ===");
                 System.Diagnostics.Debug.WriteLine($"Placa: {obj_ingreso.placa}");
                 System.Diagnostics.Debug.WriteLine($"id_parqueadero: {obj_ingreso.id_parqueadero}");
@@ -1117,7 +1218,7 @@ namespace CarsParkingService.Controllers
 
                     if (enviarWhatsapp)
                     {
-                        var resultadoWhatsapp = await EnviarWhatsAppIngreso(placa, nombreCliente, obj_ingreso.id_ingreso, telefonoCliente);
+                        var resultadoWhatsapp = await EnviarWhatsAppIngreso(placa, nombreCliente, obj_ingreso.id_ingreso, telefonoCliente, "ingreso");
 
                         if (resultadoWhatsapp.exito)
                         {
@@ -1206,17 +1307,26 @@ namespace CarsParkingService.Controllers
         }
 
         // Metodo para enviar mensaje al whatsapp para solicitar vehiculo y pagar servicio
-        private async Task<(bool exito, string mensaje)> EnviarWhatsAppIngreso(string placa, string nombre, int idIngreso, string telefono)
+        // tipo: "ingreso" o "reenvio" (queda en el registro de WhatsApp enviados)
+        private async Task<(bool exito, string mensaje)> EnviarWhatsAppIngreso(string placa, string nombre, int idIngreso, string telefono, string tipo)
         {
             if (string.IsNullOrWhiteSpace(telefono))
             {
+                RegistrarWhatsApp(idIngreso, placa, telefono, tipo, false, null, null, "Número vacío");
                 return (false, "No se pudo enviar WhatsApp: el número del cliente está vacío.");
             }
 
-            var token = "EAAN1Ou7KFoABOxsr5ohcvViIX6kLd90FRB4gmnNUNFmyKqlOIfLGWN7XCFuy96Gk6l940v8mxzSU9z9ldvZCYSDhQ9hSlZBzoQsUZBRNEkeHkKqsjIhu7FUQ5i7bSd5tE9fxBZBZC9ar1DgPjGSazftOQjXPanTJDqLhom7aVZBpvcDnrScZCkZAamOTj19Ib7aI4gZDZD";
-            var url = "https://graph.facebook.com/v22.0/625779610608874/messages";
+            // Datos de la API desde la configuración (el token va en secretos de usuario o variable de entorno)
+            var token = _configuration["WhatsApp:Token"];
+            var url = _configuration["WhatsApp:ApiUrl"];
 
-            string baseUrl = "http://143.198.163.1.sslip.io/Payment/Estado_Servicio?idIngreso=";
+            if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(url))
+            {
+                RegistrarWhatsApp(idIngreso, placa, telefono, tipo, false, null, null, "API de WhatsApp no configurada");
+                return (false, "No se pudo enviar WhatsApp: la API de WhatsApp no está configurada.");
+            }
+
+            string baseUrl = _configuration["WhatsApp:LinkEstadoServicio"] ?? string.Empty;
             string linkPago = $"{baseUrl}{idIngreso}";
 
             var payload = new
@@ -1226,7 +1336,7 @@ namespace CarsParkingService.Controllers
                 type = "template",
                 template = new
                 {
-                    name = "prueba_cars6",
+                    name = _configuration["WhatsApp:Plantilla"],
                     language = new { code = "en_US" },
                     components = new object[]
                     {
@@ -1243,7 +1353,7 @@ namespace CarsParkingService.Controllers
 
                             image = new
                             {
-                                link = "https://archivos.crmgrupoge.com:8085/logo_cars_parking.jpg"
+                                link = _configuration["WhatsApp:LogoUrl"]
                             }
                         }
                     }
@@ -1280,8 +1390,22 @@ namespace CarsParkingService.Controllers
                 var json = System.Text.Json.JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await client.PostAsync(url, content);
-                var result = await response.Content.ReadAsStringAsync();
+                HttpResponseMessage response;
+                string result;
+
+                try
+                {
+                    response = await client.PostAsync(url, content);
+                    result = await response.Content.ReadAsStringAsync();
+                }
+                catch (Exception ex)
+                {
+                    // Sin conexión con Meta: se registra y se responde sin romper la pantalla
+                    System.Diagnostics.Debug.WriteLine($"Error de conexión WhatsApp: {ex.Message}");
+                    RegistrarWhatsApp(idIngreso, placa, telefono, tipo, false, null, null, $"Sin conexión con Meta: {ex.Message}");
+                    return (false, "No se pudo enviar WhatsApp: no hubo conexión con el servicio.");
+                }
+
                 System.Diagnostics.Debug.WriteLine($"=== WHATSAPP STATUS: {response.StatusCode} ===");
                 System.Diagnostics.Debug.WriteLine($"=== WHATSAPP RESPONSE: {result} ===");
 
@@ -1290,14 +1414,115 @@ namespace CarsParkingService.Controllers
                     System.Diagnostics.Debug.WriteLine("? ERROR WHATSAPP:");
                     System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
                     System.Diagnostics.Debug.WriteLine(result);
+                    RegistrarWhatsApp(idIngreso, placa, telefono, tipo, false, (int)response.StatusCode, null, result);
                     return (false, $"No se pudo enviar WhatsApp. Estado: {(int)response.StatusCode} {response.StatusCode}.");
                 }
 
                 System.Diagnostics.Debug.WriteLine("? WhatsApp enviado correctamente");
                 System.Diagnostics.Debug.WriteLine(result);
                 System.Diagnostics.Debug.WriteLine($"WhatsApp response: {result}");
+
+                // Id del mensaje en Meta (messages[0].id), útil para soporte
+                string? idMensajeMeta = null;
+                try
+                {
+                    using var respuestaJson = System.Text.Json.JsonDocument.Parse(result);
+                    idMensajeMeta = respuestaJson.RootElement.GetProperty("messages")[0].GetProperty("id").GetString();
+                }
+                catch
+                {
+                    // Si Meta cambia el formato, el envío igual cuenta como exitoso
+                }
+
+                RegistrarWhatsApp(idIngreso, placa, telefono, tipo, true, (int)response.StatusCode, idMensajeMeta, null);
                 return (true, "WhatsApp enviado correctamente al cliente.");
             }
+        }
+
+        // Guarda el registro del envío; si falla, no afecta el envío ni el ingreso
+        private void RegistrarWhatsApp(int idIngreso, string placa, string? telefono, string tipo,
+                                       bool exito, int? codigoRespuesta, string? idMensajeMeta, string? error)
+        {
+            var registro = new whatsapp_enviados
+            {
+                id_ingreso = idIngreso,
+                placa = placa,
+                telefono = telefono,
+                tipo = tipo,
+                exito = exito,
+                codigo_respuesta = codigoRespuesta,
+                id_mensaje_meta = idMensajeMeta,
+                error = error?.Length > 500 ? error[..500] : error,
+                id_usuario = HttpContext.Session.GetInt32("id"),
+                fecha_envio = DateTime.Now
+            };
+
+            try
+            {
+                _context.whatsapp_enviados.Add(registro);
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                // Se suelta el registro para que no haga fallar el siguiente guardado
+                _context.Entry(registro).State = EntityState.Detached;
+                System.Diagnostics.Debug.WriteLine($"No se pudo registrar el WhatsApp: {ex.Message}");
+            }
+        }
+
+        // Registro de WhatsApp enviados (solo administrador)
+        [HttpGet]
+        public IActionResult WhatsAppEnviados(DateTime? desde, DateTime? hasta, string? placa, string? estado, string? tipo)
+        {
+            if (HttpContext.Session.GetInt32("id_rol") != 3)
+            {
+                return RedirectToAction("Index");
+            }
+
+            // Por defecto, solo lo de hoy
+            var fechaDesde = (desde ?? DateTime.Today).Date;
+            var fechaHasta = (hasta ?? DateTime.Today).Date.AddDays(1);
+
+            var consulta = _context.whatsapp_enviados
+                .AsNoTracking()
+                .Include(w => w.Usuario)
+                .Where(w => w.fecha_envio >= fechaDesde && w.fecha_envio < fechaHasta);
+
+            if (!string.IsNullOrWhiteSpace(placa))
+            {
+                var placaFiltro = placa.Trim().ToUpper();
+                consulta = consulta.Where(w => w.placa == placaFiltro);
+            }
+
+            if (estado == "exitoso") consulta = consulta.Where(w => w.exito);
+            if (estado == "fallido") consulta = consulta.Where(w => !w.exito);
+
+            if (tipo == "ingreso" || tipo == "reenvio")
+            {
+                consulta = consulta.Where(w => w.tipo == tipo);
+            }
+
+            // Resumen del período filtrado
+            int total = consulta.Count();
+            int exitosos = consulta.Count(w => w.exito);
+
+            ViewBag.Total = total;
+            ViewBag.Exitosos = exitosos;
+            ViewBag.Fallidos = total - exitosos;
+
+            // Máximo 500 filas para que la página no se vuelva pesada
+            var registros = consulta
+                .OrderByDescending(w => w.fecha_envio)
+                .Take(500)
+                .ToList();
+
+            ViewData["FiltroDesde"] = fechaDesde;
+            ViewData["FiltroHasta"] = fechaHasta.AddDays(-1);
+            ViewData["FiltroPlaca"] = placa;
+            ViewData["FiltroEstado"] = estado;
+            ViewData["FiltroTipo"] = tipo;
+
+            return View(registros);
         }
 
         [HttpPost]
@@ -1341,7 +1566,7 @@ namespace CarsParkingService.Controllers
 
             }
 
-            var (exito, mensaje) = await EnviarWhatsAppIngreso(ingreso.placa, ingreso.nombre_cliente, ingreso.id_ingreso, numeroEnvio);
+            var (exito, mensaje) = await EnviarWhatsAppIngreso(ingreso.placa, ingreso.nombre_cliente, ingreso.id_ingreso, numeroEnvio, "reenvio");
 
             if (exito)
             {
@@ -1372,7 +1597,7 @@ namespace CarsParkingService.Controllers
             ViewBag.Valets = _context.usuarios.Where(u => u.id_rol == 1 && u.estado == true).ToList();
             ViewBag.Bancos = _context.usuarios.Where(u => u.id_rol == 2 && u.estado == true).ToList();
             ViewBag.Parqueaderos = _context.parqueaderos.ToList();
-            ViewBag.UbicacionesS = _context.ubicacion_servicios.ToList();
+            ViewBag.UbicacionesS = _context.ubicacion_servicios.Where(u => u.estado == "activo").ToList();
 
             // Obtener el usuario de la sesion
             var nombres = HttpContext.Session.GetString("nombre");
@@ -1444,15 +1669,13 @@ namespace CarsParkingService.Controllers
                 }
 
                 // Generar código aleatorio de 6 dígitos
-                Random random = new Random();
-                string codigo = random.Next(100000, 999999).ToString();
+                string codigo = Random.Shared.Next(100000, 1000000).ToString();
 
-                // Almacenar código con expiración de 5 minutos
-                codigosSeguridad[id] = (codigo, DateTime.Now);
+                // El código solo vive en la BD y expira en 1 minuto
+                ingreso.codigo_seguridad = codigo;
+                ingreso.fecha_expiracion_codigo = DateTime.Now.AddMinutes(1);
 
                 // Actualizar método de pago
-                ingreso.codigo_seguridad = codigo;
-                ingreso.fecha_expiracion_codigo = DateTime.Now.AddMinutes(1); ;
                 ingreso.metodo_pago = metodoPago;
                 _context.SaveChanges();
 
@@ -1519,29 +1742,31 @@ namespace CarsParkingService.Controllers
         {
             try
             {
-                // Validar si el código existe
-                if (!codigosSeguridad.ContainsKey(id))
+                // Se valida contra la BD (sobrevive a reinicios del servidor)
+                var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id);
+
+                if (ingreso == null || string.IsNullOrEmpty(ingreso.codigo_seguridad))
                 {
                     return Json(new { success = false, message = "No hay código generado para este ingreso" });
                 }
 
-                var (codigoGenerado, fechaGeneracion) = codigosSeguridad[id];
-
                 // Validar que no haya expirado (1 minuto)
-                if ((DateTime.Now - fechaGeneracion).TotalMinutes > 1)
+                if (ingreso.fecha_expiracion_codigo == null || ingreso.fecha_expiracion_codigo < DateTime.Now)
                 {
-                    codigosSeguridad.Remove(id);
                     return Json(new { success = false, message = "Código expirado" });
                 }
 
                 // Validar que el código coincida
-                if (codigoGenerado != codigo)
+                if (ingreso.codigo_seguridad != codigo)
                 {
                     return Json(new { success = false, message = "Código inválido" });
                 }
 
-                // Código válido - remover de almacenamiento
-                codigosSeguridad.Remove(id);
+                // Código válido: se borra para que no se reutilice
+                ingreso.codigo_seguridad = null;
+                ingreso.fecha_expiracion_codigo = null;
+                _context.SaveChanges();
+
                 return Json(new { success = true, message = "Código validado correctamente" });
             }
             catch (Exception ex)
@@ -1580,9 +1805,9 @@ namespace CarsParkingService.Controllers
                     });
                 }
 
-                // Si el método de pago es transferencia,
+                // Si el método de pago es transferencia o QR,
                 // la foto es obligatoria.
-                if (ingreso.metodo_pago == "Transferencia")
+                if (ingreso.metodo_pago == "Transferencia" || ingreso.metodo_pago == "QR")
                 {
                     if (string.IsNullOrWhiteSpace(dto.FotoBase64))
                     {
@@ -1616,6 +1841,10 @@ namespace CarsParkingService.Controllers
                 ingreso.estado_servicio = dto.EstadoServicio;
                 ingreso.estado_pago = "pagado";
 
+                // El cobro terminó: el código ya no sirve (con o sin validación del cliente)
+                ingreso.codigo_seguridad = null;
+                ingreso.fecha_expiracion_codigo = null;
+
                 if (dto.EstadoServicio == "finalizado")
                 {
                     ingreso.fecha_salida = DateTime.Now;
@@ -1627,6 +1856,7 @@ namespace CarsParkingService.Controllers
                 {
                     1 => "valet",
                     2 => "banco",
+                    3 => "admin",
                     _ => "otro"
                 };
 
@@ -1976,10 +2206,10 @@ namespace CarsParkingService.Controllers
             System.Diagnostics.Debug.WriteLine($"idUsuarioSesion: {idUsuarioSesion}");
             System.Diagnostics.Debug.WriteLine($"rolUsuario: {rolUsuario}");
 
-            // Verificar que sea rol Key (4)
-            if (!idUsuarioSesion.HasValue || (rolUsuario != 4))
+            // Verificar que sea rol Key (4) o rol Admin (3)
+            if (!idUsuarioSesion.HasValue || (rolUsuario != 4 && rolUsuario != 3))
             {
-                System.Diagnostics.Debug.WriteLine($"Acceso denegado: no es rol Key");
+                System.Diagnostics.Debug.WriteLine($"Acceso denegado: no es rol Key o Admin");
                 return Unauthorized();
             }
 
@@ -2002,12 +2232,16 @@ namespace CarsParkingService.Controllers
                 return Unauthorized();
             }
 
+            // El admin usa el parqueadero que eligió en el modal; el Key, el de su sesión
+            var idParqueaderoSesion = HttpContext.Session.GetInt32("id_parqueadero_sesion");
+            var idParqueaderoFiltro = rolUsuario == 4 ? sesion.id_parqueadero : idParqueaderoSesion;
+
             // Obtener ingresos del parqueadero actual
             var ingresos = _context.ingresos
                 .Include(i => i.Valet)
                 .Include(i => i.Banco)
                 .Where(i =>
-                    i.id_parqueadero == sesion.id_parqueadero &&
+                    (i.id_parqueadero == idParqueaderoFiltro) &&
                     i.estado_servicio != "finalizado" &&
                     i.estado_servicio != "despachado" &&
                     i.estado_pago != "pagado")
@@ -2048,7 +2282,7 @@ namespace CarsParkingService.Controllers
             var idUsuarioSesion = HttpContext.Session.GetInt32("id");
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
 
-            if (!idUsuarioSesion.HasValue || rolUsuario != 1)
+            if (!idUsuarioSesion.HasValue || rolUsuario != 1 && rolUsuario != 3)
             {
                 return Forbid();
             }
@@ -2181,6 +2415,123 @@ namespace CarsParkingService.Controllers
             }
         }
 
+                // Datos para el panel de información del vehículo
+        [HttpGet]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult ObtenerInfoIngreso(int idIngreso)
+        {
+            var ingreso = _context.ingresos
+                .Include(i => i.Ubicacion)
+                .Include(i => i.Parqueadero)
+                .FirstOrDefault(i => i.id_ingreso == idIngreso);
+
+            if (ingreso == null)
+            {
+                return NotFound();
+            }
+
+            // Nombres del valet que lo ingresó, del que lo trae de vuelta y del banco
+            var idsValets = new int?[] { ingreso.id_valet, ingreso.valet_despacho, ingreso.id_banco }
+                .Where(id => id.HasValue)
+                .Select(id => id.Value)
+                .ToList();
+
+            var nombres = _context.usuarios
+                .Where(u => idsValets.Contains(u.id_usuario))
+                .ToDictionary(u => u.id_usuario, u => u.nombres + " " + u.apellidos);
+
+            return Json(new
+            {
+                placa = ingreso.placa,
+                fechaIngreso = ingreso.fecha_ingreso?.ToString("dd/MM/yyyy HH:mm"),
+                fechaSalida = ingreso.fecha_salida?.ToString("dd/MM/yyyy HH:mm"),
+                valetIngreso = ingreso.id_valet.HasValue ? nombres.GetValueOrDefault(ingreso.id_valet.Value) : null,
+                valetDespacho = ingreso.valet_despacho.HasValue ? nombres.GetValueOrDefault(ingreso.valet_despacho.Value) : null,
+                banco = nombres.GetValueOrDefault(ingreso.id_banco),
+                lugarEntrega = ingreso.lugar_entrega ?? ingreso.Ubicacion?.nombre_ubicacion,
+                lugarIngreso = ingreso.Ubicacion?.nombre_ubicacion,
+                parqueadero = ingreso.Parqueadero?.nombre_parqueadero,
+                objetosValor = ingreso.notas,
+                estadoPago = ingreso.estado_pago,
+                estadoServicio = ingreso.estado_servicio,
+                nombreCliente = ingreso.nombre_cliente,
+                telefono = ingreso.telefono,
+                firma = ingreso.firma != null
+                    ? "data:image/png;base64," + Convert.ToBase64String(ingreso.firma)
+                    : null,
+                // Solo el enlace: la imagen se descarga aparte para no hacer pesada la respuesta
+                fotoTransferencia = ingreso.foto_transferencia != null
+                    ? Url.Action(nameof(FotoTransferenciaIngreso), new { idIngreso = ingreso.id_ingreso })
+                    : null,
+                puedeSolicitar = PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio, ingreso.estado_pago)
+            });
+        }
+
+        // Devuelve la foto del comprobante de pago (transferencia / QR)
+        [HttpGet]
+        public IActionResult FotoTransferenciaIngreso(int idIngreso)
+        {
+            var foto = _context.ingresos
+                .AsNoTracking()
+                .Where(i => i.id_ingreso == idIngreso)
+                .Select(i => i.foto_transferencia)
+                .FirstOrDefault();
+
+            if (foto == null || foto.Length == 0)
+            {
+                return NotFound();
+            }
+
+            return File(foto, "image/jpeg");
+        }
+
+        // Valet, banco o admin pueden solicitar el vehículo solo si está activo o parqueado
+        // y todavía no está pagado (un vehículo pagado nunca se vuelve a solicitar)
+        private static bool PuedeSolicitarOperador(int? rol, string? estadoServicio, string? estadoPago)
+        {
+            var estado = estadoServicio?.Trim().ToLower();
+            var pago = estadoPago?.Trim().ToLower();
+
+            return (rol == 1 || rol == 2 || rol == 3) &&
+                   (estado == "activo" || estado == "parqueado") &&
+                   pago != "pagado";
+        }
+
+        // El operador solicita el vehículo cuando el cliente llama y no lo pidió desde su enlace
+        [HttpPost]
+        public IActionResult SolicitarVehiculoOperador(int id_ingreso, string? lugar_entrega)
+        {
+            var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            if (ingreso == null)
+            {
+                TempData["Error"] = "No se encontró el ingreso.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            if (!PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio, ingreso.estado_pago))
+            {
+                TempData["Error"] = "El vehículo no se puede solicitar en su estado actual o no tienes permiso.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            if (string.IsNullOrWhiteSpace(lugar_entrega))
+            {
+                TempData["Error"] = "Selecciona el lugar de entrega.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            // Mismos datos que guarda la solicitud del cliente
+            ingreso.estado_servicio = "solicitado";
+            ingreso.fecha_fin_servicio = DateTime.Now.AddMinutes(20);
+            ingreso.lugar_entrega = lugar_entrega.Trim();
+
+            _context.SaveChanges();
+
+            TempData["Exito"] = $"Vehículo {ingreso.placa} solicitado. Entrega en {ingreso.lugar_entrega}.";
+            return RedirectToAction("Tabla_Vehiculos");
+        }
+
 
         [HttpGet]
         public IActionResult ObtenerImagenesIngreso(int idIngreso)
@@ -2242,11 +2593,18 @@ namespace CarsParkingService.Controllers
                     i.dato_imagen[3] == 0xA3
                 )
                 .OrderBy(i => i.id_imagen)
+                // Solo se envía la URL: el video se descarga aparte y por partes cuando se reproduce
+                .Select(i => new
+                {
+                    i.id_imagen,
+                    i.id_ingreso
+                })
+                .ToList()
                 .Select(i => new
                 {
                     i.id_imagen,
                     i.id_ingreso,
-                    src = $"data:video/webm;base64,{Convert.ToBase64String(i.dato_imagen)}"
+                    src = Url.Action(nameof(VideoIngreso), new { idImagen = i.id_imagen })
                 })
                 .ToList();
 
@@ -2264,6 +2622,24 @@ namespace CarsParkingService.Controllers
                 total = videos.Count,
                 videos
             });
+        }
+
+        // Devuelve el archivo del video; con rangos el navegador solo descarga lo que reproduce
+        [HttpGet]
+        public IActionResult VideoIngreso(int idImagen)
+        {
+            var dato = _context.imagenes
+                .AsNoTracking()
+                .Where(i => i.id_imagen == idImagen)
+                .Select(i => i.dato_imagen)
+                .FirstOrDefault();
+
+            if (dato == null || dato.Length == 0)
+            {
+                return NotFound();
+            }
+
+            return File(dato, "video/webm", enableRangeProcessing: true);
         }
 
         // Metodo para guardar la ubicacion del banco

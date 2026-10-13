@@ -640,3 +640,26 @@ tbody tr {
         stroke-dashoffset: -125px;
     }
 }
+
+/* ===== Desglose por ubicación ===== */
+.ubicacion-grupo {
+    border: 1px solid #eee;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.ubicacion-grupo summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #fafafa;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.ubicacion-grupo[open] summary {
+    border-bottom: 1px solid #eee;
+}

@@ -127,6 +127,13 @@
             Keys
             <span class="adm-tab-badge">@Model.Keys.Count</span>
         </button>
+        <button class="adm-tab"
+                onclick="admTab('liquidaciones', this)"
+                type="button">
+            <i class="fa-solid fa-sack-dollar"></i>
+            Liquidaciones
+            <span class="adm-tab-badge">@Model.Liquidaciones.Count</span>
+        </button>
     </div>
 
     @* ══════════════════════════════════════
@@ -374,6 +381,102 @@
             </div>
         </div>
     </div>
+
+    @* ══════════════════════════════════════
+       PANEL LIQUIDACIONES (desde tbl_liquidacion, no depende de la sesión abierta)
+    ══════════════════════════════════════ *@
+    <div class="adm-panel" id="adm-liquidaciones">
+
+        @* Resumen del día *@
+        <div class="adm-liq-resumen">
+            <div class="adm-liq-item adm-liq-total">
+                <span class="adm-liq-num">$@Model.Liquidaciones.Sum(l => l.TotalLiquidado).ToString("N0")</span>
+                <span class="adm-liq-lbl">Total del día</span>
+            </div>
+            <div class="adm-liq-item">
+                <span class="adm-liq-num">$@Model.Liquidaciones.Sum(l => l.TotalEfectivo).ToString("N0")</span>
+                <span class="adm-liq-lbl">Efectivo</span>
+            </div>
+            <div class="adm-liq-item">
+                <span class="adm-liq-num">$@Model.Liquidaciones.Sum(l => l.TotalTransferencias).ToString("N0")</span>
+                <span class="adm-liq-lbl">Transferencias</span>
+            </div>
+            <div class="adm-liq-item">
+                <span class="adm-liq-num">@Model.Liquidaciones.Count</span>
+                <span class="adm-liq-lbl">Liquidaciones</span>
+            </div>
+        </div>
+
+        <div class="adm-table-wrap">
+            <div class="adm-table-scroll">
+                <table class="adm-table">
+                    <thead>
+                        <tr>
+                            <th>Hora</th>
+                            <th>Liquidó</th>
+                            <th>
+                                <i class="fa-solid fa-car-side"></i>
+                                Vehículos
+                            </th>
+                            <th>Efectivo</th>
+                            <th>Transferencias</th>
+                            <th>Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Liquidaciones.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="adm-empty">
+                                    <i class="fa-solid fa-sack-dollar"></i>
+                                    Sin liquidaciones en esta fecha
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var l in Model.Liquidaciones)
+                            {
+                                <tr>
+                                    <td>@(l.Fecha?.ToString("HH:mm") ?? "—")</td>
+                                    <td>@l.Usuario</td>
+                                    <td>
+                                        <span class="adm-num-pill adm-pill-ubicacion">
+                                            <i class="fa-solid fa-car-side"></i>
+                                            @l.TotalVehiculos
+                                        </span>
+                                    </td>
+                                    <td>$@l.TotalEfectivo.ToString("N0")</td>
+                                    <td>$@l.TotalTransferencias.ToString("N0")</td>
+                                    <td><strong>$@l.TotalLiquidado.ToString("N0")</strong></td>
+                                    <td>
+                                        <button type="button" class="adm-btn-detalle" data-no-spinner="true"
+                                                data-id="@l.IdLiquidacion"
+                                                data-usuario="@l.Usuario"
+                                                data-fecha="@(l.Fecha?.ToString("dd/MM HH:mm"))"
+                                                onclick="verDetalleLiquidacion(this)">
+                                            <i class="fa-solid fa-list"></i> Ver detalle
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Ventana con los vehículos de una liquidación ── *@
+<div class="Editar-Ingreso" id="modal-detalle-liquidacion" style="display:none;">
+    <div class="modal-overlay" onclick="cerrarDetalleLiquidacion()"></div>
+    <div class="Card-Ingreso adm-liq-modal">
+        <span class="close-btn" onclick="cerrarDetalleLiquidacion()">&times;</span>
+        <h3 id="detalle-liquidacion-titulo">Detalle de la liquidación</h3>
+        <div id="detalle-liquidacion-contenido"></div>
+    </div>
 </div>
 
 @* ── Script de tabs ── *@
@@ -384,6 +487,78 @@
             document.querySelectorAll('.adm-tab').forEach(b => b.classList.remove('active'));
             document.getElementById('adm-' + id).classList.add('active');
             btn.classList.add('active');
+        }
+
+        // ── Detalle de una liquidación (vehículos que la forman) ──
+        const formatoPesos = v => '$' + Number(v || 0).toLocaleString('es-CO', { maximumFractionDigits: 0 });
+
+        // Texto del servidor escrito como texto, no como HTML
+        const escaparTexto = t => String(t ?? '—')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        async function verDetalleLiquidacion(btn) {
+            const modal = document.getElementById('modal-detalle-liquidacion');
+            const titulo = document.getElementById('detalle-liquidacion-titulo');
+            const contenido = document.getElementById('detalle-liquidacion-contenido');
+
+            titulo.textContent = `Liquidación de ${btn.dataset.usuario} · ${btn.dataset.fecha}`;
+            contenido.innerHTML = '<p class="adm-text-muted">Cargando vehículos...</p>';
+            modal.style.display = 'flex';
+
+            try {
+                const respuesta = await fetch(`/Home/DetalleLiquidacion?id=${btn.dataset.id}`, { cache: 'no-store' });
+                const data = await respuesta.json();
+
+                if (!data.success) {
+                    contenido.innerHTML = `<p class="adm-text-muted">${escaparTexto(data.message)}</p>`;
+                    return;
+                }
+
+                if (data.vehiculos.length === 0) {
+                    contenido.innerHTML = '<p class="adm-text-muted">Esta liquidación no tiene vehículos asociados.</p>';
+                    return;
+                }
+
+                const filas = data.vehiculos.map(v => `
+                    <tr>
+                        <td><strong>${escaparTexto(v.placa)}</strong></td>
+                        <td>${escaparTexto(v.entrega)}</td>
+                        <td>${escaparTexto(v.cobro)} <span class="adm-text-muted">(${escaparTexto(v.rol)})</span></td>
+                        <td>${escaparTexto(v.metodo)}</td>
+                        <td>${escaparTexto(v.ubicacion)}</td>
+                        <td>${formatoPesos(v.valor)}</td>
+                    </tr>`).join('');
+
+                const total = data.vehiculos.reduce((suma, v) => suma + Number(v.valor || 0), 0);
+
+                contenido.innerHTML = `
+                    <div class="adm-table-scroll">
+                        <table class="adm-table">
+                            <thead>
+                                <tr>
+                                    <th>Placa</th>
+                                    <th>Entrega</th>
+                                    <th>Cobró</th>
+                                    <th>Método</th>
+                                    <th>Ubicación</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>${filas}</tbody>
+                        </table>
+                    </div>
+                    <p class="adm-liq-modal-total">
+                        ${data.vehiculos.length} vehículos · Total <strong>${formatoPesos(total)}</strong>
+                    </p>`;
+            }
+            catch (error) {
+                console.error('[LIQUIDACION] Error cargando el detalle:', error);
+                contenido.innerHTML = '<p class="adm-text-muted">No se pudo cargar el detalle de la liquidación.</p>';
+            }
+        }
+
+        function cerrarDetalleLiquidacion() {
+            document.getElementById('modal-detalle-liquidacion').style.display = 'none';
         }
 
 

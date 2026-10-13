@@ -9,6 +9,7 @@ using CarsParkingService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop.Infrastructure;
 using AspNetCoreGeneratedDocument;
+using CarsParkingService.Helpers;
 
 namespace CarsParkingService.Controllers
 {
@@ -354,82 +355,46 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("Login");
             }
 
-            // Actualizamos el rol actual del usuario
-            user.id_rol = id_rol;
+            // Validamos que no lleguen solicitudes de cambio de rol no permitidas
 
-            // ==============================
-            // CREAR REGISTRO DE SESIÓN
-            // ==============================
-
-            // Buscar sesiones abiertas del usuario
-            var sesionesAbiertas = _context.sesiones
-                .Where(s =>
-                    s.id_usuario == user.id_usuario &&
-                    s.fecha_fin == null)
-                .ToList();
-
-            // Cerrarlas
-            foreach (var s in sesionesAbiertas)
+            if (user.id_rol == 3 && id_rol != 3)
             {
-                s.fecha_fin = DateTime.Now;
+                
+                return RedirectToAction("Login");
+
             }
 
-            var sesion = new sesiones
+            if (user.id_rol != 3 && id_rol != 1 && id_rol != 4 && id_rol != 2)
             {
-                id_usuario = user.id_usuario,
-                id_rol = id_rol,
+                
+                return RedirectToAction("Login");
 
-                // Si es Key guardamos parqueadero
-                id_parqueadero = id_rol == 4
-                    ? id_parqueadero
-                    : null,
+            }
 
-                // Si es Banco guardamos ubicación
-                id_ubicacion = id_rol == 2
-                    ? id_ubicacion
-                    : null,
+            if (id_rol == 2 && (!id_ubicacion.HasValue || id_ubicacion.Value <= 0))
+            {
+                
+                return RedirectToAction("Login");
 
-                fecha_inicio = DateTime.Now,
+            }
 
-                // Aún no termina turno
-                fecha_fin = null
-            };
+            if (id_rol == 4 && (!id_parqueadero.HasValue || id_parqueadero.Value <= 0))
+            {
+                
+                return RedirectToAction("Login");
 
-            // Agregamos a la BD
-            _context.sesiones.Add(sesion);
+            }
 
-            // Guardamos TODO
-            _context.SaveChanges();
+            // Cierra el turno anterior y abre el nuevo (tbl_sesiones + sesión web)
+            SesionTurno.AbrirTurno(_context, HttpContext, user.id_usuario, id_rol, id_ubicacion, id_parqueadero);
 
-            // ==============================
-            // SESIÓN DEL SISTEMA
-            // ==============================
-
+            // Datos del usuario en la sesión web
             HttpContext.Session.SetInt32("id", user.id_usuario);
-            HttpContext.Session.SetInt32("id_rol", id_rol);
-
             HttpContext.Session.SetString("dni", user.dni ?? "");
             HttpContext.Session.SetString("nombre", user.nombres ?? "");
             HttpContext.Session.SetString("apellido", user.apellidos ?? "");
             HttpContext.Session.SetString("correo", user.correo ?? "");
 
-            // Guardar lugar de trabajo solo si existen valores
-
-            if (id_parqueadero.HasValue)
-            {
-                HttpContext.Session.SetInt32(
-                    "id_parqueadero",
-                    id_parqueadero.Value
-                );
-            }
-
-            if (id_ubicacion.HasValue)
-            {
-                HttpContext.Session.SetInt32(
-                    "id_ubicacion",
-                    id_ubicacion.Value
-                );
-            }
 
             // Imagen
             if (!string.IsNullOrEmpty(user.imagen_usuario))
@@ -462,6 +427,13 @@ namespace CarsParkingService.Controllers
             if (userId == null)
             {
                 return RedirectToAction("Login");
+            }
+
+            // No deja salir si tienen cobros sin liquidar
+            if (LiquidacionReglas.PorLiquidar(_context, userId.Value).Any())
+            {
+                TempData["PendienteLiquidar"] = true;
+                return RedirectToAction("Index", "Home");
             }
 
             // Buscar sesión activa del usuario

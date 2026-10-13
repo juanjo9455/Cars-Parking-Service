@@ -618,3 +618,89 @@
         stroke-dashoffset: -125px;
     }
 }
+
+/* ══════════════════════════════════════
+   PESTAÑA LIQUIDACIONES
+══════════════════════════════════════ */
+
+/* Resumen del día: total, efectivo, transferencias y cantidad */
+.adm-liq-resumen {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.adm-liq-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 14px;
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 12px;
+}
+
+.adm-liq-num {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1f2937;
+}
+
+.adm-liq-lbl {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+/* El total del día resaltado */
+.adm-liq-item.adm-liq-total {
+    background: #eafaf1;
+    border-color: #a9dfbf;
+}
+
+.adm-liq-item.adm-liq-total .adm-liq-num {
+    color: #1e5631;
+}
+
+/* Botón "Ver detalle" de cada liquidación */
+.adm-btn-detalle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid #c62828;
+    border-radius: 8px;
+    color: #c62828;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.adm-btn-detalle:hover {
+    background: #fdecea;
+}
+
+/* Ventana del detalle */
+.adm-liq-modal {
+    max-width: 900px;
+}
+
+.adm-liq-modal-total {
+    margin: 12px 0 0;
+    text-align: right;
+    font-size: 14px;
+    color: #374151;
+}
+
+/* En celular, el resumen en dos columnas */
+@media (max-width: 600px) {
+    .adm-liq-resumen {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

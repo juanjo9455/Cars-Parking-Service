@@ -9,6 +9,7 @@ using CarsParkingService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop.Infrastructure;
 using AspNetCoreGeneratedDocument;
+using CarsParkingService.Helpers;
 
 namespace CarsParkingService.Controllers
 {
@@ -41,34 +42,28 @@ namespace CarsParkingService.Controllers
         {
 
             var idUsuario = HttpContext.Session.GetInt32("id");
-            var idRol = HttpContext.Session.GetInt32("id_rol");
 
             // buscamos el total de vehiculos, efectivo y transferencia para este banco
 
-            if (!idUsuario.HasValue || idRol != 2)
+            if (!idUsuario.HasValue || !LiquidacionReglas.PorLiquidar(_context, idUsuario.Value).Any())
             {
-                return Forbid();
+                return RedirectToAction("Index", "Home");
             }
 
-            var ingresos = _context.ingresos
-                .Where(i =>
-                       i.id_banco == idUsuario.Value &&
-                       i.estado_liquidacion == false &&
-                       i.estado_pago == "pagado" &&
-                       i.fecha_entrega != null)
-                    .ToList();
+            var ingresos = LiquidacionReglas.PorLiquidar(_context, idUsuario.Value)
+                .Include(i => i.Ubicacion).ToList();
 
             var totalVehiculos = ingresos.Count;
 
             var totalEfectivo = ingresos
                 .Where(i =>
                        i.metodo_pago == "Efectivo")
-                .Sum(i => i.valor_servicio);
+                .Sum(i => i.valor_servicio ?? 0);
 
             var totalTransferencia = ingresos
                 .Where(i =>
-                       i.metodo_pago == "Transferencia")
-                .Sum(i => i.valor_servicio);
+                       i.metodo_pago != "Efectivo")
+                .Sum(i => i.valor_servicio ?? 0);
 
             var totalPropinas = ingresos
                 .Sum(i => i.valor_propina ?? 0);
@@ -77,140 +72,136 @@ namespace CarsParkingService.Controllers
                 totalEfectivo +
                 totalTransferencia;
 
+            var idsCobro = ingresos.Select(i => i.usuario_cobro).Distinct().ToList();
+
+            var nombres = _context.usuarios
+                .Where(u => idsCobro.Contains(u.id_usuario))
+                .ToDictionary(u => u.id_usuario, u => u.nombres + " " + u.apellidos);  
+
             ViewBag.totalVehiculos = totalVehiculos;
             ViewBag.totalEfectivo = totalEfectivo;
             ViewBag.TotalTransferencia = totalTransferencia;
             ViewBag.totalGeneral = totalGeneral;
 
-            // Buscamos lo que los valet le deben al banco
-
-            var idUbicacion = _context.sesiones
-                .Where(s => s.id_usuario == idUsuario.Value && s.fecha_fin == null)
-                .Select(s => s.id_ubicacion)
-                .FirstOrDefault();
-
-            ViewBag.UbicacionBanco = _context.ubicacion_servicios
-                .Where(u => u.id_ubicacion == idUbicacion)
-                .Select(u => u.nombre_ubicacion)
-                .FirstOrDefault();
-
-            Console.WriteLine("\n========== DEBUG UBICACION ==========");
-            Console.WriteLine($"ID Usuario: {idUsuario}");
-            Console.WriteLine($"ID Rol: {idRol}");
-            Console.WriteLine($"ID Ubicacion: {idUbicacion}");
-            Console.WriteLine("=====================================\n");
-
-            var resumenValets = _context.ingresos
-                .Where(i =>
-                    i.id_ubicacion == idUbicacion &&
-                    i.estado_liquidacion == false &&
-                    i.id_banco == idUsuario &&
-                    i.estado_pago == "pagado" &&
-                    i.metodo_pago == "Efectivo" &&
-                    i.rol_cobrador == "valet"
-                )
-                .Join(
-                    _context.usuarios,
-                    ingreso => ingreso.usuario_cobro,
-                    usuario => usuario.id_usuario,
-                    (ingreso, usuario) => new
-                    {
-                        usuario.id_usuario,
-                        usuario.nombres,
-                        usuario.apellidos,
-                        ingreso.valor_servicio
-                    }
-                )
-                .GroupBy(x => new { x.id_usuario, x.nombres, x.apellidos })
+            // Desglose por ubicacion: subtotal y vehiculos de cada una
+            
+            var porUbicacion = ingresos
+                .GroupBy(i => i.Ubicacion?.nombre_ubicacion ?? "Sin Ubicacion")
                 .Select(g => new
                 {
-                    IdUsuario = g.Key.id_usuario,
-                    NombreCompleto = g.Key.nombres + " " + g.Key.apellidos,
+                    Ubicacion = g.Key,
                     Vehiculos = g.Count(),
-                    TotalEfectivo = g.Sum(x => x.valor_servicio)
+                    Total = g.Sum(i => i.valor_servicio ?? 0),
+                    Detalle = g
+                        .OrderBy(i => i.fecha_entrega)
+                        .Select(i => new
+                        {
+                            Placa = i.placa,
+                            Hora = i.fecha_entrega,
+                            Cobro = nombres.GetValueOrDefault(i.usuario_cobro ?? 0, "Desconocido")
+                                    + " (" + i.rol_cobrador +")",
+                            Metodo = i.metodo_pago,
+                            Valor = i.valor_servicio ?? 0
+                        })
+                        .ToList()
                 })
                 .ToList();
 
-            var totalValetsEfectivo = resumenValets.Sum(v => v.TotalEfectivo);
+            ViewBag.porUbicacion = porUbicacion;
+            
+            // Efectivo que cada valet debe entregar al banco
+                       var resumenValets = ingresos
+                .Where(i => i.rol_cobrador == "valet" && i.metodo_pago == "Efectivo")
+                .GroupBy(i => i.usuario_cobro ?? 0)
+                .Select(g => new
+                {
+                    IdUsuario = g.Key,
+                    NombreCompleto = nombres.GetValueOrDefault(g.Key, "Desconocido"),
+                    Vehiculos = g.Count(),
+                    TotalEfectivo = g.Sum(i => i.valor_servicio ?? 0)
+                })
+                .ToList();
 
-            ViewBag.totalValetsEfectivo = totalValetsEfectivo;
-            ViewBag.valets = resumenValets;
-
+            ViewBag.totalValetsEfectivo = resumenValets.Sum(v => v.TotalEfectivo);
             ViewBag.valets = resumenValets;
 
             return View(ingresos);
         }
 
         [HttpPost]
-        public async Task<IActionResult> GuardarLiquidacion([FromBody] LiquidacionDTO liquidacion) {
+        public async Task<IActionResult> GuardarLiquidacion()
+        {
+            // El banco sale de la sesión, no de lo que mande el navegador
+            var idUsuario = HttpContext.Session.GetInt32("id");
+
+            if (!idUsuario.HasValue)
+            {
+                return Json(new { success = false, mensaje = "Sesión expirada, vuelve a iniciar sesión." });
+            }
+
+            // Mismos ingresos que muestra la pantalla de liquidación
+            var ingresos = await LiquidacionReglas.PorLiquidar(_context, idUsuario.Value).ToListAsync();
+
+            if (ingresos.Count == 0)
+            {
+                return Json(new { success = false, mensaje = "No hay servicios pendientes por liquidar." });
+            }
+
+            // Totales calculados en el servidor
+            var totalEfectivo = ingresos
+                .Where(i => i.metodo_pago == "Efectivo")
+                .Sum(i => i.valor_servicio ?? 0);
+
+            var totalTransferencia = ingresos
+                .Where(i => i.metodo_pago != "Efectivo")
+                .Sum(i => i.valor_servicio ?? 0);
+
+            // O se guarda todo, o no se guarda nada
+            using var transaccion = await _context.Database.BeginTransactionAsync();
 
             try
             {
                 var nuevaLiquidacion = new liquidacion
                 {
-
-                    id_usuario = liquidacion.IdUsuario,
-                    total_vehiculos = liquidacion.TotalVehiculos,
-                    total_efectivo = liquidacion.TotalEfectivo,
-                    total_transferencias = liquidacion.TotalTransferencia,
-                    total_liquidado = liquidacion.TotalDinero,
+                    id_usuario = idUsuario.Value,
+                    total_vehiculos = ingresos.Count,
+                    total_efectivo = totalEfectivo,
+                    total_transferencias = totalTransferencia,
+                    total_liquidado = totalEfectivo + totalTransferencia,
                     fecha = DateTime.Now
-
                 };
 
                 _context.liquidaciones.Add(nuevaLiquidacion);
+                await _context.SaveChangesAsync();   // aquí la BD le asigna su id_liquidacion
+
+                // Marcamos exactamente los ingresos que se sumaron
+                foreach (var ingreso in ingresos)
+                {
+                    ingreso.estado_liquidacion = true;
+                    ingreso.id_liquidacion = nuevaLiquidacion.id_liquidacion;
+                }
+
+                // Estado Turnos usa esta marca para mostrar el turno como liquidado
+                var sesionAbierta = await _context.sesiones
+                    .FirstOrDefaultAsync(s => s.id_usuario == idUsuario.Value && s.fecha_fin == null);
+
+                if (sesionAbierta != null)
+                {
+                    sesionAbierta.estado_liquidacion = true;
+                }
 
                 await _context.SaveChangesAsync();
+                await transaccion.CommitAsync();
 
-                // Buscamos los ingresos a liquidar 
-
-                await _context.ingresos
-                    .Where(i =>
-                           i.id_banco == liquidacion.IdUsuario &&
-                           i.estado_liquidacion == false &&
-                           i.estado_pago == "pagado" &&
-                           i.fecha_entrega != null)
-                    .ExecuteUpdateAsync(setters => setters
-                        .SetProperty(i => i.estado_liquidacion, true)
-                    );
-
-                await _context.sesiones
-                    .Where(s => s.id_usuario == liquidacion.IdUsuario && s.estado_liquidacion == false && s.fecha_fin == null)
-                    .ExecuteUpdateAsync(setters => setters
-                        .SetProperty(s => s.estado_liquidacion, true)
-                    );
-
-                var ingresosActualizados = await _context.ingresos
-                .Where(i =>
-                       i.id_banco == liquidacion.IdUsuario &&
-                       i.estado_liquidacion == false &&
-                       i.estado_pago == "pagado" &&
-                       i.fecha_entrega != null)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(i => i.estado_liquidacion, true)
-                );
-
-                Console.WriteLine($"Ingresos liquidados: {ingresosActualizados}");
-
-                return Json(new
-                {
-
-                    success = true,
-                    mensaje = "Liquidación guardada correctamente"
-
-                });
-
+                return Json(new { success = true, mensaje = "Liquidación guardada correctamente" });
             }
             catch (Exception ex)
             {
-                return Json(new
-                {
-                    success = false,
-                    mensaje = ex.Message
-                });
+                await transaccion.RollbackAsync();
+                return Json(new { success = false, mensaje = ex.Message });
             }
-
         }
+
 
     }
 }

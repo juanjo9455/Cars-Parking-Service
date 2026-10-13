@@ -14,5 +14,8 @@ namespace CarsParkingService.ViewModels
 
         public List<KeyActivoVM> Keys { get; set; } = new();
 
+        // Liquidaciones hechas en la fecha consultada (no dependen de la sesión abierta)
+        public List<LiquidacionDiaVM> Liquidaciones { get; set; } = new();
+
     }
 }

@@ -159,7 +159,7 @@
             <p>Registro de entradas y salidas del estacionamiento</p>
         </div>
 
-        @if(idRol == 2){
+        @if(idRol == 2 || idRol == 3){
         
             <a asp-controller="Home" asp-action="Ingreso_Vehiculos" class="btn btn-nuevo">+ Nuevo Ingreso</a>
          
@@ -275,9 +275,6 @@
             <thead>
                 <tr>
                     <th>Placa</th>
-                    <th>Lugar</th>
-                    <th>Hora Ingreso</th>
-                    <th>Hora Salida</th>
                     <th>Estado Pago</th>
                     <th>Estado Servicio</th>
                     <th></th>
@@ -297,17 +294,32 @@
 
                 <tr class="@claseAlerta">
 
-                    @if (ingresos.estado_servicio == "esperando valet" && idRol == 1)
-                    {
+                    <td data-label="Placa">@ingresos.placa</td>
+                    @* Chips de estado: mismos colores que tenía el panel de información *@
+                    <td data-label="Estado Pago">
+                        @if (ingresos.estado_pago == "pagado")
+                        {
+                            <span class="info-chip chip-ok">Pagado</span>
+                        }
+                        else if (ingresos.estado_pago == "solicitado")
+                        {
+                            <span class="info-chip chip-pendiente">Solicitado</span>
+                        }
+                        else
+                        {
+                            <span class="info-chip chip-pendiente">Pendiente</span>
+                        }
+                    </td>
 
-                        <td data-label="Placa">@ingresos.placa</td>
-                        <td data-label="Lugar">@ingresos.Ubicacion?.nombre_ubicacion</td>
-                        <td data-label="Hora Ingreso">@ingresos.fecha_ingreso</td>
-                        <td data-label="Hora Salida"></td>
-                        <td data-label="Estado Pago">
-                            <span class="status-badge status"></span>
-                        </td>
-                        <td data-label="Acción" class="cell-action">
+                    <td data-label="Estado Servicio">
+                        <span class="info-chip">@(string.IsNullOrWhiteSpace(ingresos.estado_servicio) ? "—" : ingresos.estado_servicio)</span>
+                    </td>
+
+                    <td data-label="Acción" class="cell-action">
+
+                        @* 0. Tomar vehículo que espera valet (Valet y Admin) *@
+                        @if (ingresos.estado_servicio == "esperando valet" && (idRol == 1 || idRol == 3))
+                        {
                             <button class="btn-tomar-vehiculo"
                                     type="button"
                                     onclick="abrirModalTomarVehiculo(this)"
@@ -320,46 +332,11 @@
                                 <i class="fa-solid fa-key"></i>
                                 Tomar vehículo
                             </button>
-                        </td>
-
-                    }
-                    else
-                    {
-                            
-                        <td data-label="Placa">@ingresos.placa</td>
-                        <td data-label="Lugar">@ingresos.Ubicacion?.nombre_ubicacion</td>
-                        <td data-label="Hora Ingreso">@ingresos.fecha_ingreso</td>
-                        <td data-label="Hora Salida">@ingresos.fecha_salida</td>
-
-                            
-                        @if (ingresos.estado_pago == "pendiente")
-                        {
-                            <td data-label="Estado Pago">
-                                <span class="status-badge status-pendiente">Pendiente</span>
-                            </td>
-                        }
-                        else if (ingresos.estado_pago == "pagado")
-                        {
-                            <td data-label="Estado Pago">
-                                <span class="status-badge status-pagado">Pagado</span>
-                            </td>
-                        }
-                        else if (ingresos.estado_pago == "solicitado")
-                        {
-                            <td data-label="Estado Pago">
-                                <span class="status-badge status-pendiente">Solicitado</span>
-                            </td>
                         }
 
-                        <td data-label="Estado Servicio">@ingresos.estado_servicio</td>
-    
-
-                    }      
-                        
-                    <td data-label="Acción" class="cell-action">
 
                         @* 1. Tomar vehículo (Solo para Valet / Rol 1) *@
-                        @if (ingresos.id_valet is null && idRol == 1)
+                        @if (ingresos.id_valet is null && (idRol == 1 || idRol == 3) && ingresos.estado_servicio != "esperando valet")
                         {
                             <i class="fa-solid fa-car-side btn-action"
                                 onclick="abrirModalTomarVehiculo(this)"
@@ -374,7 +351,7 @@
                         @if (ingresos.id_valet == idUsuarioSesion &&
                             !ingresos.foto_estacionamiento &&
                             ingresos.estado_servicio != "solicitado" &&
-                            idRol == 1 && ingresos.estado_servicio != "despachado")
+                            (idRol == 1 || idRol == 3) && ingresos.estado_servicio != "despachado")
                         {
                             <i class="fa-solid fa-camera btn-action"
                                 onclick="abrirModalFoto(this)"
@@ -385,14 +362,13 @@
                             </i>
                         }
 
-                        @* 3. Opciones de Pago (Para todos excepto el Admin) *@
-                        @if (idRol != 3)
-                        {
+                        @* 3. Opciones de Pago para todos *@
+
                             @if (idUsuarioSesion == ingresos.id_valet)
                             {
                                 @if (ingresos.id_valet != null && ingresos.foto_estacionamiento && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado" || ingresos.estado_servicio == "despachado")
                                 {
-                                    <i class="fa-solid fa-credit-card btn-action"
+                                    <i class="fa-solid fa-credit-card btn-action btn-pago-ingreso" title="Cobrar"
                                         onclick="abrirModalPago(this)"
                                         data-id="@ingresos.id_ingreso"
                                         data-placa="@ingresos.placa"
@@ -407,7 +383,7 @@
                             {
                                 @if (ingresos.id_valet != null && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado")
                                 {
-                                    <i class="fa-solid fa-credit-card btn-action"
+                                    <i class="fa-solid fa-credit-card btn-action btn-pago-ingreso" title="Cobrar"
                                         onclick="abrirModalPago(this)"
                                         data-id="@ingresos.id_ingreso"
                                         data-placa="@ingresos.placa"
@@ -418,18 +394,13 @@
                                     </i>
                                 }
                             }
-                        }
 
-                        @* 4. Información: Visible para Admin (idRol == 3) en TODOS los registros, o para otros roles solo si está pagado y finalizado *@
-                        @if (idRol == 3 || (ingresos.estado_pago == "pagado" && ingresos.estado_servicio == "finalizado"))
-                        {
-                            <i class="fa-solid fa-circle-info btn-action"
-                                onclick="abrirModalInformacion(this)"
-                                data-id-ingreso="@ingresos.id_ingreso"
-                                style="cursor:pointer;">
-                            </i>
-                        }
-
+                        @* 4. Información: siempre visible *@
+                        <i class="fa-solid fa-info btn-action btn-info-ingreso" title="Ver Informacion"
+                            onclick="abrirModalInformacion(this)"
+                            data-id-ingreso="@ingresos.id_ingreso"
+                            style="cursor:pointer;">
+                        </i>
                     </td>
                 </tr>
             }

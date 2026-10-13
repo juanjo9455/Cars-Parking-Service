@@ -4,30 +4,38 @@
 
 /*==================== Inicio ====================*/
 
-/* ============ titulo admin ============ */
-.titulo-admin {
+/* ============ titulo de rol (Valet / Banco / Admin) ============ */
+.titulo-rol {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    gap: 14px;
     width: fit-content;
-    margin: 25px 0 20px 0;
-    padding: 10px 18px;
+    margin: 10px auto 28px auto;
+    padding: 14px 32px;
     background: #fff;
-    border-left: 5px solid #C62828;
-    border-radius: 10px;
-    box-shadow: 0 3px 10px rgba(0,0,0,.08);
+    border-bottom: 4px solid #C62828;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.08);
 }
 
-.titulo-admin i {
+.titulo-rol i {
     color: #D4AF37;
-    font-size: 1.2rem;
+    font-size: 2rem;
 }
 
-.titulo-admin h2 {
+.titulo-rol svg {
+    width: 36px;
+    height: 36px;
+    color: #C62828;
+}
+
+.titulo-rol h2 {
     margin: 0;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #333;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1f2937;
+    letter-spacing: .5px;
 }
 
 .home-welcome {
@@ -147,6 +155,16 @@
 
     .home-title {
         font-size: 28px;
+    }
+        .titulo-rol h2 {
+        font-size: 1.5rem;
+    }
+
+    .titulo-rol svg,
+    .titulo-rol i {
+        width: 28px;
+        height: 28px;
+        font-size: 1.5rem;
     }
 }
 
@@ -427,7 +445,7 @@
 }
 
 .menu-lateral ol li {
-    width: 100%;
+    width: 95%;
     margin-bottom: 10px;
 }
 
@@ -474,6 +492,127 @@
 .menu-lateral #cerrar-sesion:hover{
     background-color: #efdedd;
 }
+
+/* ==================== Switch de rol ==================== */
+
+/* Si los desplegables crecen, el menú hace scroll en vez de salirse */
+.menu-lateral {
+    overflow-y: auto;
+}
+
+/* Quitar el triángulo que el navegador pone en todos los desplegables */
+.menu-lateral .switch-grupo summary {
+    list-style: none;
+    cursor: pointer;
+}
+
+.menu-lateral .switch-grupo summary::-webkit-details-marker {
+    display: none;
+}
+
+/* "Cambiar Rol": igual a los botones del menú (Inicio, Tabla Ingresos...) */
+.menu-lateral .switch-grupo > summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 15px 20px;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fffaf9;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.menu-lateral .switch-grupo > summary:hover {
+    background: rgba(255, 255, 255, 0.28);
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+}
+
+.menu-lateral .switch-grupo > summary i {
+    width: 18px;
+    text-align: center;
+}
+
+/* Flechita a la derecha, gira al abrir */
+.menu-lateral .switch-flecha {
+    margin-left: auto;
+    transition: transform 0.3s ease;
+}
+
+.menu-lateral .switch-grupo[open] > summary .switch-flecha {
+    transform: rotate(180deg);
+}
+
+/* Lista de roles (dentro de "Cambiar Rol") */
+.menu-lateral .switch-roles {
+    list-style: none;
+    margin: 0;
+    padding: 8px 0 0 15px;
+}
+
+.menu-lateral .switch-roles li {
+    margin-bottom: 8px;
+}
+
+/* Botón Valet y títulos Banco / Key / Ubicaciones / Parqueaderos */
+.menu-lateral .switch-roles > li > form > button,
+.menu-lateral .switch-roles summary {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fffaf9;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.menu-lateral .switch-roles > li > form > button:hover,
+.menu-lateral .switch-roles summary:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Opciones de adentro: cada ubicación o parqueadero */
+.menu-lateral .switch-roles details form {
+    margin: 6px 0 0 15px;
+}
+
+.menu-lateral .switch-roles details button {
+    width: 100%;
+    text-align: left;
+    padding: 8px 14px;
+    background: rgba(0, 0, 0, 0.15);
+    color: #fffaf9;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.menu-lateral .switch-roles details button:hover {
+    background: rgba(0, 0, 0, 0.28);
+}
+
+.menu-lateral .switch-flotante {
+    position: absolute;
+    left: calc(100% + 10px);
+    width: 220px;
+    background: #b71c1c;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+    z-index: 1100;
+    top: 0px;
+    overflow-y: auto;
+    max-height: 90vh;
+}
+
 
 /*==================== Fin Menu Lateral ====================*/
 
@@ -522,7 +661,8 @@
     font-size: 16px;
     background: white;
     color: var(--ui-input-text);
-    border: 1px border-radius: var(--ui-radius-sm) !important;
+    border: 1px solid var(--ui-input-border);
+    border-radius: var(--ui-radius-sm) !important;
     transition: all 0.3s ease;
 }
 
@@ -1226,14 +1366,6 @@ tbody td:last-child {
         font-size: 11px;
     }
 
-    /* Ocultamos columnas secundarias para mantener lista compacta */
-    table th:nth-child(2),
-    table td:nth-child(2),
-    table th:nth-child(4),
-    table td:nth-child(4) {
-        display: none;
-    }
-
     tbody td:last-child {
         font-size: 18px;
     }
@@ -1761,24 +1893,6 @@ tbody td:last-child {
     margin-bottom: 15px;
 }
 
-.firma-canvas-container {
-    background: white;
-    border: 2px solid #d0d0d0;
-    border-radius: 8px;
-    display: inline-block;
-    cursor: crosshair;
-    touch-action: none;
-}
-
-.firma-canvas-container canvas {
-    display: block;
-    border-radius: 6px;
-}
-
-.firma-actions {
-    margin-top: 12px;
-}
-
 .firma-btn-limpiar {
     background: white;
     border: 2px solid #d0d0d0;
@@ -1819,11 +1933,6 @@ tbody td:last-child {
 
     .firma-title {
         font-size: 14px;
-    }
-
-    .firma-canvas-container canvas {
-        width: 100%;
-        height: auto;
     }
 }
 
@@ -2330,4 +2439,452 @@ body.tabla-vehiculos-page.bubbles-respect-btn .bubble-whatsapp {
 body.tabla-vehiculos-page:not(.bubbles-respect-btn) .bubble,
 body.tabla-vehiculos-page:not(.bubbles-respect-btn) .bubble-whatsapp {
     z-index: 1000;
+}
+
+/* Botones de los modales de liquidación (le ganan al .alert-btn de la campanita) */
+.liquidacion-alert-card .alert-btn {
+    display: block;
+    width: 100%;
+    padding: .9rem;
+    background: #198754;
+    border-radius: 14px;
+    text-align: center;
+    text-decoration: none;
+    color: #fff;
+    animation: none;
+}
+
+/* ==================== Panel de información del ingreso ==================== */
+
+/* Botón de información en la tabla: círculo rojo suave */
+i.btn-info-ingreso {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    line-height: 1;
+    border-radius: 50%;
+    background: #fdecea;
+    color: #c62828;
+    font-size: 15px;
+    box-shadow: 0 2px 6px rgba(198, 40, 40, 0.15);
+}
+
+.btn-info-ingreso:hover {
+    background: #c62828;
+    color: #fff;
+}
+
+/* Botón de cobrar en la tabla: mismo círculo que el de información, en verde */
+i.btn-pago-ingreso {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    line-height: 1;
+    border-radius: 50%;
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-size: 15px;
+    box-shadow: 0 2px 6px rgba(46, 125, 50, 0.15);
+}
+
+.btn-pago-ingreso:hover {
+    background: #2e7d32;
+    color: #fff;
+}
+
+.info-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Encabezado: placa + estados */
+.info-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid #f3f3f3;
+}
+
+/* Placa con aspecto de placa de carro */
+.info-placa {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: #1f2937;
+    background: #ffd54f;
+    border: 3px solid #1f2937;
+    border-radius: 8px;
+    padding: 4px 14px;
+}
+
+.info-chip {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+    background: #eef2f7;
+    color: #334155;
+}
+
+.info-chip.chip-ok {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.info-chip.chip-pendiente {
+    background: #fff8e1;
+    color: #b26a00;
+}
+
+/* Títulos de sección (le ganan al h3 grande del modal) */
+.Card-Ingreso .info-seccion {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 18px 0 8px;
+    padding-bottom: 0;
+    border-bottom: none;
+    font-size: 13px;
+    font-weight: 700;
+    color: #b71c1c;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+/* Tarjetas de datos en dos columnas */
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 10px;
+}
+
+/* Dato que ocupa todo el ancho del bloque (ej. banco) */
+.info-item-completo {
+    grid-column: 1 / -1;
+}
+
+.info-label {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.info-valor {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.info-vacio {
+    font-weight: 400;
+    font-style: italic;
+    color: #9ca3af;
+}
+
+/* Lugar de entrega distinto al de ingreso */
+.info-destacado {
+    background: #fffbeb;
+    border-color: #f9a825;
+}
+
+/* En celular, una sola columna */
+@media (max-width: 480px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==================== Solicitud del vehículo por el operador ==================== */
+
+/* Botón discreto (borde, sin relleno) debajo del encabezado de la información */
+.info-btn-solicitar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 12px;
+    padding: 9px 12px;
+    background: transparent;
+    border: 1px dashed #c62828;
+    border-radius: 10px;
+    color: #c62828;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s ease;
+}
+
+.info-btn-solicitar:hover {
+    background: #fdecea;
+}
+
+/* El panel de confirmación queda oculto hasta que se presiona el botón */
+.solicitud-panel {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* En modo solicitud solo se ve el panel de confirmación */
+#contenido-modal-acciones.modo-solicitud > .solicitud-panel {
+    display: flex;
+}
+
+/* !important porque las imágenes y videos traen display:grid en línea */
+#contenido-modal-acciones.modo-solicitud > :not(.solicitud-panel) {
+    display: none !important;
+}
+
+.solicitud-datos {
+    padding: 12px 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.solicitud-datos p {
+    margin: 0 0 4px;
+}
+
+.solicitud-datos p:last-child {
+    margin-bottom: 0;
+}
+
+.solicitud-nota {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 8px 12px;
+    background: #fffbeb;
+    border: 1px solid #f9a825;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #7a5200;
+}
+
+.solicitud-panel label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.solicitud-panel select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.solicitud-acciones {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.solicitud-acciones .btn {
+    flex: 1;
+}
+
+/* Celular del cliente: enlace para llamar */
+.info-tel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #c62828;
+    text-decoration: none;
+}
+
+.info-tel:hover {
+    text-decoration: underline;
+}
+
+/* Firma del cliente sobre fondo blanco, como en el papel */
+.info-firma {
+    padding: 10px;
+    background: #fff;
+    border: 1px dashed #d0d0d0;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.info-firma img {
+    max-width: 100%;
+    max-height: 160px;
+}
+
+/* Objetos de valor anotados en el ingreso */
+.info-objetos {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 4px 0 12px;
+    padding: 12px 14px;
+    background: #fffbeb;
+    border: 1px solid #f9a825;
+    border-left: 4px solid #f9a825;
+    border-radius: 10px;
+    color: #7a5200;
+}
+
+.info-objetos > i {
+    margin-top: 2px;
+    font-size: 16px;
+}
+
+.info-objetos-titulo {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.info-objetos-texto {
+    margin: 0;
+    font-size: 14px;
+    color: #1f2937;
+    white-space: pre-line;
+    word-break: break-word;
+}
+
+/* Se recibió sin objetos de valor */
+.info-objetos-ninguno {
+    align-items: center;
+    background: #f0fdf4;
+    border-color: #86efac;
+    border-left-color: #22c55e;
+    color: #166534;
+}
+
+/* No se anotó nada */
+.info-objetos-vacio {
+    align-items: center;
+    background: #fafafa;
+    border-color: #eee;
+    border-left-color: #d1d5db;
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* ==================== Código de seguridad en el modal de pago ==================== */
+
+/* El operador ve el código grande para compararlo con el del cliente */
+.codigo-operador {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 14px;
+    padding: 14px;
+    background: #e8f5e9;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.codigo-operador-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #2e7d32;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.codigo-operador-valor {
+    font-family: monospace;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: 6px;
+    color: #1b5e20;
+}
+
+.codigo-operador-ayuda {
+    margin: 0;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+/* ==================== Registro de WhatsApp enviados (admin) ==================== */
+
+/* Resumen del período: total, exitosos y fallidos */
+.wa-resumen {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 18px 0;
+}
+
+.wa-resumen-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 14px;
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 12px;
+}
+
+.wa-resumen-num {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1f2937;
+}
+
+.wa-resumen-lbl {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.wa-resumen-item.wa-ok {
+    background: #f0fdf4;
+    border-color: #86efac;
+}
+
+.wa-resumen-item.wa-ok .wa-resumen-num {
+    color: #166534;
+}
+
+.wa-resumen-item.wa-error {
+    background: #fef2f2;
+    border-color: #fca5a5;
+}
+
+.wa-resumen-item.wa-error .wa-resumen-num {
+    color: #b91c1c;
+}
+
+/* Estado fallido en la tabla (el error completo va en el title) */
+.wa-badge-error {
+    background: #fdecea;
+    color: #b71c1c;
+    cursor: help;
+}
+
+.wa-aviso {
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: #7a5200;
 }

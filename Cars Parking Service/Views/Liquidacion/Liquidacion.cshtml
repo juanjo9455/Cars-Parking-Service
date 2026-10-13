@@ -13,7 +13,7 @@
     <!-- Header -->
     <div class="header">
         <div class="header-left">
-            <h1>Liquidación - @ViewBag.UbicacionBanco</h1>
+            <h1>Liquidación de turno</h1>
             <p>Resumen de los servicios pendientes por liquidar</p>
         </div>
 
@@ -70,6 +70,54 @@
 
     </div>
 
+        <!-- Desglose por ubicación -->
+    <div class="section">
+
+        <h2>
+            <i class="fa-solid fa-location-dot"></i>
+            Detalle por ubicación
+        </h2>
+
+        @foreach (var u in ViewBag.porUbicacion)
+        {
+            <details class="ubicacion-grupo">
+
+                <summary>
+                    <span>@u.Ubicacion</span>
+                    <span>@u.Vehiculos vehículos</span>
+                    <strong>$@(((decimal)u.Total).ToString("N0"))</strong>
+                </summary>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Placa</th>
+                            <th>Hora</th>
+                            <th>Cobró</th>
+                            <th>Método</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in u.Detalle)
+                        {
+                            <tr>
+                                <td>@d.Placa</td>
+                                <td>@(((DateTime?)d.Hora)?.ToString("dd/MM HH:mm"))</td>
+                                <td>@d.Cobro</td>
+                                <td>@d.Metodo</td>
+                                <td>$@(((decimal)d.Valor).ToString("N0"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+            </details>
+        }
+
+    </div>
+
+
     <!-- Valets -->
     <div class="section">
 
@@ -95,7 +143,7 @@
             </thead>
 
             <tbody>
-                @if (ViewBag.valets != null)
+                @if (ViewBag.valets.Count > 0)
                 {
                     foreach (var v in ViewBag.valets)
                     {

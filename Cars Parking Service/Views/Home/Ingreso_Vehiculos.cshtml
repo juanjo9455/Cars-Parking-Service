@@ -1,9 +1,15 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Identity
+@{
     ViewData["Title"] = "Ingresar Vehiculo";
 
     var idUbicacion = Context.Session.GetInt32("id_ubicacion");
+    var idRol = Context.Session.GetInt32("id_rol");
+
 }
 
+
+<link rel="stylesheet" href="~/css/firma-cliente.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/ingreso-borrador.css" asp-append-version="true" />
 
 <div id="client-error-container" style="display:none;position:fixed;top:10px;left:10px;right:10px;z-index:9999;background:#fee;border:1px solid #f99;padding:10px;border-radius:6px;color:#600;max-height:40vh;overflow:auto;"></div>
 
@@ -136,7 +142,9 @@
         </div>
     }
 
-    <form method="post" asp-action="IngresoVehiculos" asp-controller="Home" id="ingresoForm" enctype="multipart/form-data">
+    @* data-error-servidor: si el servidor rechazó el ingreso, ingreso-borrador.js ofrece recuperarlo *@
+    <form method="post" asp-action="IngresoVehiculos" asp-controller="Home" id="ingresoForm" enctype="multipart/form-data"
+          data-error-servidor="@((TempData.Peek("Error") != null || ViewBag.Error != null) ? "true" : "false")">
         <div class="input-group">
             <input type="text"
                    name="placa"
@@ -213,7 +221,46 @@
             <div class="error-message" id="errorParqueadero">⚠️ Selecciona un parqueadero</div>
         </div>
 
-        <input type="hidden" id="id_ubicacion" name="id_ubicacion" value="@idUbicacion" />
+        <!-- Ubicación: obligatoria para todos. Al banco le llega seleccionada la de su turno -->
+        <div class="input-group">
+            <select name="id_ubicacion" id="id_ubicacion" style="width:100%;" required
+                    data-actual="@(idRol == 2 ? idUbicacion : null)">
+                <option value="">Selecciona una Ubicación</option>
+                @if (ViewBag.UbicacionesS != null)
+                {
+                    foreach (var u in ViewBag.UbicacionesS)
+                    {
+                        <option value="@u.id_ubicacion" selected="@(u.id_ubicacion == idUbicacion)">@u.nombre_ubicacion</option>
+                    }
+                }
+            </select>
+
+                <script>
+                    (function () {
+                        const select = document.getElementById('id_ubicacion');
+                        const actual = select.dataset.actual;
+
+                        // Solo avisa al banco (los demás no tienen ubicación de turno)
+                        if (!actual) return;
+
+                        select.addEventListener('change', function () {
+                            if (!select.value || select.value === actual) return;
+
+                            const nombreActual = select.querySelector('option[value="' + actual + '"]').textContent;
+                            const nombreNuevo = select.options[select.selectedIndex].textContent;
+
+                            const ok = confirm('Vas a cambiar tu ubicación de "' + nombreActual + '" a "' + nombreNuevo +
+                                            '".\nTu turno pasará a esa ubicación. ¿Continuar?');
+
+                            if (!ok) {
+                                select.value = actual;   // se arrepintió: vuelve a su ubicación
+                            }
+                        });
+                    })();
+                </script>
+
+        </div>
+
 
         <!-- Notas/Valuables -->
         <!--<div class="input-group notas-group">
@@ -304,22 +351,51 @@
             <div class="error-message" id="errorMedia" style="display:none;"></div>
         </div>
 
-        <!-- Firma del cliente (canvas centralizado, solo lógica de site.js) -->
+        <!-- Firma del cliente: se firma en una ventana aparte y queda guardada como imagen (firma-cliente.js) -->
         <div class="firma-section">
             <h3 class="firma-title">Firma del Cliente</h3>
-            <div class="firma-canvas-container" style="width:100%;max-width:340px;margin:auto;">
-                <canvas id="firmaCanvas" width="340" height="160" style="width:100%;height:160px;border:1px solid #ccc;touch-action: none;"></canvas>
-            </div>
-            <div class="firma-actions">
-                <button type="button" class="firma-btn-limpiar" id="limpiarFirma">
-                    <i class="fa-solid fa-eraser"></i> Limpiar
+
+            <button type="button" class="firma-abrir" id="btnAbrirFirma" data-no-spinner="true">
+                <i class="fa-solid fa-signature"></i> Toca para firmar
+            </button>
+
+            <div class="firma-vista-previa" id="firmaVistaPrevia" style="display:none;">
+                <img id="firmaPreviaImg" alt="Firma del cliente" />
+                <span class="firma-ok"><i class="fa-solid fa-circle-check"></i> Firma guardada</span>
+                <button type="button" class="firma-btn-limpiar" id="btnRehacerFirma" data-no-spinner="true">
+                    <i class="fa-solid fa-rotate-left"></i> Volver a firmar
                 </button>
             </div>
+
             <div class="error-message" id="errorFirma">⚠️ La firma del cliente es obligatoria</div>
             <input type="hidden" id="firmaBase64" name="firmaBase64">
         </div>
         <button type="submit" class="ingreso-btn" id="acceder">Ingresar</button>
     </form>
+
+    <!-- Ventana a pantalla completa para firmar -->
+    <div class="firma-modal" id="firmaModal" aria-hidden="true">
+        <div class="firma-modal-contenido" role="dialog" aria-label="Firma del cliente">
+            <div class="firma-modal-header">
+                <h3>Firma del cliente</h3>
+                <button type="button" class="firma-modal-cerrar" id="btnCerrarFirma" aria-label="Cerrar" data-no-spinner="true">&times;</button>
+            </div>
+
+            <canvas id="firmaModalCanvas" class="firma-modal-canvas"></canvas>
+
+            <p class="firma-modal-ayuda"><i class="fa-solid fa-mobile-screen"></i> Gira el celular para tener más espacio</p>
+            <p class="firma-modal-aviso" id="firmaAvisoCorta" style="display:none;">La firma es muy corta. Firma de nuevo, por favor.</p>
+
+            <div class="firma-modal-acciones">
+                <button type="button" class="btn btn-secondary" id="btnLimpiarFirmaModal" data-no-spinner="true">
+                    <i class="fa-solid fa-eraser"></i> Limpiar
+                </button>
+                <button type="button" class="btn btn-primary" id="btnAceptarFirma" data-no-spinner="true">
+                    <i class="fa-solid fa-check"></i> Aceptar firma
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal de grabación de video (minimalista, cámara trasera, controles sobre el video) -->
@@ -399,8 +475,10 @@
 
 @section Scripts {
     <script src="~/js/solicitudes.js" asp-append-version="true" defer></script>
+    <script src="~/js/firma-cliente.js" asp-append-version="true" defer></script>
     <script src="~/js/ingreso-vehiculos.js" asp-append-version="true" defer></script>
     <script src="~/js/ingreso-vehiculos-camera.js" asp-append-version="true" defer></script>
+    <script src="~/js/ingreso-borrador.js" asp-append-version="true" defer></script>
 
     <script>
         (function () {
