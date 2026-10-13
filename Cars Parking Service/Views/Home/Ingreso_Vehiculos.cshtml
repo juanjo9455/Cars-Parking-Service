@@ -8,6 +8,8 @@
 }
 
 
+<link rel="stylesheet" href="~/css/firma-cliente.css" asp-append-version="true" />
+
 <div id="client-error-container" style="display:none;position:fixed;top:10px;left:10px;right:10px;z-index:9999;background:#fee;border:1px solid #f99;padding:10px;border-radius:6px;color:#600;max-height:40vh;overflow:auto;"></div>
 
 <!-- Notificación estilo Android -->
@@ -346,22 +348,51 @@
             <div class="error-message" id="errorMedia" style="display:none;"></div>
         </div>
 
-        <!-- Firma del cliente (canvas centralizado, solo lógica de site.js) -->
+        <!-- Firma del cliente: se firma en una ventana aparte y queda guardada como imagen (firma-cliente.js) -->
         <div class="firma-section">
             <h3 class="firma-title">Firma del Cliente</h3>
-            <div class="firma-canvas-container" style="width:100%;max-width:340px;margin:auto;">
-                <canvas id="firmaCanvas" width="340" height="160" style="width:100%;height:160px;border:1px solid #ccc;touch-action: none;"></canvas>
-            </div>
-            <div class="firma-actions">
-                <button type="button" class="firma-btn-limpiar" id="limpiarFirma">
-                    <i class="fa-solid fa-eraser"></i> Limpiar
+
+            <button type="button" class="firma-abrir" id="btnAbrirFirma" data-no-spinner="true">
+                <i class="fa-solid fa-signature"></i> Toca para firmar
+            </button>
+
+            <div class="firma-vista-previa" id="firmaVistaPrevia" style="display:none;">
+                <img id="firmaPreviaImg" alt="Firma del cliente" />
+                <span class="firma-ok"><i class="fa-solid fa-circle-check"></i> Firma guardada</span>
+                <button type="button" class="firma-btn-limpiar" id="btnRehacerFirma" data-no-spinner="true">
+                    <i class="fa-solid fa-rotate-left"></i> Volver a firmar
                 </button>
             </div>
+
             <div class="error-message" id="errorFirma">⚠️ La firma del cliente es obligatoria</div>
             <input type="hidden" id="firmaBase64" name="firmaBase64">
         </div>
         <button type="submit" class="ingreso-btn" id="acceder">Ingresar</button>
     </form>
+
+    <!-- Ventana a pantalla completa para firmar -->
+    <div class="firma-modal" id="firmaModal" aria-hidden="true">
+        <div class="firma-modal-contenido" role="dialog" aria-label="Firma del cliente">
+            <div class="firma-modal-header">
+                <h3>Firma del cliente</h3>
+                <button type="button" class="firma-modal-cerrar" id="btnCerrarFirma" aria-label="Cerrar" data-no-spinner="true">&times;</button>
+            </div>
+
+            <canvas id="firmaModalCanvas" class="firma-modal-canvas"></canvas>
+
+            <p class="firma-modal-ayuda"><i class="fa-solid fa-mobile-screen"></i> Gira el celular para tener más espacio</p>
+            <p class="firma-modal-aviso" id="firmaAvisoCorta" style="display:none;">La firma es muy corta. Firma de nuevo, por favor.</p>
+
+            <div class="firma-modal-acciones">
+                <button type="button" class="btn btn-secondary" id="btnLimpiarFirmaModal" data-no-spinner="true">
+                    <i class="fa-solid fa-eraser"></i> Limpiar
+                </button>
+                <button type="button" class="btn btn-primary" id="btnAceptarFirma" data-no-spinner="true">
+                    <i class="fa-solid fa-check"></i> Aceptar firma
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal de grabación de video (minimalista, cámara trasera, controles sobre el video) -->
@@ -441,6 +472,7 @@
 
 @section Scripts {
     <script src="~/js/solicitudes.js" asp-append-version="true" defer></script>
+    <script src="~/js/firma-cliente.js" asp-append-version="true" defer></script>
     <script src="~/js/ingreso-vehiculos.js" asp-append-version="true" defer></script>
     <script src="~/js/ingreso-vehiculos-camera.js" asp-append-version="true" defer></script>
 

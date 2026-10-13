@@ -1,15 +1,11 @@
 ﻿document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('ingresoForm');
-    const firmaCanvas = document.getElementById('firmaCanvas');
-    const ctx = firmaCanvas.getContext('2d');
     const placaInput = document.getElementById('placa');
     const submitBtn = document.getElementById('acceder');
     const noValuablesBtn = document.getElementById('noValuablesBtn');
     const notasInput = document.getElementById('notas');
     const btnObjetosImagenes = document.getElementById("tomarFotoObjetosBtn");
     const sinObjetosHidden = document.getElementById('sin_objetos_valor_hidden');
-    let firmando = false;
-    let firmaRealizada = false;
 
     const mostrarAlerta = (mensaje, tipo = 'error') => {
         if (typeof window.mostrarAlertaServidor === 'function') {
@@ -88,57 +84,7 @@
 
     console.log('✅ Script ingreso-vehiculos.js cargado correctamente');
 
-    // ========== SOLO FIRMA ==========
-    // Configurar canvas para firma
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-
-    // Eventos de firma
-    firmaCanvas.addEventListener('mousedown', iniciarFirma);
-    firmaCanvas.addEventListener('mousemove', dibujarFirma);
-    firmaCanvas.addEventListener('mouseup', finalizarFirma);
-    firmaCanvas.addEventListener('touchstart', iniciarFirma);
-    firmaCanvas.addEventListener('touchmove', dibujarFirma);
-    firmaCanvas.addEventListener('touchend', finalizarFirma);
-
-    function iniciarFirma(e) {
-        e.preventDefault();
-        firmando = true;
-        const rect = firmaCanvas.getBoundingClientRect();
-        const x = (e.clientX || e.touches[0].clientX) - rect.left;
-        const y = (e.clientY || e.touches[0].clientY) - rect.top;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-    }
-
-    function dibujarFirma(e) {
-        if (!firmando) return;
-        e.preventDefault();
-        const rect = firmaCanvas.getBoundingClientRect();
-        const x = (e.clientX || e.touches[0].clientX) - rect.left;
-        const y = (e.clientY || e.touches[0].clientY) - rect.top;
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        firmaRealizada = true;
-    }
-
-    function finalizarFirma() {
-        firmando = false;
-    }
-
-    // Limpiar firma
-    const limpiarFirmaBtn = document.getElementById('limpiarFirma');
-    if (limpiarFirmaBtn) {
-        limpiarFirmaBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            ctx.clearRect(0, 0, firmaCanvas.width, firmaCanvas.height);
-            firmaRealizada = false;
-            const errorFirma = document.getElementById('errorFirma');
-            if (errorFirma) errorFirma.style.display = 'none';
-            console.log('🧹 Firma limpiada');
-        });
-    }
+    // La firma se toma en firma-cliente.js y queda guardada como imagen en #firmaBase64
 
     // ========== VALIDACIÓN ANTES DE ENVÍO ==========
     // Este script SOLO valida los campos del formulario
@@ -227,23 +173,17 @@
             if (errorMedia) errorMedia.style.display = 'none';
         }
 
-        // Validar firma
-        console.log('=== VALIDACIÓN DE FIRMA ===');
-        console.log('Firma realizada:', firmaRealizada);
+        // Validar firma (ya guardada como imagen al aceptarla en la ventana de firma)
+        const firmaGuardada = !!document.getElementById('firmaBase64')?.value;
 
-        if (!firmaRealizada) {
+        console.log('=== VALIDACIÓN DE FIRMA ===');
+        console.log('Firma guardada:', firmaGuardada);
+
+        if (!firmaGuardada) {
             errores.push('Firma requerida');
             const errorFirma = document.getElementById('errorFirma');
             if (errorFirma) errorFirma.style.display = 'block';
             console.error('❌ Firma NO realizada');
-        } else {
-            // Capturar firma como base64
-            const firmaBase64Value = firmaCanvas.toDataURL('image/png');
-            const firmaBase64Input = document.getElementById('firmaBase64');
-            if (firmaBase64Input) {
-                firmaBase64Input.value = firmaBase64Value;
-            }
-            console.log('✅ Firma capturada');
         }
 
         // Si hay errores de validación, PREVENIR el envío
