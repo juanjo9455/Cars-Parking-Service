@@ -2085,19 +2085,32 @@ async function abrirModalInformacion(btn) {
 
         } else {
 
+            // Miniaturas del mismo tamaño que las imágenes; el video solo se descarga al reproducirlo
+            const contenedorVideos = document.createElement("div");
+
+            contenedorVideos.style.display = "grid";
+            contenedorVideos.style.gridTemplateColumns = "repeat(auto-fill, minmax(120px,1fr))";
+            contenedorVideos.style.gap = "10px";
+
             dataVideos.videos.forEach(video => {
 
                 const reproductor = document.createElement("video");
 
                 reproductor.src = video.src;
                 reproductor.controls = true;
+                reproductor.preload = "metadata";
+                reproductor.playsInline = true;
                 reproductor.style.width = "100%";
-                reproductor.style.marginBottom = "15px";
+                reproductor.style.height = "120px";
+                reproductor.style.objectFit = "cover";
                 reproductor.style.borderRadius = "8px";
+                reproductor.style.background = "#000";
 
-                contenido.appendChild(reproductor);
+                contenedorVideos.appendChild(reproductor);
 
             });
+
+            contenido.appendChild(contenedorVideos);
 
         }
 

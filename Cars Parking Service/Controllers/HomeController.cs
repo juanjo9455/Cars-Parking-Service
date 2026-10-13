@@ -2323,11 +2323,18 @@ namespace CarsParkingService.Controllers
                     i.dato_imagen[3] == 0xA3
                 )
                 .OrderBy(i => i.id_imagen)
+                // Solo se envía la URL: el video se descarga aparte y por partes cuando se reproduce
+                .Select(i => new
+                {
+                    i.id_imagen,
+                    i.id_ingreso
+                })
+                .ToList()
                 .Select(i => new
                 {
                     i.id_imagen,
                     i.id_ingreso,
-                    src = $"data:video/webm;base64,{Convert.ToBase64String(i.dato_imagen)}"
+                    src = Url.Action(nameof(VideoIngreso), new { idImagen = i.id_imagen })
                 })
                 .ToList();
 
@@ -2345,6 +2352,24 @@ namespace CarsParkingService.Controllers
                 total = videos.Count,
                 videos
             });
+        }
+
+        // Devuelve el archivo del video; con rangos el navegador solo descarga lo que reproduce
+        [HttpGet]
+        public IActionResult VideoIngreso(int idImagen)
+        {
+            var dato = _context.imagenes
+                .AsNoTracking()
+                .Where(i => i.id_imagen == idImagen)
+                .Select(i => i.dato_imagen)
+                .FirstOrDefault();
+
+            if (dato == null || dato.Length == 0)
+            {
+                return NotFound();
+            }
+
+            return File(dato, "video/webm", enableRangeProcessing: true);
         }
 
         // Metodo para guardar la ubicacion del banco
