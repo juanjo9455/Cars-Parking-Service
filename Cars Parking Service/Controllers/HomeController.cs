@@ -131,6 +131,12 @@ namespace CarsParkingService.Controllers
 
         public IActionResult Estado_Turnos(DateTime? FechaSeleccionada) {
 
+            // Muestra dinero de todos los turnos: solo el administrador
+            if (HttpContext.Session.GetInt32("id_rol") != 3)
+            {
+                return RedirectToAction("Index");
+            }
+
             var model = new EstadoTurnosViewModel();
 
             DateTime FechaConsulta;
@@ -165,12 +171,14 @@ namespace CarsParkingService.Controllers
 
 
                     // Consultamos lo que debe el valet al banco
+                    // (por fecha de entrega, igual que la regla de liquidación)
                     Deuda = _context.ingresos
                             .Where(i => i.rol_cobrador == "valet" &&
                                         i.usuario_cobro == grupo.Key &&
                                         i.metodo_pago == "Efectivo" &&
-                                        i.fecha_ingreso.HasValue &&
-                                        i.fecha_ingreso.Value.Date == FechaConsulta &&
+                                        i.estado_pago == "pagado" &&
+                                        i.fecha_entrega.HasValue &&
+                                        i.fecha_entrega.Value.Date == FechaConsulta &&
                                         i.estado_liquidacion == false)
                             .Sum(i => (decimal?)i.valor_servicio) ?? 0,
 
@@ -205,7 +213,7 @@ namespace CarsParkingService.Controllers
                     IdUsuario = grupo.Key,
 
                     Nombres = grupo.First().u.nombres ?? "",
-                    Apellidos = grupo.First().u.nombres ?? "",
+                    Apellidos = grupo.First().u.apellidos ?? "",
 
                     LugarActual = grupo.First().s.Ubicacion.nombre_ubicacion ?? "Sin Ubicacion",
 
@@ -249,8 +257,69 @@ namespace CarsParkingService.Controllers
 
             ).ToList();
 
+            // Liquidaciones del día, desde tbl_liquidacion (aunque el banco ya haya cerrado sesión)
+            var inicioDia = FechaConsulta;
+            var finDia = FechaConsulta.AddDays(1);
+
+            model.Liquidaciones = _context.liquidaciones
+                .AsNoTracking()
+                .Where(l => l.fecha >= inicioDia && l.fecha < finDia)
+                .OrderBy(l => l.fecha)
+                .Select(l => new LiquidacionDiaVM
+                {
+                    IdLiquidacion = l.id_liquidacion,
+                    Fecha = l.fecha,
+                    Usuario = l.Usuario != null ? l.Usuario.nombres + " " + l.Usuario.apellidos : "—",
+                    TotalVehiculos = l.total_vehiculos ?? 0,
+                    TotalEfectivo = l.total_efectivo ?? 0,
+                    TotalTransferencias = l.total_transferencias ?? 0,
+                    TotalLiquidado = l.total_liquidado ?? 0
+                })
+                .ToList();
+
             return View(model);
-        
+
+        }
+
+        // Vehículos que forman una liquidación (botón "Ver detalle" de Estado Turnos)
+        [HttpGet]
+        public IActionResult DetalleLiquidacion(int id)
+        {
+            if (HttpContext.Session.GetInt32("id_rol") != 3)
+            {
+                return Json(new { success = false, message = "No tienes permiso para ver liquidaciones." });
+            }
+
+            var vehiculos = (
+                from i in _context.ingresos.AsNoTracking()
+                where i.id_liquidacion == id
+                join u in _context.usuarios on i.usuario_cobro equals (int?)u.id_usuario into cobradores
+                from u in cobradores.DefaultIfEmpty()
+                orderby i.fecha_entrega
+                select new
+                {
+                    placa = i.placa,
+                    entrega = i.fecha_entrega,
+                    cobro = u != null ? u.nombres + " " + u.apellidos : "—",
+                    rol = i.rol_cobrador,
+                    metodo = i.metodo_pago,
+                    valor = i.valor_servicio ?? 0,
+                    ubicacion = i.Ubicacion != null ? i.Ubicacion.nombre_ubicacion : "—"
+                }
+            )
+            .ToList()
+            .Select(v => new
+            {
+                v.placa,
+                entrega = v.entrega?.ToString("dd/MM HH:mm") ?? "—",
+                v.cobro,
+                v.rol,
+                v.metodo,
+                v.valor,
+                v.ubicacion
+            });
+
+            return Json(new { success = true, vehiculos });
         }
 
 
