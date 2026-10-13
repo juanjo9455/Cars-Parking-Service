@@ -1,0 +1,49 @@
+﻿/* ==================== Aviso de ingreso sin terminar (borrador) ==================== */
+
+.borrador-aviso {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    background: #fffbeb;
+    border: 1px solid #f9a825;
+    border-left: 4px solid #f9a825;
+    border-radius: 10px;
+    color: #7a5200;
+}
+
+.borrador-texto {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.borrador-texto > i {
+    margin-top: 3px;
+    font-size: 18px;
+}
+
+.borrador-texto strong {
+    display: block;
+    color: #5c3d00;
+}
+
+.borrador-detalle {
+    display: block;
+    font-size: 14px;
+}
+
+.borrador-texto small {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    color: #92400e;
+}
+
+.borrador-acciones {
+    display: flex;
+    gap: 8px;
+}

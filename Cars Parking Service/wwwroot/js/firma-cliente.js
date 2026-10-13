@@ -134,14 +134,8 @@
         terminarTrazo();
     }
 
-    // Convierte el trazo en imagen y la deja en el formulario
-    function aceptar() {
-        if (largoTrazo < LARGO_MINIMO) {
-            if (avisoCorta) avisoCorta.style.display = 'block';
-            return;
-        }
-
-        const imagen = canvas.toDataURL('image/png');
+    // Deja la imagen de la firma en el formulario y muestra la miniatura
+    function mostrarFirma(imagen) {
         inputFirma.value = imagen;
 
         if (imgPrevia) imgPrevia.src = imagen;
@@ -152,9 +146,28 @@
             errorFirma.style.display = 'none';
             errorFirma.classList.remove('visible');
         }
-
-        cerrar();
     }
+
+    // Convierte el trazo en imagen y la deja en el formulario
+    function aceptar() {
+        if (largoTrazo < LARGO_MINIMO) {
+            if (avisoCorta) avisoCorta.style.display = 'block';
+            return;
+        }
+
+        mostrarFirma(canvas.toDataURL('image/png'));
+        cerrar();
+
+        // Avisa al borrador del ingreso (ingreso-borrador.js) que hay firma nueva
+        document.dispatchEvent(new CustomEvent('firma:guardada'));
+    }
+
+    // Permite recuperar una firma guardada en el borrador (solo imágenes PNG)
+    window.establecerFirma = function (imagen) {
+        if (typeof imagen === 'string' && imagen.startsWith('data:image/png;base64,')) {
+            mostrarFirma(imagen);
+        }
+    };
 
     if (btnAbrir) btnAbrir.addEventListener('click', abrir);
     if (btnRehacer) btnRehacer.addEventListener('click', abrir);

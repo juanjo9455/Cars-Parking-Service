@@ -9,6 +9,7 @@
 
 
 <link rel="stylesheet" href="~/css/firma-cliente.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/ingreso-borrador.css" asp-append-version="true" />
 
 <div id="client-error-container" style="display:none;position:fixed;top:10px;left:10px;right:10px;z-index:9999;background:#fee;border:1px solid #f99;padding:10px;border-radius:6px;color:#600;max-height:40vh;overflow:auto;"></div>
 
@@ -141,7 +142,9 @@
         </div>
     }
 
-    <form method="post" asp-action="IngresoVehiculos" asp-controller="Home" id="ingresoForm" enctype="multipart/form-data">
+    @* data-error-servidor: si el servidor rechazó el ingreso, ingreso-borrador.js ofrece recuperarlo *@
+    <form method="post" asp-action="IngresoVehiculos" asp-controller="Home" id="ingresoForm" enctype="multipart/form-data"
+          data-error-servidor="@((TempData.Peek("Error") != null || ViewBag.Error != null) ? "true" : "false")">
         <div class="input-group">
             <input type="text"
                    name="placa"
