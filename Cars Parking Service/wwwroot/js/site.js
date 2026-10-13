@@ -1894,7 +1894,7 @@ async function abrirModalInformacion(btn) {
 
     // Marcador visual: estado inicial de carga
     console.log("[abrirModalInformacion] Consultando todas las imágenes en el controlador...");
-    contenido.innerHTML = "<p class='texto-cargando'>Cargando imágenes...</p>";
+    contenido.innerHTML = "<p class='texto-cargando'>Cargando informacion...</p>";
     console.log("[INFO] Mostrando modal-acciones...");
 
     modalAcciones.style.display = 'flex';
@@ -1912,10 +1912,15 @@ async function abrirModalInformacion(btn) {
         console.log("[FETCH] Iniciando consultas...");
         console.log("========================================");
 
-        const [respuestaImagenes, respuestaVideos] = await Promise.all([
+        const [respuestaInfo, respuestaImagenes, respuestaVideos] = await Promise.all([
+            fetch(`/Home/ObtenerInfoIngreso?idIngreso=${idIngreso}`),
             fetch(`/Home/ObtenerImagenesIngreso?idIngreso=${idIngreso}`),
             fetch(`/Home/ObtenerVideosIngreso?idIngreso=${idIngreso}`)
         ]);
+
+        if (!respuestaInfo.ok)
+            throw new Error("No fue posible obtener la información del vehículo.");
+
 
         if (!respuestaImagenes.ok)
             throw new Error("No fue posible obtener las imagenes.");
@@ -1927,6 +1932,26 @@ async function abrirModalInformacion(btn) {
         const dataVideos = await respuestaVideos.json();
 
         contenido.innerHTML = "";
+
+        //========================
+        // INFORMACIÓN
+        //========================
+
+        const info = await respuestaInfo.json();
+        const sinValet = "El valet no ha sido asignado al vehículo";
+
+        contenido.innerHTML += `
+            <h2>ℹ️ Información ${info.placa ?? ""}</h2>
+            <div class="info-auto">
+                <p><strong>Fecha de ingreso:</strong> ${info.fechaIngreso ?? "—"}</p>
+                <p><strong>Fecha de salida:</strong> ${info.fechaSalida ?? "Aún no ha salido"}</p>
+                <p><strong>Valet que lo ingresó:</strong> ${info.valetIngreso ?? sinValet}</p>
+                <p><strong>Valet que lo trae:</strong> ${info.valetDespacho ?? sinValet}</p>
+                <p><strong>Lugar de entrega:</strong> ${info.lugarEntrega ?? "—"}</p>
+            </div>
+            <hr style="margin:25px 0;">
+        `;
+
 
         //========================
         // IMÁGENES

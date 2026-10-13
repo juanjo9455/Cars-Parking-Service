@@ -2220,6 +2220,40 @@ namespace CarsParkingService.Controllers
             }
         }
 
+                // Datos para el panel de información del vehículo
+        [HttpGet]
+        public IActionResult ObtenerInfoIngreso(int idIngreso)
+        {
+            var ingreso = _context.ingresos
+                .Include(i => i.Ubicacion)
+                .FirstOrDefault(i => i.id_ingreso == idIngreso);
+
+            if (ingreso == null)
+            {
+                return NotFound();
+            }
+
+            // Nombres del valet que lo ingresó y del que lo trae de vuelta
+            var idsValets = new[] { ingreso.id_valet, ingreso.valet_despacho }
+                .Where(id => id.HasValue)
+                .Select(id => id.Value)
+                .ToList();
+
+            var nombres = _context.usuarios
+                .Where(u => idsValets.Contains(u.id_usuario))
+                .ToDictionary(u => u.id_usuario, u => u.nombres + " " + u.apellidos);
+
+            return Json(new
+            {
+                placa = ingreso.placa,
+                fechaIngreso = ingreso.fecha_ingreso?.ToString("dd/MM/yyyy HH:mm"),
+                fechaSalida = ingreso.fecha_salida?.ToString("dd/MM/yyyy HH:mm"),
+                valetIngreso = ingreso.id_valet.HasValue ? nombres.GetValueOrDefault(ingreso.id_valet.Value) : null,
+                valetDespacho = ingreso.valet_despacho.HasValue ? nombres.GetValueOrDefault(ingreso.valet_despacho.Value) : null,
+                lugarEntrega = ingreso.lugar_entrega ?? ingreso.Ubicacion?.nombre_ubicacion
+            });
+        }
+
 
         [HttpGet]
         public IActionResult ObtenerImagenesIngreso(int idIngreso)

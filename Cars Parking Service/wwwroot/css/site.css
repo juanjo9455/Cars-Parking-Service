@@ -1366,14 +1366,6 @@ tbody td:last-child {
         font-size: 11px;
     }
 
-    /* Ocultamos columnas secundarias para mantener lista compacta */
-    table th:nth-child(2),
-    table td:nth-child(2),
-    table th:nth-child(4),
-    table td:nth-child(4) {
-        display: none;
-    }
-
     tbody td:last-child {
         font-size: 18px;
     }
