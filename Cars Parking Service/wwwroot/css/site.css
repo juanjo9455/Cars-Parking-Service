@@ -2480,12 +2480,13 @@ body.tabla-vehiculos-page:not(.bubbles-respect-btn) .bubble-whatsapp {
 /* ==================== Panel de información del ingreso ==================== */
 
 /* Botón de información en la tabla: círculo rojo suave */
-.btn-info-ingreso {
+i.btn-info-ingreso {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 34px;
     height: 34px;
+    line-height: 1;
     border-radius: 50%;
     background: #fdecea;
     color: #c62828;
