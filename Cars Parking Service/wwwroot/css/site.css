@@ -2658,8 +2658,9 @@ i.btn-info-ingreso {
     display: flex;
 }
 
+/* !important porque las imágenes y videos traen display:grid en línea */
 #contenido-modal-acciones.modo-solicitud > :not(.solicitud-panel) {
-    display: none;
+    display: none !important;
 }
 
 .solicitud-datos {
@@ -2737,4 +2738,59 @@ i.btn-info-ingreso {
 .info-firma img {
     max-width: 100%;
     max-height: 160px;
+}
+
+/* Objetos de valor anotados en el ingreso */
+.info-objetos {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 4px 0 12px;
+    padding: 12px 14px;
+    background: #fffbeb;
+    border: 1px solid #f9a825;
+    border-left: 4px solid #f9a825;
+    border-radius: 10px;
+    color: #7a5200;
+}
+
+.info-objetos > i {
+    margin-top: 2px;
+    font-size: 16px;
+}
+
+.info-objetos-titulo {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.info-objetos-texto {
+    margin: 0;
+    font-size: 14px;
+    color: #1f2937;
+    white-space: pre-line;
+    word-break: break-word;
+}
+
+/* Se recibió sin objetos de valor */
+.info-objetos-ninguno {
+    align-items: center;
+    background: #f0fdf4;
+    border-color: #86efac;
+    border-left-color: #22c55e;
+    color: #166534;
+}
+
+/* No se anotó nada */
+.info-objetos-vacio {
+    align-items: center;
+    background: #fafafa;
+    border-color: #eee;
+    border-left-color: #d1d5db;
+    color: #9ca3af;
+    font-style: italic;
 }

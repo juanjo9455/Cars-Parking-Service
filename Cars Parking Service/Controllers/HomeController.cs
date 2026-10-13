@@ -2222,6 +2222,7 @@ namespace CarsParkingService.Controllers
 
                 // Datos para el panel de información del vehículo
         [HttpGet]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult ObtenerInfoIngreso(int idIngreso)
         {
             var ingreso = _context.ingresos
@@ -2255,6 +2256,7 @@ namespace CarsParkingService.Controllers
                 lugarEntrega = ingreso.lugar_entrega ?? ingreso.Ubicacion?.nombre_ubicacion,
                 lugarIngreso = ingreso.Ubicacion?.nombre_ubicacion,
                 parqueadero = ingreso.Parqueadero?.nombre_parqueadero,
+                objetosValor = ingreso.notas,
                 estadoPago = ingreso.estado_pago,
                 estadoServicio = ingreso.estado_servicio,
                 nombreCliente = ingreso.nombre_cliente,

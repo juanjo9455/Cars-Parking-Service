@@ -1916,7 +1916,7 @@ async function abrirModalInformacion(btn) {
         console.log("========================================");
 
         const [respuestaInfo, respuestaImagenes, respuestaVideos] = await Promise.all([
-            fetch(`/Home/ObtenerInfoIngreso?idIngreso=${idIngreso}`),
+            fetch(`/Home/ObtenerInfoIngreso?idIngreso=${idIngreso}`, { cache: 'no-store' }),
             fetch(`/Home/ObtenerImagenesIngreso?idIngreso=${idIngreso}`),
             fetch(`/Home/ObtenerVideosIngreso?idIngreso=${idIngreso}`)
         ]);
@@ -2083,8 +2083,44 @@ async function abrirModalInformacion(btn) {
         // IMÁGENES
         //========================
 
+        // Objetos de valor que se anotaron en el ingreso (texto libre, se escapa)
+        const textoObjetos = (info.objetosValor ?? "").trim();
+        const sinObjetos = textoObjetos.toLowerCase() === "sin objetos de valor";
+
+        const objetosEscapados = textoObjetos
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+
+        let objetosValor;
+
+        if (!textoObjetos) {
+            objetosValor = `
+                <div class="info-objetos info-objetos-vacio">
+                    <i class="fa-regular fa-circle-question"></i>
+                    <span>No se registraron objetos de valor</span>
+                </div>`;
+        } else if (sinObjetos) {
+            objetosValor = `
+                <div class="info-objetos info-objetos-ninguno">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>El vehículo se recibió sin objetos de valor</span>
+                </div>`;
+        } else {
+            objetosValor = `
+                <div class="info-objetos">
+                    <i class="fa-solid fa-gem"></i>
+                    <div>
+                        <span class="info-objetos-titulo">Objetos que dejó el cliente</span>
+                        <p class="info-objetos-texto">${objetosEscapados}</p>
+                    </div>
+                </div>`;
+        }
+
         contenido.innerHTML += `
             <h3 class="info-seccion"><i class="fa-solid fa-images"></i> Imágenes</h3>
+            <span class="info-label">Objetos de valor</span>
+            ${objetosValor}
         `;
 
         if (dataImagenes.imagenes.length == 0) {
