@@ -2265,8 +2265,30 @@ namespace CarsParkingService.Controllers
                 firma = ingreso.firma != null
                     ? "data:image/png;base64," + Convert.ToBase64String(ingreso.firma)
                     : null,
+                // Solo el enlace: la imagen se descarga aparte para no hacer pesada la respuesta
+                fotoTransferencia = ingreso.foto_transferencia != null
+                    ? Url.Action(nameof(FotoTransferenciaIngreso), new { idIngreso = ingreso.id_ingreso })
+                    : null,
                 puedeSolicitar = PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio)
             });
+        }
+
+        // Devuelve la foto del comprobante de pago (transferencia / QR)
+        [HttpGet]
+        public IActionResult FotoTransferenciaIngreso(int idIngreso)
+        {
+            var foto = _context.ingresos
+                .AsNoTracking()
+                .Where(i => i.id_ingreso == idIngreso)
+                .Select(i => i.foto_transferencia)
+                .FirstOrDefault();
+
+            if (foto == null || foto.Length == 0)
+            {
+                return NotFound();
+            }
+
+            return File(foto, "image/jpeg");
         }
 
         // Valet, banco o admin pueden solicitar el vehículo solo si está activo o parqueado

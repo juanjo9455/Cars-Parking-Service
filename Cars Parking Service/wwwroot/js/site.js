@@ -2128,6 +2128,18 @@ async function abrirModalInformacion(btn) {
             ${objetosValor}
         `;
 
+        // Comprobante de pago (transferencia / QR), del mismo tamaño que las imágenes
+        if (info.fotoTransferencia) {
+            contenido.innerHTML += `
+                <span class="info-label">Comprobante de pago</span>
+                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px,1fr)); gap:10px; margin:4px 0 12px;">
+                    <img src="${info.fotoTransferencia}" alt="Comprobante de pago" loading="lazy"
+                         class="imagen-galeria"
+                         style="width:100%; height:120px; object-fit:cover; border-radius:8px; cursor:pointer;" />
+                </div>
+            `;
+        }
+
         if (dataImagenes.imagenes.length == 0) {
 
             contenido.innerHTML += "<p>No hay imágenes registradas.</p>";
