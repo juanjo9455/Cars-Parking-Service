@@ -1892,6 +1892,9 @@ async function abrirModalInformacion(btn) {
 
     console.log("[INFO] ID del ingreso:", idIngreso);
 
+    // Siempre abre en la vista de información, no en la de solicitud
+    contenido.classList.remove("modo-solicitud");
+
     // Marcador visual: estado inicial de carga
     console.log("[abrirModalInformacion] Consultando todas las imágenes en el controlador...");
     contenido.innerHTML = "<p class='texto-cargando'>Cargando informacion...</p>";
@@ -1957,7 +1960,49 @@ async function abrirModalInformacion(btn) {
             ? `<div class="info-firma"><img src="${info.firma}" alt="Firma del cliente" /></div>`
             : valor(null, "El cliente no firmó");
 
+        // Solicitud por el operador cuando el cliente llama (el servidor decide si se puede)
+        const botonSolicitar = info.puedeSolicitar
+            ? `<button type="button" class="info-btn-solicitar" onclick="mostrarSolicitudOperador()">
+                   <i class="fa-solid fa-bell-concierge"></i> Solicitar vehículo por el cliente
+               </button>`
+            : "";
+
+        const panelSolicitud = info.puedeSolicitar
+            ? `<form class="solicitud-panel" method="post" action="/Home/SolicitarVehiculoOperador"
+                     onsubmit="return enviarSolicitudOperador(this)">
+                   <h3>Solicitar vehículo</h3>
+
+                   <div class="solicitud-datos">
+                       <p><strong>Placa:</strong> ${info.placa ?? "—"}</p>
+                       <p><strong>Cliente:</strong> ${info.nombreCliente ?? "Sin nombre registrado"}</p>
+                   </div>
+
+                   <p class="solicitud-nota">
+                       <i class="fa-solid fa-phone"></i> El cliente llamó y no lo solicitó desde su enlace.
+                   </p>
+
+                   <input type="hidden" name="id_ingreso" value="${idIngreso}" />
+
+                   <label for="solicitud-lugar">Lugar de entrega</label>
+                   <select id="solicitud-lugar" name="lugar_entrega" required
+                           data-preseleccion="${info.lugarIngreso ?? ""}">
+                       <option value="">Cargando ubicaciones...</option>
+                   </select>
+
+                   <div class="solicitud-acciones">
+                       <button type="button" class="btn btn-secondary" onclick="cancelarSolicitudOperador()">
+                           Cancelar
+                       </button>
+                       <button type="submit" class="btn btn-primary">
+                           <i class="fa-solid fa-bell-concierge"></i> Solicitar vehículo
+                       </button>
+                   </div>
+               </form>`
+            : "";
+
         contenido.innerHTML += `
+            ${panelSolicitud}
+
             <div class="info-panel">
 
                 <div class="info-header">
@@ -1967,6 +2012,8 @@ async function abrirModalInformacion(btn) {
                         <span class="info-chip ${claseChipPago}">${info.estadoPago ?? "—"}</span>
                     </div>
                 </div>
+
+                ${botonSolicitar}
 
                 <h3 class="info-seccion"><i class="fa-solid fa-user"></i> Cliente</h3>
                 <div class="info-grid">
@@ -2129,6 +2176,69 @@ async function abrirModalInformacion(btn) {
     }
 }
 
+// ======================================================
+// SOLICITUD DEL VEHÍCULO POR EL OPERADOR (cliente llamó)
+// ======================================================
+
+// Cambia el modal de información al panel de confirmación
+function mostrarSolicitudOperador() {
+
+    const contenido = document.getElementById('contenido-modal-acciones');
+    const select = document.getElementById('solicitud-lugar');
+
+    if (!contenido || !select) return;
+
+    contenido.classList.add('modo-solicitud');
+
+    // Las ubicaciones se cargan una sola vez
+    if (select.dataset.cargado === 'true') return;
+
+    fetch(`/Payment/ObtenerUbicaciones?_=${Date.now()}`, { cache: 'no-store' })
+        .then(response => response.json())
+        .then(data => {
+
+            if (!data.success) throw new Error(data.message);
+
+            select.innerHTML = '<option value="">Selecciona una ubicación</option>';
+
+            // Se preselecciona el lugar donde se ingresó el vehículo
+            data.data.forEach(u => {
+                const option = document.createElement('option');
+                option.value = u.nombre;
+                option.textContent = u.nombre;
+                option.selected = u.nombre === select.dataset.preseleccion;
+                select.appendChild(option);
+            });
+
+            select.dataset.cargado = 'true';
+        })
+        .catch(error => {
+            console.error('[SOLICITUD] Error cargando ubicaciones:', error);
+            select.innerHTML = '<option value="">No se pudieron cargar las ubicaciones</option>';
+        });
+}
+
+// Vuelve a la información sin enviar nada
+function cancelarSolicitudOperador() {
+
+    const contenido = document.getElementById('contenido-modal-acciones');
+
+    if (contenido) contenido.classList.remove('modo-solicitud');
+}
+
+// Evita el doble envío mientras se procesa
+function enviarSolicitudOperador(form) {
+
+    const boton = form.querySelector('button[type="submit"]');
+
+    if (boton.disabled) return false;
+
+    boton.disabled = true;
+    boton.textContent = 'Solicitando...';
+
+    return true;
+}
+
 function cerrarModalAcciones() {
 
     console.log("========================================");
@@ -2157,6 +2267,7 @@ function cerrarModalAcciones() {
 
     if (contenido) {
         contenido.innerHTML = '';
+        contenido.classList.remove('modo-solicitud');
 
         console.log(
             "[MODAL] Contenido limpiado."

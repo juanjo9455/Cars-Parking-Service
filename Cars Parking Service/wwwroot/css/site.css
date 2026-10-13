@@ -2621,6 +2621,97 @@ i.btn-info-ingreso {
     }
 }
 
+/* ==================== Solicitud del vehículo por el operador ==================== */
+
+/* Botón discreto (borde, sin relleno) debajo del encabezado de la información */
+.info-btn-solicitar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 12px;
+    padding: 9px 12px;
+    background: transparent;
+    border: 1px dashed #c62828;
+    border-radius: 10px;
+    color: #c62828;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s ease;
+}
+
+.info-btn-solicitar:hover {
+    background: #fdecea;
+}
+
+/* El panel de confirmación queda oculto hasta que se presiona el botón */
+.solicitud-panel {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* En modo solicitud solo se ve el panel de confirmación */
+#contenido-modal-acciones.modo-solicitud > .solicitud-panel {
+    display: flex;
+}
+
+#contenido-modal-acciones.modo-solicitud > :not(.solicitud-panel) {
+    display: none;
+}
+
+.solicitud-datos {
+    padding: 12px 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.solicitud-datos p {
+    margin: 0 0 4px;
+}
+
+.solicitud-datos p:last-child {
+    margin-bottom: 0;
+}
+
+.solicitud-nota {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 8px 12px;
+    background: #fffbeb;
+    border: 1px solid #f9a825;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #7a5200;
+}
+
+.solicitud-panel label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.solicitud-panel select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.solicitud-acciones {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.solicitud-acciones .btn {
+    flex: 1;
+}
+
 /* Celular del cliente: enlace para llamar */
 .info-tel {
     display: inline-flex;

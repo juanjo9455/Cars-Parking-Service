@@ -2259,8 +2259,53 @@ namespace CarsParkingService.Controllers
                 telefono = ingreso.telefono,
                 firma = ingreso.firma != null
                     ? "data:image/png;base64," + Convert.ToBase64String(ingreso.firma)
-                    : null
+                    : null,
+                puedeSolicitar = PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio)
             });
+        }
+
+        // Valet, banco o admin pueden solicitar el vehículo solo si está activo o parqueado
+        private static bool PuedeSolicitarOperador(int? rol, string? estadoServicio)
+        {
+            var estado = estadoServicio?.Trim().ToLower();
+
+            return (rol == 1 || rol == 2 || rol == 3) &&
+                   (estado == "activo" || estado == "parqueado");
+        }
+
+        // El operador solicita el vehículo cuando el cliente llama y no lo pidió desde su enlace
+        [HttpPost]
+        public IActionResult SolicitarVehiculoOperador(int id_ingreso, string? lugar_entrega)
+        {
+            var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            if (ingreso == null)
+            {
+                TempData["Error"] = "No se encontró el ingreso.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            if (!PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio))
+            {
+                TempData["Error"] = "El vehículo no se puede solicitar en su estado actual o no tienes permiso.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            if (string.IsNullOrWhiteSpace(lugar_entrega))
+            {
+                TempData["Error"] = "Selecciona el lugar de entrega.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            // Mismos datos que guarda la solicitud del cliente
+            ingreso.estado_servicio = "solicitado";
+            ingreso.fecha_fin_servicio = DateTime.Now.AddMinutes(20);
+            ingreso.lugar_entrega = lugar_entrega.Trim();
+
+            _context.SaveChanges();
+
+            TempData["Exito"] = $"Vehículo {ingreso.placa} solicitado. Entrega en {ingreso.lugar_entrega}.";
+            return RedirectToAction("Tabla_Vehiculos");
         }
 
 
