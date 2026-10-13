@@ -1340,23 +1340,28 @@ function abrirModalPago(btn) {
                 style="margin-top:10px; color:red; font-weight:bold;">
         </p>
 
-        <!-- Ingresar código de validación (OCULTO INICIALMENTE) -->
+        <!-- Código para comparar con el cliente (OCULTO INICIALMENTE) -->
         <div id="validacion-contenedor-${id}" style="display:none; margin-bottom: 20px;">
-            <div class="form-group-modal" style="margin-bottom: 20px;">
-                <label>Ingresa el código que el cliente confirmó:</label>
-                <input type="text" id="codigo-validacion-${id}" placeholder="Ej: 123456" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 16px; letter-spacing: 5px;" maxlength="6">
-                <button type="button" id="OtroCodigo" class="btn btn-link" onclick="generarCodigoSeguridad('${id}')" style="margin-top: 10px; color: #2e7d32; text-decoration: underline;">
+            <div class="codigo-operador">
+                <span class="codigo-operador-label">Código de seguridad</span>
+                <span class="codigo-operador-valor" id="codigo-valor-${id}">------</span>
+                <p class="codigo-operador-ayuda">Pídale al cliente que le muestre este mismo código en su celular.</p>
+                <button type="button" class="btn btn-link" onclick="generarCodigoSeguridad('${id}')" style="color: #2e7d32; text-decoration: underline;">
                     Generar otro código
                 </button>
             </div>
 
-            <!-- Botones de validación -->
+            <!-- Confirmar con el cliente o continuar sin él (sin celular / no solicitó) -->
+            <button type="button" class="btn btn-primary" onclick="validarCodigoYAbrir('${id}', '${placa}', '${nombre_cliente}', '${metodo_pago}','modal-acciones', '${estado_servicio}')" style="width: 100%; margin-bottom: 10px;">
+                <i class="fa-solid fa-check"></i> Código confirmado
+            </button>
+            <button type="button" class="btn btn-outline-secondary" onclick="abrirModalFinalizacion('${id}', '${placa}', '${nombre_cliente}', '${metodo_pago}','modal-acciones', '${estado_servicio}')" style="width: 100%; margin-bottom: 10px;">
+                Continuar sin el cliente
+            </button>
+
             <div class="modal-actions" style="display: flex; gap: 10px;">
                 <button type="button" class="btn btn-secondary" onclick="cerrarModalPago('${id}')" style="flex: 1;">
                     Cancelar
-                </button>
-                <button type="button" class="btn btn-primary" onclick="validarCodigoYAbrir('${id}', '${placa}', '${nombre_cliente}', '${metodo_pago}','modal-acciones', '${estado_servicio}')" style="flex: 1;">
-                    <i class="fa-solid fa-check"></i> Validar y Continuar
                 </button>
             </div>
         </div>
@@ -1387,12 +1392,6 @@ function cerrarModalFinalizacion(idIngreso) {
 
 // Limpiar modal de pago
 function limpiarModalPago(idIngreso) {
-
-    const codigoValidacion = document.getElementById(`codigo-validacion-${idIngreso}`);
-
-    if (codigoValidacion) {
-        codigoValidacion.value = '';
-    }
 
     const codigoGenerado = document.getElementById(`codigo-generado-${idIngreso}`);
 
@@ -1427,6 +1426,9 @@ function limpiarModalPago(idIngreso) {
     }
 }
 
+// Contador de expiración activo por ingreso
+const intervalosCodigo = {};
+
 // Generar código de seguridad
 function generarCodigoSeguridad(idIngreso) {
 
@@ -1443,13 +1445,6 @@ function generarCodigoSeguridad(idIngreso) {
 
     const btnContenedor = document.getElementById(`btn-generar-contenedor-${idIngreso}`);
     const btnGenerar = btnContenedor?.querySelector('button');
-    const otroCodigo = document.getElementById("OtroCodigo");
-
-    if (otroCodigo) {
-
-        otroCodigo.style
-
-    }
 
     if (btnGenerar) {
         btnGenerar.disabled = true;
@@ -1498,7 +1493,10 @@ function generarCodigoSeguridad(idIngreso) {
 
             let tiempoRestante = 60;
 
-            const intervalo = setInterval(() => {
+            // Si se generó otro código, el contador anterior no debe borrar el nuevo
+            clearInterval(intervalosCodigo[idIngreso]);
+
+            intervalosCodigo[idIngreso] = setInterval(() => {
 
                 contadorElemento.textContent =
                     `El código expira en ${tiempoRestante}s`;
@@ -1507,7 +1505,7 @@ function generarCodigoSeguridad(idIngreso) {
 
                 if (tiempoRestante < 0) {
 
-                    clearInterval(intervalo);
+                    clearInterval(intervalosCodigo[idIngreso]);
 
                    eliminarCodigoSeguridad(idIngreso);
 
@@ -1587,23 +1585,21 @@ function eliminarCodigoSeguridad(idIngreso) {
         });
 }
 
-// Validar código y abrir modal final
+// Validar código (el que el operador ve y comparó con el cliente) y abrir modal final
 
 function validarCodigoYAbrir(idIngreso,placa,nombre_cliente,metodo_pago,modalId,estado_servicio) {
 
-    const codigoInput =
-        document.getElementById(`codigo-validacion-${idIngreso}`);
+    const codigoValor =
+        document.getElementById(`codigo-valor-${idIngreso}`);
 
-    if (!codigoInput) return;
+    const codigo = codigoValor?.textContent.trim();
 
-    const codigoIngresado = codigoInput.value;
-
-    if (!codigoIngresado || codigoIngresado.length !== 6) {
-        alert('Ingresa un código válido de 6 dígitos');
+    if (!codigo || codigo.length !== 6) {
+        alert('El código expiró. Genera otro código o continúa sin el cliente.');
         return;
     }
 
-    fetch(`/Home/ValidarCodigoSeguridad?id=${idIngreso}&codigo=${codigoIngresado}`, {
+    fetch(`/Home/ValidarCodigoSeguridad?id=${idIngreso}&codigo=${codigo}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1616,6 +1612,23 @@ function validarCodigoYAbrir(idIngreso,placa,nombre_cliente,metodo_pago,modalId,
             alert(data.message || 'Código inválido');
             return;
         }
+
+        abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, modalId, estado_servicio);
+
+    })
+    .catch(error => {
+
+        console.error(error);
+        alert('Error al validar el código');
+
+    });
+}
+
+// Modal final del cobro (con código confirmado o sin el cliente)
+function abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, modalId, estado_servicio) {
+
+        // Se usa el método elegido en el modal (pudo cambiar al generar el código)
+        metodo_pago = document.getElementById(`metodo-pago-${idIngreso}`)?.value || metodo_pago;
 
         cerrarModalPago(idIngreso);
 
@@ -1750,14 +1763,6 @@ function validarCodigoYAbrir(idIngreso,placa,nombre_cliente,metodo_pago,modalId,
         if (metodo_pago === "Transferencia" || metodo_pago == "QR" || metodo_pago == "Nequi") {
             inicializarCamaraTransferencia();
         }
-
-    })
-    .catch(error => {
-
-        console.error(error);
-        alert('Error al validar el código');
-
-    });
 }
 
 // Finalizar servicio
@@ -1775,10 +1780,10 @@ function finalizarServicio(idIngreso, metodoPago) {
         return;
     }
 
-    // Obtener foto si el método es transferencia
+    // Obtener foto si el método es transferencia o QR
     let fotoBase64 = '';
 
-    if (metodoPago === 'Transferencia') {
+    if (metodoPago === 'Transferencia' || metodoPago === 'QR') {
 
         const inputFoto = document.querySelector(
             '#fotosTransferenciaBase64Container input[name^="fotoTransferencia"]'

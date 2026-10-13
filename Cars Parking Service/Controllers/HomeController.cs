@@ -21,9 +21,6 @@ namespace CarsParkingService.Controllers
     {
         private readonly ApplicationDbContext _context;
         
-        // Diccionario para almacenar códigos de seguridad generados
-        // Key: id_ingreso, Value: (código, fecha_generación)
-        private static Dictionary<int, (string codigo, DateTime fechaGeneracion)> codigosSeguridad = new();
 
         public HomeController(ApplicationDbContext context)
         {
@@ -1478,15 +1475,13 @@ namespace CarsParkingService.Controllers
                 }
 
                 // Generar código aleatorio de 6 dígitos
-                Random random = new Random();
-                string codigo = random.Next(100000, 999999).ToString();
+                string codigo = Random.Shared.Next(100000, 1000000).ToString();
 
-                // Almacenar código con expiración de 5 minutos
-                codigosSeguridad[id] = (codigo, DateTime.Now);
+                // El código solo vive en la BD y expira en 1 minuto
+                ingreso.codigo_seguridad = codigo;
+                ingreso.fecha_expiracion_codigo = DateTime.Now.AddMinutes(1);
 
                 // Actualizar método de pago
-                ingreso.codigo_seguridad = codigo;
-                ingreso.fecha_expiracion_codigo = DateTime.Now.AddMinutes(1); ;
                 ingreso.metodo_pago = metodoPago;
                 _context.SaveChanges();
 
@@ -1553,29 +1548,31 @@ namespace CarsParkingService.Controllers
         {
             try
             {
-                // Validar si el código existe
-                if (!codigosSeguridad.ContainsKey(id))
+                // Se valida contra la BD (sobrevive a reinicios del servidor)
+                var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id);
+
+                if (ingreso == null || string.IsNullOrEmpty(ingreso.codigo_seguridad))
                 {
                     return Json(new { success = false, message = "No hay código generado para este ingreso" });
                 }
 
-                var (codigoGenerado, fechaGeneracion) = codigosSeguridad[id];
-
                 // Validar que no haya expirado (1 minuto)
-                if ((DateTime.Now - fechaGeneracion).TotalMinutes > 1)
+                if (ingreso.fecha_expiracion_codigo == null || ingreso.fecha_expiracion_codigo < DateTime.Now)
                 {
-                    codigosSeguridad.Remove(id);
                     return Json(new { success = false, message = "Código expirado" });
                 }
 
                 // Validar que el código coincida
-                if (codigoGenerado != codigo)
+                if (ingreso.codigo_seguridad != codigo)
                 {
                     return Json(new { success = false, message = "Código inválido" });
                 }
 
-                // Código válido - remover de almacenamiento
-                codigosSeguridad.Remove(id);
+                // Código válido: se borra para que no se reutilice
+                ingreso.codigo_seguridad = null;
+                ingreso.fecha_expiracion_codigo = null;
+                _context.SaveChanges();
+
                 return Json(new { success = true, message = "Código validado correctamente" });
             }
             catch (Exception ex)
@@ -1614,9 +1611,9 @@ namespace CarsParkingService.Controllers
                     });
                 }
 
-                // Si el método de pago es transferencia,
+                // Si el método de pago es transferencia o QR,
                 // la foto es obligatoria.
-                if (ingreso.metodo_pago == "Transferencia")
+                if (ingreso.metodo_pago == "Transferencia" || ingreso.metodo_pago == "QR")
                 {
                     if (string.IsNullOrWhiteSpace(dto.FotoBase64))
                     {
@@ -1649,6 +1646,10 @@ namespace CarsParkingService.Controllers
 
                 ingreso.estado_servicio = dto.EstadoServicio;
                 ingreso.estado_pago = "pagado";
+
+                // El cobro terminó: el código ya no sirve (con o sin validación del cliente)
+                ingreso.codigo_seguridad = null;
+                ingreso.fecha_expiracion_codigo = null;
 
                 if (dto.EstadoServicio == "finalizado")
                 {

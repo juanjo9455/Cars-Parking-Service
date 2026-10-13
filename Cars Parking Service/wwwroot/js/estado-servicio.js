@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     mostrarInformacion2(data.codigo);
 
                     // 4. Iniciar verificación de código de seguridad
-                    //iniciarVerificacionCodigo();
+                    iniciarVerificacionCodigo();
 
                     // 5. Bloquear botón cerrar del modal
                     bloquearCierreModal();
@@ -282,8 +282,7 @@ function mostrarInformacion2(codigo) {
     if (i1) i1.style.display = 'none';
     if (i2) i2.style.display = 'block';
 
-    const codigoValor = document.getElementById('codigo-valor');
-    if (codigoValor && codigo) codigoValor.textContent = codigo;
+    mostrarCodigoSeguridad(codigo);
 }
 
 // ============================================================
@@ -503,7 +502,7 @@ function Pagar(informacion1, informacion2) {
                 bloquearCierreModal();
 
                 // Iniciar verificación de código
-                //iniciarVerificacionCodigo();
+                iniciarVerificacionCodigo();
 
             } else {
                 alert('Error al guardar pago: ' + data.message);
@@ -640,29 +639,38 @@ function handleTiempoAgotado() {
 // CÓDIGO DE SEGURIDAD
 // ============================================================
 
-/*function iniciarVerificacionCodigo() {
+// Consulta cada 3 s si el operador generó (o venció) el código, sin recargar
+function iniciarVerificacionCodigo() {
     if (intervaloCodigo !== null) clearInterval(intervaloCodigo);
+
+    const idIngreso = document.getElementById('idIngreso')?.value;
+    if (!idIngreso) return;
+
     intervaloCodigo = setInterval(() => {
-        const idIngreso = document.getElementById('idIngreso')?.value;
-        if (!idIngreso) return;
-        fetch(`/Payment/VerificarCodigoSeguridad?id=${idIngreso}`)
+        fetch(`/Payment/ObtenerEstadoIngreso?id=${idIngreso}&_=${Date.now()}`, { cache: 'no-store' })
             .then(res => res.json())
             .then(data => {
-                if (data.success && data.tieneCodigo) {
+                if (!data.success) return;
+
+                mostrarCodigoSeguridad(data.codigo);
+
+                // Cobro terminado: ya no hay código que esperar
+                if (data.estadoPago === 'pagado') {
                     clearInterval(intervaloCodigo);
-                    mostrarCodigoSeguridad(data.codigo);
+                    intervaloCodigo = null;
                 }
             })
             .catch(err => console.error('❌ Error verificando código:', err));
     }, 3000);
 }
 
+// Muestra el código vigente o lo oculta si no hay / venció
 function mostrarCodigoSeguridad(codigo) {
     const contenedor = document.getElementById('codigo-generado');
     const valor = document.getElementById('codigo-valor');
-    if (contenedor) contenedor.style.display = 'block';
-    if (valor) valor.textContent = codigo;
-}*/
+    if (contenedor) contenedor.style.display = codigo ? 'block' : 'none';
+    if (valor) valor.textContent = codigo || '------';
+}
 
 // ============================================================
 // BOTÓN PAGAR DINÁMICO

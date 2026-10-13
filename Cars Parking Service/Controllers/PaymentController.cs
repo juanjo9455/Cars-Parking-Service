@@ -127,7 +127,8 @@ namespace CarsParkingService.Controllers
                 idConsulta = ingreso.id_ingreso,
                 estadoServicio = ingreso.estado_servicio,
                 estadoPago = ingreso.estado_pago,
-                codigo = ingreso.codigo_seguridad,
+                // Solo se envía el código mientras no haya vencido
+                codigo = ingreso.fecha_expiracion_codigo > DateTime.Now ? ingreso.codigo_seguridad : null,
                 fechaFinServicio = ingreso.fecha_fin_servicio?.ToString("O"), // ISO 8601
                 lugarEntrega = ingreso.lugar_entrega
             });
