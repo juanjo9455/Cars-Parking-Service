@@ -276,8 +276,8 @@
             <thead>
                 <tr>
                     <th>Placa</th>
-                    <th>Estado Pago</th>
                     <th>Estado Servicio</th>
+                    <th>Estado Pago</th>
                     <th></th>
                 </tr>
             </thead>
@@ -296,6 +296,11 @@
                 <tr class="@claseAlerta">
 
                     <td data-label="Placa">@ingresos.placa</td>
+
+                    <td data-label="Estado Servicio">
+                        <span class="info-chip">@(string.IsNullOrWhiteSpace(ingresos.estado_servicio) ? "—" : ingresos.estado_servicio)</span>
+                    </td>
+
                     @* Chips de estado: mismos colores que tenía el panel de información *@
                     <td data-label="Estado Pago">
                         @if (ingresos.estado_pago == "pagado")
@@ -310,10 +315,6 @@
                         {
                             <span class="info-chip chip-pendiente">Pendiente</span>
                         }
-                    </td>
-
-                    <td data-label="Estado Servicio">
-                        <span class="info-chip">@(string.IsNullOrWhiteSpace(ingresos.estado_servicio) ? "—" : ingresos.estado_servicio)</span>
                     </td>
 
                     <td data-label="Acción" class="cell-action">

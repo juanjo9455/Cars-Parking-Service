@@ -1264,10 +1264,7 @@ function abrirModalPago(btn) {
 
             <!-- Confirmar con el cliente o continuar sin él (sin celular / no solicitó) -->
             <button type="button" class="btn btn-primary" onclick="validarCodigoYAbrir('${id}', '${placa}', '${nombre_cliente}', '${metodo_pago}','modal-acciones', '${estado_servicio}')" style="width: 100%; margin-bottom: 10px;">
-                <i class="fa-solid fa-check"></i> Código confirmado
-            </button>
-            <button type="button" class="btn btn-outline-secondary" onclick="abrirModalFinalizacion('${id}', '${placa}', '${nombre_cliente}', '${metodo_pago}','modal-acciones', '${estado_servicio}')" style="width: 100%; margin-bottom: 10px;">
-                Continuar sin el cliente
+                <i class="fa-solid fa-check"></i> Continuar
             </button>
 
             <div class="modal-actions" style="display: flex; gap: 10px;">
@@ -1631,22 +1628,6 @@ function abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, m
 
         ` : ''}
 
-        <div class="form-group-modal"
-                style="margin-bottom:20px;">
-
-            <label>Estado del Servicio:</label>
-
-            <select id="estado-servicio-${idIngreso}"
-                    style="width:100%; padding:8px;">
-
-                <option value="finalizado">
-                    Finalizado
-                </option>
-
-            </select>
-
-        </div>
-
         <div class="modal-actions"
                 style="display:flex; gap:10px;">
 
@@ -1662,7 +1643,7 @@ function abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, m
                     class="btn btn-success"
                     onclick="finalizarServicio('${idIngreso}','${metodo_pago}')">
 
-                Confirmar
+                Finalizar Servicio
 
             </button>
 
@@ -1679,17 +1660,7 @@ function abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, m
 // Finalizar servicio
 function finalizarServicio(idIngreso, metodoPago) {
 
-    const estadoServicioSelect =
-        document.getElementById(`estado-servicio-${idIngreso}`);
-
-    if (!estadoServicioSelect) return;
-
-    const estadoServicio = estadoServicioSelect.value;
-
-    if (!estadoServicio) {
-        alert('Selecciona un estado para el servicio');
-        return;
-    }
+    const estadoServicio = 'finalizado';
 
     // Obtener foto si el método es transferencia o QR
     let fotoBase64 = '';
@@ -1701,7 +1672,7 @@ function finalizarServicio(idIngreso, metodoPago) {
         );
 
         if (!inputFoto || !inputFoto.value) {
-            alert('Debes capturar la foto de la transferencia');
+            mostrarAlertaWhatsApp('Debes capturar la foto de la transferencia', 'error');
             return;
         }
 
@@ -1733,14 +1704,12 @@ function finalizarServicio(idIngreso, metodoPago) {
 
         if (data.success) {
 
-            alert('Servicio finalizado con éxito');
-
             location.reload();
 
         } else {
 
-            alert(data.message ||
-                'No se pudo finalizar el servicio');
+            mostrarAlertaWhatsApp(data.message ||
+                'No se pudo finalizar el servicio', 'error');
 
             if (btnConfirmar) {
                 btnConfirmar.disabled = false;
@@ -1753,7 +1722,7 @@ function finalizarServicio(idIngreso, metodoPago) {
 
         console.error(error);
 
-        alert('Error al finalizar el servicio');
+        mostrarAlertaWhatsApp('Error al finalizar el servicio', 'error');
 
         if (btnConfirmar) {
             btnConfirmar.disabled = false;
@@ -1882,6 +1851,8 @@ async function abrirModalInformacion(btn) {
                </button>`
             : "";
 
+        console.log("Estado Servicio: " + info.estadoServicio);
+
         const panelSolicitud = info.puedeSolicitar
             ? `<form class="solicitud-panel" method="post" action="/Home/SolicitarVehiculoOperador"
                      onsubmit="return enviarSolicitudOperador(this)">
@@ -1950,8 +1921,12 @@ async function abrirModalInformacion(btn) {
                     </div>
                 </div>
 
-                <h3 class="info-seccion"><i class="fa-solid fa-user-tie"></i> Valets</h3>
+                <h3 class="info-seccion"><i class="fa-solid fa-user-tie"></i> Operadores</h3>
                 <div class="info-grid">
+                    <div class="info-item info-item-completo">
+                        <span class="info-label">Banco ingreso</span>
+                        ${valor(info.banco, "Sin banco registrado")}
+                    </div>
                     <div class="info-item">
                         <span class="info-label">Valet parqueo</span>
                         ${valor(info.valetIngreso, sinValet)}
@@ -1959,10 +1934,6 @@ async function abrirModalInformacion(btn) {
                     <div class="info-item">
                         <span class="info-label">Valet despacho</span>
                         ${valor(info.valetDespacho, sinValet)}
-                    </div>
-                    <div class="info-item info-item-completo">
-                        <span class="info-label">Banco ingreso</span>
-                        ${valor(info.banco, "Sin banco registrado")}
                     </div>
                 </div>
 

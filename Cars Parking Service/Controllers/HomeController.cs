@@ -1862,6 +1862,9 @@ namespace CarsParkingService.Controllers
 
                 _context.SaveChanges();
 
+                // La alerta verde se muestra en la tabla después de recargar
+                TempData["Exito"] = "Servicio finalizado correctamente.";
+
                 return Json(new
                 {
                     success = true,

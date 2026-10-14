@@ -2505,9 +2505,7 @@ i.btn-pago-ingreso {
 .info-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
+    justify-content: space-evenly;
     padding-bottom: 14px;
     border-bottom: 2px solid #f3f3f3;
 }
