@@ -1545,7 +1545,7 @@ namespace CarsParkingService.Controllers
             if (ingreso == null)
             {
 
-                return Json(new { succes = false, message = "El ingreso no existe." });
+                return Json(new { success = false, message = "El ingreso no existe." });
 
             }
 
@@ -1553,23 +1553,16 @@ namespace CarsParkingService.Controllers
                 ? telefono.Trim()
                 : ingreso.telefono;
 
-            if (!string.IsNullOrWhiteSpace(telefono))
-            {
-
-                ingreso.telefono = telefono.Trim();
-                int lineasAfectadas = await _context.SaveChangesAsync();
-
-                if (lineasAfectadas <= 0)
-                {
-                    return Json(new { success = false, message = "Error al actualizar el número de teléfono en la base de datos." });
-                }
-
-            }
-
             var (exito, mensaje) = await EnviarWhatsAppIngreso(ingreso.placa, ingreso.nombre_cliente, ingreso.id_ingreso, numeroEnvio, "reenvio");
 
             if (exito)
             {
+                // El número nuevo se guarda solo si cambió y el envío funcionó
+                if (numeroEnvio != ingreso.telefono)
+                {
+                    ingreso.telefono = numeroEnvio;
+                    await _context.SaveChangesAsync();
+                }
 
                 return Json(new
                 {
