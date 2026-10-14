@@ -633,7 +633,6 @@ window.inicializarCamaraTransferencia = function () {
         !photosPreviewTransferencia) return;
 
     let archivosTransferenciaCapturados = [];
-    let cameraInputTransferenciaClicking = false;
 
     function sincronizarInputsTransferenciaOcultos() {
 
@@ -672,12 +671,6 @@ window.inicializarCamaraTransferencia = function () {
             removeBtn.className = 'delete-photo';
             removeBtn.textContent = '✕';
 
-            tomarFotoTransferenciaBtn.disabled = false;
-            tomarFotoTransferenciaBtn.style.backgroundColor = '';
-            tomarFotoTransferenciaBtn.style.cursor = '';
-            tomarFotoTransferenciaBtn.style.opacity = '';
-            cameraInputTransferenciaClicking = false;
-
             removeBtn.onclick = () => {
 
                 archivosTransferenciaCapturados.splice(index, 1);
@@ -692,11 +685,17 @@ window.inicializarCamaraTransferencia = function () {
             previewDiv.appendChild(removeBtn);
             photosPreviewTransferencia.appendChild(previewDiv);
         });
+
+        // Con foto tomada el botón queda deshabilitado; al borrarla (✕) se habilita otra vez
+        const hayFoto = archivosTransferenciaCapturados.length > 0;
+
+        tomarFotoTransferenciaBtn.disabled = hayFoto;
+        tomarFotoTransferenciaBtn.style.backgroundColor = hayFoto ? '#9e9e9e' : '';
+        tomarFotoTransferenciaBtn.style.cursor = hayFoto ? 'not-allowed' : '';
+        tomarFotoTransferenciaBtn.style.opacity = hayFoto ? '0.7' : '';
     }
 
     cameraInputTransferencia.addEventListener('change', async (e) => {
-
-        cameraInputTransferenciaClicking = false;
 
         const files = Array.from(e.target.files);
 
@@ -724,21 +723,7 @@ window.inicializarCamaraTransferencia = function () {
             '1 foto seleccionada (max. 1)';
     });
 
-    tomarFotoTransferenciaBtn.addEventListener('click', function (e) {
-
-        if (cameraInputTransferenciaClicking) {
-
-            e.preventDefault();
-            return;
-        }
-
-        // Deshabilitar el botón y ponerlo gris
-        tomarFotoTransferenciaBtn.disabled = true;
-        tomarFotoTransferenciaBtn.style.backgroundColor = '#9e9e9e';
-        tomarFotoTransferenciaBtn.style.cursor = 'not-allowed';
-        tomarFotoTransferenciaBtn.style.opacity = '0.7';
-
-        cameraInputTransferenciaClicking = true;
+    tomarFotoTransferenciaBtn.addEventListener('click', function () {
 
         cameraInputTransferencia.removeAttribute('multiple');
         cameraInputTransferencia.accept = 'image/*';
