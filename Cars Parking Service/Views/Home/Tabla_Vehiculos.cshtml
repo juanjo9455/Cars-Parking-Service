@@ -140,7 +140,7 @@
     <div class="header">
         <div class="header-info">
             <h2>
-                Ingresos - Valet Parking
+                Ingresos
                 @if (!string.IsNullOrEmpty(ViewBag.ubicacion))
                 {
                     <span style="color: #b00020; font-weight: 600;">
@@ -260,13 +260,14 @@
                         <span class="btn-text">Limpiar</span>
                     </a>
                 </div>
-                <div class="total-registros-filtro">
-                    <i class="fa-solid fa-car-side"></i>
-                    Total de ingresos realizados:
-                    <strong>@ViewBag.TotalRegistros</strong>
-                </div>
             </form>
         </div>
+    </div>
+
+    <div class="total-registros-filtro">
+        <i class="fa-solid fa-car-side"></i>
+        Total de ingresos realizados:
+        <strong>@ViewBag.TotalRegistros</strong>
     </div>
 
     <!-- Table -->

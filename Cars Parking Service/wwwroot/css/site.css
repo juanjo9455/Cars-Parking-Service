@@ -1352,7 +1352,7 @@ tbody td:last-child {
     }
 
     table {
-        min-width: 560px;
+        min-width: 300px;
         font-size: 12px;
     }
 
