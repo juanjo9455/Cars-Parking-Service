@@ -1,4 +1,5 @@
-const CACHE_VERSION = 'cps-v1';
+// Subir la versión borra las cachés viejas (incluidas respuestas de datos guardadas por error)
+const CACHE_VERSION = 'cps-v2';
 const APP_SHELL_CACHE = `app-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 
@@ -71,6 +72,9 @@ self.addEventListener('fetch', (event) => {
         );
         return;
     }
+
+    // Solo archivos estáticos van a caché; los datos (/Home/..., /Payment/...) siempre van al servidor
+    if (!/^\/(css|js|lib|icons|img)\/|^\/(favicon\.ico|manifest\.webmanifest|offline\.html)$/.test(requestUrl.pathname)) return;
 
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
