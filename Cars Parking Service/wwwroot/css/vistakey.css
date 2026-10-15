@@ -188,6 +188,29 @@
     transform: translateY(-2px);
 }
 
+/* Botón secundario del modal (solo admin): vuelve al panel */
+.modal-volver {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 13px;
+    border: 1px solid #d0d5dd;
+    border-radius: 12px;
+    background: #fff;
+    color: #344054;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    transition: .3s;
+}
+
+.modal-volver:hover {
+    background: #f2f4f7;
+    color: #1d2939;
+    transform: translateY(-2px);
+}
+
 @keyframes aparecerModal {
     from {
         opacity: 0;

@@ -1225,7 +1225,7 @@ function abrirModalPago(btn) {
         </div>
         <br />
         <p> Editar Metodo De Pago </p>
-        <select id="metodo-pago-${id}" style="width:100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 20px;">
+        <select id="metodo-pago-${id}" onchange="mostrarDatosPago('${id}')" style="width:100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 20px;">
             <option value="QR" ${metodo_pago === "QR" ? "selected" : ""}>
                 QR
             </option>
@@ -1239,6 +1239,10 @@ function abrirModalPago(btn) {
             </option>
 
         </select>
+
+        <!-- QR o número de cuenta según el método elegido (en efectivo queda vacío) -->
+        <div id="datos-pago-${id}" style="text-align: center; margin-bottom: 20px;"></div>
+
         <br />
         <!-- Generar código de seguridad -->
         <div id="btn-generar-contenedor-${id}" style="margin-bottom: 20px;">
@@ -1276,7 +1280,29 @@ function abrirModalPago(btn) {
     
     `
 
+    mostrarDatosPago(id);
+
     if (modalAcciones) { modalAcciones.style.display = 'flex'; }
+}
+
+// Muestra el QR (QR) o la cuenta de ahorros (Transferencia); en efectivo no muestra nada
+function mostrarDatosPago(id) {
+    const metodo = document.getElementById(`metodo-pago-${id}`)?.value;
+    const contenedor = document.getElementById(`datos-pago-${id}`);
+
+    if (!contenedor) return;
+
+    if (metodo === 'QR') {
+        contenedor.innerHTML = `
+            <img src="/img/qr-pago.png" alt="QR para pagar" class="imagen-galeria"
+                 style="width: 100%; max-width: 240px; border-radius: 8px; cursor: pointer;" />`;
+    } else if (metodo === 'Transferencia') {
+        contenedor.innerHTML = `
+            <p style="margin: 0;">Cuenta de ahorros Bancolombia</p>
+            <p style="margin: 0; font-size: 1.4rem; font-weight: bold;">23681691537</p>`;
+    } else {
+        contenedor.innerHTML = '';
+    }
 }
 
 // Cerrar modal de pago
