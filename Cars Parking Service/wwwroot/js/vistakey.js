@@ -64,221 +64,10 @@ if (btnAcceder) {
 
 }
 
-async function abrirModalInformacionKey(btn) {
-
-    const idIngreso = btn?.dataset?.idIngreso;
-    const data = window.vistaKeyInfoMap?.[String(idIngreso)];
-
-    if (!data) {
-        alert("No se encontró información del vehículo.");
-        return;
-    }
-
-    const modal = document.getElementById("modalInfoKey");
-
-    const placa = document.getElementById("infoKeyPlaca");
-    const cliente = document.getElementById("infoKeyCliente");
-    const valet = document.getElementById("infoKeyValet");
-    const ubicacion = document.getElementById("infoKeyUbicacion");
-
-    const gallery = document.getElementById("infoKeyGallery");
-    const noPhotos = document.getElementById("infoKeyNoPhotos");
-
-    if (!modal || !placa || !cliente || !valet || !ubicacion || !gallery || !noPhotos) {
-        console.error("No se encontró el modal de información.");
-        return;
-    }
-
-    //========================
-    // INFORMACIÓN DEL VEHÍCULO
-    //========================
-
-    placa.textContent = data.placa || "N/A";
-    cliente.textContent = data.cliente || "N/A";
-    valet.textContent = data.valet || "N/A";
-    ubicacion.textContent = data.ubicacion || "N/A";
-
-    //========================
-    // PREPARAR GALERÍA
-    //========================
-
-    gallery.innerHTML = "";
-    noPhotos.style.display = "none";
-
-    modal.classList.add("show");
-    modal.setAttribute("aria-hidden", "false");
-
-    try {
-
-        const [respuestaImagenes, respuestaVideos] = await Promise.all([
-            fetch(`/Home/ObtenerImagenesIngreso?idIngreso=${idIngreso}`),
-            fetch(`/Home/ObtenerVideosIngreso?idIngreso=${idIngreso}`)
-        ]);
-
-        if (!respuestaImagenes.ok)
-            throw new Error("No fue posible obtener las imágenes.");
-
-        if (!respuestaVideos.ok)
-            throw new Error("No fue posible obtener los videos.");
-
-        const dataImagenes = await respuestaImagenes.json();
-        const dataVideos = await respuestaVideos.json();
-
-        //========================
-        // IMÁGENES
-        //========================
-
-        if (dataImagenes.imagenes.length > 0) {
-
-            dataImagenes.imagenes.forEach(imagen => {
-
-                const item = document.createElement("div");
-                item.className = "info-key-photo-item";
-
-                const img = document.createElement("img");
-
-                img.src = imagen.src;
-                img.alt = "Imagen del vehículo";
-                img.loading = "lazy";
-
-                // -------------------------------------------------------------
-                // AGREGAR ESTA LÍNEA:
-                img.classList.add("imagen-galeria");
-                // De esta forma el listener event.target.closest(".imagen-galeria") la detectará
-                // -------------------------------------------------------------
-
-                item.appendChild(img);
-                gallery.appendChild(item);
-
-            });
-
-        }
-
-        //========================
-        // VIDEOS
-        //========================
-
-        if (dataVideos.videos.length > 0) {
-
-            dataVideos.videos.forEach(video => {
-
-                const item = document.createElement("div");
-                item.className = "info-key-photo-item";
-
-                const reproductor = document.createElement("video");
-
-                reproductor.src = video.src;
-                reproductor.controls = true;
-                reproductor.preload = "metadata";
-                reproductor.style.width = "100%";
-                reproductor.style.height = "100%";
-                reproductor.style.objectFit = "cover";
-
-                item.appendChild(reproductor);
-                gallery.appendChild(item);
-
-            });
-
-        }
-
-        if (
-            dataImagenes.imagenes.length === 0 &&
-            dataVideos.videos.length === 0
-        ) {
-            noPhotos.style.display = "block";
-        }
-
-    }
-    catch (error) {
-
-        console.error(error);
-
-        noPhotos.style.display = "block";
-        noPhotos.textContent = "Ocurrió un error al obtener la información del vehículo.";
-
-    }
-
-}
-
-// ==========================================
-// ABRIR VISOR DE IMAGEN
-// ==========================================
-
-function abrirVisorImagen(src) {
-
-    console.log("=================================");
-    console.log("[VISOR] abrirVisorImagen() EJECUTADA");
-    console.log("[VISOR] SRC recibido:", src);
-
-    const visor = document.getElementById("visor-imagen");
-    const imagenGrande = document.getElementById("imagen-grande");
-
-    console.log("[VISOR] visor:", visor);
-    console.log("[VISOR] imagenGrande:", imagenGrande);
-
-    if (!visor) {
-        console.error("[VISOR] ❌ NO existe #visor-imagen");
-        return;
-    }
-
-    if (!imagenGrande) {
-        console.error("[VISOR] ❌ NO existe #imagen-grande");
-        return;
-    }
-
-    console.log("[VISOR] Asignando SRC a imagen grande...");
-
-    imagenGrande.src = src;
-
-    console.log("[VISOR] Mostrando visor...");
-
-    visor.style.display = "flex";
-
-    console.log("[VISOR] display actual:", visor.style.display);
-    console.log("=================================");
-}
-
-function cerrarVisorImagen() {
-
-    const visor = document.getElementById("visor-imagen");
-    const imagenGrande = document.getElementById("imagen-grande");
-
-    if (visor) {
-        visor.style.display = "none";
-    }
-
-    if (imagenGrande) {
-        imagenGrande.src = "";
-    }
-}
-
-// ==========================================
-// LISTENER DEL CONTENEDOR DE IMÁGENES
-// ==========================================
-
-document.addEventListener("click", function (event) {
-    // Busca si es una etiqueta .imagen-galeria O si es una <img> dentro de la galería del modal
-    const imagen = event.target.closest(".imagen-galeria, .info-key-gallery img");
-
-    if (!imagen) return;
-
-    abrirVisorImagen(imagen.src);
-});
-
-function cerrarModalInfoKey() {
-    const modal = document.getElementById('modalInfoKey');
-    if (!modal) return;
-
-    modal.classList.remove('show');
-    modal.setAttribute('aria-hidden', 'true');
-}
-
 /**
  * Abre el modal para despacho de vehículos
  * @param {HTMLElement} btn - El botón que abrió el modal, contiene la información del vehículo.
  */
-console.log("JS cargado");
-
 function abrirModalDespacho(btn) {
     // Leer atributos usados en la vista
     const idIngreso = btn.getAttribute('data-id-ingreso') || btn.getAttribute('data-id');
@@ -463,8 +252,9 @@ function construirFilaTabla(ingreso) {
         <button type="button"
                 class="btn-icon btn-icon-info"
                 title="Ver información del vehículo"
-                onclick="abrirModalInformacionKey(this)"
-                data-id-ingreso="${ingreso.id}">
+                onclick="abrirModalInformacion(this)"
+                data-id-ingreso="${ingreso.id}"
+                data-sin-solicitar="true">
             <i class="fa-solid fa-circle-info"></i>
         </button>
     `;
@@ -562,7 +352,7 @@ function reinicializarEventos() {
     // Si hay botones de info, asegurarse de que tengan el evento
     document.querySelectorAll('.btn-icon-info').forEach(btn => {
         btn.onclick = function () {
-            abrirModalInformacionKey(this);
+            abrirModalInformacion(this);
         };
     });
 }

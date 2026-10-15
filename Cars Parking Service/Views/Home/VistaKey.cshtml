@@ -166,8 +166,9 @@
                             <button type="button"
                                     class="btn-icon btn-icon-info"
                                     title="Ver información del vehículo"
-                                    onclick="abrirModalInformacionKey(this)"
-                                    data-id-ingreso="@item.id_ingreso">
+                                    onclick="abrirModalInformacion(this)"
+                                    data-id-ingreso="@item.id_ingreso"
+                                    data-sin-solicitar="true">
                                 <i class="fa-solid fa-circle-info"></i>
                             </button>
                         </td>
@@ -320,51 +321,28 @@
     </div>
 </div>
 
-<!-- Modal información vehículo -->
-<div class="info-key-modal" id="modalInfoKey" aria-hidden="true">
-    <div class="info-key-modal-card" role="dialog" aria-modal="true" aria-labelledby="infoKeyTitle">
-        <div class="info-key-modal-header">
-            <div>
-                <h5 id="infoKeyTitle">Información del vehículo</h5>
-                <p>Detalle completo del ingreso</p>
-            </div>
-            <button type="button" class="info-key-close" onclick="cerrarModalInfoKey()" aria-label="Cerrar">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
+<!-- Modal de información: el mismo de la tabla de ingresos (abrirModalInformacion en site.js) -->
+<style>
+    .card-ingreso-vehiculos {
+        width: 30%;
+        max-width: 1100px;
+    }
+</style>
 
-        <div class="info-key-modal-body">
-            <div class="info-key-grid">
-                <div class="info-key-item">
-                    <span class="info-key-label">Placa</span>
-                    <span class="info-key-value" id="infoKeyPlaca"></span>
-                </div>
+<div id="modal-acciones" class="Editar-Ingreso" style="display:none;">
 
-                <div class="info-key-item">
-                    <span class="info-key-label">Cliente</span>
-                    <span class="info-key-value" id="infoKeyCliente"></span>
-                </div>
+    <div class="modal-overlay" onclick="cerrarModalAcciones()"></div>
 
-                <div class="info-key-item">
-                    <span class="info-key-label">Valet asignado</span>
-                    <span class="info-key-value" id="infoKeyValet"></span>
-                </div>
+    <div class="Card-Ingreso card-ingreso-vehiculos">
 
-                <div class="info-key-item">
-                    <span class="info-key-label">Ubicación del servicio</span>
-                    <span class="info-key-value" id="infoKeyUbicacion"></span>
-                </div>
-            </div>
+        <span class="close-btn" onclick="cerrarModalAcciones()">
+            &times;
+        </span>
 
-            <div class="info-key-gallery-wrap">
-                <h6>Fotos del vehículo</h6>
-                <div class="info-key-gallery" id="infoKeyGallery"></div>
-                <div class="info-key-no-photos" id="infoKeyNoPhotos" style="display:none;">
-                    No hay fotos registradas para este vehículo.
-                </div>
-            </div>
-        </div>
+        <div id="contenido-modal-acciones"></div>
+
     </div>
+
 </div>
 
 <!-- ==========================================
@@ -390,10 +368,6 @@
     </div>
 
 </div>
-
-<script>
-    window.vistaKeyInfoMap = @Html.Raw(ViewBag.VistaKeyInfoJson ?? "{}");
-</script>
 
 <script>
     window.debugVistaKeyController = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["DebugVistaKey"]?.ToString() ?? string.Empty));
@@ -442,11 +416,11 @@
 
         document.querySelectorAll('button, a.btn, a.home-action-btn').forEach(addSpinner);
 
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', ev => {
-                const submitter = ev.submitter || form.querySelector('button[type="submit"], button:not([type])');
-                activate(submitter);
-            });
+        // Delegado en document: también cubre las filas que redibuja el refresco automático
+        document.addEventListener('submit', ev => {
+            const form = ev.target;
+            const submitter = ev.submitter || form.querySelector('button[type="submit"], button:not([type])');
+            activate(submitter);
         });
 
         document.querySelectorAll('a.btn, a.home-action-btn').forEach(link => {

@@ -348,7 +348,6 @@ namespace CarsParkingService.Controllers
             var query = _context.ingresos
                 .Include(i => i.Valet)
                 .Include(i => i.Banco)
-                .Include(i => i.Ubicacion)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(placa))
@@ -422,40 +421,12 @@ namespace CarsParkingService.Controllers
             var idParqueaderoVista = idParqueaderoSesion ?? sesion?.id_parqueadero;
             var parqueadero = _context.parqueaderos.FirstOrDefault(p => p.id_parqueadero == idParqueaderoVista);
 
-            var idsIngresos = ingresos.Select(i => i.id_ingreso).ToList();
-
-            var imagenesPorIngreso = _context.imagenes
-                .Where(img => idsIngresos.Contains(img.id_ingreso))
-                .AsEnumerable()
-                .Select(img => new
-                {
-                    img.id_ingreso,
-                    foto = $"data:image/jpeg;base64,{Convert.ToBase64String(img.dato_imagen)}"
-                })
-                .GroupBy(x => x.id_ingreso)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Select(x => x.foto).ToList()
-                );
-
-            var vistaKeyInfo = ingresos.ToDictionary(
-                i => i.id_ingreso,
-                i => new
-                {
-                    idIngreso = i.id_ingreso,
-                    placa = i.placa,
-                    cliente = i.nombre_cliente ?? "N/A",
-                    valet = i.Valet?.nombres ?? "N/A",
-                    ubicacion = i.Ubicacion?.nombre_ubicacion ?? "N/A",
-                    fotos = imagenesPorIngreso.TryGetValue(i.id_ingreso, out var fotos) ? fotos : new List<string>()
-                }
-            );
+            // La información del vehículo (fotos, videos, firma) se pide al abrir el modal, igual que en la tabla de ingresos
 
             ViewData["FiltroPlaca"] = placa;
             ViewData["FiltroEstado"] = estado_servicio;
             ViewData["NombreParqueadero"] = parqueadero?.nombre_parqueadero ?? "Parqueadero";
             ViewBag.valets = _context.usuarios.Where(v => v.id_rol == 1).ToList();
-            ViewBag.VistaKeyInfoJson = System.Text.Json.JsonSerializer.Serialize(vistaKeyInfo);
             ViewBag.idRol = rolUsuario;
             ViewBag.EstaEnParqueadero = idParqueaderoSesion.HasValue;
             ViewBag.Parqueaderos = _context.parqueaderos

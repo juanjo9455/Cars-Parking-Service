@@ -1847,16 +1847,17 @@ async function abrirModalInformacion(btn) {
             ? `<div class="info-firma"><img src="${info.firma}" alt="Firma del cliente" /></div>`
             : valor(null, "El cliente no firmó");
 
-        // Solicitud por el operador cuando el cliente llama (el servidor decide si se puede)
-        const botonSolicitar = info.puedeSolicitar
+        // Solicitud por el operador cuando el cliente llama (el servidor decide si se puede).
+        // En VistaKey no se ofrece: los botones de allá traen data-sin-solicitar.
+        const puedeSolicitar = info.puedeSolicitar && btn.dataset.sinSolicitar !== 'true';
+
+        const botonSolicitar = puedeSolicitar
             ? `<button type="button" class="info-btn-solicitar" onclick="mostrarSolicitudOperador()">
                    <i class="fa-solid fa-bell-concierge"></i> Solicitar vehículo por el cliente
                </button>`
             : "";
 
-        console.log("Estado Servicio: " + info.estadoServicio);
-
-        const panelSolicitud = info.puedeSolicitar
+        const panelSolicitud = puedeSolicitar
             ? `<form class="solicitud-panel" method="post" action="/Home/SolicitarVehiculoOperador"
                      onsubmit="return enviarSolicitudOperador(this)">
                    <h3>Solicitar vehículo</h3>
