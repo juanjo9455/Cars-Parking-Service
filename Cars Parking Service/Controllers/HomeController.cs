@@ -369,10 +369,13 @@ namespace CarsParkingService.Controllers
                     s.fecha_fin == null
                 );
 
-            if (sesion == null)
+            // Solo el Key necesita su turno (de ahí sale su parqueadero); valet y admin lo eligen en el modal.
+            // Se limpia la sesión web para que el login no lo devuelva aquí en bucle.
+            if (sesion == null && rolUsuario == 4)
             {
                 System.Diagnostics.Debug.WriteLine($"ERROR: No hay sesión activa para el usuario {idUsuarioSesion}");
-                return RedirectToAction("Login");
+                HttpContext.Session.Clear();
+                return RedirectToAction("Login", "Auth");
             }
 
             List<ingresos> ingresos;
@@ -404,7 +407,7 @@ namespace CarsParkingService.Controllers
             {
                 ingresos = query
                     .Where(i =>
-                        i.id_parqueadero == sesion.id_parqueadero &&
+                        i.id_parqueadero == sesion!.id_parqueadero &&
                         i.estado_servicio != "finalizado" &&
                         i.estado_servicio != "despachado" &&
                         i.estado_pago != "pagado")
@@ -416,7 +419,8 @@ namespace CarsParkingService.Controllers
                 ViewBag.MostrarModal = false;
             }
 
-            var parqueadero = _context.parqueaderos.FirstOrDefault(p => p.id_parqueadero ==(idParqueaderoSesion ?? sesion.id_parqueadero));
+            var idParqueaderoVista = idParqueaderoSesion ?? sesion?.id_parqueadero;
+            var parqueadero = _context.parqueaderos.FirstOrDefault(p => p.id_parqueadero == idParqueaderoVista);
 
             var idsIngresos = ingresos.Select(i => i.id_ingreso).ToList();
 
@@ -2203,10 +2207,10 @@ namespace CarsParkingService.Controllers
             System.Diagnostics.Debug.WriteLine($"idUsuarioSesion: {idUsuarioSesion}");
             System.Diagnostics.Debug.WriteLine($"rolUsuario: {rolUsuario}");
 
-            // Verificar que sea rol Key (4) o rol Admin (3)
-            if (!idUsuarioSesion.HasValue || (rolUsuario != 4 && rolUsuario != 3))
+            // Mismos roles que pueden entrar a VistaKey: Key (4), Valet (1) y Admin (3)
+            if (!idUsuarioSesion.HasValue || (rolUsuario != 4 && rolUsuario != 1 && rolUsuario != 3))
             {
-                System.Diagnostics.Debug.WriteLine($"Acceso denegado: no es rol Key o Admin");
+                System.Diagnostics.Debug.WriteLine($"Acceso denegado: no es rol Key, Valet o Admin");
                 return Unauthorized();
             }
 
@@ -2223,15 +2227,16 @@ namespace CarsParkingService.Controllers
                 System.Diagnostics.Debug.WriteLine($"id_parqueadero de sesión: {sesion.id_parqueadero}");
             }
 
-            if (sesion == null)
+            // Solo el Key necesita su turno: de ahí sale su parqueadero
+            if (sesion == null && rolUsuario == 4)
             {
                 System.Diagnostics.Debug.WriteLine($"No hay sesión activa");
                 return Unauthorized();
             }
 
-            // El admin usa el parqueadero que eligió en el modal; el Key, el de su sesión
+            // Valet y admin usan el parqueadero que eligieron en el modal; el Key, el de su sesión
             var idParqueaderoSesion = HttpContext.Session.GetInt32("id_parqueadero_sesion");
-            var idParqueaderoFiltro = rolUsuario == 4 ? sesion.id_parqueadero : idParqueaderoSesion;
+            var idParqueaderoFiltro = rolUsuario == 4 ? sesion!.id_parqueadero : idParqueaderoSesion;
 
             // Obtener ingresos del parqueadero actual
             var ingresos = _context.ingresos
