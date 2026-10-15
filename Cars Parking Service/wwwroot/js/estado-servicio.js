@@ -408,6 +408,7 @@ function solicitarVehiculo() {
         .then(data => {
 
             console.log('✅ Vehículo solicitado');
+            window.reproducirSonido?.('confirmacion');
 
             // Actualizar estado localmente
             estadoActual = 'solicitado';
@@ -445,6 +446,7 @@ function solicitarVehiculo() {
             btnConfirmacionFinal.disabled = false;
             btnConfirmacionFinal.textContent = 'Aceptar';
 
+            window.reproducirSonido?.('error');
             alert('Error al solicitar vehículo');
         });
     });
@@ -480,6 +482,7 @@ function Pagar(informacion1, informacion2) {
         .then(data => {
             if (data.success) {
                 console.log('✅ Pago guardado');
+                window.reproducirSonido?.('confirmacion');
 
                 estadoActual = 'solicitado'; // ← bloquear cierre desde este momento
 
@@ -505,11 +508,13 @@ function Pagar(informacion1, informacion2) {
                 iniciarVerificacionCodigo();
 
             } else {
+                window.reproducirSonido?.('error');
                 alert('Error al guardar pago: ' + data.message);
             }
         })
         .catch(error => {
             console.error('❌ Error en fetch:', error);
+            window.reproducirSonido?.('error');
             alert('Error de conexión al guardar pago');
         });
 }
@@ -632,6 +637,7 @@ function actualizarDisplayTiempo() {
 }
 
 function handleTiempoAgotado() {
+    window.reproducirSonido?.('solicitud');
     alert('⚠️ El vehículo ha llegado. Por favor, dirígete al punto de entrega.');
 }
 
@@ -656,6 +662,7 @@ function iniciarVerificacionCodigo() {
 
                 // Cobro terminado: ya no hay código que esperar
                 if (data.estadoPago === 'pagado') {
+                    window.reproducirSonido?.('pago');
                     clearInterval(intervaloCodigo);
                     intervaloCodigo = null;
                 }
@@ -668,6 +675,10 @@ function iniciarVerificacionCodigo() {
 function mostrarCodigoSeguridad(codigo) {
     const contenedor = document.getElementById('codigo-generado');
     const valor = document.getElementById('codigo-valor');
+
+    // Suena solo cuando llega un código nuevo, no en cada consulta
+    if (codigo && valor && valor.textContent !== codigo) window.reproducirSonido?.('codigo');
+
     if (contenedor) contenedor.style.display = codigo ? 'block' : 'none';
     if (valor) valor.textContent = codigo || '------';
 }

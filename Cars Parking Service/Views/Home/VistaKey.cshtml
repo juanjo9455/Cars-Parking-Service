@@ -460,6 +460,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         if (window.debugVistaKeyController && typeof window.mostrarDebugKeyAlerta === 'function') {
             window.mostrarDebugKeyAlerta(window.debugVistaKeyController, 'server');
+            window.reproducirSonido?.(window.debugVistaKeyController.startsWith('Error') ? 'error' : 'confirmacion');
         }
     });
 </script>

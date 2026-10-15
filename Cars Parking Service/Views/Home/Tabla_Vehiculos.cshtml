@@ -3,6 +3,7 @@
     ViewData["Title"] = "Tabla Vehiculos";
     var modalError = TempData["Error"] as string;
     var mensajeExito = TempData["Exito"] as string;
+    var sonidoExito = TempData["Sonido"] as string;
     var whatsappExito = TempData["WhatsAppExito"] as string;
     var whatsappError = TempData["WhatsAppError"] as string;
     var modalErrorIngresoId = TempData["ErrorIngresoId"]?.ToString();
@@ -464,7 +465,9 @@
         <script>
             (function () {
                 if (typeof window.mostrarAlertaServidor !== 'function') {
-                    window.mostrarAlertaServidor = function (mensaje, tipo) {
+                    window.mostrarAlertaServidor = function (mensaje, tipo, sonido) {
+                        window.reproducirSonido?.(sonido || (tipo === 'success' ? 'confirmacion' : 'error'));
+
                         const containerId = 'customAlertContainer';
                         let container = document.getElementById(containerId);
 
@@ -496,8 +499,10 @@
                 const exitoWhatsapp = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(whatsappExito ?? string.Empty));
                 const errorWhatsapp = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(whatsappError ?? string.Empty));
 
-                if (exitoGeneral) window.mostrarAlertaServidor(exitoGeneral, 'success');
-                if (exitoWhatsapp) window.mostrarAlertaServidor(exitoWhatsapp, 'success');
+                const sonidoExito = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(sonidoExito ?? string.Empty));
+
+                if (exitoGeneral) window.mostrarAlertaServidor(exitoGeneral, 'success', sonidoExito);
+                if (exitoWhatsapp) window.mostrarAlertaServidor(exitoWhatsapp, 'success', 'mensaje');
                 if (errorGeneral) window.mostrarAlertaServidor(errorGeneral, 'error');
                 if (errorWhatsapp) window.mostrarAlertaServidor(errorWhatsapp, 'error');
             });

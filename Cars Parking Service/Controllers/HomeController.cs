@@ -1857,6 +1857,7 @@ namespace CarsParkingService.Controllers
 
                 // La alerta verde se muestra en la tabla después de recargar
                 TempData["Exito"] = "Servicio finalizado correctamente.";
+                TempData["Sonido"] = "pago";
 
                 return Json(new
                 {

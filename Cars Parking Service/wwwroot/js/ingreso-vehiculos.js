@@ -13,6 +13,8 @@
             return;
         }
 
+        window.reproducirSonido?.(tipo === 'success' ? 'confirmacion' : 'error');
+
         const containerId = 'customAlertContainer';
         let container = document.getElementById(containerId);
 

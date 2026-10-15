@@ -1369,6 +1369,8 @@ function generarCodigoSeguridad(idIngreso) {
 
         if (data.success) {
 
+            window.reproducirSonido?.('codigo');
+
             const codigoValor = document.getElementById(`codigo-valor-${idIngreso}`);
             const codigoGenerado = document.getElementById(`codigo-generado-${idIngreso}`);
             const validacionContenedor = document.getElementById(`validacion-contenedor-${idIngreso}`);
@@ -1503,7 +1505,7 @@ function validarCodigoYAbrir(idIngreso,placa,nombre_cliente,metodo_pago,modalId,
     const codigo = codigoValor?.textContent.trim();
 
     if (!codigo || codigo.length !== 6) {
-        alert('El código expiró. Genera otro código o continúa sin el cliente.');
+        mostrarAlertaWhatsApp('El código expiró. Genera otro código.', 'error', 'advertencia');
         return;
     }
 
@@ -1517,17 +1519,18 @@ function validarCodigoYAbrir(idIngreso,placa,nombre_cliente,metodo_pago,modalId,
     .then(data => {
 
         if (!data.success) {
-            alert(data.message || 'Código inválido');
+            mostrarAlertaWhatsApp(data.message || 'Código inválido', 'error');
             return;
         }
 
+        window.reproducirSonido?.('confirmacion');
         abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, modalId, estado_servicio);
 
     })
     .catch(error => {
 
         console.error(error);
-        alert('Error al validar el código');
+        mostrarAlertaWhatsApp('Error al validar el código', 'error');
 
     });
 }
@@ -2284,7 +2287,9 @@ document.addEventListener("click", function (event) {
 
 // ============ Evento para modal de reenviar whatsApp con la burbuja ============ //
 
-function mostrarAlertaWhatsApp(mensaje, tipo = 'error') {
+function mostrarAlertaWhatsApp(mensaje, tipo = 'error', sonido) {
+    window.reproducirSonido?.(sonido || (tipo === 'success' ? 'confirmacion' : 'error'));
+
     const containerId = 'customAlertContainer';
     let container = document.getElementById(containerId);
 
@@ -2429,7 +2434,7 @@ function abrirModalWhatsApp() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        mostrarAlertaWhatsApp('✅ ' + data.message, 'success');
+                        mostrarAlertaWhatsApp('✅ ' + data.message, 'success', 'mensaje');
                         setTimeout(() => {
                             cerrarModalAcciones();
                         }, 2000);

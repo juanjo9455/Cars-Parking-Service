@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        window.reproducirSonido?.('error');
+
         const containerId = 'customAlertContainer';
         let container = document.getElementById(containerId);
 

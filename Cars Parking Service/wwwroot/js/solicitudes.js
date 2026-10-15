@@ -151,6 +151,9 @@ async function cargarSolicitudes(){
     // Llenamos el array global con solicitudes
     solicitudes = ingresos.solicitudes;
 
+    // Campana una sola vez por cada solicitud nueva
+    window.sonarSiHayNuevos?.('sonido-solicitudes', solicitudes.map(s => s.id), 'solicitud');
+
     // Buscamos el elemento donde mostrar resultados
     const contadorBurbuja = document.getElementById('bubbleCount');
     const contadorPend = document.getElementById('statPend');
@@ -208,6 +211,9 @@ async function cargarEsperandoValet() {
     const data = await response.json();
 
     vehiculosEsperandoValet = data.vehiculos;
+
+    // Aviso una sola vez por cada vehículo nuevo esperando valet
+    window.sonarSiHayNuevos?.('sonido-esperando-valet', vehiculosEsperandoValet.map(v => v.id), 'advertencia');
 
     const statDone = document.getElementById('statDone');
     const badgeEsperandoValet = document.getElementById('badge-esperando-valet');

@@ -433,7 +433,9 @@
     <script>
         (function () {
             if (typeof window.mostrarAlertaServidor !== 'function') {
-                window.mostrarAlertaServidor = function (mensaje, tipo) {
+                window.mostrarAlertaServidor = function (mensaje, tipo, sonido) {
+                    window.reproducirSonido?.(sonido || (tipo === 'success' ? 'confirmacion' : 'error'));
+
                     const containerId = 'customAlertContainer';
                     let container = document.getElementById(containerId);
 
@@ -466,7 +468,7 @@
             const mensajeWhatsappError = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["WhatsAppError"]?.ToString() ?? string.Empty));
 
             if (mensajeExito) window.mostrarAlertaServidor(mensajeExito, 'success');
-            if (mensajeWhatsappExito) window.mostrarAlertaServidor(mensajeWhatsappExito, 'success');
+            if (mensajeWhatsappExito) window.mostrarAlertaServidor(mensajeWhatsappExito, 'success', 'mensaje');
             if (mensajeError) window.mostrarAlertaServidor(mensajeError, 'error');
             if (mensajeWhatsappError) window.mostrarAlertaServidor(mensajeWhatsappError, 'error');
         });

@@ -74,7 +74,7 @@ self.addEventListener('fetch', (event) => {
     }
 
     // Solo archivos estáticos van a caché; los datos (/Home/..., /Payment/...) siempre van al servidor
-    if (!/^\/(css|js|lib|icons|img)\/|^\/(favicon\.ico|manifest\.webmanifest|offline\.html)$/.test(requestUrl.pathname)) return;
+    if (!/^\/(css|js|lib|icons|img|sounds)\/|^\/(favicon\.ico|manifest\.webmanifest|offline\.html)$/.test(requestUrl.pathname)) return;
 
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {

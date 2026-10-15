@@ -378,6 +378,9 @@ document.addEventListener('submit', function (event) {
 // ===== ACTUALIZACIÓN DINÁMICA DE LA TABLA =====
 let actualizacionEnProceso = false;
 
+// Cada 10 s: suficiente para enterarse de una solicitud sin cargar de más el servidor
+const INTERVALO_ACTUALIZACION = 10000;
+
 /**
  * Obtiene los ingresos actualizados del servidor
  */
@@ -460,7 +463,7 @@ function construirFilaTabla(ingreso) {
         <button type="button"
                 class="btn-icon btn-icon-info"
                 title="Ver información del vehículo"
-                onclick="verInfoExtra(this)"
+                onclick="abrirModalInformacionKey(this)"
                 data-id-ingreso="${ingreso.id}">
             <i class="fa-solid fa-circle-info"></i>
         </button>
@@ -501,6 +504,12 @@ async function actualizarTabla() {
             actualizacionEnProceso = false;
             return;
         }
+
+        // Campana una sola vez por cada solicitud nueva de este parqueadero
+        const idsSolicitados = datos.ingresos
+            .filter(i => i.estado_servicio?.trim().toLowerCase() === 'solicitado')
+            .map(i => i.id);
+        window.sonarSiHayNuevos?.('sonido-solicitudes-key', idsSolicitados, 'solicitud');
 
         const tbody = document.querySelector('table tbody');
         if (!tbody) {
@@ -553,18 +562,14 @@ function reinicializarEventos() {
     // Si hay botones de info, asegurarse de que tengan el evento
     document.querySelectorAll('.btn-icon-info').forEach(btn => {
         btn.onclick = function () {
-            verInfoExtra(this);
+            abrirModalInformacionKey(this);
         };
     });
 }
 
 // Inicializar solo al cargar la página
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('VistaKey cargado - SIN auto-refresco para diagnóstico');
-    console.log('La página se mantendrá estática con los datos iniciales');
-    
-    // NO HACER AUTO-REFRESCO POR AHORA - Deshabilitado para diagnóstico
-    // setInterval(actualizarTabla, INTERVALO_ACTUALIZACION);
+    setInterval(actualizarTabla, INTERVALO_ACTUALIZACION);
 });
 
 // Limpiar al cerrar la página
