@@ -2538,8 +2538,9 @@ i.btn-pago-ingreso {
     border-bottom: 2px solid #f3f3f3;
 }
 
-/* Placa con aspecto de placa de carro */
-.info-placa {
+/* Placa con aspecto de placa de carro: modal de Información y tabla de ingresos (punto 22) */
+.info-placa,
+.ingreso-placa {
     font-family: 'DM Mono', monospace;
     font-size: 22px;
     font-weight: 800;
@@ -2549,6 +2550,29 @@ i.btn-pago-ingreso {
     border: 3px solid #1f2937;
     border-radius: 8px;
     padding: 4px 14px;
+}
+
+/* En la tabla: un poco más pequeña que en Información, con aire alrededor dentro de la celda */
+.ingreso-placa {
+    display: inline-block;
+    margin: 6px 0;
+    font-size: 17px;
+    letter-spacing: 2px;
+    line-height: 1.2;
+    padding: 15px 20px;
+    border-width: 2px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+/* En el celular, más compacta para que las 4 columnas sigan cabiendo sin desborde */
+@media (max-width: 768px) {
+    .ingreso-placa {
+        margin: 4px 0;
+        font-size: 13px;
+        letter-spacing: 1px;
+        padding: 2px 6px;
+    }
 }
 
 .info-chip {

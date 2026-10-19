@@ -309,7 +309,8 @@
 
                 <tr class="@claseAlerta">
 
-                    <td data-label="Placa">@ingresos.placa</td>
+                    @* La placa va en un span: la celda conserva su relleno y la placa no queda pegada a los bordes *@
+                    <td data-label="Placa"><span class="ingreso-placa">@ingresos.placa</span></td>
 
                     <td data-label="Estado Servicio">
                         <span class="info-chip">@(string.IsNullOrWhiteSpace(ingresos.estado_servicio) ? "—" : ingresos.estado_servicio)</span>
