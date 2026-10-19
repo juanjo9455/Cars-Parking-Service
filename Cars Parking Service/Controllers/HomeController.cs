@@ -888,8 +888,9 @@ namespace CarsParkingService.Controllers
 
             ViewBag.TotalRegistros = totalRegistros;
 
-            ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
-            ViewBag.Parqueaderos = _context.parqueaderos.ToList();
+            // Listas de los filtros en orden alfabético (punto 15)
+            ViewBag.Ubicaciones = _context.ubicacion_servicios.OrderBy(u => u.nombre_ubicacion).ToList();
+            ViewBag.Parqueaderos = _context.parqueaderos.OrderBy(p => p.nombre_parqueadero).ToList();
             ViewBag.Valets = ValetsDisponibles();
 
 
@@ -1615,9 +1616,12 @@ namespace CarsParkingService.Controllers
         private void CargarDatosFormulario()
         {
             ViewBag.Valets = ValetsDisponibles();
-            ViewBag.Bancos = _context.usuarios.Where(u => u.id_rol == 2 && u.estado == true).ToList();
-            ViewBag.Parqueaderos = _context.parqueaderos.ToList();
-            ViewBag.UbicacionesS = _context.ubicacion_servicios.Where(u => u.estado == "activo").ToList();
+            // Listas del formulario de ingreso en orden alfabético (punto 15)
+            ViewBag.Bancos = _context.usuarios.Where(u => u.id_rol == 2 && u.estado == true)
+                .OrderBy(u => u.nombres).ThenBy(u => u.apellidos).ToList();
+            ViewBag.Parqueaderos = _context.parqueaderos.OrderBy(p => p.nombre_parqueadero).ToList();
+            ViewBag.UbicacionesS = _context.ubicacion_servicios.Where(u => u.estado == "activo")
+                .OrderBy(u => u.nombre_ubicacion).ToList();
 
             // Obtener el usuario de la sesion
             var nombres = HttpContext.Session.GetString("nombre");
