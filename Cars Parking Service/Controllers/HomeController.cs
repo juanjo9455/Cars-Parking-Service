@@ -436,11 +436,35 @@ namespace CarsParkingService.Controllers
             return View(ingresos);
         }
 
+        // Solo se parquea un vehículo activo y con valet asignado. Así también quedan por fuera el que
+        // espera valet, el solicitado (se perdería la solicitud) y el que ya está parqueado o despachado.
+        private static bool PuedeParquear(ingresos ingreso)
+        {
+            return ingreso.id_valet != null &&
+                   ingreso.estado_servicio?.Trim().ToLower() == "activo";
+        }
+
         // POST: Cambiar el estado desde la vista Key
         [HttpPost]
         public IActionResult ActualizarEstadoKey(int id_ingreso, string nuevo_estado, int? id_valet = null)
         {
+            // Sin sesión no se cambia el estado de ningún vehículo
+            if (!HttpContext.Session.GetInt32("id").HasValue)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
             var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            // La regla se valida aquí porque el botón Parquear puede seguir en pantalla (refresco o página sin recargar)
+            if (ingreso != null && nuevo_estado == "parqueado" && !PuedeParquear(ingreso))
+            {
+                TempData["DebugVistaKey"] = ingreso.id_valet == null
+                    ? "Error al parquear: el vehículo no tiene valet asignado."
+                    : $"Error al parquear: el vehículo está {ingreso.estado_servicio ?? "sin estado"}.";
+
+                return RedirectToAction("VistaKey");
+            }
 
             if (ingreso != null)
             {
