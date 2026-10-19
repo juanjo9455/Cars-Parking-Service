@@ -35,10 +35,12 @@ namespace CarsParkingService.Services
                     {
                         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-                        // Consideramos inactiva una sesión que no reporte actividad en 3 minutos
-                        var limiteInactividad = DateTime.Now.AddMinutes(-3);
+                        // Consideramos inactiva una sesión que no reporte actividad en 30 minutos (lo mismo que dura
+                        // la sesión web). Con 3, bastaba bloquear el celular un rato para perder el turno, porque
+                        // el navegador pausa el latido mientras la pantalla está apagada.
+                        var limiteInactividad = DateTime.Now.AddMinutes(-30);
 
-                        // Obtenemos las sesiones sin fecha_fin cuya última actividad sea menor a 3 minutos
+                        // Obtenemos las sesiones sin fecha_fin cuya última actividad sea anterior a ese límite
                         var sesionesExpiradas = await context.sesiones
                             .Where(s => s.fecha_fin == null && s.ultima_actividad < limiteInactividad)
                             .ToListAsync(stoppingToken);

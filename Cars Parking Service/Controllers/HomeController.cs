@@ -2662,11 +2662,9 @@ namespace CarsParkingService.Controllers
         [HttpPost]
         public async Task<IActionResult> KeepAlive()
         {
-            // 1. Validar si el usuario está autenticado
-            if (User.Identity == null || !User.Identity.IsAuthenticated)
-            {
-                return Unauthorized(new { success = false, message = "Sesión expirada" });
-            }
+            // 1. La sesión ya la revisa OnActionExecuting. Antes aquí se pedía User.Identity.IsAuthenticated,
+            //    que nunca es true en esta app (no usa ese tipo de autenticación): el latido respondía 401
+            //    siempre y los turnos se cerraban solos a los pocos minutos.
 
             // 2. Obtener el ID del usuario desde la sesión
             var idUsuario = HttpContext.Session.GetInt32("id");
