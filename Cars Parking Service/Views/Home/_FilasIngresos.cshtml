@@ -1,0 +1,141 @@
+﻿@using CarsParkingService.Helpers
+@model List<CarsParkingService.Models.ingresos>
+@{
+    // Mismos datos de sesión que usa Tabla_Vehiculos para decidir qué botones ve cada rol
+    var idRol = Context.Session.GetInt32("id_rol");
+    var idUsuarioSesion = Context.Session.GetInt32("id");
+}
+@* Filas de la tabla de ingresos. Las usan la página y su refresco automático (FilasIngresos, punto 16),
+   así los botones salen siempre de las mismas reglas *@
+
+            @foreach (var ingresos in Model){
+                var claseAlerta = "";
+                if (ingresos.estado_servicio?.Trim().ToLower() == "solicitado")
+                {
+                    claseAlerta = "alerta-solicitado";
+                }
+                else if (ingresos.id_valet == null)
+                {
+                    claseAlerta = "alerta-sin-valet";
+                }
+
+                <tr class="@claseAlerta">
+
+                    @* La placa va en un span: la celda conserva su relleno y la placa no queda pegada a los bordes *@
+                    <td data-label="Placa"><span class="ingreso-placa">@ingresos.placa</span></td>
+
+                    <td data-label="Estado Servicio">
+                        <span class="info-chip">@(string.IsNullOrWhiteSpace(ingresos.estado_servicio) ? "—" : ingresos.estado_servicio)</span>
+                    </td>
+
+                    @* Chips de estado: mismos colores que tenía el panel de información *@
+                    <td data-label="Estado Pago">
+                        @if (ingresos.estado_pago == "pagado")
+                        {
+                            <span class="info-chip chip-ok">Pagado</span>
+                        }
+                        else if (ingresos.estado_pago == "solicitado")
+                        {
+                            <span class="info-chip chip-pendiente">Solicitado</span>
+                        }
+                        else
+                        {
+                            <span class="info-chip chip-pendiente">Pendiente</span>
+                        }
+                    </td>
+
+                    <td data-label="Acción" class="cell-action">
+
+                        @* 0. Vehículo sin valet: el valet se lo toma; banco y admin le asignan uno de la lista.
+                              Misma regla que valida actualizarValet (IngresoReglas.PuedeRecibirValet) *@
+                        @if (IngresoReglas.PuedeRecibirValet(ingresos) && idRol == 1)
+                        {
+                            <button class="btn-tomar-vehiculo"
+                                    type="button"
+                                    onclick="abrirModalTomarVehiculo(this)"
+                                    data-id="@ingresos.id_ingreso"
+                                    data-placa="@ingresos.placa"
+                                    data-cliente="@ingresos.nombre_cliente"
+                                    data-id-valet="@idUsuarioSesion"
+                                    title="Sin valet asignado — disponible para tomar"
+                                    aria-label="Tomar vehículo">
+                                <span class="btn-tomar-ping"></span>
+                                <i class="fa-solid fa-key"></i>
+                                <span class="btn-tomar-texto">Tomar vehículo</span>
+                            </button>
+                        }
+                        else if (IngresoReglas.PuedeRecibirValet(ingresos) && (idRol == 2 || idRol == 3))
+                        {
+                            <button class="btn-tomar-vehiculo"
+                                    type="button"
+                                    onclick="abrirModalAsignarValet(this)"
+                                    data-id="@ingresos.id_ingreso"
+                                    data-placa="@ingresos.placa"
+                                    data-cliente="@ingresos.nombre_cliente"
+                                    title="Sin valet asignado — elegir uno"
+                                    aria-label="Asignar valet">
+                                <span class="btn-tomar-ping"></span>
+                                <i class="fa-solid fa-user-plus"></i>
+                                <span class="btn-tomar-texto">Asignar valet</span>
+                            </button>
+                        }
+
+                        @* 2. Cámara solo para el valet responsable *@
+                        @if (ingresos.id_valet == idUsuarioSesion &&
+                            !ingresos.foto_estacionamiento &&
+                            ingresos.estado_servicio != "solicitado" &&
+                            (idRol == 1 || idRol == 3) &&
+                            ingresos.estado_servicio != "despachado" &&
+                            ingresos.estado_servicio != "finalizado")
+                        {
+                            <i class="fa-solid fa-camera btn-action"
+                                onclick="abrirModalFoto(this)"
+                                data-id-ingreso="@ingresos.id_ingreso"
+                                data-placa="@ingresos.placa"
+                                data-cliente="@ingresos.nombre_cliente"
+                                style="cursor:pointer;">
+                            </i>
+                        }
+
+                        @* 3. Opciones de Pago para todos *@
+
+                            @if (idUsuarioSesion == ingresos.id_valet)
+                            {
+                                @if (ingresos.id_valet != null && ingresos.foto_estacionamiento && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado" || ingresos.estado_servicio == "despachado")
+                                {
+                                    <i class="fa-solid fa-credit-card btn-action btn-pago-ingreso" title="Cobrar"
+                                        onclick="abrirModalPago(this)"
+                                        data-id="@ingresos.id_ingreso"
+                                        data-placa="@ingresos.placa"
+                                        data-cliente="@ingresos.nombre_cliente"
+                                        data-metodo-pago="@(ingresos.metodo_pago ?? "No especificado")"
+                                        data-estado-servicio="@(ingresos.estado_servicio ?? "No especificado")"
+                                        style="cursor:pointer;">
+                                    </i>
+                                }
+                            }
+                            else
+                            {
+                                @if (ingresos.id_valet != null && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado")
+                                {
+                                    <i class="fa-solid fa-credit-card btn-action btn-pago-ingreso" title="Cobrar"
+                                        onclick="abrirModalPago(this)"
+                                        data-id="@ingresos.id_ingreso"
+                                        data-placa="@ingresos.placa"
+                                        data-cliente="@ingresos.nombre_cliente"
+                                        data-metodo-pago="@(ingresos.metodo_pago ?? "No especificado")"
+                                        data-estado-servicio="@(ingresos.estado_servicio ?? "No especificado")"
+                                        style="cursor:pointer;">
+                                    </i>
+                                }
+                            }
+
+                        @* 4. Información: siempre visible *@
+                        <i class="fa-solid fa-info btn-action btn-info-ingreso" title="Ver Informacion"
+                            onclick="abrirModalInformacion(this)"
+                            data-id-ingreso="@ingresos.id_ingreso"
+                            style="cursor:pointer;">
+                        </i>
+                    </td>
+                </tr>
+            }

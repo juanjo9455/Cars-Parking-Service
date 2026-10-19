@@ -433,22 +433,36 @@ namespace CarsParkingService.Controllers
                 .ToList();
         }
 
-        // POST: Cambiar el estado desde la vista Key
+        // POST: Cambiar el estado desde la vista Key, o Parquear desde el modal de Información de la
+        // tabla de ingresos (volver = "tabla", puntos 13 y 18)
         [HttpPost]
-        public IActionResult ActualizarEstadoKey(int id_ingreso, string nuevo_estado, int? id_valet = null)
+        public IActionResult ActualizarEstadoKey(int id_ingreso, string nuevo_estado, int? id_valet = null, string? volver = null)
         {
             // La sesión ya la revisa OnActionExecuting para todo HomeController
             var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
 
+            // Desde la tabla de ingresos se vuelve a la tabla con su alerta verde o roja; si no, a VistaKey
+            IActionResult Volver(string mensaje)
+            {
+                if (volver == "tabla")
+                {
+                    TempData[mensaje.StartsWith("Error") ? "Error" : "Exito"] = mensaje;
+                    return RedirectToAction("Tabla_Vehiculos");
+                }
+
+                TempData["DebugVistaKey"] = mensaje;
+                return RedirectToAction("VistaKey");
+            }
+
             // La regla se valida aquí porque el botón Parquear puede seguir en pantalla (refresco o página sin recargar)
             if (ingreso != null && nuevo_estado == "parqueado" && !IngresoReglas.PuedeParquear(ingreso))
             {
-                TempData["DebugVistaKey"] = ingreso.id_valet == null
+                return Volver(ingreso.id_valet == null
                     ? "Error al parquear: el vehículo no tiene valet asignado."
-                    : $"Error al parquear: el vehículo está {ingreso.estado_servicio ?? "sin estado"}.";
-
-                return RedirectToAction("VistaKey");
+                    : $"Error al parquear: el vehículo está {ingreso.estado_servicio ?? "sin estado"}.");
             }
+
+            string mensaje;
 
             if (ingreso != null)
             {
@@ -476,7 +490,7 @@ namespace CarsParkingService.Controllers
 
                 _context.SaveChanges();
 
-                TempData["DebugVistaKey"] = nuevo_estado switch
+                mensaje = nuevo_estado switch
                 {
                     "parqueado" when ingreso.estado_servicio == "parqueado" => "Parqueado con éxito.",
                     "parqueado" => "Error al parquear.",
@@ -487,15 +501,15 @@ namespace CarsParkingService.Controllers
             }
             else
             {
-                TempData["DebugVistaKey"] = nuevo_estado == "parqueado"
+                mensaje = nuevo_estado == "parqueado"
                     ? "Error al parquear."
                     : nuevo_estado == "despachado"
                         ? "Error al despachar."
                         : "No se encontró el ingreso.";
             }
 
-            // Lo retornamos a la vista
-            return RedirectToAction("VistaKey");
+            // Lo retornamos a la vista (VistaKey o la tabla de ingresos)
+            return Volver(mensaje);
         }
 
         // Metodo para guardar parqueadero del valet
@@ -796,7 +810,6 @@ namespace CarsParkingService.Controllers
         public IActionResult Tabla_Vehiculos(string placa, string? lugar, string estado_servicio, string estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
         {
             var idUsuarioSesion = HttpContext.Session.GetInt32("id");
-            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
 
             ViewBag.mostrarMenu = false;
 
@@ -817,6 +830,35 @@ namespace CarsParkingService.Controllers
 
             ViewBag.ubicacion = ubicacionUsuario;
 
+            var ingresos = IngresosTabla(idUsuario, placa, lugar, estado_servicio, estado_pago, parqueadero, fechaInicio, fechaFin);
+            int totalRegistros = ingresos.Count();
+
+            ViewBag.TotalRegistros = totalRegistros;
+
+            // Listas de los filtros en orden alfabético (punto 15)
+            ViewBag.Ubicaciones = _context.ubicacion_servicios.OrderBy(u => u.nombre_ubicacion).ToList();
+            ViewBag.Parqueaderos = _context.parqueaderos.OrderBy(p => p.nombre_parqueadero).ToList();
+            ViewBag.Valets = ValetsDisponibles();
+
+
+            ViewData["FiltroPlaca"] = placa;
+            ViewData["FiltroLugar"] = lugar;
+            ViewData["FiltroEstadoServicio"] = estado_servicio;
+            ViewData["FiltroEstadoPago"] = estado_pago;
+            ViewData["FiltroParqueadero"] = parqueadero;
+            ViewData["FiltroFechaInicio"] = fechaInicio;
+            ViewData["FiltroFechaFin"] = fechaFin;
+
+            return View(ingresos);
+        }
+
+        // Ingresos de la tabla según los filtros y el rol (procedimiento sp_consultarRegistros). Los usan
+        // la página y su refresco automático (FilasIngresos, punto 16) para mostrar exactamente lo mismo
+        private List<ingresos> IngresosTabla(int idUsuario, string? placa, string? lugar, string? estado_servicio,
+            string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
+        {
+            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+
             var idUbicacionUsuario = (from s in _context.sesiones
                                       where s.id_usuario == idUsuario
                                       && s.fecha_fin == null
@@ -830,15 +872,6 @@ namespace CarsParkingService.Controllers
             string? estadoPago = !string.IsNullOrEmpty(estado_pago) ? estado_pago : null;
             string? nombreParqueadero = !string.IsNullOrEmpty(parqueadero) ? parqueadero : null;
 
-            // ?? DEBUG: Ver qué parámetros se envían
-            System.Diagnostics.Debug.WriteLine("=== PARÁMETROS SP ===");
-            System.Diagnostics.Debug.WriteLine($"Placa: {placaUpper ?? "NULL"}");
-            System.Diagnostics.Debug.WriteLine($"Lugar: {nombreUbicacion ?? "NULL"}");
-            System.Diagnostics.Debug.WriteLine($"Estado Servicio: {estadoServicio ?? "NULL"}");
-            System.Diagnostics.Debug.WriteLine($"Estado Pago: {estadoPago ?? "NULL"}");
-            System.Diagnostics.Debug.WriteLine($"Parqueadero: {nombreParqueadero ?? "NULL"}");
-            System.Diagnostics.Debug.WriteLine($"Fecha Inicio: {fechaInicio?.ToString("yyyy-MM-dd") ?? "NULL"}");
-            System.Diagnostics.Debug.WriteLine($"Fecha Fin: {fechaFin?.ToString("yyyy-MM-dd") ?? "NULL"}");
 
             var parametros = new List<SqlParameter>
 {
@@ -876,7 +909,7 @@ namespace CarsParkingService.Controllers
             parametros.Add(new SqlParameter("@id_ubicacion", idUbicacionFiltro ?? (object)DBNull.Value));
             
             // ✔ conversión a array (ESTO ES LO CLAVE)
-            var ingresos = _context.ingresos.FromSqlRaw(
+            return _context.ingresos.FromSqlRaw(
                 "EXEC sp_consultarRegistros @placa, @lugar, @estado_servicio, @estado_pago, @id_usuario, @parqueadero, @fecha_inicio, @fecha_fin, @id_ubicacion", 
                 parametros.ToArray()
             )
@@ -884,25 +917,22 @@ namespace CarsParkingService.Controllers
             .OrderByDescending(u => u.estado_servicio?.Trim().ToLower() == "solicitado")
             .ThenByDescending(u => u.fecha_ingreso)
             .ToList();
-            int totalRegistros = ingresos.Count();
+        }
 
-            ViewBag.TotalRegistros = totalRegistros;
+        // Filas de la tabla de ingresos para el refresco automático (punto 16): las mismas de la página,
+        // con sus filtros, armadas por la misma vista parcial (_FilasIngresos)
+        [HttpGet]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult FilasIngresos(string? placa, string? lugar, string? estado_servicio, string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
+        {
+            // Sin sesión, OnActionExecuting ya redirige al login
+            var idUsuario = HttpContext.Session.GetInt32("id");
+            if (!idUsuario.HasValue)
+            {
+                return Unauthorized();
+            }
 
-            // Listas de los filtros en orden alfabético (punto 15)
-            ViewBag.Ubicaciones = _context.ubicacion_servicios.OrderBy(u => u.nombre_ubicacion).ToList();
-            ViewBag.Parqueaderos = _context.parqueaderos.OrderBy(p => p.nombre_parqueadero).ToList();
-            ViewBag.Valets = ValetsDisponibles();
-
-
-            ViewData["FiltroPlaca"] = placa;
-            ViewData["FiltroLugar"] = lugar;
-            ViewData["FiltroEstadoServicio"] = estado_servicio;
-            ViewData["FiltroEstadoPago"] = estado_pago;
-            ViewData["FiltroParqueadero"] = parqueadero;
-            ViewData["FiltroFechaInicio"] = fechaInicio;
-            ViewData["FiltroFechaFin"] = fechaFin;
-
-            return View(ingresos);
+            return PartialView("_FilasIngresos", IngresosTabla(idUsuario.Value, placa, lugar, estado_servicio, estado_pago, parqueadero, fechaInicio, fechaFin));
         }
         [HttpPost]
         public IActionResult actualizarValet(int id_ingreso, int id_valet)
@@ -2444,7 +2474,10 @@ namespace CarsParkingService.Controllers
                     : null,
                 puedeSolicitar = PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio, ingreso.estado_pago),
                 // Banco y admin pueden asignar valet a un vehículo que no tiene (punto 4)
-                puedeAsignarValet = (HttpContext.Session.GetInt32("id_rol") is 2 or 3) && IngresoReglas.PuedeRecibirValet(ingreso)
+                puedeAsignarValet = (HttpContext.Session.GetInt32("id_rol") is 2 or 3) && IngresoReglas.PuedeRecibirValet(ingreso),
+                // Valet, banco y admin parquean desde Información sin ir a VistaKey (puntos 13 y 18);
+                // misma regla que el botón del Key y que valida ActualizarEstadoKey
+                puedeParquear = (HttpContext.Session.GetInt32("id_rol") is 1 or 2 or 3) && IngresoReglas.PuedeParquear(ingreso)
             });
         }
 

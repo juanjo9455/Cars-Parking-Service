@@ -1140,7 +1140,12 @@ function abrirModalFoto(btnOrId) {
 
         if (!file || !file.type.startsWith('image/')) return;
 
-        const base64 = await fileToDataUrl(file);
+        // Se reduce como las demás fotos (máx. 1600 px, JPEG): la original de un celular puede pasar los
+        // 4 MB por campo que acepta el servidor; entonces no se guardaba y el valet veía un 404.
+        // compressImageToBase64 viene de ingreso-vehiculos-camera.js (cargado en la tabla de ingresos)
+        const base64 = typeof compressImageToBase64 === 'function'
+            ? await compressImageToBase64(file)
+            : await fileToDataUrl(file);
 
         fotoBase64.value = base64;
 
@@ -1904,6 +1909,20 @@ async function abrirModalInformacion(btn) {
                </button>`
             : "";
 
+        // Parquear desde Información (puntos 13 y 18): valet, banco y admin no tienen que ir a VistaKey.
+        // El servidor decide con la misma regla del botón del Key; en VistaKey no se muestra (data-sin-solicitar)
+        const botonParquear = info.puedeParquear && btn.dataset.sinSolicitar !== 'true'
+            ? `<form method="post" action="/Home/ActualizarEstadoKey"
+                     onsubmit="this.querySelector('button').disabled = true">
+                   <input type="hidden" name="id_ingreso" value="${escaparHtml(idIngreso)}" />
+                   <input type="hidden" name="nuevo_estado" value="parqueado" />
+                   <input type="hidden" name="volver" value="tabla" />
+                   <button type="submit" class="info-btn-solicitar">
+                       <i class="fa-solid fa-square-parking"></i> Marcar como parqueado
+                   </button>
+               </form>`
+            : "";
+
         const panelSolicitud = puedeSolicitar
             ? `<form class="solicitud-panel" method="post" action="/Home/SolicitarVehiculoOperador"
                      onsubmit="return enviarSolicitudOperador(this)">
@@ -1952,6 +1971,7 @@ async function abrirModalInformacion(btn) {
 
                 ${botonSolicitar}
                 ${botonAsignarValet}
+                ${botonParquear}
 
                 <h3 class="info-seccion"><i class="fa-solid fa-user"></i> Cliente</h3>
                 <div class="info-grid">
