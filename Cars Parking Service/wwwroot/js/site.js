@@ -1916,7 +1916,7 @@ async function abrirModalInformacion(btn) {
                        <option value="">Cargando ubicaciones...</option>
                    </select>
 
-                   <input type="text" id="solicitud-lugar-otra" name="lugar_entrega" maxlength="100"
+                   <input type="text" id="solicitud-lugar-otra" name="lugar_entrega" maxlength="50"
                           placeholder="Escribe el lugar de entrega" hidden disabled />
 
                    <div class="solicitud-acciones">
