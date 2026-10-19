@@ -13,5 +13,15 @@ namespace CarsParkingService.Helpers
             return ingreso.id_valet != null &&
                    ingreso.estado_servicio?.Trim().ToLower() == "activo";
         }
+
+        // Puede recibir valet el vehículo que no tiene y todavía no sale: el que espera valet, el que el
+        // cliente pidió antes de que alguien lo tomara (solicitado) y el activo sin valet (datos viejos).
+        public static bool PuedeRecibirValet(ingresos ingreso)
+        {
+            var estado = ingreso.estado_servicio?.Trim().ToLower();
+
+            return ingreso.id_valet == null &&
+                   (estado == "esperando valet" || estado == "solicitado" || estado == "activo");
+        }
     }
 }

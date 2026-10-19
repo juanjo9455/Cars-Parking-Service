@@ -391,7 +391,7 @@ namespace CarsParkingService.Controllers
             ViewData["FiltroPlaca"] = placa;
             ViewData["FiltroEstado"] = estado_servicio;
             ViewData["NombreParqueadero"] = parqueadero?.nombre_parqueadero ?? "Parqueadero";
-            ViewBag.valets = _context.usuarios.Where(v => v.id_rol == 1).ToList();
+            ViewBag.valets = ValetsDisponibles();
             ViewBag.idRol = rolUsuario;
             ViewBag.EstaEnParqueadero = idParqueaderoSesion.HasValue;
             ViewBag.Parqueaderos = _context.parqueaderos
@@ -890,7 +890,7 @@ namespace CarsParkingService.Controllers
 
             ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
             ViewBag.Parqueaderos = _context.parqueaderos.ToList();
-            ViewBag.Valets = _context.usuarios.Where(u => u.id_rol == 1 && u.estado == true).ToList();
+            ViewBag.Valets = ValetsDisponibles();
 
 
             ViewData["FiltroPlaca"] = placa;
@@ -906,20 +906,64 @@ namespace CarsParkingService.Controllers
         [HttpPost]
         public IActionResult actualizarValet(int id_ingreso, int id_valet)
         {
+            var idUsuario = HttpContext.Session.GetInt32("id");
+            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+
             var ingreso = _context.ingresos
                 .FirstOrDefault(i => i.id_ingreso == id_ingreso);
 
             if (ingreso == null)
             {
-                return NotFound();
+                TempData["Error"] = "No se encontró el vehículo.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            // El valet solo se toma el vehículo a sí mismo; banco y admin asignan a un valet de la lista
+            bool permitido = rolUsuario == 1
+                ? id_valet == idUsuario
+                : (rolUsuario == 2 || rolUsuario == 3) && ValetsDisponibles().Any(v => v.id_usuario == id_valet);
+
+            if (!permitido)
+            {
+                TempData["Error"] = "No puedes asignar ese valet.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            // Solo se asigna a un vehículo sin valet que todavía no ha salido
+            if (!IngresoReglas.PuedeRecibirValet(ingreso))
+            {
+                TempData["Error"] = $"El vehículo {ingreso.placa} ya tiene valet o no se le puede asignar uno.";
+                return RedirectToAction("Tabla_Vehiculos");
             }
 
             ingreso.id_valet = id_valet;
-            ingreso.estado_servicio = "activo";
+
+            // El que esperaba valet pasa a activo; un solicitado sigue solicitado (no se pierde la solicitud)
+            if (ingreso.estado_servicio?.Trim().ToLower() == "esperando valet")
+            {
+                ingreso.estado_servicio = "activo";
+            }
 
             _context.SaveChanges();
 
+            TempData["Exito"] = $"Valet asignado al vehículo {ingreso.placa}.";
             return RedirectToAction("Tabla_Vehiculos");
+        }
+
+        // Valets que se pueden asignar a un vehículo: los de rol Valet, quien tenga turno abierto como
+        // valet (switch de rol) y el admin, que también trabaja como valet. Ordenados por nombre.
+        private List<usuarios> ValetsDisponibles()
+        {
+            var enTurnoDeValet = _context.sesiones
+                .Where(s => s.fecha_fin == null && s.id_rol == 1)
+                .Select(s => s.id_usuario);
+
+            return _context.usuarios
+                .Where(u => u.estado &&
+                            (u.id_rol == 1 || u.id_rol == 3 || enTurnoDeValet.Contains(u.id_usuario)))
+                .OrderBy(u => u.nombres)
+                .ThenBy(u => u.apellidos)
+                .ToList();
         }
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -1570,7 +1614,7 @@ namespace CarsParkingService.Controllers
 
         private void CargarDatosFormulario()
         {
-            ViewBag.Valets = _context.usuarios.Where(u => u.id_rol == 1 && u.estado == true).ToList();
+            ViewBag.Valets = ValetsDisponibles();
             ViewBag.Bancos = _context.usuarios.Where(u => u.id_rol == 2 && u.estado == true).ToList();
             ViewBag.Parqueaderos = _context.parqueaderos.ToList();
             ViewBag.UbicacionesS = _context.ubicacion_servicios.Where(u => u.estado == "activo").ToList();
@@ -2394,7 +2438,9 @@ namespace CarsParkingService.Controllers
                 fotoTransferencia = ingreso.foto_transferencia != null
                     ? Url.Action(nameof(FotoTransferenciaIngreso), new { idIngreso = ingreso.id_ingreso })
                     : null,
-                puedeSolicitar = PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio, ingreso.estado_pago)
+                puedeSolicitar = PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio, ingreso.estado_pago),
+                // Banco y admin pueden asignar valet a un vehículo que no tiene (punto 4)
+                puedeAsignarValet = (HttpContext.Session.GetInt32("id_rol") is 2 or 3) && IngresoReglas.PuedeRecibirValet(ingreso)
             });
         }
 

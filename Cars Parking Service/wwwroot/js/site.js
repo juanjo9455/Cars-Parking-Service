@@ -1893,6 +1893,17 @@ async function abrirModalInformacion(btn) {
                </button>`
             : "";
 
+        // Banco y admin asignan valet a un vehículo que no tiene (punto 4). Solo donde está la lista
+        // de valets (tabla de ingresos), por eso se revisa que exista la plantilla
+        const botonAsignarValet = info.puedeAsignarValet && document.getElementById('plantilla-valets')
+            ? `<button type="button" class="info-btn-solicitar" onclick="abrirModalAsignarValet(this)"
+                       data-id="${escaparHtml(idIngreso)}"
+                       data-placa="${escaparHtml(info.placa ?? "")}"
+                       data-cliente="${escaparHtml(info.nombreCliente ?? "")}">
+                   <i class="fa-solid fa-user-plus"></i> Asignar valet
+               </button>`
+            : "";
+
         const panelSolicitud = puedeSolicitar
             ? `<form class="solicitud-panel" method="post" action="/Home/SolicitarVehiculoOperador"
                      onsubmit="return enviarSolicitudOperador(this)">
@@ -1940,6 +1951,7 @@ async function abrirModalInformacion(btn) {
                 </div>
 
                 ${botonSolicitar}
+                ${botonAsignarValet}
 
                 <h3 class="info-seccion"><i class="fa-solid fa-user"></i> Cliente</h3>
                 <div class="info-grid">
