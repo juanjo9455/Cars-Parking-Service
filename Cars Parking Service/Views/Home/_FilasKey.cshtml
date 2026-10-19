@@ -26,9 +26,6 @@
                 @item.estado_servicio?.ToUpper()
             </span>
         </td>
-        <td data-label="Valet Asignado">@(item.Valet?.nombres ?? "N/A")</td>
-        <td data-label="Banco Asignado">@(item.Banco?.nombres ?? "N/A")</td>
-        <td data-label="Fecha Ingreso">@item.fecha_ingreso?.ToString("dd/MM/yyyy HH:mm")</td>
         <td data-label="Acciones" class="cell-action">
 
             <form method="post" action="@Url.Action("ActualizarEstadoKey", "Home")" class="d-inline actions-form">
@@ -72,7 +69,7 @@
 @if (!Model.Any())
 {
     <tr>
-        <td colspan="6" class="text-center" style="padding: 30px; color:#888;">
+        <td colspan="3" class="text-center" style="padding: 30px; color:#888;">
             No se encontraron vehículos.
         </td>
     </tr>
