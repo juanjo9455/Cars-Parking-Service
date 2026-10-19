@@ -2452,6 +2452,13 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("Tabla_Vehiculos");
             }
 
+            // Con "Otra ubicación" el lugar se escribe a mano: se limita el largo para que quepa en la columna
+            if (lugar_entrega.Trim().Length > 100)
+            {
+                TempData["Error"] = "El lugar de entrega no puede tener más de 100 caracteres.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
             // Mismos datos que guarda la solicitud del cliente
             ingreso.estado_servicio = "solicitado";
             ingreso.fecha_fin_servicio = DateTime.Now.AddMinutes(20);

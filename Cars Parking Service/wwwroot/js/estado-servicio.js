@@ -59,10 +59,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (LugarLI && LugarLabel) {
 
                         LugarLI.style.display = "block";
-                        LugarLabel.innerHTML = `
-                        <strong>📍 Punto de entrega:</strong>
-                        ${data.lugarEntrega}
-`;
+
+                        // El lugar puede venir escrito a mano por el operador ("Otra ubicación"):
+                        // se pone como texto para que no se interprete como HTML
+                        LugarLabel.innerHTML = '<strong>📍 Punto de entrega:</strong> ';
+                        LugarLabel.append(data.lugarEntrega);
 
                     }
 

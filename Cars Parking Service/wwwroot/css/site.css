@@ -2685,7 +2685,8 @@ i.btn-pago-ingreso {
     color: #374151;
 }
 
-.solicitud-panel select {
+.solicitud-panel select,
+.solicitud-panel input[type="text"] {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
