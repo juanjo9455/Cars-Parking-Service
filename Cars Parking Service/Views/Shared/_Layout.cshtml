@@ -73,7 +73,7 @@
                             <li><a asp-controller="Home" asp-action="VistaKey"><i class="fa-solid fa-square-parking"></i>Parqueaderos</a></li>
 
                         }
-                        @if (idRol == 2 && (ViewBag.estadoLiquidacion ?? false) == false)
+                        @if ((idRol == 2 || idRol == 3) && (ViewBag.estadoLiquidacion ?? false) == false)
                         {
                             <li>
                                 <a asp-controller="Liquidacion" asp-action="Liquidacion">

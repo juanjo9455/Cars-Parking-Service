@@ -14,8 +14,10 @@ namespace CarsParkingService.Helpers
             return db.ingresos.Where(i => i.estado_pago == "pagado" &&
                                            i.fecha_entrega != null &&
                                            i.estado_liquidacion == false &&
+                                           // Lo que cobro el mismo como banco o como admin (punto 31: antes
+                                           // lo del admin quedaba fuera de toda liquidacion)
                                            ((i.usuario_cobro == idBanco &&
-                                           i.rol_cobrador == "banco") ||
+                                           (i.rol_cobrador == "banco" || i.rol_cobrador == "admin")) ||
                                            (i.rol_cobrador == "valet" &&
                                            db.sesiones.Any(s => s.id_usuario == idBanco &&
                                            s.id_rol == 2 &&
