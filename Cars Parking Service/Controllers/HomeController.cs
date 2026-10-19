@@ -462,6 +462,16 @@ namespace CarsParkingService.Controllers
                     : $"Error al parquear: el vehículo está {ingreso.estado_servicio ?? "sin estado"}.");
             }
 
+            // Despachar desde VistaKey: solo parqueado o solicitado y con un valet de despacho válido
+            // (el cobro lo exige, punto 32). Antes no se revisaba y se podía despachar en cualquier estado
+            if (ingreso != null && nuevo_estado == "despachado" &&
+                (!IngresoReglas.PuedeDespachar(ingreso) || !id_valet.HasValue || !ValetsDisponibles().Any(v => v.id_usuario == id_valet)))
+            {
+                return Volver(!IngresoReglas.PuedeDespachar(ingreso)
+                    ? $"Error al despachar: el vehículo está {ingreso.estado_servicio ?? "sin estado"}."
+                    : "Error al despachar: elige un valet de despacho de la lista.");
+            }
+
             string mensaje;
 
             if (ingreso != null)
@@ -510,6 +520,40 @@ namespace CarsParkingService.Controllers
 
             // Lo retornamos a la vista (VistaKey o la tabla de ingresos)
             return Volver(mensaje);
+        }
+
+        // Despachar desde la burbuja de solicitados (puntos 25 y 33): banco, admin y valet. Quien despacha queda
+        // como valet de despacho (en VistaKey, en cambio, se elige de la lista). Responde JSON para no recargar
+        // la página: la burbuja también está en el ingreso de vehículos y no se debe perder lo escrito
+        [HttpPost]
+        public IActionResult DespacharDesdeBurbuja(int id_ingreso)
+        {
+            var idUsuario = HttpContext.Session.GetInt32("id");
+            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+
+            if (!idUsuario.HasValue || rolUsuario is not (1 or 2 or 3))
+            {
+                return Json(new { success = false, mensaje = "No tienes permiso para despachar desde aquí." });
+            }
+
+            var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            if (ingreso == null)
+            {
+                return Json(new { success = false, mensaje = "No se encontró el vehículo." });
+            }
+
+            if (!IngresoReglas.PuedeDespachar(ingreso))
+            {
+                return Json(new { success = false, mensaje = $"El vehículo {ingreso.placa} está {ingreso.estado_servicio ?? "sin estado"} y no se puede despachar." });
+            }
+
+            ingreso.estado_servicio = "despachado";
+            ingreso.valet_despacho = idUsuario.Value;
+            ingreso.fecha_salida = DateTime.Now;
+            _context.SaveChanges();
+
+            return Json(new { success = true, mensaje = $"Vehículo {ingreso.placa} despachado. Quedaste como valet de despacho." });
         }
 
         // Metodo para guardar parqueadero del valet
@@ -601,7 +645,10 @@ namespace CarsParkingService.Controllers
 
                     nombre_banco = i.Banco != null
                         ? i.Banco.nombres
-                        : "Sin banco"
+                        : "Sin banco",
+
+                    // Para verlo al tocar el vehículo en la burbuja (punto 25)
+                    lugar_entrega = i.lugar_entrega
                 })
                 .ToList();
 
@@ -1856,6 +1903,16 @@ namespace CarsParkingService.Controllers
                     {
                         success = false,
                         message = "Ingreso no encontrado."
+                    });
+                }
+
+                // Mismo criterio que el botón Cobrar (punto 32): despachado, con valet de despacho y sin pagar
+                if (!IngresoReglas.PuedeCobrar(ingreso))
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = $"El vehículo {ingreso.placa} solo se puede cobrar cuando ya fue despachado y tiene valet de despacho."
                     });
                 }
 

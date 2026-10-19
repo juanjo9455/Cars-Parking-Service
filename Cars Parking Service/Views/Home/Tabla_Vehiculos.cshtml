@@ -49,7 +49,7 @@
 </div>
 
 <!-- Burbuja ovalada WhatsApp-->
-<div class="bubble-whatsapp" id="vehiculoBubble"
+<div class="bubble-whatsapp" id="whatsappBubble"
      onclick="abrirModalWhatsApp()"
      role="button" tabindex="0"
      aria-label="Reenviar WhatsApp">
@@ -577,6 +577,9 @@
             }
 
             setInterval(refrescarFilas, INTERVALO);
+
+            // Para refrescar en el momento después de una acción sin recargar (p. ej. despachar desde la burbuja)
+            window.refrescarTablaIngresos = refrescarFilas;
         })();
     </script>
 }

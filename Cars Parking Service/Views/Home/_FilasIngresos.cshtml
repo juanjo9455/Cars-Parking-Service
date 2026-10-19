@@ -97,38 +97,20 @@
                             </i>
                         }
 
-                        @* 3. Opciones de Pago para todos *@
-
-                            @if (idUsuarioSesion == ingresos.id_valet)
-                            {
-                                @if (ingresos.id_valet != null && ingresos.foto_estacionamiento && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado" || ingresos.estado_servicio == "despachado")
-                                {
-                                    <i class="fa-solid fa-credit-card btn-action btn-pago-ingreso" title="Cobrar"
-                                        onclick="abrirModalPago(this)"
-                                        data-id="@ingresos.id_ingreso"
-                                        data-placa="@ingresos.placa"
-                                        data-cliente="@ingresos.nombre_cliente"
-                                        data-metodo-pago="@(ingresos.metodo_pago ?? "No especificado")"
-                                        data-estado-servicio="@(ingresos.estado_servicio ?? "No especificado")"
-                                        style="cursor:pointer;">
-                                    </i>
-                                }
-                            }
-                            else
-                            {
-                                @if (ingresos.id_valet != null && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado")
-                                {
-                                    <i class="fa-solid fa-credit-card btn-action btn-pago-ingreso" title="Cobrar"
-                                        onclick="abrirModalPago(this)"
-                                        data-id="@ingresos.id_ingreso"
-                                        data-placa="@ingresos.placa"
-                                        data-cliente="@ingresos.nombre_cliente"
-                                        data-metodo-pago="@(ingresos.metodo_pago ?? "No especificado")"
-                                        data-estado-servicio="@(ingresos.estado_servicio ?? "No especificado")"
-                                        style="cursor:pointer;">
-                                    </i>
-                                }
-                            }
+                        @* 3. Cobrar: solo despachado, con valet de despacho y sin pagar (punto 32).
+                              Misma regla que valida FinalizarServicio (IngresoReglas.PuedeCobrar) *@
+                        @if (IngresoReglas.PuedeCobrar(ingresos))
+                        {
+                            <i class="fa-solid fa-credit-card btn-action btn-pago-ingreso" title="Cobrar"
+                                onclick="abrirModalPago(this)"
+                                data-id="@ingresos.id_ingreso"
+                                data-placa="@ingresos.placa"
+                                data-cliente="@ingresos.nombre_cliente"
+                                data-metodo-pago="@(ingresos.metodo_pago ?? "No especificado")"
+                                data-estado-servicio="@(ingresos.estado_servicio ?? "No especificado")"
+                                style="cursor:pointer;">
+                            </i>
+                        }
 
                         @* 4. Información: siempre visible *@
                         <i class="fa-solid fa-info btn-action btn-info-ingreso" title="Ver Informacion"
