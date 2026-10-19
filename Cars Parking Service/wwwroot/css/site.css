@@ -1057,25 +1057,30 @@ tbody tr {
     border-radius: 5px;
 }
 
-/* ====== Alerta cuando no hay un valet asignado ====== */
+/* ====== Alerta cuando no hay un valet asignado (punto 19) ======
+   Parpadea el borde izquierdo y el fondo queda suave y fijo. Antes se animaba el fondo, pero su
+   !important anulaba la animación y no se veía; por eso el borde va sin !important */
 
-.alerta-sin-valet {
-    border-left: 5px solid #d97706 !important;
+tbody tr.alerta-sin-valet {
+    border-left: 5px solid #d97706;
     background-color: #fffbf0 !important;
-    animation: flashSinValet 2.5s infinite;
+    animation: bordeSinValet 1.2s ease-in-out infinite;
 }
 
-@keyframes flashSinValet {
-    0% {
-        background-color: #ffffff;
+@keyframes bordeSinValet {
+    0%, 100% {
+        border-left-color: #d97706;
     }
 
     50% {
-        background-color: #fef3c7;
+        border-left-color: #fde68a;
     }
+}
 
-    100% {
-        background-color: #ffffff;
+/* Quien pidió "reducir movimiento" en su celular ve el borde fijo */
+@media (prefers-reduced-motion: reduce) {
+    tbody tr.alerta-sin-valet {
+        animation: none;
     }
 }
 
