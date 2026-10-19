@@ -2498,10 +2498,10 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("Tabla_Vehiculos");
             }
 
-            // Con "Otra ubicación" el lugar se escribe a mano: se limita el largo para que quepa en la columna
-            if (lugar_entrega.Trim().Length > 100)
+            // Con "Otra ubicación" el lugar se escribe a mano: tbl_ingresos.lugar_entrega es VARCHAR(50)
+            if (lugar_entrega.Trim().Length > 50)
             {
-                TempData["Error"] = "El lugar de entrega no puede tener más de 100 caracteres.";
+                TempData["Error"] = "El lugar de entrega no puede tener más de 50 caracteres.";
                 return RedirectToAction("Tabla_Vehiculos");
             }
 
