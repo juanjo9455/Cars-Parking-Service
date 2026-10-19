@@ -433,22 +433,36 @@ namespace CarsParkingService.Controllers
                 .ToList();
         }
 
-        // POST: Cambiar el estado desde la vista Key
+        // POST: Cambiar el estado desde la vista Key, o Parquear desde el modal de Información de la
+        // tabla de ingresos (volver = "tabla", puntos 13 y 18)
         [HttpPost]
-        public IActionResult ActualizarEstadoKey(int id_ingreso, string nuevo_estado, int? id_valet = null)
+        public IActionResult ActualizarEstadoKey(int id_ingreso, string nuevo_estado, int? id_valet = null, string? volver = null)
         {
             // La sesión ya la revisa OnActionExecuting para todo HomeController
             var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
 
+            // Desde la tabla de ingresos se vuelve a la tabla con su alerta verde o roja; si no, a VistaKey
+            IActionResult Volver(string mensaje)
+            {
+                if (volver == "tabla")
+                {
+                    TempData[mensaje.StartsWith("Error") ? "Error" : "Exito"] = mensaje;
+                    return RedirectToAction("Tabla_Vehiculos");
+                }
+
+                TempData["DebugVistaKey"] = mensaje;
+                return RedirectToAction("VistaKey");
+            }
+
             // La regla se valida aquí porque el botón Parquear puede seguir en pantalla (refresco o página sin recargar)
             if (ingreso != null && nuevo_estado == "parqueado" && !IngresoReglas.PuedeParquear(ingreso))
             {
-                TempData["DebugVistaKey"] = ingreso.id_valet == null
+                return Volver(ingreso.id_valet == null
                     ? "Error al parquear: el vehículo no tiene valet asignado."
-                    : $"Error al parquear: el vehículo está {ingreso.estado_servicio ?? "sin estado"}.";
-
-                return RedirectToAction("VistaKey");
+                    : $"Error al parquear: el vehículo está {ingreso.estado_servicio ?? "sin estado"}.");
             }
+
+            string mensaje;
 
             if (ingreso != null)
             {
@@ -476,7 +490,7 @@ namespace CarsParkingService.Controllers
 
                 _context.SaveChanges();
 
-                TempData["DebugVistaKey"] = nuevo_estado switch
+                mensaje = nuevo_estado switch
                 {
                     "parqueado" when ingreso.estado_servicio == "parqueado" => "Parqueado con éxito.",
                     "parqueado" => "Error al parquear.",
@@ -487,15 +501,15 @@ namespace CarsParkingService.Controllers
             }
             else
             {
-                TempData["DebugVistaKey"] = nuevo_estado == "parqueado"
+                mensaje = nuevo_estado == "parqueado"
                     ? "Error al parquear."
                     : nuevo_estado == "despachado"
                         ? "Error al despachar."
                         : "No se encontró el ingreso.";
             }
 
-            // Lo retornamos a la vista
-            return RedirectToAction("VistaKey");
+            // Lo retornamos a la vista (VistaKey o la tabla de ingresos)
+            return Volver(mensaje);
         }
 
         // Metodo para guardar parqueadero del valet
@@ -2444,7 +2458,10 @@ namespace CarsParkingService.Controllers
                     : null,
                 puedeSolicitar = PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio, ingreso.estado_pago),
                 // Banco y admin pueden asignar valet a un vehículo que no tiene (punto 4)
-                puedeAsignarValet = (HttpContext.Session.GetInt32("id_rol") is 2 or 3) && IngresoReglas.PuedeRecibirValet(ingreso)
+                puedeAsignarValet = (HttpContext.Session.GetInt32("id_rol") is 2 or 3) && IngresoReglas.PuedeRecibirValet(ingreso),
+                // Valet, banco y admin parquean desde Información sin ir a VistaKey (puntos 13 y 18);
+                // misma regla que el botón del Key y que valida ActualizarEstadoKey
+                puedeParquear = (HttpContext.Session.GetInt32("id_rol") is 1 or 2 or 3) && IngresoReglas.PuedeParquear(ingreso)
             });
         }
 
