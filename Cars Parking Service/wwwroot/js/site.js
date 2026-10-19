@@ -1140,7 +1140,12 @@ function abrirModalFoto(btnOrId) {
 
         if (!file || !file.type.startsWith('image/')) return;
 
-        const base64 = await fileToDataUrl(file);
+        // Se reduce como las demás fotos (máx. 1600 px, JPEG): la original de un celular puede pasar los
+        // 4 MB por campo que acepta el servidor; entonces no se guardaba y el valet veía un 404.
+        // compressImageToBase64 viene de ingreso-vehiculos-camera.js (cargado en la tabla de ingresos)
+        const base64 = typeof compressImageToBase64 === 'function'
+            ? await compressImageToBase64(file)
+            : await fileToDataUrl(file);
 
         fotoBase64.value = base64;
 
