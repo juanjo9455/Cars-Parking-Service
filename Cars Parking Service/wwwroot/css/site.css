@@ -1379,6 +1379,34 @@ tbody td:last-child {
     .table-container tbody td::before {
         content: none;
     }
+
+    /* Tabla de ingresos: en 360 px la columna de acciones se salía ~27 px. Celdas, chips e íconos
+       más compactos para que quepan las 4 columnas; si aún no caben, los íconos bajan de línea */
+    .tabla-ingresos thead th,
+    .tabla-ingresos tbody td {
+        padding: 8px 4px;
+    }
+
+    /* "ESTADO SERVICIO" era lo más ancho de su columna: el encabezado puede ir en dos líneas */
+    .tabla-ingresos thead th {
+        white-space: normal;
+    }
+
+    .tabla-ingresos td .info-chip {
+        padding: 4px 7px;
+        font-size: 11px;
+    }
+
+    .tabla-ingresos td.cell-action {
+        white-space: normal;
+    }
+
+    .tabla-ingresos td.cell-action i.btn-pago-ingreso,
+    .tabla-ingresos td.cell-action i.btn-info-ingreso {
+        width: 28px;
+        height: 28px;
+        font-size: 13px;
+    }
 }
  
 /*==================== Fin Tabla Registros de Vehiculos ====================*/
@@ -2685,7 +2713,8 @@ i.btn-pago-ingreso {
     color: #374151;
 }
 
-.solicitud-panel select {
+.solicitud-panel select,
+.solicitud-panel input[type="text"] {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;

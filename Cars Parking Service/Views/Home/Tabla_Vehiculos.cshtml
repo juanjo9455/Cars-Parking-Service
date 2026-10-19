@@ -1,4 +1,5 @@
 ﻿@model List<CarsParkingService.Models.ingresos>
+@using CarsParkingService.Helpers
 @{
     ViewData["Title"] = "Tabla Vehiculos";
     var modalError = TempData["Error"] as string;
@@ -265,6 +266,18 @@
         </div>
     </div>
 
+    @* Valets que banco y admin pueden asignar (abrirModalAsignarValet copia estas opciones).
+       data-usuario: el admin aparece preseleccionado para tomarlo él mismo *@
+    @if (idRol == 2 || idRol == 3)
+    {
+        <template id="plantilla-valets" data-usuario="@idUsuarioSesion">
+            @foreach (var valet in ViewBag.Valets)
+            {
+                <option value="@valet.id_usuario">@valet.nombres @valet.apellidos</option>
+            }
+        </template>
+    }
+
     <div class="total-registros-filtro">
         <i class="fa-solid fa-car-side"></i>
         Total de ingresos realizados:
@@ -273,7 +286,7 @@
 
     <!-- Table -->
     <div class="table-container">
-        <table>
+        <table class="tabla-ingresos">
             <thead>
                 <tr>
                     <th>Placa</th>
@@ -320,8 +333,9 @@
 
                     <td data-label="Acción" class="cell-action">
 
-                        @* 0. Tomar vehículo que espera valet (Valet y Admin) *@
-                        @if (ingresos.estado_servicio == "esperando valet" && (idRol == 1 || idRol == 3))
+                        @* 0. Vehículo sin valet: el valet se lo toma; banco y admin le asignan uno de la lista.
+                              Misma regla que valida actualizarValet (IngresoReglas.PuedeRecibirValet) *@
+                        @if (IngresoReglas.PuedeRecibirValet(ingresos) && idRol == 1)
                         {
                             <button class="btn-tomar-vehiculo"
                                     type="button"
@@ -330,24 +344,27 @@
                                     data-placa="@ingresos.placa"
                                     data-cliente="@ingresos.nombre_cliente"
                                     data-id-valet="@idUsuarioSesion"
-                                    title="Sin valet asignado — disponible para tomar">
+                                    title="Sin valet asignado — disponible para tomar"
+                                    aria-label="Tomar vehículo">
                                 <span class="btn-tomar-ping"></span>
                                 <i class="fa-solid fa-key"></i>
-                                Tomar vehículo
+                                <span class="btn-tomar-texto">Tomar vehículo</span>
                             </button>
                         }
-
-
-                        @* 1. Tomar vehículo (Solo para Valet / Rol 1) *@
-                        @if (ingresos.id_valet is null && (idRol == 1 || idRol == 3) && ingresos.estado_servicio != "esperando valet")
+                        else if (IngresoReglas.PuedeRecibirValet(ingresos) && (idRol == 2 || idRol == 3))
                         {
-                            <i class="fa-solid fa-car-side btn-action"
-                                onclick="abrirModalTomarVehiculo(this)"
-                                data-id="@ingresos.id_ingreso"
-                                data-placa="@ingresos.placa"
-                                data-cliente="@ingresos.nombre_cliente"
-                                style="cursor:pointer;">
-                            </i>
+                            <button class="btn-tomar-vehiculo"
+                                    type="button"
+                                    onclick="abrirModalAsignarValet(this)"
+                                    data-id="@ingresos.id_ingreso"
+                                    data-placa="@ingresos.placa"
+                                    data-cliente="@ingresos.nombre_cliente"
+                                    title="Sin valet asignado — elegir uno"
+                                    aria-label="Asignar valet">
+                                <span class="btn-tomar-ping"></span>
+                                <i class="fa-solid fa-user-plus"></i>
+                                <span class="btn-tomar-texto">Asignar valet</span>
+                            </button>
                         }
 
                         @* 2. Cámara solo para el valet responsable *@

@@ -165,196 +165,47 @@ document.addEventListener('submit', function (event) {
 });
 
 // ===== ACTUALIZACIÓN DINÁMICA DE LA TABLA =====
+// Cada 10 s se piden al servidor las filas ya armadas (vista parcial _FilasKey, acción FilasVistaKey),
+// con los mismos filtros de la página. Así los botones salen de las mismas reglas que valida el
+// servidor; antes se armaban aquí en JS con otras reglas.
 let actualizacionEnProceso = false;
 
 // Cada 10 s: suficiente para enterarse de una solicitud sin cargar de más el servidor
 const INTERVALO_ACTUALIZACION = 10000;
 
-/**
- * Obtiene los ingresos actualizados del servidor
- */
-async function obtenerIngresosPorParqueadero() {
-    try {
-        const response = await fetch('/Home/ObtenerIngresosPorParqueadero');
-        if (!response.ok) {
-            console.error('Error al obtener ingresos:', response.status);
-            return null;
-        }
-        const data = await response.json();
-        console.log('Datos obtenidos del servidor:', data);
-        return data;
-    } catch (error) {
-        console.error('Error en fetch:', error);
-        return null;
-    }
-}
-
-/**
- * Construye una fila de tabla HTML a partir de un ingreso
- */
-function construirFilaTabla(ingreso) {
-
-    const estado = ingreso.estado_servicio?.trim().toLowerCase();
-    let claseAlerta = '';
-
-    if (estado === 'solicitado') {
-        claseAlerta = 'alerta-solicitado';
-    }
-    else if (estado === 'esperando valet' || ingreso.id_valet == null) {
-        claseAlerta = 'alerta-sin-valet';
-    }
-
-    // Ahora claseBadge afuera
-    const claseBadge = estado === 'solicitado' ? 'status-pendiente'
-        : estado === 'esperando valet' ? 'status-esperando-valet'
-            : estado === 'parqueado' ? 'status-pagado'
-                : 'status-en-uso';
-    
-    const fechaFormato = new Date(ingreso.fecha_ingreso).toLocaleString('es-ES', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-
-    let botonesAccion = '';
-
-    // Botón Marcar como Parqueado
-    if (ingreso.estado_servicio !== 'parqueado' && ingreso.estado_servicio !== 'despachado') {
-        botonesAccion += `
-            <form method="post" action="/Home/ActualizarEstadoKey" class="d-inline actions-form">
-                <input type="hidden" name="id_ingreso" value="${ingreso.id}" />
-                <button type="submit" name="nuevo_estado" value="parqueado" class="btn-icon btn-icon-success" title="Marcar como Parqueado">
-                    <i class="fa-solid fa-square-parking"></i>
-                </button>
-            </form>
-        `;
-    }
-
-    // Botón Despachar
-    if (ingreso.estado_servicio !== 'despachado' && ingreso.estado_servicio?.trim().toLowerCase() === 'parqueado') {
-        botonesAccion += `
-            <button type="button"
-                    class="btn-icon btn-icon-warning"
-                    title="Despachar"
-                    onclick="abrirModalDespacho(this)"
-                    data-id-ingreso="${ingreso.id}"
-                    data-placa="${ingreso.placa}"
-                    data-id-valet="${ingreso.id_valet}">
-                <i class="fa-solid fa-right-from-bracket"></i>
-            </button>
-        `;
-    }
-
-    // Botón Ver Info
-    botonesAccion += `
-        <button type="button"
-                class="btn-icon btn-icon-info"
-                title="Ver información del vehículo"
-                onclick="abrirModalInformacion(this)"
-                data-id-ingreso="${ingreso.id}"
-                data-sin-solicitar="true">
-            <i class="fa-solid fa-circle-info"></i>
-        </button>
-    `;
-
-    const html = `
-        <tr class="${claseAlerta}">
-            <td class="fw-bold" data-label="Placa">${ingreso.placa}</td>
-            <td data-label="Estado">
-                <span class="status-badge ${claseBadge}">
-                    ${ingreso.estado_servicio?.toUpperCase()}
-                </span>
-            </td>
-            <td data-label="Valet Asignado">${ingreso.nombre_valet}</td>
-            <td data-label="Banco Asignado">${ingreso.nombre_banco}</td>
-            <td data-label="Fecha Ingreso">${fechaFormato}</td>
-            <td data-label="Acciones" class="cell-action">
-                ${botonesAccion}
-            </td>
-        </tr>
-    `;
-
-    return html;
-}
-
-/**
- * Actualiza la tabla with los ingresos del servidor
- */
 async function actualizarTabla() {
     if (actualizacionEnProceso) return;
-    
+
+    // Si se está enviando un formulario (Parqueando..., Despachando...) no se cambian las filas:
+    // el formulario quedaría fuera de la página y no se enviaría
+    if (document.querySelector('form[data-debug-submitting="true"]')) return;
+
     actualizacionEnProceso = true;
 
     try {
-        const datos = await obtenerIngresosPorParqueadero();
-        if (!datos || !datos.ingresos) {
-            console.warn('No hay datos para actualizar');
-            actualizacionEnProceso = false;
-            return;
-        }
+        // redirect 'manual': si la sesión venció, HomeController redirige al login y esa página
+        // no debe terminar dentro de la tabla (la respuesta llega con ok = false)
+        const response = await fetch(`/Home/FilasVistaKey${location.search}`, { cache: 'no-store', redirect: 'manual' });
+
+        // Sin sesión, sin turno o sin parqueadero: se dejan las filas que hay
+        if (!response.ok) return;
+
+        const html = await response.text();
+        const tbody = document.querySelector('table.tabla-key tbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = html;
 
         // Campana una sola vez por cada solicitud nueva de este parqueadero
-        const idsSolicitados = datos.ingresos
-            .filter(i => i.estado_servicio?.trim().toLowerCase() === 'solicitado')
-            .map(i => i.id);
+        const idsSolicitados = [...tbody.querySelectorAll('tr.alerta-solicitado')]
+            .map(fila => Number(fila.dataset.id));
         window.sonarSiHayNuevos?.('sonido-solicitudes-key', idsSolicitados, 'solicitud');
 
-        const tbody = document.querySelector('table tbody');
-        if (!tbody) {
-            console.warn('No se encontró tbody en la tabla');
-            actualizacionEnProceso = false;
-            return;
-        }
-
-        console.log('Cantidad de ingresos:', datos.cantidad);
-        console.log('IDs de ingresos:', datos.ingresos.map(i => i.id));
-
-        // Si no hay ingresos y antes había, mostrar mensaje vacío
-        if (datos.cantidad === 0) {
-            console.log('No hay ingresos, mostrando mensaje vacío');
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center" style="padding: 30px; color:#888;">
-                        No se encontraron vehículos.
-                    </td>
-                </tr>
-            `;
-        } else {
-            console.log('Renderizando ' + datos.cantidad + ' filas');
-            // Construir HTML de todas las filas
-            const filasHTML = datos.ingresos.map(ingreso => construirFilaTabla(ingreso)).join('');
-            tbody.innerHTML = filasHTML;
-
-            // Re-asignar event listeners si es necesario
-            reinicializarEventos();
-        }
-
     } catch (error) {
-        console.error('Error al actualizar tabla:', error);
+        console.error('Error al actualizar la tabla:', error);
     } finally {
         actualizacionEnProceso = false;
     }
-}
-
-/**
- * Reinicializa los eventos de los elementos después de actualizar la tabla
- */
-function reinicializarEventos() {
-    // Si hay botones de despacho, asegurarse de que tengan el evento
-    document.querySelectorAll('.btn-icon-warning').forEach(btn => {
-        btn.onclick = function() {
-            abrirModalDespacho(this);
-        };
-    });
-
-    // Si hay botones de info, asegurarse de que tengan el evento
-    document.querySelectorAll('.btn-icon-info').forEach(btn => {
-        btn.onclick = function () {
-            abrirModalInformacion(this);
-        };
-    });
 }
 
 // Inicializar solo al cargar la página

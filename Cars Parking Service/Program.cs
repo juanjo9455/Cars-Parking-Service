@@ -35,6 +35,13 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+// Comprime las respuestas (páginas, JSON y las filas que trae el refresco de VistaKey) para gastar
+// menos datos en los celulares. EnableForHttps: el sitio corre en HTTPS y sin esto no comprimiría nada.
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -44,6 +51,9 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
     app.UseHttpsRedirection();
 }
+
+// Va antes de los archivos estáticos y de los controladores para comprimir lo que ellos responden
+app.UseResponseCompression();
 
 app.UseStaticFiles();
 

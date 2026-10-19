@@ -330,8 +330,8 @@ namespace CarsParkingService.Controllers
 
             }
 
-            ViewBag.Parqueaderos = _context.parqueaderos.ToList();
-            ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
+            ViewBag.Parqueaderos = _context.parqueaderos.OrderBy(p => p.nombre_parqueadero).ToList();
+            ViewBag.Ubicaciones = _context.ubicacion_servicios.OrderBy(u => u.nombre_ubicacion).ToList();
 
             return View("Login");
         }

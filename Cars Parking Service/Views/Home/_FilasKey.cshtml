@@ -1,0 +1,79 @@
+﻿@using CarsParkingService.Helpers
+@model IEnumerable<CarsParkingService.Models.ingresos>
+
+@* Filas de la tabla de VistaKey. Las usan la página y su refresco automático (FilasVistaKey),
+   así los botones salen siempre de las mismas reglas que valida el servidor. *@
+
+@foreach (var item in Model)
+{
+    var estado = item.estado_servicio?.Trim().ToLower();
+
+    // Solicitado: alerta roja. Sin valet: alerta naranja que parpadea
+    var claseAlerta = estado == "solicitado" ? "alerta-solicitado"
+        : (estado == "esperando valet" || item.id_valet == null) ? "alerta-sin-valet"
+        : "";
+
+    var claseEstado = estado == "solicitado" ? "status-pendiente"
+        : estado == "esperando valet" ? "status-esperando-valet"
+        : estado == "parqueado" ? "status-pagado"
+        : "status-en-uso";
+
+    @* data-id: el refresco lo usa para sonar la campana una sola vez por solicitud nueva *@
+    <tr class="@claseAlerta" data-id="@item.id_ingreso">
+        <td class="fw-bold" data-label="Placa">@item.placa</td>
+        <td data-label="Estado">
+            <span class="status-badge @claseEstado">
+                @item.estado_servicio?.ToUpper()
+            </span>
+        </td>
+        <td data-label="Valet Asignado">@(item.Valet?.nombres ?? "N/A")</td>
+        <td data-label="Banco Asignado">@(item.Banco?.nombres ?? "N/A")</td>
+        <td data-label="Fecha Ingreso">@item.fecha_ingreso?.ToString("dd/MM/yyyy HH:mm")</td>
+        <td data-label="Acciones" class="cell-action">
+
+            <form method="post" action="@Url.Action("ActualizarEstadoKey", "Home")" class="d-inline actions-form">
+                <input type="hidden" name="id_ingreso" value="@item.id_ingreso" />
+
+                @* Misma regla que valida ActualizarEstadoKey: activo y con valet asignado *@
+                @if (IngresoReglas.PuedeParquear(item))
+                {
+                    <button type="submit" name="nuevo_estado" value="parqueado" class="btn-icon btn-icon-success" title="Marcar como Parqueado">
+                        <i class="fa-solid fa-square-parking"></i>
+                    </button>
+                }
+
+                @* Se despacha lo que está parqueado y lo que el cliente ya pidió *@
+                @if (estado == "parqueado" || estado == "solicitado")
+                {
+                    <button type="button"
+                            class="btn-icon btn-icon-warning"
+                            title="Despachar"
+                            onclick="abrirModalDespacho(this)"
+                            data-id-ingreso="@item.id_ingreso"
+                            data-placa="@item.placa"
+                            data-id-valet="@(item.id_valet)">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                }
+            </form>
+
+            <button type="button"
+                    class="btn-icon btn-icon-info"
+                    title="Ver información del vehículo"
+                    onclick="abrirModalInformacion(this)"
+                    data-id-ingreso="@item.id_ingreso"
+                    data-sin-solicitar="true">
+                <i class="fa-solid fa-circle-info"></i>
+            </button>
+        </td>
+    </tr>
+}
+
+@if (!Model.Any())
+{
+    <tr>
+        <td colspan="6" class="text-center" style="padding: 30px; color:#888;">
+            No se encontraron vehículos.
+        </td>
+    </tr>
+}

@@ -345,23 +345,6 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("Login", "Auth");
             }
 
-            var query = _context.ingresos
-                .Include(i => i.Valet)
-                .Include(i => i.Banco)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(placa))
-            {
-                query = query.Where(i =>
-                i.placa != null &&
-                i.placa.Contains(placa.Trim().ToUpper()));
-            }
-
-            if (!string.IsNullOrEmpty(estado_servicio))
-            {
-                query = query.Where(i => i.estado_servicio == estado_servicio);
-            }
-
             var sesion = _context.sesiones
                 .FirstOrDefault(s =>
                     s.id_usuario == idUsuarioSesion &&
@@ -388,32 +371,14 @@ namespace CarsParkingService.Controllers
                 }
                 else
                 {
-                    ingresos = query
-                        .Where(i =>
-                            i.id_parqueadero == idParqueaderoSesion &&
-                            i.estado_servicio != "finalizado" &&
-                            i.estado_servicio != "despachado" &&
-                            i.estado_pago != "pagado")
-                        .AsEnumerable()
-                        .OrderByDescending(i => i.estado_servicio?.Trim().ToLower() == "solicitado")
-                        .ThenByDescending(i => i.fecha_ingreso)
-                        .ToList();
+                    ingresos = IngresosVistaKey(idParqueaderoSesion, placa, estado_servicio);
 
                     ViewBag.MostrarModal = false;
                 }
             }
             else
             {
-                ingresos = query
-                    .Where(i =>
-                        i.id_parqueadero == sesion!.id_parqueadero &&
-                        i.estado_servicio != "finalizado" &&
-                        i.estado_servicio != "despachado" &&
-                        i.estado_pago != "pagado")
-                    .AsEnumerable()
-                    .OrderByDescending(i => i.estado_servicio?.Trim().ToLower() == "solicitado")
-                    .ThenByDescending(i => i.fecha_ingreso)
-                    .ToList();
+                ingresos = IngresosVistaKey(sesion!.id_parqueadero, placa, estado_servicio);
 
                 ViewBag.MostrarModal = false;
             }
@@ -426,7 +391,7 @@ namespace CarsParkingService.Controllers
             ViewData["FiltroPlaca"] = placa;
             ViewData["FiltroEstado"] = estado_servicio;
             ViewData["NombreParqueadero"] = parqueadero?.nombre_parqueadero ?? "Parqueadero";
-            ViewBag.valets = _context.usuarios.Where(v => v.id_rol == 1).ToList();
+            ViewBag.valets = ValetsDisponibles();
             ViewBag.idRol = rolUsuario;
             ViewBag.EstaEnParqueadero = idParqueaderoSesion.HasValue;
             ViewBag.Parqueaderos = _context.parqueaderos
@@ -436,11 +401,54 @@ namespace CarsParkingService.Controllers
             return View(ingresos);
         }
 
+        // Vehículos de un parqueadero que muestra VistaKey, con los filtros de la página.
+        // Los usan la página y su refresco (FilasVistaKey), para que las dos muestren lo mismo.
+        private List<ingresos> IngresosVistaKey(int? idParqueadero, string? placa, string? estado_servicio)
+        {
+            var query = _context.ingresos
+                .Include(i => i.Valet)
+                .Include(i => i.Banco)
+                .Where(i =>
+                    i.id_parqueadero == idParqueadero &&
+                    i.estado_servicio != "finalizado" &&
+                    i.estado_servicio != "despachado" &&
+                    i.estado_pago != "pagado");
+
+            if (!string.IsNullOrWhiteSpace(placa))
+            {
+                var placaFiltro = placa.Trim().ToUpper();
+                query = query.Where(i => i.placa != null && i.placa.Contains(placaFiltro));
+            }
+
+            if (!string.IsNullOrEmpty(estado_servicio))
+            {
+                query = query.Where(i => i.estado_servicio == estado_servicio);
+            }
+
+            // Primero los solicitados; luego los más recientes
+            return query
+                .AsEnumerable()
+                .OrderByDescending(i => i.estado_servicio?.Trim().ToLower() == "solicitado")
+                .ThenByDescending(i => i.fecha_ingreso)
+                .ToList();
+        }
+
         // POST: Cambiar el estado desde la vista Key
         [HttpPost]
         public IActionResult ActualizarEstadoKey(int id_ingreso, string nuevo_estado, int? id_valet = null)
         {
+            // La sesión ya la revisa OnActionExecuting para todo HomeController
             var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            // La regla se valida aquí porque el botón Parquear puede seguir en pantalla (refresco o página sin recargar)
+            if (ingreso != null && nuevo_estado == "parqueado" && !IngresoReglas.PuedeParquear(ingreso))
+            {
+                TempData["DebugVistaKey"] = ingreso.id_valet == null
+                    ? "Error al parquear: el vehículo no tiene valet asignado."
+                    : $"Error al parquear: el vehículo está {ingreso.estado_servicio ?? "sin estado"}.";
+
+                return RedirectToAction("VistaKey");
+            }
 
             if (ingreso != null)
             {
@@ -880,9 +888,10 @@ namespace CarsParkingService.Controllers
 
             ViewBag.TotalRegistros = totalRegistros;
 
-            ViewBag.Ubicaciones = _context.ubicacion_servicios.ToList();
-            ViewBag.Parqueaderos = _context.parqueaderos.ToList();
-            ViewBag.Valets = _context.usuarios.Where(u => u.id_rol == 1 && u.estado == true).ToList();
+            // Listas de los filtros en orden alfabético (punto 15)
+            ViewBag.Ubicaciones = _context.ubicacion_servicios.OrderBy(u => u.nombre_ubicacion).ToList();
+            ViewBag.Parqueaderos = _context.parqueaderos.OrderBy(p => p.nombre_parqueadero).ToList();
+            ViewBag.Valets = ValetsDisponibles();
 
 
             ViewData["FiltroPlaca"] = placa;
@@ -898,20 +907,64 @@ namespace CarsParkingService.Controllers
         [HttpPost]
         public IActionResult actualizarValet(int id_ingreso, int id_valet)
         {
+            var idUsuario = HttpContext.Session.GetInt32("id");
+            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+
             var ingreso = _context.ingresos
                 .FirstOrDefault(i => i.id_ingreso == id_ingreso);
 
             if (ingreso == null)
             {
-                return NotFound();
+                TempData["Error"] = "No se encontró el vehículo.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            // El valet solo se toma el vehículo a sí mismo; banco y admin asignan a un valet de la lista
+            bool permitido = rolUsuario == 1
+                ? id_valet == idUsuario
+                : (rolUsuario == 2 || rolUsuario == 3) && ValetsDisponibles().Any(v => v.id_usuario == id_valet);
+
+            if (!permitido)
+            {
+                TempData["Error"] = "No puedes asignar ese valet.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            // Solo se asigna a un vehículo sin valet que todavía no ha salido
+            if (!IngresoReglas.PuedeRecibirValet(ingreso))
+            {
+                TempData["Error"] = $"El vehículo {ingreso.placa} ya tiene valet o no se le puede asignar uno.";
+                return RedirectToAction("Tabla_Vehiculos");
             }
 
             ingreso.id_valet = id_valet;
-            ingreso.estado_servicio = "activo";
+
+            // El que esperaba valet pasa a activo; un solicitado sigue solicitado (no se pierde la solicitud)
+            if (ingreso.estado_servicio?.Trim().ToLower() == "esperando valet")
+            {
+                ingreso.estado_servicio = "activo";
+            }
 
             _context.SaveChanges();
 
+            TempData["Exito"] = $"Valet asignado al vehículo {ingreso.placa}.";
             return RedirectToAction("Tabla_Vehiculos");
+        }
+
+        // Valets que se pueden asignar a un vehículo: los de rol Valet, quien tenga turno abierto como
+        // valet (switch de rol) y el admin, que también trabaja como valet. Ordenados por nombre.
+        private List<usuarios> ValetsDisponibles()
+        {
+            var enTurnoDeValet = _context.sesiones
+                .Where(s => s.fecha_fin == null && s.id_rol == 1)
+                .Select(s => s.id_usuario);
+
+            return _context.usuarios
+                .Where(u => u.estado &&
+                            (u.id_rol == 1 || u.id_rol == 3 || enTurnoDeValet.Contains(u.id_usuario)))
+                .OrderBy(u => u.nombres)
+                .ThenBy(u => u.apellidos)
+                .ToList();
         }
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -1562,10 +1615,13 @@ namespace CarsParkingService.Controllers
 
         private void CargarDatosFormulario()
         {
-            ViewBag.Valets = _context.usuarios.Where(u => u.id_rol == 1 && u.estado == true).ToList();
-            ViewBag.Bancos = _context.usuarios.Where(u => u.id_rol == 2 && u.estado == true).ToList();
-            ViewBag.Parqueaderos = _context.parqueaderos.ToList();
-            ViewBag.UbicacionesS = _context.ubicacion_servicios.Where(u => u.estado == "activo").ToList();
+            ViewBag.Valets = ValetsDisponibles();
+            // Listas del formulario de ingreso en orden alfabético (punto 15)
+            ViewBag.Bancos = _context.usuarios.Where(u => u.id_rol == 2 && u.estado == true)
+                .OrderBy(u => u.nombres).ThenBy(u => u.apellidos).ToList();
+            ViewBag.Parqueaderos = _context.parqueaderos.OrderBy(p => p.nombre_parqueadero).ToList();
+            ViewBag.UbicacionesS = _context.ubicacion_servicios.Where(u => u.estado == "activo")
+                .OrderBy(u => u.nombre_ubicacion).ToList();
 
             // Obtener el usuario de la sesion
             var nombres = HttpContext.Session.GetString("nombre");
@@ -2166,87 +2222,37 @@ namespace CarsParkingService.Controllers
 
         // =================== Nuevos métodos para VistaKey =================== //
 
-        // Nuevo método para obtener ingresos de VistaKey sin recargar la página
+        // Filas de la tabla de VistaKey para el refresco automático (cada 10 s): las mismas que arma la
+        // página, con sus filtros. Antes el refresco las armaba aparte en JS con otras reglas: mostraba
+        // Parquear donde no iba y les quitaba Despachar a los solicitados.
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult ObtenerIngresosPorParqueadero()
+        public IActionResult FilasVistaKey(string? placa, string? estado_servicio)
         {
             var idUsuarioSesion = HttpContext.Session.GetInt32("id");
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
 
-            System.Diagnostics.Debug.WriteLine($"=== ObtenerIngresosPorParqueadero ===");
-            System.Diagnostics.Debug.WriteLine($"idUsuarioSesion: {idUsuarioSesion}");
-            System.Diagnostics.Debug.WriteLine($"rolUsuario: {rolUsuario}");
-
             // Mismos roles que pueden entrar a VistaKey: Key (4), Valet (1) y Admin (3)
             if (!idUsuarioSesion.HasValue || (rolUsuario != 4 && rolUsuario != 1 && rolUsuario != 3))
             {
-                System.Diagnostics.Debug.WriteLine($"Acceso denegado: no es rol Key, Valet o Admin");
                 return Unauthorized();
             }
 
-            // Buscamos la sesión activa con el usuario
-            var sesion = _context.sesiones
-                .FirstOrDefault(s =>
-                    s.id_usuario == idUsuarioSesion &&
-                    s.fecha_fin == null
-                );
+            // Valet y admin usan el parqueadero que eligieron en el modal; el Key, el de su turno
+            var idParqueadero = rolUsuario == 4
+                ? _context.sesiones
+                    .Where(s => s.id_usuario == idUsuarioSesion && s.fecha_fin == null)
+                    .Select(s => s.id_parqueadero)
+                    .FirstOrDefault()
+                : HttpContext.Session.GetInt32("id_parqueadero_sesion");
 
-            System.Diagnostics.Debug.WriteLine($"Sesión encontrada: {(sesion != null ? "SÍ" : "NO")}");
-            if (sesion != null)
+            // Sin parqueadero (Key sin turno, o valet/admin que aún no lo elige) se dejan las filas que hay
+            if (!idParqueadero.HasValue)
             {
-                System.Diagnostics.Debug.WriteLine($"id_parqueadero de sesión: {sesion.id_parqueadero}");
-            }
-
-            // Solo el Key necesita su turno: de ahí sale su parqueadero
-            if (sesion == null && rolUsuario == 4)
-            {
-                System.Diagnostics.Debug.WriteLine($"No hay sesión activa");
                 return Unauthorized();
             }
 
-            // Valet y admin usan el parqueadero que eligieron en el modal; el Key, el de su sesión
-            var idParqueaderoSesion = HttpContext.Session.GetInt32("id_parqueadero_sesion");
-            var idParqueaderoFiltro = rolUsuario == 4 ? sesion!.id_parqueadero : idParqueaderoSesion;
-
-            // Obtener ingresos del parqueadero actual
-            var ingresos = _context.ingresos
-                .Include(i => i.Valet)
-                .Include(i => i.Banco)
-                .Where(i =>
-                    (i.id_parqueadero == idParqueaderoFiltro) &&
-                    i.estado_servicio != "finalizado" &&
-                    i.estado_servicio != "despachado" &&
-                    i.estado_pago != "pagado")
-                .AsEnumerable()
-                .OrderByDescending(i => i.estado_servicio?.Trim().ToLower() == "solicitado")
-                .ThenByDescending(i => i.fecha_ingreso)
-                .Select(i => new
-                {
-                    id = i.id_ingreso,
-                    placa = i.placa,
-                    estado_servicio = i.estado_servicio,
-                    estado_pago = i.estado_pago,
-                    id_valet = i.id_valet,
-                    id_banco = i.id_banco,
-                    nombre_valet = i.Valet != null ? i.Valet.nombres : "N/A",
-                    nombre_banco = i.Banco != null ? i.Banco.nombres : "N/A",
-                    fecha_ingreso = i.fecha_ingreso
-                })
-                .ToList();
-
-            System.Diagnostics.Debug.WriteLine($"Total ingresos obtenidos: {ingresos.Count}");
-            foreach (var ing in ingresos)
-            {
-                System.Diagnostics.Debug.WriteLine($"  - ID: {ing.id}, Placa: {ing.placa}, Estado: {ing.estado_servicio}, Pago: {ing.estado_pago}");
-            }
-
-            return Json(new
-            {
-                cantidad = ingresos.Count(),
-                ingresos = ingresos,
-                serverTime = DateTime.Now.ToString("O")
-            });
+            return PartialView("_FilasKey", IngresosVistaKey(idParqueadero, placa, estado_servicio));
         }
 
         [HttpPost]
@@ -2436,7 +2442,9 @@ namespace CarsParkingService.Controllers
                 fotoTransferencia = ingreso.foto_transferencia != null
                     ? Url.Action(nameof(FotoTransferenciaIngreso), new { idIngreso = ingreso.id_ingreso })
                     : null,
-                puedeSolicitar = PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio, ingreso.estado_pago)
+                puedeSolicitar = PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio, ingreso.estado_pago),
+                // Banco y admin pueden asignar valet a un vehículo que no tiene (punto 4)
+                puedeAsignarValet = (HttpContext.Session.GetInt32("id_rol") is 2 or 3) && IngresoReglas.PuedeRecibirValet(ingreso)
             });
         }
 
@@ -2491,6 +2499,13 @@ namespace CarsParkingService.Controllers
             if (string.IsNullOrWhiteSpace(lugar_entrega))
             {
                 TempData["Error"] = "Selecciona el lugar de entrega.";
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
+            // Con "Otra ubicación" el lugar se escribe a mano: tbl_ingresos.lugar_entrega es VARCHAR(50)
+            if (lugar_entrega.Trim().Length > 50)
+            {
+                TempData["Error"] = "El lugar de entrega no puede tener más de 50 caracteres.";
                 return RedirectToAction("Tabla_Vehiculos");
             }
 
@@ -2651,11 +2666,9 @@ namespace CarsParkingService.Controllers
         [HttpPost]
         public async Task<IActionResult> KeepAlive()
         {
-            // 1. Validar si el usuario está autenticado
-            if (User.Identity == null || !User.Identity.IsAuthenticated)
-            {
-                return Unauthorized(new { success = false, message = "Sesión expirada" });
-            }
+            // 1. La sesión ya la revisa OnActionExecuting. Antes aquí se pedía User.Identity.IsAuthenticated,
+            //    que nunca es true en esta app (no usa ese tipo de autenticación): el latido respondía 401
+            //    siempre y los turnos se cerraban solos a los pocos minutos.
 
             // 2. Obtener el ID del usuario desde la sesión
             var idUsuario = HttpContext.Session.GetInt32("id");

@@ -7,11 +7,14 @@
     var parqueaderoAdmin = Context.Session.GetInt32("id_parqueadero_sesion");
     var enVistaKey = ViewContext.RouteData.Values["action"]?.ToString() == "VistaKey";
 
+    // En orden alfabetico (punto 15)
     var ubicacionesActivas = _context.ubicacion_servicios
-        .Where(u => u.estado == "activo");
+        .Where(u => u.estado == "activo")
+        .OrderBy(u => u.nombre_ubicacion);
 
     var parqueaderosActivos = _context.parqueaderos
-        .Where(p => p.estado == "activo");
+        .Where(p => p.estado == "activo")
+        .OrderBy(p => p.nombre_parqueadero);
 }
 
 @if(idRol != 3 && idRol.HasValue)

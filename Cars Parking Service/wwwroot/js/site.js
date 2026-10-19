@@ -1780,6 +1780,16 @@ function cerrarModalNoLiquidado() {
 
 // =========================== Eventos para ver informacion del ingreso ============================ \\
 
+// Escapa el texto escrito a mano (nombres, teléfonos, lugares, notas) antes de ponerlo dentro de HTML,
+// para que no se interprete como código
+function escaparHtml(texto) {
+    return String(texto)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
 async function abrirModalInformacion(btn) {
 
     console.log("========================================");
@@ -1856,9 +1866,9 @@ async function abrirModalInformacion(btn) {
 
         const info = await respuestaInfo.json();
 
-        // Muestra el dato, o un texto gris cuando no existe
+        // Muestra el dato (escapado), o un texto gris cuando no existe
         const valor = (texto, vacio) => texto
-            ? `<span class="info-valor">${texto}</span>`
+            ? `<span class="info-valor">${escaparHtml(texto)}</span>`
             : `<span class="info-valor info-vacio">${vacio}</span>`;
 
         const sinValet = "El valet no ha sido asignado al vehículo";
@@ -1866,7 +1876,7 @@ async function abrirModalInformacion(btn) {
 
         // Celular: con un toque se llama desde el celular
         const celular = info.telefono
-            ? `<a class="info-valor info-tel" href="tel:${info.telefono}"><i class="fa-solid fa-phone"></i> ${info.telefono}</a>`
+            ? `<a class="info-valor info-tel" href="tel:${escaparHtml(info.telefono)}"><i class="fa-solid fa-phone"></i> ${escaparHtml(info.telefono)}</a>`
             : valor(null, "Sin número registrado");
 
         const firma = info.firma
@@ -1883,14 +1893,25 @@ async function abrirModalInformacion(btn) {
                </button>`
             : "";
 
+        // Banco y admin asignan valet a un vehículo que no tiene (punto 4). Solo donde está la lista
+        // de valets (tabla de ingresos), por eso se revisa que exista la plantilla
+        const botonAsignarValet = info.puedeAsignarValet && document.getElementById('plantilla-valets')
+            ? `<button type="button" class="info-btn-solicitar" onclick="abrirModalAsignarValet(this)"
+                       data-id="${escaparHtml(idIngreso)}"
+                       data-placa="${escaparHtml(info.placa ?? "")}"
+                       data-cliente="${escaparHtml(info.nombreCliente ?? "")}">
+                   <i class="fa-solid fa-user-plus"></i> Asignar valet
+               </button>`
+            : "";
+
         const panelSolicitud = puedeSolicitar
             ? `<form class="solicitud-panel" method="post" action="/Home/SolicitarVehiculoOperador"
                      onsubmit="return enviarSolicitudOperador(this)">
                    <h3>Solicitar vehículo</h3>
 
                    <div class="solicitud-datos">
-                       <p><strong>Placa:</strong> ${info.placa ?? "—"}</p>
-                       <p><strong>Cliente:</strong> ${info.nombreCliente ?? "Sin nombre registrado"}</p>
+                       <p><strong>Placa:</strong> ${escaparHtml(info.placa ?? "—")}</p>
+                       <p><strong>Cliente:</strong> ${escaparHtml(info.nombreCliente ?? "Sin nombre registrado")}</p>
                    </div>
 
                    <p class="solicitud-nota">
@@ -1901,9 +1922,13 @@ async function abrirModalInformacion(btn) {
 
                    <label for="solicitud-lugar">Lugar de entrega</label>
                    <select id="solicitud-lugar" name="lugar_entrega" required
-                           data-preseleccion="${info.lugarIngreso ?? ""}">
+                           data-preseleccion="${escaparHtml(info.lugarIngreso ?? "")}"
+                           onchange="cambiarLugarSolicitud(this)">
                        <option value="">Cargando ubicaciones...</option>
                    </select>
+
+                   <input type="text" id="solicitud-lugar-otra" name="lugar_entrega" maxlength="50"
+                          placeholder="Escribe el lugar de entrega" hidden disabled />
 
                    <div class="solicitud-acciones">
                        <button type="button" class="btn btn-secondary" onclick="cancelarSolicitudOperador()">
@@ -1922,10 +1947,11 @@ async function abrirModalInformacion(btn) {
             <div class="info-panel">
 
                 <div class="info-header">
-                    <span class="info-placa">${info.placa ?? "—"}</span>
+                    <span class="info-placa">${escaparHtml(info.placa ?? "—")}</span>
                 </div>
 
                 ${botonSolicitar}
+                ${botonAsignarValet}
 
                 <h3 class="info-seccion"><i class="fa-solid fa-user"></i> Cliente</h3>
                 <div class="info-grid">
@@ -1999,10 +2025,7 @@ async function abrirModalInformacion(btn) {
         const textoObjetos = (info.objetosValor ?? "").trim();
         const sinObjetos = textoObjetos.toLowerCase() === "sin objetos de valor";
 
-        const objetosEscapados = textoObjetos
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
+        const objetosEscapados = escaparHtml(textoObjetos);
 
         let objetosValor;
 
@@ -2174,12 +2197,36 @@ function mostrarSolicitudOperador() {
                 select.appendChild(option);
             });
 
+            // Al final, la opción para escribir un lugar que no es una ubicación del servicio
+            const otra = document.createElement('option');
+            otra.value = OTRA_UBICACION;
+            otra.textContent = 'Otra ubicación…';
+            select.appendChild(otra);
+
             select.dataset.cargado = 'true';
         })
         .catch(error => {
             console.error('[SOLICITUD] Error cargando ubicaciones:', error);
             select.innerHTML = '<option value="">No se pudieron cargar las ubicaciones</option>';
         });
+}
+
+// Valor de la opción "Otra ubicación…" del lugar de entrega (no es el nombre de ninguna ubicación)
+const OTRA_UBICACION = '__otra__';
+
+// Con "Otra ubicación…" aparece un campo para escribir el lugar de entrega, que puede no ser una
+// ubicación del servicio. Solo uno de los dos campos se envía como lugar_entrega.
+function cambiarLugarSolicitud(select) {
+
+    const campoOtra = document.getElementById('solicitud-lugar-otra');
+    const esOtra = select.value === OTRA_UBICACION;
+
+    select.name = esOtra ? '' : 'lugar_entrega';
+    campoOtra.hidden = !esOtra;
+    campoOtra.disabled = !esOtra;
+    campoOtra.required = esOtra;
+
+    if (esOtra) campoOtra.focus();
 }
 
 // Vuelve a la información sin enviar nada

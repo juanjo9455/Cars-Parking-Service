@@ -493,8 +493,8 @@ function abrirModalTomarVehiculo(btn) {
             <h3>Confirmar Asignacion</h3>
 
             <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <p><strong>Placa:</strong> ${placa}</p>
-                <p><strong>Cliente:</strong> ${nombre_cliente}</p>
+                <p><strong>Placa:</strong> ${escaparHtml(placa)}</p>
+                <p><strong>Cliente:</strong> ${escaparHtml(nombre_cliente)}</p>
             </div>
             <div class="alerta-confirmacion">
                 <div class="alerta-warning">
@@ -503,7 +503,7 @@ function abrirModalTomarVehiculo(btn) {
                         <p class="alerta-titulo">¿Estás seguro?</p>
                         <p class="alerta-mensaje">
                             Estás a punto de tomar la solicitud del vehículo con placa
-                            <strong>${placa}</strong>. Esta acción te asignará como valet responsable.
+                            <strong>${escaparHtml(placa)}</strong>. Esta acción te asignará como valet responsable.
                         </p>
                     </div>
                 </div>
@@ -515,6 +515,59 @@ function abrirModalTomarVehiculo(btn) {
 
     if (modalAcciones) { modalAcciones.style.display = "flex"; }
 
+}
+
+// ================= banco y admin asignan valet a un vehículo que no tiene (punto 4) ================= //
+// Se abre desde el botón "Asignar valet" de la tabla o desde el modal de Información.
+// Las opciones salen de <template id="plantilla-valets"> (lista ValetsDisponibles del servidor).
+function abrirModalAsignarValet(btn) {
+
+    const modalAcciones = document.getElementById('modal-acciones');
+    const plantilla = document.getElementById('plantilla-valets');
+    if (!plantilla) return;
+
+    const id = btn.getAttribute('data-id');
+    const placa = btn.getAttribute('data-placa') ?? '';
+    const cliente = btn.getAttribute('data-cliente') ?? '';
+
+    // Si venía del panel "Solicitar vehículo", ese modo escondería este formulario
+    const contenido = document.getElementById("contenido-modal-acciones");
+    contenido.classList.remove('modo-solicitud');
+
+    contenido.innerHTML = `
+
+        <form method="post" action="/Home/actualizarValet" onsubmit="tomarSolicitud()">
+
+            <input type="hidden" name="id_ingreso" value="${escaparHtml(id)}" />
+
+            <span class="close-btn" onclick="cerrarModalTomarVehiculo()">&times;</span>
+
+            <h3>Asignar valet</h3>
+
+            <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <p><strong>Placa:</strong> ${escaparHtml(placa)}</p>
+                <p><strong>Cliente:</strong> ${escaparHtml(cliente || 'Sin nombre registrado')}</p>
+            </div>
+
+            <div class="form-group-modal" style="margin-bottom: 20px;">
+                <label for="asignar-valet">Valet responsable</label>
+                <select id="asignar-valet" name="id_valet" required style="width:100%;">
+                    <option value="">Selecciona un valet</option>
+                    ${plantilla.innerHTML}
+                </select>
+            </div>
+
+            <button type="submit" class="ingreso-btn" id="confirmar">Asignar valet</button>
+        </form>
+    `;
+
+    // El admin aparece preseleccionado: así se lo toma él mismo con un clic
+    const select = document.getElementById('asignar-valet');
+    if (select.querySelector(`option[value="${plantilla.dataset.usuario}"]`)) {
+        select.value = plantilla.dataset.usuario;
+    }
+
+    if (modalAcciones) { modalAcciones.style.display = "flex"; }
 }
 
 function cerrarModalTomarVehiculo() {

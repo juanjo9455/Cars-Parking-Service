@@ -187,6 +187,7 @@ namespace CarsParkingService.Controllers
             {
                 var ubicaciones = _context.ubicacion_servicios
                     .Where(u => u.estado != null && u.estado.Trim().ToLower() == "activo")
+                    .OrderBy(u => u.nombre_ubicacion)   // lugar de entrega en orden alfabético (punto 15)
                     .Select(u => new
                     {
                         id = u.id_ubicacion,

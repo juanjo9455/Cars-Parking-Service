@@ -122,66 +122,8 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
-                {
-                    var claseAlerta = (item.estado_servicio?.Trim().ToLower() == "solicitado") ? "alerta-solicitado" : "";
-
-                    <tr class="@claseAlerta">
-                        <td class="fw-bold" data-label="Placa">@item.placa</td>
-                        <td data-label="Estado">
-                            <span class="status-badge @(item.estado_servicio == "solicitado" ? "status-pendiente" : item.estado_servicio == "parqueado" ? "status-pagado" : "status-en-uso")">
-                                @item.estado_servicio?.ToUpper()
-                            </span>
-                        </td>
-                        <td data-label="Valet Asignado">@(item.Valet?.nombres ?? "N/A")</td>
-                        <td data-label="Banco Asignado">@(item.Banco?.nombres ?? "N/A")</td>
-                        <td data-label="Fecha Ingreso">@item.fecha_ingreso?.ToString("dd/MM/yyyy HH:mm")</td>
-                        <td data-label="Acciones" class="cell-action">
-
-                            <form method="post" action="@Url.Action("ActualizarEstadoKey", "Home")" class="d-inline actions-form">
-                                <input type="hidden" name="id_ingreso" value="@item.id_ingreso" />
-
-                                @if (item.estado_servicio != "parqueado" && item.estado_servicio != "despachado" && item.id_valet is not null && item.estado_servicio != "solicitado")
-                                {
-                                    <button type="submit" name="nuevo_estado" value="parqueado" class="btn-icon btn-icon-success" title="Marcar como Parqueado">
-                                        <i class="fa-solid fa-square-parking"></i>
-                                    </button>
-                                }
-
-                                @if (item.estado_servicio != "despachado" && item.estado_servicio?.Trim().ToLower() == "parqueado" || item.estado_servicio == "solicitado")
-                                {
-                                    <button type="button"
-                                            class="btn-icon btn-icon-warning"
-                                            title="Despachar"
-                                            onclick="abrirModalDespacho(this)"
-                                            data-id-ingreso="@item.id_ingreso"
-                                            data-placa="@item.placa"
-                                            data-id-valet="@(item.id_valet)">
-                                        <i class="fa-solid fa-right-from-bracket"></i>
-                                    </button>
-                                }
-                            </form>
-
-                            <button type="button"
-                                    class="btn-icon btn-icon-info"
-                                    title="Ver información del vehículo"
-                                    onclick="abrirModalInformacion(this)"
-                                    data-id-ingreso="@item.id_ingreso"
-                                    data-sin-solicitar="true">
-                                <i class="fa-solid fa-circle-info"></i>
-                            </button>
-                        </td>
-                    </tr>
-                }
-
-                @if (!Model.Any())
-                {
-                    <tr>
-                        <td colspan="6" class="text-center" style="padding: 30px; color:#888;">
-                            No se encontraron vehículos.
-                        </td>
-                    </tr>
-                }
+                @* Las filas salen de _FilasKey, la misma vista parcial que usa el refresco automático (FilasVistaKey) *@
+                <partial name="_FilasKey" model="Model" />
             
             </tbody>
         </table>
@@ -282,7 +224,7 @@
                                 foreach (var valet in ViewBag.Valets)
                                 {
                                     <option value="@valet.id_usuario">
-                                        @valet.nombres
+                                        @valet.nombres @valet.apellidos
                                     </option>
                                 }
                             }
