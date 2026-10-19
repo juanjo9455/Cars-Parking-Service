@@ -716,6 +716,18 @@
     color: #fff;
 }
 
+/* En el celular el texto no cabe y corta la columna de acciones: queda solo el ícono
+   (el nombre sigue en title y aria-label) */
+@media (max-width: 768px) {
+    .btn-tomar-texto {
+        display: none;
+    }
+
+    .btn-tomar-vehiculo {
+        padding: 6px 9px;
+    }
+}
+
 .btn-tomar-ping {
     position: absolute;
     top: -4px;

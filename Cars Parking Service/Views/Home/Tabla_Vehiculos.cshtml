@@ -344,10 +344,11 @@
                                     data-placa="@ingresos.placa"
                                     data-cliente="@ingresos.nombre_cliente"
                                     data-id-valet="@idUsuarioSesion"
-                                    title="Sin valet asignado — disponible para tomar">
+                                    title="Sin valet asignado — disponible para tomar"
+                                    aria-label="Tomar vehículo">
                                 <span class="btn-tomar-ping"></span>
                                 <i class="fa-solid fa-key"></i>
-                                Tomar vehículo
+                                <span class="btn-tomar-texto">Tomar vehículo</span>
                             </button>
                         }
                         else if (IngresoReglas.PuedeRecibirValet(ingresos) && (idRol == 2 || idRol == 3))
@@ -358,10 +359,11 @@
                                     data-id="@ingresos.id_ingreso"
                                     data-placa="@ingresos.placa"
                                     data-cliente="@ingresos.nombre_cliente"
-                                    title="Sin valet asignado — elegir uno">
+                                    title="Sin valet asignado — elegir uno"
+                                    aria-label="Asignar valet">
                                 <span class="btn-tomar-ping"></span>
                                 <i class="fa-solid fa-user-plus"></i>
-                                Asignar valet
+                                <span class="btn-tomar-texto">Asignar valet</span>
                             </button>
                         }
 
