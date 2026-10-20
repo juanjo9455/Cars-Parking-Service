@@ -31,6 +31,12 @@ namespace CarsParkingService.Helpers
                    ingreso.estado_pago?.Trim().ToLower() != "pagado";
         }
 
+        // Una solicitud se puede reversar mientras el vehículo siga solicitado (antes de despacharlo, punto 21)
+        public static bool PuedeReversarSolicitud(ingresos ingreso)
+        {
+            return ingreso.estado_servicio?.Trim().ToLower() == "solicitado";
+        }
+
         // Puede recibir valet el vehículo que no tiene y todavía no sale: el que espera valet, el que el
         // cliente pidió antes de que alguien lo tomara (solicitado) y el activo sin valet (datos viejos).
         public static bool PuedeRecibirValet(ingresos ingreso)

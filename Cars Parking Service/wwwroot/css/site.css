@@ -2570,6 +2570,34 @@ i.btn-pago-ingreso {
     white-space: nowrap;
 }
 
+/* Columna Solicitud de la tabla de ingresos: quién y a qué hora (puntos 26 y 27) */
+.tabla-ingresos .col-solicitud {
+    white-space: nowrap;
+}
+
+.tabla-ingresos .solicitud-quien {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+}
+
+.tabla-ingresos .solicitud-hora {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.tabla-ingresos .solicitud-vacia {
+    color: #9ca3af;
+}
+
+/* En el celular no cabe una columna más: quién y cuándo se ven en Información */
+@media (max-width: 768px) {
+    .tabla-ingresos .col-solicitud {
+        display: none;
+    }
+}
+
 /* En el celular, más compacta para que las 4 columnas sigan cabiendo sin desborde */
 @media (max-width: 768px) {
     .ingreso-placa {

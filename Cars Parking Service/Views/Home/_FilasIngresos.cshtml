@@ -44,6 +44,25 @@
                         }
                     </td>
 
+                    @* Quién y a qué hora se solicitó (puntos 26 y 27). Sin usuario = el cliente desde su enlace *@
+                    <td data-label="Solicitud" class="col-solicitud">
+                        @if (ingresos.fecha_solicitud.HasValue)
+                        {
+                            var nombresSolicitud = ViewBag.NombresSolicitud as Dictionary<int, string>;
+                            var quien = ingresos.usuario_solicitud.HasValue
+                                ? nombresSolicitud?.GetValueOrDefault(ingresos.usuario_solicitud.Value) ?? "Operador"
+                                : "Cliente";
+
+                            <span class="solicitud-quien">@quien</span>
+                            @* Solo la hora si fue hoy; si no, también el día *@
+                            <span class="solicitud-hora">@ingresos.fecha_solicitud.Value.ToString(ingresos.fecha_solicitud.Value.Date == DateTime.Today ? "HH:mm" : "dd/MM HH:mm")</span>
+                        }
+                        else
+                        {
+                            <span class="solicitud-vacia">—</span>
+                        }
+                    </td>
+
                     <td data-label="Acción" class="cell-action">
 
                         @* 0. Vehículo sin valet: el valet se lo toma; banco y admin le asignan uno de la lista.

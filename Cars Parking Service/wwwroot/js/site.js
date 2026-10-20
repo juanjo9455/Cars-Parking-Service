@@ -1923,6 +1923,14 @@ async function abrirModalInformacion(btn) {
                </form>`
             : "";
 
+        // Reversar una solicitud hecha por error (punto 21): valet, banco y admin, mientras siga solicitado.
+        // En VistaKey no se muestra (data-sin-solicitar)
+        const botonReversar = info.puedeReversar && btn.dataset.sinSolicitar !== 'true'
+            ? `<button type="button" class="info-btn-solicitar" onclick="reversarSolicitud(${Number(idIngreso)}, this)">
+                   <i class="fa-solid fa-rotate-left"></i> Reversar solicitud
+               </button>`
+            : "";
+
         const panelSolicitud = puedeSolicitar
             ? `<form class="solicitud-panel" method="post" action="/Home/SolicitarVehiculoOperador"
                      onsubmit="return enviarSolicitudOperador(this)">
@@ -1972,6 +1980,7 @@ async function abrirModalInformacion(btn) {
                 ${botonSolicitar}
                 ${botonAsignarValet}
                 ${botonParquear}
+                ${botonReversar}
 
                 <h3 class="info-seccion"><i class="fa-solid fa-user"></i> Cliente</h3>
                 <div class="info-grid">
@@ -1995,6 +2004,10 @@ async function abrirModalInformacion(btn) {
                         <span class="info-label">Salida</span>
                         ${valor(info.fechaSalida, "Aún no ha salido")}
                     </div>
+                    <div class="info-item info-item-completo">
+                        <span class="info-label">Solicitud</span>
+                        ${valor(info.fechaSolicitud, "Aún no se ha solicitado")}
+                    </div>
                 </div>
 
                 <h3 class="info-seccion"><i class="fa-solid fa-user-tie"></i> Operadores</h3>
@@ -2010,6 +2023,10 @@ async function abrirModalInformacion(btn) {
                     <div class="info-item">
                         <span class="info-label">Valet despacho</span>
                         ${valor(info.valetDespacho, sinValet)}
+                    </div>
+                    <div class="info-item info-item-completo">
+                        <span class="info-label">Solicitó</span>
+                        ${valor(info.solicitadoPor, "Aún no se ha solicitado")}
                     </div>
                 </div>
 
@@ -2268,6 +2285,58 @@ function enviarSolicitudOperador(form) {
     boton.textContent = 'Solicitando...';
 
     return true;
+}
+
+// Reversar una solicitud hecha por error (punto 21). Se usa desde Información y desde la burbuja.
+// El primer toque pide confirmar; el segundo la reversa, sin recargar la página
+async function reversarSolicitud(idIngreso, boton) {
+
+    if (boton.dataset.confirmar !== 'true') {
+        boton.dataset.confirmar = 'true';
+        boton.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Toca de nuevo para reversar';
+        return;
+    }
+
+    boton.disabled = true;
+    boton.textContent = 'Reversando...';
+
+    let data;
+
+    try {
+        // redirect 'manual': si la sesión venció no se sigue al login
+        const respuesta = await fetch('/Home/ReversarSolicitud', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `id_ingreso=${encodeURIComponent(idIngreso)}`,
+            redirect: 'manual'
+        });
+
+        data = respuesta.ok
+            ? await respuesta.json()
+            : { success: false, mensaje: 'No se pudo reversar. Revisa tu sesión e intenta de nuevo.' };
+    } catch (error) {
+        console.error('Error al reversar la solicitud:', error);
+        data = { success: false, mensaje: 'No se pudo reversar. Revisa tu conexión e intenta de nuevo.' };
+    }
+
+    mostrarAlertaWhatsApp(data.mensaje, data.success ? 'success' : 'error');
+
+    if (data.success) {
+        // Se cierra Información si estaba abierta y se actualizan la tabla y la burbuja
+        const modal = document.getElementById('modal-acciones');
+        if (modal && modal.style.display !== 'none') cerrarModalAcciones();
+
+        window.refrescarTablaIngresos?.();
+
+        if (typeof cargarSolicitudes === 'function') {
+            await cargarSolicitudes();
+            mostrarSolicitados();
+        }
+    } else {
+        boton.disabled = false;
+        delete boton.dataset.confirmar;
+        boton.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Reversar solicitud';
+    }
 }
 
 function cerrarModalAcciones() {

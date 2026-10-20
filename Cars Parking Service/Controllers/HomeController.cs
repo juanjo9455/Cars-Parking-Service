@@ -878,6 +878,7 @@ namespace CarsParkingService.Controllers
             ViewBag.ubicacion = ubicacionUsuario;
 
             var ingresos = IngresosTabla(idUsuario, placa, lugar, estado_servicio, estado_pago, parqueadero, fechaInicio, fechaFin);
+            ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
             int totalRegistros = ingresos.Count();
 
             ViewBag.TotalRegistros = totalRegistros;
@@ -979,7 +980,24 @@ namespace CarsParkingService.Controllers
                 return Unauthorized();
             }
 
-            return PartialView("_FilasIngresos", IngresosTabla(idUsuario.Value, placa, lugar, estado_servicio, estado_pago, parqueadero, fechaInicio, fechaFin));
+            var ingresos = IngresosTabla(idUsuario.Value, placa, lugar, estado_servicio, estado_pago, parqueadero, fechaInicio, fechaFin);
+            ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
+
+            return PartialView("_FilasIngresos", ingresos);
+        }
+
+        // Nombre de quien solicitó cada vehículo de la tabla (columna Solicitud, punto 26)
+        private Dictionary<int, string> NombresSolicitud(List<ingresos> ingresos)
+        {
+            var ids = ingresos
+                .Where(i => i.usuario_solicitud.HasValue)
+                .Select(i => i.usuario_solicitud!.Value)
+                .Distinct()
+                .ToList();
+
+            return _context.usuarios
+                .Where(u => ids.Contains(u.id_usuario))
+                .ToDictionary(u => u.id_usuario, u => u.nombres + " " + u.apellidos);
         }
         [HttpPost]
         public IActionResult actualizarValet(int id_ingreso, int id_valet)
@@ -2496,8 +2514,8 @@ namespace CarsParkingService.Controllers
                 return NotFound();
             }
 
-            // Nombres del valet que lo ingresó, del que lo trae de vuelta y del banco
-            var idsValets = new int?[] { ingreso.id_valet, ingreso.valet_despacho, ingreso.id_banco }
+            // Nombres del valet que lo ingresó, del que lo trae de vuelta, del banco y de quien lo solicitó
+            var idsValets = new int?[] { ingreso.id_valet, ingreso.valet_despacho, ingreso.id_banco, ingreso.usuario_solicitud }
                 .Where(id => id.HasValue)
                 .Select(id => id.Value)
                 .ToList();
@@ -2534,8 +2552,60 @@ namespace CarsParkingService.Controllers
                 puedeAsignarValet = (HttpContext.Session.GetInt32("id_rol") is 2 or 3) && IngresoReglas.PuedeRecibirValet(ingreso),
                 // Valet, banco y admin parquean desde Información sin ir a VistaKey (puntos 13 y 18);
                 // misma regla que el botón del Key y que valida ActualizarEstadoKey
-                puedeParquear = (HttpContext.Session.GetInt32("id_rol") is 1 or 2 or 3) && IngresoReglas.PuedeParquear(ingreso)
+                puedeParquear = (HttpContext.Session.GetInt32("id_rol") is 1 or 2 or 3) && IngresoReglas.PuedeParquear(ingreso),
+                // Quién y cuándo se solicitó (puntos 26 y 27): sin usuario = el cliente desde su enlace
+                fechaSolicitud = ingreso.fecha_solicitud?.ToString("dd/MM/yyyy HH:mm"),
+                solicitadoPor = !ingreso.fecha_solicitud.HasValue
+                    ? null
+                    : ingreso.usuario_solicitud.HasValue
+                        ? nombres.GetValueOrDefault(ingreso.usuario_solicitud.Value)
+                        : "El cliente, desde su enlace",
+                // Reversar una solicitud hecha por error (punto 21): los mismos que pueden solicitar
+                puedeReversar = (HttpContext.Session.GetInt32("id_rol") is 1 or 2 or 3) && IngresoReglas.PuedeReversarSolicitud(ingreso)
             });
+        }
+
+        // Reversar una solicitud hecha por error (punto 21): valet, banco y admin, solo mientras está
+        // "solicitado". El vehículo vuelve al estado que tenía y se borran los datos de la solicitud.
+        // Responde JSON: se usa desde Información y desde la burbuja sin recargar la página
+        [HttpPost]
+        public IActionResult ReversarSolicitud(int id_ingreso)
+        {
+            if (HttpContext.Session.GetInt32("id_rol") is not (1 or 2 or 3))
+            {
+                return Json(new { success = false, mensaje = "No tienes permiso para reversar solicitudes." });
+            }
+
+            var ingreso = _context.ingresos
+                .Include(i => i.Ubicacion)
+                .FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            if (ingreso == null)
+            {
+                return Json(new { success = false, mensaje = "No se encontró el vehículo." });
+            }
+
+            if (!IngresoReglas.PuedeReversarSolicitud(ingreso))
+            {
+                return Json(new { success = false, mensaje = $"El vehículo {ingreso.placa} ya no está solicitado; no hay nada que reversar." });
+            }
+
+            // Solicitudes hechas antes de esta versión no guardaron el estado anterior: si tiene valet
+            // se asume que estaba parqueado; si no, que esperaba valet
+            ingreso.estado_servicio = ingreso.estado_antes_solicitud
+                ?? (ingreso.id_valet.HasValue ? "parqueado" : "esperando valet");
+
+            // Se deshace lo que guardó la solicitud: lugar de entrega (vuelve al del ingreso), temporizador
+            // del cliente y quién/cuándo la hizo
+            ingreso.lugar_entrega = ingreso.Ubicacion?.nombre_ubicacion;
+            ingreso.fecha_fin_servicio = null;
+            ingreso.usuario_solicitud = null;
+            ingreso.fecha_solicitud = null;
+            ingreso.estado_antes_solicitud = null;
+
+            _context.SaveChanges();
+
+            return Json(new { success = true, mensaje = $"Solicitud del vehículo {ingreso.placa} reversada. Volvió a {ingreso.estado_servicio}." });
         }
 
         // Devuelve la foto del comprobante de pago (transferencia / QR)
@@ -2600,6 +2670,11 @@ namespace CarsParkingService.Controllers
             }
 
             // Mismos datos que guarda la solicitud del cliente
+            // Quién y cuándo (puntos 26 y 27) y el estado anterior para poder reversar (punto 21)
+            ingreso.estado_antes_solicitud = ingreso.estado_servicio;
+            ingreso.usuario_solicitud = HttpContext.Session.GetInt32("id");
+            ingreso.fecha_solicitud = DateTime.Now;
+
             ingreso.estado_servicio = "solicitado";
             ingreso.fecha_fin_servicio = DateTime.Now.AddMinutes(20);
             ingreso.lugar_entrega = lugar_entrega.Trim();

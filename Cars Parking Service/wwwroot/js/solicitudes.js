@@ -258,6 +258,7 @@ function mostrarSolicitados() {
         // Al tocar un vehículo se abre su detalle: lugar de entrega (punto 25) y Despachar (punto 33)
         const abierta = solicitud.id === solicitudAbierta;
         const despachando = solicitud.id === despachandoId;
+        const confirmandoReversar = solicitud.id === reversarConfirmandoId;
 
         const detalle = abierta
             ? `<div class="req-item-detalle" onclick="event.stopPropagation()">
@@ -269,6 +270,13 @@ function mostrarSolicitados() {
                            onclick="despacharDesdeBurbuja(${solicitud.id})">
                        <i class="fa-solid fa-right-from-bracket"></i>
                        ${despachando ? 'Despachando...' : 'Despachar (quedo como valet de despacho)'}
+                   </button>
+                   <button type="button" class="btn-reversar-burbuja" ${despachando ? 'disabled' : ''}
+                           ${confirmandoReversar ? 'data-confirmar="true"' : ''}
+                           onclick="reversarDesdeBurbuja(${solicitud.id}, this)">
+                       ${confirmandoReversar
+                           ? '<i class="fa-solid fa-triangle-exclamation"></i> Toca de nuevo para reversar'
+                           : '<i class="fa-solid fa-rotate-left"></i> Reversar solicitud'}
                    </button>
                </div>`
             : '';
@@ -309,15 +317,30 @@ function mostrarSolicitados() {
 
     })
 }
-// Vehículo de la lista de solicitados que está abierto y el que se está despachando.
-// Se guardan aparte porque la lista se vuelve a dibujar cada 5 s
+// Vehículo de la lista de solicitados que está abierto, el que se está despachando y el que espera
+// el segundo toque para reversar. Se guardan aparte porque la lista se vuelve a dibujar cada 5 s
 let solicitudAbierta = null;
 let despachandoId = null;
+let reversarConfirmandoId = null;
 
 // Abre o cierra el detalle de un vehículo solicitado
 function alternarSolicitud(id) {
     solicitudAbierta = solicitudAbierta === id ? null : id;
+    reversarConfirmandoId = null;
     mostrarSolicitados();
+}
+
+// Reversar desde la burbuja (punto 21): el primer toque pide confirmar y el segundo reversa
+// (reversarSolicitud, en site.js, es la misma de Información)
+function reversarDesdeBurbuja(id, boton) {
+    if (reversarConfirmandoId !== id) {
+        reversarConfirmandoId = id;
+        mostrarSolicitados();
+        return;
+    }
+
+    reversarConfirmandoId = null;
+    reversarSolicitud(id, boton);
 }
 
 // Despachar desde la burbuja (puntos 25 y 33): quien despacha queda como valet de despacho.

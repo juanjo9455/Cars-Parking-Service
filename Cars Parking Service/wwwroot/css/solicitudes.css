@@ -583,6 +583,27 @@
     cursor: not-allowed;
 }
 
+/* Reversar una solicitud hecha por error (punto 21): secundario, para no confundirlo con Despachar */
+.btn-reversar-burbuja {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border: 1.5px solid #C0392B;
+    border-radius: 8px;
+    background: #fff;
+    color: #922B21;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-reversar-burbuja:disabled {
+    opacity: .7;
+    cursor: not-allowed;
+}
+
 .status-dot {
     display: inline-block;
     width: 6px;
