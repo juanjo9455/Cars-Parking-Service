@@ -2002,12 +2002,16 @@ async function abrirModalInformacion(btn) {
                         ${valor(info.fechaIngreso, "—")}
                     </div>
                     <div class="info-item">
-                        <span class="info-label">Salida</span>
-                        ${valor(info.fechaSalida, "Aún no ha salido")}
+                        <span class="info-label">Parqueo</span>
+                        ${valor(info.fechaParqueo, "Sin registro")}
                     </div>
-                    <div class="info-item info-item-completo">
+                    <div class="info-item">
                         <span class="info-label">Solicitud</span>
                         ${valor(info.fechaSolicitud, "Aún no se ha solicitado")}
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Salida</span>
+                        ${valor(info.fechaSalida, "Aún no ha salido")}
                     </div>
                 </div>
 
@@ -2025,7 +2029,11 @@ async function abrirModalInformacion(btn) {
                         <span class="info-label">Valet despacho</span>
                         ${valor(info.valetDespacho, sinValet)}
                     </div>
-                    <div class="info-item info-item-completo">
+                    <div class="info-item">
+                        <span class="info-label">Parqueó</span>
+                        ${valor(info.parqueadoPor, "Sin registro")}
+                    </div>
+                    <div class="info-item">
                         <span class="info-label">Solicitó</span>
                         ${valor(info.solicitadoPor, "Aún no se ha solicitado")}
                     </div>

@@ -493,6 +493,13 @@ namespace CarsParkingService.Controllers
                     // en otros casos no modificamos id_valet para no sobreescribir datos previos
                 }
 
+                // Quién lo parqueó y a qué hora: el Key desde VistaKey o un operador desde Información
+                if (nuevo_estado == "parqueado")
+                {
+                    ingreso.usuario_parqueo = HttpContext.Session.GetInt32("id");
+                    ingreso.fecha_parqueo = DateTime.Now;
+                }
+
                 if (nuevo_estado == "despachado")
                 {
                     ingreso.fecha_salida = DateTime.Now;
@@ -1681,9 +1688,10 @@ namespace CarsParkingService.Controllers
                 .Take(500)
                 .ToList();
 
-            // Nombres de todos los que aparecen: valet que recibió, quien solicitó, valet de despacho y quien cobró
+            // Nombres de todos los que aparecen: valet que recibió, quien parqueó, quien solicitó, valet de despacho
+            // y quien cobró
             var idsUsuarios = ingresos
-                .SelectMany(i => new int?[] { i.id_valet, i.usuario_solicitud, i.valet_despacho, i.usuario_cobro })
+                .SelectMany(i => new int?[] { i.id_valet, i.usuario_parqueo, i.usuario_solicitud, i.valet_despacho, i.usuario_cobro })
                 .Where(id => id.HasValue)
                 .Select(id => id!.Value)
                 .Distinct()
@@ -2580,8 +2588,9 @@ namespace CarsParkingService.Controllers
                 return NotFound();
             }
 
-            // Nombres del valet que lo ingresó, del que lo trae de vuelta, del banco y de quien lo solicitó
-            var idsValets = new int?[] { ingreso.id_valet, ingreso.valet_despacho, ingreso.id_banco, ingreso.usuario_solicitud }
+            // Nombres del valet que lo ingresó, del que lo trae de vuelta, del banco, de quien lo solicitó y de
+            // quien lo parqueó
+            var idsValets = new int?[] { ingreso.id_valet, ingreso.valet_despacho, ingreso.id_banco, ingreso.usuario_solicitud, ingreso.usuario_parqueo }
                 .Where(id => id.HasValue)
                 .Select(id => id.Value)
                 .ToList();
@@ -2626,6 +2635,9 @@ namespace CarsParkingService.Controllers
                     : ingreso.usuario_solicitud.HasValue
                         ? nombres.GetValueOrDefault(ingreso.usuario_solicitud.Value)
                         : "El cliente, desde su enlace",
+                // Quién tocó Parquear y a qué hora (null en ingresos anteriores a este registro)
+                fechaParqueo = ingreso.fecha_parqueo?.ToString("dd/MM/yyyy HH:mm"),
+                parqueadoPor = ingreso.usuario_parqueo.HasValue ? nombres.GetValueOrDefault(ingreso.usuario_parqueo.Value) : null,
                 // Reversar una solicitud hecha por error (punto 21): los mismos que pueden solicitar
                 puedeReversar = (HttpContext.Session.GetInt32("id_rol") is 1 or 2 or 3) && IngresoReglas.PuedeReversarSolicitud(ingreso)
             });

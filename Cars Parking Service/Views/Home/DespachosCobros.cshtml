@@ -24,7 +24,7 @@
             <h2 style="margin: 0;">
                 <i class="fa-solid fa-receipt" style="color: #d32f2f;"></i> Despachos y cobros
             </h2>
-            <p>Vehículos con ingreso, despacho o cobro en el período: quién los recibió, solicitó, despachó y cobró</p>
+            <p>Vehículos con ingreso, despacho o cobro en el período: quién los recibió, parqueó, solicitó, despachó y cobró</p>
         </div>
 
         <a asp-controller="Home" asp-action="Administrador" class="btn btn-secondary">
@@ -115,6 +115,7 @@
                     <th>Placa</th>
                     <th>Ubicación</th>
                     <th>Ingreso</th>
+                    <th>Parqueo</th>
                     <th>Solicitud</th>
                     <th>Despacho</th>
                     <th>Cobro</th>
@@ -126,7 +127,7 @@
                 @if (Model.Count == 0)
                 {
                     <tr>
-                        <td colspan="8" style="text-align:center; color:#9ca3af;">
+                        <td colspan="9" style="text-align:center; color:#9ca3af;">
                             No hay vehículos con ingreso, despacho o cobro en este período
                         </td>
                     </tr>
@@ -143,6 +144,18 @@
                         <td data-label="Ingreso">
                             <span class="dc-principal">@Hora(i.fecha_ingreso)</span>
                             <span class="dc-detalle">Recibió: @Nombre(i.id_valet, "sin valet")</span>
+                        </td>
+
+                        <td data-label="Parqueo">
+                            @if (i.fecha_parqueo.HasValue)
+                            {
+                                <span class="dc-principal">@Hora(i.fecha_parqueo)</span>
+                                <span class="dc-detalle">@Nombre(i.usuario_parqueo)</span>
+                            }
+                            else
+                            {
+                                <span class="dc-vacio">—</span>
+                            }
                         </td>
 
                         <td data-label="Solicitud">
