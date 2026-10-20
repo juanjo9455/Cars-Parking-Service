@@ -205,6 +205,8 @@
                     if (contParq) clearSelectError(contParq);
                     if (contUb) clearSelectError(contUb);
                 }
+
+                actualizarBotonIniciar();
             });
         }
     }
@@ -582,6 +584,23 @@ function mostrarCamposRol() {
     else if (rolSeleccionado == 4) {
         contenedorParqueadero.style.display = 'block';
     }
+
+    actualizarBotonIniciar();
+}
+
+// El botón Iniciar queda desactivado mientras falte la ubicación (banco) o el parqueadero (Key):
+// los mismos casos que rechaza AuthController.cambiarRol. Valet y admin no eligen ninguno
+function actualizarBotonIniciar() {
+    const form = document.getElementById('selectRol')?.closest('form');
+    const boton = form?.querySelector('button[type="submit"]');
+    if (!boton) return;
+
+    const faltaSeleccion = ['contenedorParqueadero', 'contenedorUbicacion'].some(id => {
+        const contenedor = document.getElementById(id);
+        return contenedor && contenedor.style.display !== 'none' && !contenedor.querySelector('select')?.value;
+    });
+
+    boton.disabled = faltaSeleccion;
 }
 
 // Exponerla globalmente para usarla desde onchange en Razor

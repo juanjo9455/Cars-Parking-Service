@@ -140,6 +140,14 @@ body {
     background: #8b0000;
 }
 
+/* Iniciar sin ubicación o parqueadero elegido (auth.js). No aplica al spinner del envío, que también
+   desactiva el botón */
+.login-btn:disabled:not(.btn-loading),
+.login-btn:disabled:not(.btn-loading):hover {
+    background: #bdbdbd;
+    cursor: not-allowed;
+}
+
 /* ===== Error de Credenciales ===== */
 .error-credenciales {
     background: #ffebee;

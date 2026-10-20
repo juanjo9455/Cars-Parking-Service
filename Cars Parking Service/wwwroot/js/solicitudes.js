@@ -255,10 +255,37 @@ function mostrarSolicitados() {
     // Recorremos las solicitudes
     solicitudes.forEach(solicitud => {
 
-        // Creamos el html dinamicamente
+        // Al tocar un vehículo se abre su detalle: lugar de entrega (punto 25) y Despachar (punto 33)
+        const abierta = solicitud.id === solicitudAbierta;
+        const despachando = solicitud.id === despachandoId;
+        const confirmandoReversar = solicitud.id === reversarConfirmandoId;
+
+        const detalle = abierta
+            ? `<div class="req-item-detalle" onclick="event.stopPropagation()">
+                   <div class="req-item-lugar">
+                       <i class="fa-solid fa-location-dot"></i>
+                       Entrega en: <strong>${escaparHtml(solicitud.lugar_entrega || 'Sin lugar registrado')}</strong>
+                   </div>
+                   <button type="button" class="btn-despachar-burbuja" ${despachando ? 'disabled' : ''}
+                           onclick="despacharDesdeBurbuja(${solicitud.id})">
+                       <i class="fa-solid fa-right-from-bracket"></i>
+                       ${despachando ? 'Despachando...' : 'Despachar (quedo como valet de despacho)'}
+                   </button>
+                   <button type="button" class="btn-reversar-burbuja" ${despachando ? 'disabled' : ''}
+                           ${confirmandoReversar ? 'data-confirmar="true"' : ''}
+                           onclick="reversarDesdeBurbuja(${solicitud.id}, this)">
+                       ${confirmandoReversar
+                           ? '<i class="fa-solid fa-triangle-exclamation"></i> Toca de nuevo para reversar'
+                           : '<i class="fa-solid fa-rotate-left"></i> Reversar solicitud'}
+                   </button>
+               </div>`
+            : '';
+
+        // Creamos el html dinamicamente (los textos se escapan: el lugar puede venir escrito a mano)
         const solicitudHTML = `
 
-            <div class="req-item">
+            <div class="req-item${abierta ? ' abierta' : ''}" role="button" tabindex="0"
+                 onclick="alternarSolicitud(${solicitud.id})">
 
                 <div class="req-item-icon">
                     <i class="fa-solid fa-car-side"></i>
@@ -267,26 +294,20 @@ function mostrarSolicitados() {
                 <div class="req-item-info">
 
                     <div class="req-item-title">
-                        ${solicitud.placa}
+                        ${escaparHtml(solicitud.placa ?? '')}
                     </div>
 
                     <div class="req-item-sub">
-                        Banco: ${solicitud.nombre_banco}
+                        Banco: ${escaparHtml(solicitud.nombre_banco)}
                     </div>
 
                     <div class="req-item-sub">
-                        Valet: ${solicitud.nombre_valet}
+                        Valet: ${escaparHtml(solicitud.nombre_valet)}
                     </div>
+
+                    ${detalle}
 
                 </div>
-
-               <!--<div class="req-item-actions" display="none">
-
-                    <button class="btn-solicitud" onclick="tomarSolicitud(${solicitud.id})" id="tomarSolicitud">
-                        Tomar
-                    </button>
-
-                </div>-->
             </div>
 
         `;
@@ -296,6 +317,77 @@ function mostrarSolicitados() {
 
     })
 }
+// Vehículo de la lista de solicitados que está abierto, el que se está despachando y el que espera
+// el segundo toque para reversar. Se guardan aparte porque la lista se vuelve a dibujar cada 5 s
+let solicitudAbierta = null;
+let despachandoId = null;
+let reversarConfirmandoId = null;
+
+// Abre o cierra el detalle de un vehículo solicitado
+function alternarSolicitud(id) {
+    solicitudAbierta = solicitudAbierta === id ? null : id;
+    reversarConfirmandoId = null;
+    mostrarSolicitados();
+}
+
+// Reversar desde la burbuja (punto 21): el primer toque pide confirmar y el segundo reversa
+// (reversarSolicitud, en site.js, es la misma de Información)
+function reversarDesdeBurbuja(id, boton) {
+    if (reversarConfirmandoId !== id) {
+        reversarConfirmandoId = id;
+        mostrarSolicitados();
+        return;
+    }
+
+    reversarConfirmandoId = null;
+    reversarSolicitud(id, boton);
+}
+
+// Despachar desde la burbuja (puntos 25 y 33): quien despacha queda como valet de despacho.
+// Se hace sin recargar la página (la burbuja también está en el ingreso de vehículos)
+async function despacharDesdeBurbuja(id) {
+
+    if (despachandoId) return;
+
+    despachandoId = id;
+    mostrarSolicitados();
+
+    let data;
+
+    try {
+        // redirect 'manual': si la sesión venció no se sigue al login
+        const respuesta = await fetch('/Home/DespacharDesdeBurbuja', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `id_ingreso=${encodeURIComponent(id)}`,
+            redirect: 'manual'
+        });
+
+        data = respuesta.ok
+            ? await respuesta.json()
+            : { success: false, mensaje: 'No se pudo despachar. Revisa tu sesión e intenta de nuevo.' };
+    } catch (error) {
+        console.error('Error al despachar desde la burbuja:', error);
+        data = { success: false, mensaje: 'No se pudo despachar. Revisa tu conexión e intenta de nuevo.' };
+    }
+
+    // mostrarAlertaWhatsApp es la alerta general de site.js (verde o roja, con sonido)
+    mostrarAlertaWhatsApp(data.mensaje, data.success ? 'success' : 'error');
+
+    despachandoId = null;
+
+    if (data.success) {
+        solicitudAbierta = null;
+        await Promise.all([cargarSolicitudes(), cargarDespachados()]);
+        mostrarDespachados();
+
+        // La tabla de ingresos no espera su refresco de 10 s
+        window.refrescarTablaIngresos?.();
+    }
+
+    mostrarSolicitados();
+}
+
 // Funcion para mostrar los vehiculos en curso en el html
 function mostrarDespachados() {
 

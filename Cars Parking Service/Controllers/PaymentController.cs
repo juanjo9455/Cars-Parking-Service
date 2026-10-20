@@ -89,6 +89,12 @@ namespace CarsParkingService.Controllers
             Console.WriteLine("ANTES DE GUARDAR:");
             Console.WriteLine(ingreso.estado_servicio);
 
+            // Quién y cuándo (puntos 26 y 27): null = el cliente desde su enlace. El estado anterior
+            // se guarda para poder reversar una solicitud hecha por error (punto 21)
+            ingreso.estado_antes_solicitud = ingreso.estado_servicio;
+            ingreso.usuario_solicitud = null;
+            ingreso.fecha_solicitud = DateTime.Now;
+
             ingreso.estado_servicio = "solicitado";
             ingreso.fecha_fin_servicio = fechaFinServicio;
             ingreso.lugar_entrega = data.lugarEntrega;

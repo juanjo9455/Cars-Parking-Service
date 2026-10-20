@@ -14,6 +14,29 @@ namespace CarsParkingService.Helpers
                    ingreso.estado_servicio?.Trim().ToLower() == "activo";
         }
 
+        // Se despacha lo que está parqueado y lo que el cliente ya pidió (mismo criterio del botón del Key)
+        public static bool PuedeDespachar(ingresos ingreso)
+        {
+            var estado = ingreso.estado_servicio?.Trim().ToLower();
+
+            return estado == "parqueado" || estado == "solicitado";
+        }
+
+        // Se cobra solo el vehículo despachado, con valet de despacho y sin pagar (punto 32).
+        // La foto de parqueo no es requisito: si la tomaron, queda en Información
+        public static bool PuedeCobrar(ingresos ingreso)
+        {
+            return ingreso.estado_servicio?.Trim().ToLower() == "despachado" &&
+                   ingreso.valet_despacho != null &&
+                   ingreso.estado_pago?.Trim().ToLower() != "pagado";
+        }
+
+        // Una solicitud se puede reversar mientras el vehículo siga solicitado (antes de despacharlo, punto 21)
+        public static bool PuedeReversarSolicitud(ingresos ingreso)
+        {
+            return ingreso.estado_servicio?.Trim().ToLower() == "solicitado";
+        }
+
         // Puede recibir valet el vehículo que no tiene y todavía no sale: el que espera valet, el que el
         // cliente pidió antes de que alguien lo tomara (solicitado) y el activo sin valet (datos viejos).
         public static bool PuedeRecibirValet(ingresos ingreso)

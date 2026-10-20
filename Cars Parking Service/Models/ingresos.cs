@@ -52,6 +52,17 @@ namespace CarsParkingService.Models
         public string? rol_cobrador { get; set; }
         public byte[]? foto_transferencia { get; set; }
         public string? lugar_entrega { get; set; }
+
+        // Columnas de Database/rama4-solicitudes.sql (puntos 26, 27 y 21)
+        // Quién solicitó el vehículo: null = el cliente desde su enlace
+        public int? usuario_solicitud { get; set; }
+        public DateTime? fecha_solicitud { get; set; }
+        // Estado antes de solicitarse, para poder reversar la solicitud
+        public string? estado_antes_solicitud { get; set; }
+
+        // Columnas de Database/rama4-usuario-parqueo.sql: quién tocó Parquear (Key u operador) y a qué hora
+        public int? usuario_parqueo { get; set; }
+        public DateTime? fecha_parqueo { get; set; }
     }
 
     public class SolicitudDto

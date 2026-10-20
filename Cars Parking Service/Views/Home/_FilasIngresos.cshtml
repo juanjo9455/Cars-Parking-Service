@@ -44,6 +44,25 @@
                         }
                     </td>
 
+                    @* Quién y a qué hora se solicitó (puntos 26 y 27). Sin usuario = el cliente desde su enlace *@
+                    <td data-label="Solicitud" class="col-solicitud">
+                        @if (ingresos.fecha_solicitud.HasValue)
+                        {
+                            var nombresSolicitud = ViewBag.NombresSolicitud as Dictionary<int, string>;
+                            var quien = ingresos.usuario_solicitud.HasValue
+                                ? nombresSolicitud?.GetValueOrDefault(ingresos.usuario_solicitud.Value) ?? "Operador"
+                                : "Cliente";
+
+                            <span class="solicitud-quien">@quien</span>
+                            @* Solo la hora si fue hoy; si no, también el día *@
+                            <span class="solicitud-hora">@ingresos.fecha_solicitud.Value.ToString(ingresos.fecha_solicitud.Value.Date == DateTime.Today ? "HH:mm" : "dd/MM HH:mm")</span>
+                        }
+                        else
+                        {
+                            <span class="solicitud-vacia">—</span>
+                        }
+                    </td>
+
                     <td data-label="Acción" class="cell-action">
 
                         @* 0. Vehículo sin valet: el valet se lo toma; banco y admin le asignan uno de la lista.
@@ -97,38 +116,20 @@
                             </i>
                         }
 
-                        @* 3. Opciones de Pago para todos *@
-
-                            @if (idUsuarioSesion == ingresos.id_valet)
-                            {
-                                @if (ingresos.id_valet != null && ingresos.foto_estacionamiento && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado" || ingresos.estado_servicio == "despachado")
-                                {
-                                    <i class="fa-solid fa-credit-card btn-action btn-pago-ingreso" title="Cobrar"
-                                        onclick="abrirModalPago(this)"
-                                        data-id="@ingresos.id_ingreso"
-                                        data-placa="@ingresos.placa"
-                                        data-cliente="@ingresos.nombre_cliente"
-                                        data-metodo-pago="@(ingresos.metodo_pago ?? "No especificado")"
-                                        data-estado-servicio="@(ingresos.estado_servicio ?? "No especificado")"
-                                        style="cursor:pointer;">
-                                    </i>
-                                }
-                            }
-                            else
-                            {
-                                @if (ingresos.id_valet != null && ingresos.estado_pago != "pagado" && ingresos.estado_servicio != "finalizado")
-                                {
-                                    <i class="fa-solid fa-credit-card btn-action btn-pago-ingreso" title="Cobrar"
-                                        onclick="abrirModalPago(this)"
-                                        data-id="@ingresos.id_ingreso"
-                                        data-placa="@ingresos.placa"
-                                        data-cliente="@ingresos.nombre_cliente"
-                                        data-metodo-pago="@(ingresos.metodo_pago ?? "No especificado")"
-                                        data-estado-servicio="@(ingresos.estado_servicio ?? "No especificado")"
-                                        style="cursor:pointer;">
-                                    </i>
-                                }
-                            }
+                        @* 3. Cobrar: solo despachado, con valet de despacho y sin pagar (punto 32).
+                              Misma regla que valida FinalizarServicio (IngresoReglas.PuedeCobrar) *@
+                        @if (IngresoReglas.PuedeCobrar(ingresos))
+                        {
+                            <i class="fa-solid fa-credit-card btn-action btn-pago-ingreso" title="Cobrar"
+                                onclick="abrirModalPago(this)"
+                                data-id="@ingresos.id_ingreso"
+                                data-placa="@ingresos.placa"
+                                data-cliente="@ingresos.nombre_cliente"
+                                data-metodo-pago="@(ingresos.metodo_pago ?? "No especificado")"
+                                data-estado-servicio="@(ingresos.estado_servicio ?? "No especificado")"
+                                style="cursor:pointer;">
+                            </i>
+                        }
 
                         @* 4. Información: siempre visible *@
                         <i class="fa-solid fa-info btn-action btn-info-ingreso" title="Ver Informacion"

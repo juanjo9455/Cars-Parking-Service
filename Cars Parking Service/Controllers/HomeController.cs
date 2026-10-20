@@ -462,6 +462,16 @@ namespace CarsParkingService.Controllers
                     : $"Error al parquear: el vehículo está {ingreso.estado_servicio ?? "sin estado"}.");
             }
 
+            // Despachar desde VistaKey: solo parqueado o solicitado y con un valet de despacho válido
+            // (el cobro lo exige, punto 32). Antes no se revisaba y se podía despachar en cualquier estado
+            if (ingreso != null && nuevo_estado == "despachado" &&
+                (!IngresoReglas.PuedeDespachar(ingreso) || !id_valet.HasValue || !ValetsDisponibles().Any(v => v.id_usuario == id_valet)))
+            {
+                return Volver(!IngresoReglas.PuedeDespachar(ingreso)
+                    ? $"Error al despachar: el vehículo está {ingreso.estado_servicio ?? "sin estado"}."
+                    : "Error al despachar: elige un valet de despacho de la lista.");
+            }
+
             string mensaje;
 
             if (ingreso != null)
@@ -481,6 +491,13 @@ namespace CarsParkingService.Controllers
                         ingreso.valet_despacho = null;
                     }
                     // en otros casos no modificamos id_valet para no sobreescribir datos previos
+                }
+
+                // Quién lo parqueó y a qué hora: el Key desde VistaKey o un operador desde Información
+                if (nuevo_estado == "parqueado")
+                {
+                    ingreso.usuario_parqueo = HttpContext.Session.GetInt32("id");
+                    ingreso.fecha_parqueo = DateTime.Now;
                 }
 
                 if (nuevo_estado == "despachado")
@@ -510,6 +527,40 @@ namespace CarsParkingService.Controllers
 
             // Lo retornamos a la vista (VistaKey o la tabla de ingresos)
             return Volver(mensaje);
+        }
+
+        // Despachar desde la burbuja de solicitados (puntos 25 y 33): banco, admin y valet. Quien despacha queda
+        // como valet de despacho (en VistaKey, en cambio, se elige de la lista). Responde JSON para no recargar
+        // la página: la burbuja también está en el ingreso de vehículos y no se debe perder lo escrito
+        [HttpPost]
+        public IActionResult DespacharDesdeBurbuja(int id_ingreso)
+        {
+            var idUsuario = HttpContext.Session.GetInt32("id");
+            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+
+            if (!idUsuario.HasValue || rolUsuario is not (1 or 2 or 3))
+            {
+                return Json(new { success = false, mensaje = "No tienes permiso para despachar desde aquí." });
+            }
+
+            var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            if (ingreso == null)
+            {
+                return Json(new { success = false, mensaje = "No se encontró el vehículo." });
+            }
+
+            if (!IngresoReglas.PuedeDespachar(ingreso))
+            {
+                return Json(new { success = false, mensaje = $"El vehículo {ingreso.placa} está {ingreso.estado_servicio ?? "sin estado"} y no se puede despachar." });
+            }
+
+            ingreso.estado_servicio = "despachado";
+            ingreso.valet_despacho = idUsuario.Value;
+            ingreso.fecha_salida = DateTime.Now;
+            _context.SaveChanges();
+
+            return Json(new { success = true, mensaje = $"Vehículo {ingreso.placa} despachado. Quedaste como valet de despacho." });
         }
 
         // Metodo para guardar parqueadero del valet
@@ -601,7 +652,10 @@ namespace CarsParkingService.Controllers
 
                     nombre_banco = i.Banco != null
                         ? i.Banco.nombres
-                        : "Sin banco"
+                        : "Sin banco",
+
+                    // Para verlo al tocar el vehículo en la burbuja (punto 25)
+                    lugar_entrega = i.lugar_entrega
                 })
                 .ToList();
 
@@ -831,6 +885,7 @@ namespace CarsParkingService.Controllers
             ViewBag.ubicacion = ubicacionUsuario;
 
             var ingresos = IngresosTabla(idUsuario, placa, lugar, estado_servicio, estado_pago, parqueadero, fechaInicio, fechaFin);
+            ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
             int totalRegistros = ingresos.Count();
 
             ViewBag.TotalRegistros = totalRegistros;
@@ -932,7 +987,24 @@ namespace CarsParkingService.Controllers
                 return Unauthorized();
             }
 
-            return PartialView("_FilasIngresos", IngresosTabla(idUsuario.Value, placa, lugar, estado_servicio, estado_pago, parqueadero, fechaInicio, fechaFin));
+            var ingresos = IngresosTabla(idUsuario.Value, placa, lugar, estado_servicio, estado_pago, parqueadero, fechaInicio, fechaFin);
+            ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
+
+            return PartialView("_FilasIngresos", ingresos);
+        }
+
+        // Nombre de quien solicitó cada vehículo de la tabla (columna Solicitud, punto 26)
+        private Dictionary<int, string> NombresSolicitud(List<ingresos> ingresos)
+        {
+            var ids = ingresos
+                .Where(i => i.usuario_solicitud.HasValue)
+                .Select(i => i.usuario_solicitud!.Value)
+                .Distinct()
+                .ToList();
+
+            return _context.usuarios
+                .Where(u => ids.Contains(u.id_usuario))
+                .ToDictionary(u => u.id_usuario, u => u.nombres + " " + u.apellidos);
         }
         [HttpPost]
         public IActionResult actualizarValet(int id_ingreso, int id_valet)
@@ -1583,6 +1655,71 @@ namespace CarsParkingService.Controllers
             return View(registros);
         }
 
+        // Despachos y cobros (punto 28, solo administrador): cada vehículo con ingreso, despacho o cobro en el
+        // período, con quién lo recibió, quién lo solicitó, quién lo despachó, quién lo cobró y su liquidación
+        [HttpGet]
+        public IActionResult DespachosCobros(DateTime? desde, DateTime? hasta, string? placa)
+        {
+            if (HttpContext.Session.GetInt32("id_rol") != 3)
+            {
+                return RedirectToAction("Index");
+            }
+
+            // Por defecto, solo lo de hoy
+            var fechaDesde = (desde ?? DateTime.Today).Date;
+            var fechaHasta = (hasta ?? DateTime.Today).Date.AddDays(1);
+
+            var consulta = _context.ingresos
+                .AsNoTracking()
+                .Include(i => i.Ubicacion)
+                .Where(i => (i.fecha_ingreso >= fechaDesde && i.fecha_ingreso < fechaHasta) ||
+                            (i.fecha_salida >= fechaDesde && i.fecha_salida < fechaHasta) ||
+                            (i.fecha_entrega >= fechaDesde && i.fecha_entrega < fechaHasta));
+
+            if (!string.IsNullOrWhiteSpace(placa))
+            {
+                var placaFiltro = placa.Trim().ToUpper();
+                consulta = consulta.Where(i => i.placa != null && i.placa.Contains(placaFiltro));
+            }
+
+            // Máximo 500 filas para que la página no se vuelva pesada
+            var ingresos = consulta
+                .OrderByDescending(i => i.fecha_ingreso)
+                .Take(500)
+                .ToList();
+
+            // Nombres de todos los que aparecen: valet que recibió, quien parqueó, quien solicitó, valet de despacho
+            // y quien cobró
+            var idsUsuarios = ingresos
+                .SelectMany(i => new int?[] { i.id_valet, i.usuario_parqueo, i.usuario_solicitud, i.valet_despacho, i.usuario_cobro })
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value)
+                .Distinct()
+                .ToList();
+
+            ViewBag.Nombres = _context.usuarios
+                .Where(u => idsUsuarios.Contains(u.id_usuario))
+                .ToDictionary(u => u.id_usuario, u => u.nombres + " " + u.apellidos);
+
+            // Resumen del período: mismos criterios que la liquidación (valor del servicio; las propinas aparte)
+            bool EnPeriodo(DateTime? fecha) => fecha >= fechaDesde && fecha < fechaHasta;
+            var cobrados = ingresos.Where(i => i.estado_pago == "pagado" && EnPeriodo(i.fecha_entrega)).ToList();
+
+            ViewBag.Vehiculos = ingresos.Count;
+            ViewBag.Despachados = ingresos.Count(i => i.valet_despacho.HasValue && EnPeriodo(i.fecha_salida));
+            ViewBag.Cobrados = cobrados.Count;
+            ViewBag.TotalEfectivo = cobrados.Where(i => i.metodo_pago == "Efectivo").Sum(i => i.valor_servicio ?? 0);
+            ViewBag.TotalTransferencias = cobrados.Where(i => i.metodo_pago != "Efectivo").Sum(i => i.valor_servicio ?? 0);
+            ViewBag.TotalPropinas = cobrados.Sum(i => i.valor_propina ?? 0);
+            ViewBag.SinLiquidar = cobrados.Count(i => i.estado_liquidacion != true);
+
+            ViewData["FiltroDesde"] = fechaDesde;
+            ViewData["FiltroHasta"] = fechaHasta.AddDays(-1);
+            ViewData["FiltroPlaca"] = placa;
+
+            return View(ingresos);
+        }
+
         [HttpPost]
         public async Task<IActionResult> ReenviarWhatsApp(string placa, string? telefono)
         {
@@ -1859,6 +1996,16 @@ namespace CarsParkingService.Controllers
                     });
                 }
 
+                // Mismo criterio que el botón Cobrar (punto 32): despachado, con valet de despacho y sin pagar
+                if (!IngresoReglas.PuedeCobrar(ingreso))
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = $"El vehículo {ingreso.placa} solo se puede cobrar cuando ya fue despachado y tiene valet de despacho."
+                    });
+                }
+
                 // Si el método de pago es transferencia o QR,
                 // la foto es obligatoria.
                 if (ingreso.metodo_pago == "Transferencia" || ingreso.metodo_pago == "QR")
@@ -1901,7 +2048,9 @@ namespace CarsParkingService.Controllers
 
                 if (dto.EstadoServicio == "finalizado")
                 {
-                    ingreso.fecha_salida = DateTime.Now;
+                    // Se conserva la hora del despacho (la usa el reporte de despachos y cobros, punto 28);
+                    // solo se pone si nunca se despachó
+                    ingreso.fecha_salida ??= DateTime.Now;
                     ingreso.fecha_entrega = DateTime.Now;
                     ingreso.usuario_cobro = idUsuario;
                 }
@@ -2439,8 +2588,9 @@ namespace CarsParkingService.Controllers
                 return NotFound();
             }
 
-            // Nombres del valet que lo ingresó, del que lo trae de vuelta y del banco
-            var idsValets = new int?[] { ingreso.id_valet, ingreso.valet_despacho, ingreso.id_banco }
+            // Nombres del valet que lo ingresó, del que lo trae de vuelta, del banco, de quien lo solicitó y de
+            // quien lo parqueó
+            var idsValets = new int?[] { ingreso.id_valet, ingreso.valet_despacho, ingreso.id_banco, ingreso.usuario_solicitud, ingreso.usuario_parqueo }
                 .Where(id => id.HasValue)
                 .Select(id => id.Value)
                 .ToList();
@@ -2477,8 +2627,72 @@ namespace CarsParkingService.Controllers
                 puedeAsignarValet = (HttpContext.Session.GetInt32("id_rol") is 2 or 3) && IngresoReglas.PuedeRecibirValet(ingreso),
                 // Valet, banco y admin parquean desde Información sin ir a VistaKey (puntos 13 y 18);
                 // misma regla que el botón del Key y que valida ActualizarEstadoKey
-                puedeParquear = (HttpContext.Session.GetInt32("id_rol") is 1 or 2 or 3) && IngresoReglas.PuedeParquear(ingreso)
+                puedeParquear = (HttpContext.Session.GetInt32("id_rol") is 1 or 2 or 3) && IngresoReglas.PuedeParquear(ingreso),
+                // Quién y cuándo se solicitó (puntos 26 y 27): sin usuario = el cliente desde su enlace
+                fechaSolicitud = ingreso.fecha_solicitud?.ToString("dd/MM/yyyy HH:mm"),
+                solicitadoPor = !ingreso.fecha_solicitud.HasValue
+                    ? null
+                    : ingreso.usuario_solicitud.HasValue
+                        ? nombres.GetValueOrDefault(ingreso.usuario_solicitud.Value)
+                        : "El cliente, desde su enlace",
+                // Quién tocó Parquear y a qué hora (null en ingresos anteriores a este registro)
+                fechaParqueo = ingreso.fecha_parqueo?.ToString("dd/MM/yyyy HH:mm"),
+                parqueadoPor = ingreso.usuario_parqueo.HasValue ? nombres.GetValueOrDefault(ingreso.usuario_parqueo.Value) : null,
+                // Reversar una solicitud hecha por error (punto 21): los mismos que pueden solicitar
+                puedeReversar = (HttpContext.Session.GetInt32("id_rol") is 1 or 2 or 3) && IngresoReglas.PuedeReversarSolicitud(ingreso)
             });
+        }
+
+        // Reversar una solicitud hecha por error (punto 21): valet, banco y admin, solo mientras está
+        // "solicitado". El vehículo vuelve al estado que tenía y se borran los datos de la solicitud.
+        // Responde JSON: se usa desde Información y desde la burbuja sin recargar la página
+        [HttpPost]
+        public IActionResult ReversarSolicitud(int id_ingreso)
+        {
+            if (HttpContext.Session.GetInt32("id_rol") is not (1 or 2 or 3))
+            {
+                return Json(new { success = false, mensaje = "No tienes permiso para reversar solicitudes." });
+            }
+
+            var ingreso = _context.ingresos
+                .Include(i => i.Ubicacion)
+                .FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            if (ingreso == null)
+            {
+                return Json(new { success = false, mensaje = "No se encontró el vehículo." });
+            }
+
+            if (!IngresoReglas.PuedeReversarSolicitud(ingreso))
+            {
+                return Json(new { success = false, mensaje = $"El vehículo {ingreso.placa} ya no está solicitado; no hay nada que reversar." });
+            }
+
+            // Solicitudes hechas antes de esta versión no guardaron el estado anterior: si tiene valet
+            // se asume que estaba parqueado; si no, que esperaba valet
+            var estadoAnterior = ingreso.estado_antes_solicitud
+                ?? (ingreso.id_valet.HasValue ? "parqueado" : "esperando valet");
+
+            // Si le asignaron valet mientras estaba solicitado ya no espera valet: queda activo, como en
+            // actualizarValet (si no, quedaría bloqueado: no se podría parquear ni asignarle valet)
+            if (estadoAnterior.Trim().ToLower() == "esperando valet" && ingreso.id_valet.HasValue)
+            {
+                estadoAnterior = "activo";
+            }
+
+            ingreso.estado_servicio = estadoAnterior;
+
+            // Se deshace lo que guardó la solicitud: lugar de entrega (vuelve al del ingreso), temporizador
+            // del cliente y quién/cuándo la hizo
+            ingreso.lugar_entrega = ingreso.Ubicacion?.nombre_ubicacion;
+            ingreso.fecha_fin_servicio = null;
+            ingreso.usuario_solicitud = null;
+            ingreso.fecha_solicitud = null;
+            ingreso.estado_antes_solicitud = null;
+
+            _context.SaveChanges();
+
+            return Json(new { success = true, mensaje = $"Solicitud del vehículo {ingreso.placa} reversada. Volvió a {ingreso.estado_servicio}." });
         }
 
         // Devuelve la foto del comprobante de pago (transferencia / QR)
@@ -2543,6 +2757,11 @@ namespace CarsParkingService.Controllers
             }
 
             // Mismos datos que guarda la solicitud del cliente
+            // Quién y cuándo (puntos 26 y 27) y el estado anterior para poder reversar (punto 21)
+            ingreso.estado_antes_solicitud = ingreso.estado_servicio;
+            ingreso.usuario_solicitud = HttpContext.Session.GetInt32("id");
+            ingreso.fecha_solicitud = DateTime.Now;
+
             ingreso.estado_servicio = "solicitado";
             ingreso.fecha_fin_servicio = DateTime.Now.AddMinutes(20);
             ingreso.lugar_entrega = lugar_entrega.Trim();
