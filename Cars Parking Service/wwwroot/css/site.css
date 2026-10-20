@@ -1833,31 +1833,6 @@ tbody td:last-child {
     animation-delay: 0.12s;
 }
 
-/* Responsive para panel admin */
-@media (max-width: 768px) {
-    .admin-cards-container {
-        grid-template-columns: 1fr;
-    }
-
-    .admin-container {
-        max-width: 100%;
-        padding-left: 6px;
-        padding-right: 6px;
-    }
-
-    .admin-wide-table {
-        margin-left: -6px;
-        margin-right: -6px;
-        border-radius: 0;
-    }
-
-    #TablaUsuariosContainer .admin-wide-table table,
-    #TablaUbicacionesContainer .admin-wide-table table,
-    #TablaParqueaderosContainer .admin-wide-table table {
-        min-width: 760px;
-    }
-}
-
 .admin-container {
     max-width: 1360px;
 }
@@ -1880,30 +1855,52 @@ tbody td:last-child {
     min-width: 900px;
 }
 
+/* Responsive para panel admin: mismos márgenes que la tabla de ingresos (los 16 px del .container),
+   tablas sin ancho mínimo y sin las columnas secundarias (se ven en Editar) */
 @media (max-width: 768px) {
-    .admin-container {
-        max-width: none;
-        width: calc(100vw - 8px);
-        margin-left: calc(50% - 50vw + 4px);
-        margin-right: calc(50% - 50vw + 4px);
-        padding-left: 4px;
-        padding-right: 4px;
+    .admin-cards-container {
+        grid-template-columns: 1fr;
     }
 
     .admin-container .content {
-        padding: 6px;
-    }
-
-    .admin-wide-table {
-        margin-left: -6px;
-        margin-right: -6px;
-        border-radius: 0;
+        padding: 6px 0;
     }
 
     #TablaUsuariosContainer .admin-wide-table table,
     #TablaUbicacionesContainer .admin-wide-table table,
     #TablaParqueaderosContainer .admin-wide-table table {
-        min-width: 760px;
+        min-width: 0;
+    }
+
+    .admin-wide-table .col-movil-oculta {
+        display: none;
+    }
+
+    /* Nombres largos ("MARZANO - EL CAMPESTRE") bajan de línea en vez de ensanchar la tabla */
+    .admin-wide-table thead th,
+    .admin-wide-table tbody td {
+        white-space: normal;
+        padding: 8px 4px;
+    }
+
+    .admin-wide-table .status-badge {
+        white-space: nowrap;
+    }
+
+    /* Formularios de registro: menos relleno para que los campos usen el ancho del celular */
+    .admin-container .ingreso-container {
+        padding: 24px 16px;
+    }
+
+    /* Modales de edición: campos a todo el ancho y el de usuario en una sola columna */
+    .form-group-modal {
+        width: 100%;
+    }
+
+    .edit-usuario-layout {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
     }
 }
 

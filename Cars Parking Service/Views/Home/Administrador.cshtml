@@ -220,11 +220,11 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Identificacion</th>
+                            <th class="col-movil-oculta">Identificacion</th>
                             <th>Nombre</th>
-                            <th>Teléfono</th>
-                            <th>Edad</th>
-                            <th>Correo</th>
+                            <th class="col-movil-oculta">Teléfono</th>
+                            <th class="col-movil-oculta">Edad</th>
+                            <th class="col-movil-oculta">Correo</th>
                             <th>Rol</th>
                             <th>Estado</th>
                             <th>Acciones</th>
@@ -236,11 +236,11 @@
                             foreach (var user in ViewBag.Usuarios)
                             {
                                 <tr class="@(user.estado ? "usuario-activo" : "usuario-inactivo")">
-                                    <td>@user.dni</td>
+                                    <td class="col-movil-oculta">@user.dni</td>
                                     <td>@user.nombres @user.apellidos</td>
-                                    <td>@user.telefono</td>
-                                    <td>@user.edad</td>
-                                    <td>@user.correo</td>
+                                    <td class="col-movil-oculta">@user.telefono</td>
+                                    <td class="col-movil-oculta">@user.edad</td>
+                                    <td class="col-movil-oculta">@user.correo</td>
                                     <td>
                                         @if (user.id_rol == 1)
                                         {
@@ -411,8 +411,8 @@
                     <thead>
                         <tr>
                             <th>Nombre Ubicacion</th>
-                            <th>Direccion</th>
-                            <th>Ciudad</th>
+                            <th class="col-movil-oculta">Direccion</th>
+                            <th class="col-movil-oculta">Ciudad</th>
                             <th>Valor Servicio</th>
                             <th>Estado</th>
                             <th>Acciones</th>
@@ -425,8 +425,8 @@
                             {
                                 <tr class="@(ubicacion.estado == "activo" ? "ubicacion-activa" : "ubicacion-inactiva")">
                                     <td>@ubicacion.nombre_ubicacion</td>
-                                    <td>@ubicacion.direccion</td>
-                                    <td>@ubicacion.ciudad</td>
+                                    <td class="col-movil-oculta">@ubicacion.direccion</td>
+                                    <td class="col-movil-oculta">@ubicacion.ciudad</td>
                                     <!-- Formateamos el valor para no mostrar los decimales (,0000) -->
                                     <td>@ubicacion.valor_servicio.ToString("0")</td>
                                     <td class="text-center">
@@ -539,8 +539,8 @@
                     <thead>
                         <tr>
                             <th>Nombre Parqueadero</th>
-                            <th>Dirección</th>
-                            <th>Ciudad</th>
+                            <th class="col-movil-oculta">Dirección</th>
+                            <th class="col-movil-oculta">Ciudad</th>
                             <th>Tarifa</th>
                             <th>Estado</th>
                             <th>Acciones</th>
@@ -553,8 +553,8 @@
                             {
                                 <tr class="@(parqueadero.estado == "activo" ? "parqueadero-activo" : "parqueadero-inactivo")">
                                     <td>@parqueadero.nombre_parqueadero</td>
-                                    <td>@parqueadero.direccion</td>
-                                    <td>@parqueadero.ciudad</td>
+                                    <td class="col-movil-oculta">@parqueadero.direccion</td>
+                                    <td class="col-movil-oculta">@parqueadero.ciudad</td>
                                     <td>@parqueadero.tarifa.ToString("0")</td>
                                     <td class="text-center">
                                         @if (parqueadero.estado == "activo" || parqueadero.estado == "Activo" || parqueadero.estado == "ACTIVO")
@@ -760,7 +760,7 @@
         </div>
 
 
-        <button type="button" class="btn btn-secondary" id="volverMenuGeneral" style="display: none; margin-left: 13cm; margin-top: .5cm;">
+        <button type="button" class="btn btn-secondary" id="volverMenuGeneral" style="display: none; margin: .5cm auto 0;">
             Volver al Menú de Administrador
         </button>
     </div>
