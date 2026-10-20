@@ -154,11 +154,12 @@
     let estadoUbicaciones = "principal";
     let estadoParqueaderos = "principal";
 
-    // La card de WhatsApp se muestra/oculta igual que la de Usuarios (menú principal)
-    const whatsappCard = document.getElementById("CardWhatsApp");
-    if (whatsappCard && usuariosCard) {
+    // Las cards de páginas aparte (WhatsApp, Despachos y cobros) se muestran/ocultan igual que la de
+    // Usuarios (menú principal)
+    const cardsPaginasAparte = document.querySelectorAll("#CardWhatsApp, #CardDespachosCobros");
+    if (cardsPaginasAparte.length && usuariosCard) {
         new MutationObserver(() => {
-            whatsappCard.style.display = usuariosCard.style.display === "none" ? "none" : "";
+            cardsPaginasAparte.forEach(card => card.style.display = usuariosCard.style.display === "none" ? "none" : "");
         }).observe(usuariosCard, { attributes: true, attributeFilter: ["style"] });
     }
 
