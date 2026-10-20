@@ -2670,8 +2670,17 @@ namespace CarsParkingService.Controllers
 
             // Solicitudes hechas antes de esta versión no guardaron el estado anterior: si tiene valet
             // se asume que estaba parqueado; si no, que esperaba valet
-            ingreso.estado_servicio = ingreso.estado_antes_solicitud
+            var estadoAnterior = ingreso.estado_antes_solicitud
                 ?? (ingreso.id_valet.HasValue ? "parqueado" : "esperando valet");
+
+            // Si le asignaron valet mientras estaba solicitado ya no espera valet: queda activo, como en
+            // actualizarValet (si no, quedaría bloqueado: no se podría parquear ni asignarle valet)
+            if (estadoAnterior.Trim().ToLower() == "esperando valet" && ingreso.id_valet.HasValue)
+            {
+                estadoAnterior = "activo";
+            }
+
+            ingreso.estado_servicio = estadoAnterior;
 
             // Se deshace lo que guardó la solicitud: lugar de entrega (vuelve al del ingreso), temporizador
             // del cliente y quién/cuándo la hizo
