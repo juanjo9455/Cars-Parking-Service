@@ -237,7 +237,7 @@
                             {
                                 <tr class="@(user.estado ? "usuario-activo" : "usuario-inactivo")">
                                     <td>@user.dni</td>
-                                    <td>@user.nombres</td>
+                                    <td>@user.nombres @user.apellidos</td>
                                     <td>@user.telefono</td>
                                     <td>@user.edad</td>
                                     <td>@user.correo</td>
@@ -253,6 +253,10 @@
                                         else if (user.id_rol == 3)
                                         {
                                             <span class="status-badge" style="background: #d32f2f; color: white;">Admin</span>
+                                        }
+                                        else if (user.id_rol == 4)
+                                        {
+                                            <span class="status-badge" style="background: #6a1b9a; color: white;">Key</span>
                                         }
                                         else
                                         {
@@ -326,6 +330,7 @@
                                         <option value="1">Valet</option>
                                         <option value="2">Banco</option>
                                         <option value="3">Administrador</option>
+                                        <option value="4">Key</option>
                                     </select>
                                 </div>
                             </div>
