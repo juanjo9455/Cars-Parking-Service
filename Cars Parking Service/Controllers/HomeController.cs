@@ -1648,6 +1648,70 @@ namespace CarsParkingService.Controllers
             return View(registros);
         }
 
+        // Despachos y cobros (punto 28, solo administrador): cada vehículo con ingreso, despacho o cobro en el
+        // período, con quién lo recibió, quién lo solicitó, quién lo despachó, quién lo cobró y su liquidación
+        [HttpGet]
+        public IActionResult DespachosCobros(DateTime? desde, DateTime? hasta, string? placa)
+        {
+            if (HttpContext.Session.GetInt32("id_rol") != 3)
+            {
+                return RedirectToAction("Index");
+            }
+
+            // Por defecto, solo lo de hoy
+            var fechaDesde = (desde ?? DateTime.Today).Date;
+            var fechaHasta = (hasta ?? DateTime.Today).Date.AddDays(1);
+
+            var consulta = _context.ingresos
+                .AsNoTracking()
+                .Include(i => i.Ubicacion)
+                .Where(i => (i.fecha_ingreso >= fechaDesde && i.fecha_ingreso < fechaHasta) ||
+                            (i.fecha_salida >= fechaDesde && i.fecha_salida < fechaHasta) ||
+                            (i.fecha_entrega >= fechaDesde && i.fecha_entrega < fechaHasta));
+
+            if (!string.IsNullOrWhiteSpace(placa))
+            {
+                var placaFiltro = placa.Trim().ToUpper();
+                consulta = consulta.Where(i => i.placa != null && i.placa.Contains(placaFiltro));
+            }
+
+            // Máximo 500 filas para que la página no se vuelva pesada
+            var ingresos = consulta
+                .OrderByDescending(i => i.fecha_ingreso)
+                .Take(500)
+                .ToList();
+
+            // Nombres de todos los que aparecen: valet que recibió, quien solicitó, valet de despacho y quien cobró
+            var idsUsuarios = ingresos
+                .SelectMany(i => new int?[] { i.id_valet, i.usuario_solicitud, i.valet_despacho, i.usuario_cobro })
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value)
+                .Distinct()
+                .ToList();
+
+            ViewBag.Nombres = _context.usuarios
+                .Where(u => idsUsuarios.Contains(u.id_usuario))
+                .ToDictionary(u => u.id_usuario, u => u.nombres + " " + u.apellidos);
+
+            // Resumen del período: mismos criterios que la liquidación (valor del servicio; las propinas aparte)
+            bool EnPeriodo(DateTime? fecha) => fecha >= fechaDesde && fecha < fechaHasta;
+            var cobrados = ingresos.Where(i => i.estado_pago == "pagado" && EnPeriodo(i.fecha_entrega)).ToList();
+
+            ViewBag.Vehiculos = ingresos.Count;
+            ViewBag.Despachados = ingresos.Count(i => i.valet_despacho.HasValue && EnPeriodo(i.fecha_salida));
+            ViewBag.Cobrados = cobrados.Count;
+            ViewBag.TotalEfectivo = cobrados.Where(i => i.metodo_pago == "Efectivo").Sum(i => i.valor_servicio ?? 0);
+            ViewBag.TotalTransferencias = cobrados.Where(i => i.metodo_pago != "Efectivo").Sum(i => i.valor_servicio ?? 0);
+            ViewBag.TotalPropinas = cobrados.Sum(i => i.valor_propina ?? 0);
+            ViewBag.SinLiquidar = cobrados.Count(i => i.estado_liquidacion != true);
+
+            ViewData["FiltroDesde"] = fechaDesde;
+            ViewData["FiltroHasta"] = fechaHasta.AddDays(-1);
+            ViewData["FiltroPlaca"] = placa;
+
+            return View(ingresos);
+        }
+
         [HttpPost]
         public async Task<IActionResult> ReenviarWhatsApp(string placa, string? telefono)
         {
@@ -1976,7 +2040,9 @@ namespace CarsParkingService.Controllers
 
                 if (dto.EstadoServicio == "finalizado")
                 {
-                    ingreso.fecha_salida = DateTime.Now;
+                    // Se conserva la hora del despacho (la usa el reporte de despachos y cobros, punto 28);
+                    // solo se pone si nunca se despachó
+                    ingreso.fecha_salida ??= DateTime.Now;
                     ingreso.fecha_entrega = DateTime.Now;
                     ingreso.usuario_cobro = idUsuario;
                 }

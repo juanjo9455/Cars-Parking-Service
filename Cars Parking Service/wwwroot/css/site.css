@@ -2972,3 +2972,27 @@ i.btn-pago-ingreso {
     font-size: 13px;
     color: #7a5200;
 }
+
+/* ==================== Despachos y cobros (admin, punto 28) ==================== */
+
+/* Siete tarjetas de resumen: se acomodan solas según el ancho */
+.wa-resumen.dc-resumen {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+}
+
+/* Cada celda: hora (y método) arriba, quién debajo */
+.tabla-despachos .dc-principal {
+    display: block;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.tabla-despachos .dc-detalle {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.tabla-despachos .dc-vacio {
+    color: #9ca3af;
+}
