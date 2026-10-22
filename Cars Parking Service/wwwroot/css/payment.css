@@ -460,6 +460,33 @@ a {
     margin: 20px auto 0 auto; /* centrado horizontal */
 }
 
+/* Lugar de entrega escrito por el cliente ("Otra ubicación…"): mismo aspecto que la lista */
+.lugar-entrega-otra {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px 15px;
+    border: 1px solid var(--ui-input-border);
+    border-radius: var(--ui-radius-sm);
+    color: var(--ui-input-text);
+    font-size: 14px;
+    font-family: inherit;
+    min-height: 44px;
+    box-sizing: border-box;
+}
+
+.lugar-entrega-otra:focus {
+    border-color: var(--ui-input-border-focus);
+    box-shadow: var(--ui-input-focus-shadow);
+    outline: none;
+}
+
+.lugar-entrega-error {
+    margin: 8px 0 0;
+    color: var(--ui-error);
+    font-size: 13px;
+    font-weight: 600;
+}
+
 .modal-confirmacion,
 .modal-pagar {
     position: fixed;
