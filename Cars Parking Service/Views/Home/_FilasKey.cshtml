@@ -20,7 +20,7 @@
 
     @* data-id: el refresco lo usa para sonar la campana una sola vez por solicitud nueva *@
     <tr class="@claseAlerta" data-id="@item.id_ingreso">
-        <td class="fw-bold" data-label="Placa">@item.placa</td>
+        <td data-label="Placa"><span class="ingreso-placa">@item.placa</span></td>
         <td data-label="Estado">
             <span class="status-badge @claseEstado">
                 @item.estado_servicio?.ToUpper()

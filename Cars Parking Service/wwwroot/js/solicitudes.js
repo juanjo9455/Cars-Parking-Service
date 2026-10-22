@@ -294,7 +294,7 @@ function mostrarSolicitados() {
                 <div class="req-item-info">
 
                     <div class="req-item-title">
-                        ${escaparHtml(solicitud.placa ?? '')}
+                        <span class="ingreso-placa">${escaparHtml(solicitud.placa ?? '')}</span>
                     </div>
 
                     <div class="req-item-sub">
@@ -428,7 +428,7 @@ function mostrarDespachados() {
                 <div class="req-item-info">
 
                     <div class="req-item-title">
-                        ${vehiculos.placa}
+                        <span class="ingreso-placa">${vehiculos.placa}</span>
                     </div>
 
                     <div class="req-item-sub">
@@ -490,7 +490,7 @@ function mostrarEperandoValet() {
                 <div class="req-item-info">
 
                     <div class="req-item-title">
-                        ${vehiculos.placa}
+                        <span class="ingreso-placa">${vehiculos.placa}</span>
                     </div>
 
                     <div class="req-item-sub">

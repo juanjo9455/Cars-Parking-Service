@@ -524,6 +524,14 @@
     font-family: sans-serif;
 }
 
+/* Placa amarilla (.ingreso-placa de site.css) en tamaño de la burbuja */
+.req-item .ingreso-placa {
+    margin: 0 0 2px;
+    font-size: 13px;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+}
+
 .req-item-sub {
     font-size: 11px;
     color: #666;
