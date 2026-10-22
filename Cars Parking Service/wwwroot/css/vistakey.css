@@ -83,7 +83,7 @@
 }
 
 .debug-alert-title {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: .5px;
@@ -92,7 +92,7 @@
 }
 
 .debug-alert-message {
-    font-size: 13px;
+    font-size: 15px;
     line-height: 1.45;
     color: #111827;
     word-break: break-word;
@@ -140,7 +140,7 @@
 }
 
 .modal-texto {
-    color: #666;
+    color: #444;
     line-height: 1.6;
     margin-bottom: 25px;
 }
@@ -326,7 +326,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 18px;
     cursor: pointer;
     transition: all 0.2s ease;
     background-color: #f1f1f1;
@@ -489,7 +489,7 @@
 
     .modal-alert i {
         color: #d32f2f;
-        font-size: 24px;
+        font-size: 26px;
     }
 
     .modal-alert strong {
@@ -499,7 +499,7 @@
     }
 
     .modal-alert span {
-        color: #666;
+        color: #444;
         font-size: .92rem;
     }
 
@@ -523,7 +523,7 @@
 .summary-label {
     font-size: .82rem;
     text-transform: uppercase;
-    color: #888;
+    color: #4b5563;
     letter-spacing: 1px;
     font-weight: 700;
 }
@@ -595,7 +595,7 @@
     align-items: center;
     gap: 8px;
     margin-top: 10px;
-    color: #777;
+    color: #4b5563;
     font-size: .85rem;
 }
 
@@ -659,7 +659,7 @@
     .modal-icon-wrap {
         width: 58px;
         height: 58px;
-        font-size: 24px;
+        font-size: 26px;
     }
 
     .modal-title {

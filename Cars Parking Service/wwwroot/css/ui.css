@@ -3,7 +3,7 @@
     --ui-input-border-focus: #2196F3;
     --ui-input-focus-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
     --ui-input-text: #333;
-    --ui-input-placeholder: #999;
+    --ui-input-placeholder: #6b7280;
 
     --ui-radius-sm: 8px;
     --ui-radius-md: 10px;
@@ -84,7 +84,7 @@ select, .form-group select, .input-group select {
     border: 1px solid var(--ui-input-border);
     border-radius: var(--ui-radius-sm);
     color: var(--ui-input-text);
-    font-size: 14px;
+    font-size: 16px;
     font-family: inherit;
     min-height: 44px;
     min-width: 60px;

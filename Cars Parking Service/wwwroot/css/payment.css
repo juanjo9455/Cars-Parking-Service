@@ -5,7 +5,7 @@
 }
 
 html {
-    font-size: 14px;
+    font-size: 16px;
     height: 100%;
 }
 
@@ -124,7 +124,7 @@ a {
 }
 
 .pago-header-text p {
-    font-size: 13px;
+    font-size: 15px;
     opacity: 0.85;
     margin: 0;
     letter-spacing: 0.5px;
@@ -163,10 +163,10 @@ a {
 }
 
 .pago-amount-label {
-    font-size: 12px;
+    font-size: 14px;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: #999;
+    color: #555;
     font-weight: 600;
 }
 
@@ -185,8 +185,8 @@ a {
     width: 100%;
     padding-top: 20px;
     border-top: 1px solid #e0e0e0;
-    font-size: 13px;
-    color: #666;
+    font-size: 15px;
+    color: #444;
 }
 
 .pago-detail-row {
@@ -197,7 +197,7 @@ a {
 }
 
 .pago-detail-label {
-    color: #999;
+    color: #555;
 }
 
 .pago-detail-value {
@@ -211,7 +211,7 @@ a {
 }
 
 .pago-methods-section h2 {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     color: #333;
     margin: 0 0 25px 0;
@@ -295,7 +295,7 @@ a {
 }
 
 .pago-method-info {
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 600;
     color: #333;
     transition: color 0.3s ease;
@@ -330,7 +330,7 @@ a {
 .pago-method-radio::after {
     content: '✓';
     color: #d32f2f;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: bold;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -355,14 +355,14 @@ a {
 
 .pago-info-icon {
     color: #d32f2f;
-    font-size: 20px;
+    font-size: 22px;
     flex-shrink: 0;
     margin-top: 2px;
 }
 
 .pago-info-text {
-    font-size: 13px;
-    color: #666;
+    font-size: 15px;
+    color: #444;
     line-height: 1.5;
     margin: 0;
 }
@@ -379,7 +379,7 @@ a {
     padding: 16px 28px;
     border: none;
     border-radius: 12px;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -468,7 +468,7 @@ a {
     border: 1px solid var(--ui-input-border);
     border-radius: var(--ui-radius-sm);
     color: var(--ui-input-text);
-    font-size: 14px;
+    font-size: 16px;
     font-family: inherit;
     min-height: 44px;
     box-sizing: border-box;
@@ -483,7 +483,7 @@ a {
 .lugar-entrega-error {
     margin: 8px 0 0;
     color: var(--ui-error);
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
 }
 
@@ -613,7 +613,7 @@ a {
 }
 
 .pago-modal-subtitle {
-    font-size: 14px;
+    font-size: 16px;
     opacity: 0.85;
     margin: 0;
     position: relative;
@@ -649,16 +649,16 @@ a {
 }
 
 .pago-confirmation-label {
-    font-size: 11px;
+    font-size: 13px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: #999;
+    color: #555;
     font-weight: 600;
     margin-bottom: 4px;
 }
 
 .pago-confirmation-value {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     color: #1a1a1a;
 }
@@ -684,7 +684,7 @@ a {
     background: none;
     border: none;
     color: #d32f2f;
-    font-size: 14px;
+    font-size: 16px;
     cursor: pointer;
     padding: 10px 20px;
     font-weight: 600;
@@ -737,7 +737,7 @@ a {
     }
 
     .pago-header-text p {
-        font-size: 15px;
+        font-size: 17px;
     }
 
     .pago-main {
@@ -762,17 +762,17 @@ a {
     }
 
     .pago-amount-label {
-        font-size: 13px;
+        font-size: 15px;
     }
 
     .pago-summary-details {
         padding-top: 28px;
         gap: 16px;
-        font-size: 15px;
+        font-size: 17px;
     }
 
     .pago-methods-section h2 {
-        font-size: 19px;
+        font-size: 21px;
         margin-bottom: 24px;
     }
 
@@ -794,7 +794,7 @@ a {
     }
 
     .pago-method-info {
-        font-size: 16px;
+        font-size: 18px;
     }
 
     .pago-info-box {
@@ -804,11 +804,11 @@ a {
     }
 
     .pago-info-icon {
-        font-size: 22px;
+        font-size: 24px;
     }
 
     .pago-info-text {
-        font-size: 15px;
+        font-size: 17px;
         line-height: 1.6;
     }
 
@@ -819,7 +819,7 @@ a {
     .pago-btn-primary,
     .pago-btn-secondary {
         padding: 18px 28px;
-        font-size: 17px;
+        font-size: 19px;
     }
 
     .pago-modal-content {
@@ -858,7 +858,7 @@ a {
     }
 
     .pago-modal-subtitle {
-        font-size: 15px;
+        font-size: 17px;
     }
 
     .pago-modal-body {
@@ -871,11 +871,11 @@ a {
     }
 
     .pago-confirmation-label {
-        font-size: 13px;
+        font-size: 15px;
     }
 
     .pago-confirmation-value {
-        font-size: 17px;
+        font-size: 19px;
     }
 
     .pago-confirmation-value.amount {
@@ -889,11 +889,11 @@ a {
 
     .pago-modal-footer .pago-btn-primary {
         padding: 16px 28px;
-        font-size: 16px;
+        font-size: 18px;
     }
 
     .pago-close-btn {
-        font-size: 15px;
+        font-size: 17px;
         padding: 14px 28px;
     }
 }
@@ -1011,7 +1011,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
     background: rgba(255, 255, 255, 0.2);
     padding: 8px 16px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -1035,8 +1035,8 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 }
 
 .titulo-subtexto {
-    font-size: 14px;
-    color: #999;
+    font-size: 16px;
+    color: #555;
     margin: 0 0 28px 0;
     letter-spacing: 0.3px;
 }
@@ -1064,16 +1064,16 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 }
 
 .campo-label {
-    font-size: 11px;
+    font-size: 13px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: #999;
+    color: #555;
     font-weight: 600;
     margin: 0 0 6px 0;
 }
 
 .campo-valor {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     color: #1a1a1a;
     margin: 0;
@@ -1088,7 +1088,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
     border: none;
     padding: 16px 28px;
     border-radius: 12px;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1192,7 +1192,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 }
 
 .carro-icono {
-    font-size: 24px;
+    font-size: 26px;
 }
 
 .ruta-puntitos {
@@ -1210,7 +1210,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 }
 
 .destino-icono {
-    font-size: 24px;
+    font-size: 26px;
 }
 
 .conductor-section {
@@ -1237,15 +1237,15 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 }
 
 .conductor-nombre {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     color: #1a1a1a;
     margin-bottom: 4px;
 }
 
 .conductor-detalle {
-    font-size: 12px;
-    color: #999;
+    font-size: 14px;
+    color: #555;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1260,7 +1260,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
     background: #f5f5f5;
     padding: 3px 8px;
     border-radius: 4px;
-    color: #666;
+    color: #444;
     font-weight: 600;
 }
 
@@ -1277,7 +1277,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 }
 
 .resumen-titulo {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
     color: #333;
     text-transform: uppercase;
@@ -1290,8 +1290,8 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
     justify-content: space-between;
     align-items: center;
     padding: 12px 0;
-    font-size: 14px;
-    color: #666;
+    font-size: 16px;
+    color: #444;
     border-bottom: 1px solid #f5f5f5;
 }
 
@@ -1312,7 +1312,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
     background: white;
     border-radius: 50%;
     color: #d32f2f;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
     cursor: pointer;
     display: flex;
@@ -1354,12 +1354,12 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 
 .total-label {
     color: #333;
-    font-size: 15px;
+    font-size: 17px;
 }
 
 .total-valor {
     color: #d32f2f;
-    font-size: 18px;
+    font-size: 20px;
 }
 
 .pago-section {
@@ -1370,7 +1370,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 }
 
 .pago-titulo {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
     color: #333;
     text-transform: uppercase;
@@ -1394,7 +1394,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
     align-items: center;
     gap: 8px;
     transition: all 0.3s ease;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     color: #333;
 }
@@ -1412,7 +1412,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 }
 
 .metodo-btn .ico {
-    font-size: 24px;
+    font-size: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1430,7 +1430,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
     border: none;
     padding: 16px 28px;
     border-radius: 12px;
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1494,7 +1494,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 }
 
 .confirmacion-titulo {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 800;
     color: #1a1a1a;
     margin: 0 0 8px 0;
@@ -1502,8 +1502,8 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 }
 
 .confirmacion-sub {
-    font-size: 14px;
-    color: #999;
+    font-size: 16px;
+    color: #555;
     margin: 0;
     letter-spacing: 0.3px;
 }
@@ -1545,7 +1545,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 .etiqueta-llegada-confirmacion {
     position: relative;
     z-index: 1;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     margin-bottom: 12px;
     letter-spacing: 0.3px;
@@ -1560,7 +1560,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
     padding: 6px 14px;
     border-radius: 8px;
     font-family: 'Courier New', monospace;
-    font-size: 18px;
+    font-size: 20px;
     letter-spacing: 2px;
     min-width: 80px;
     text-align: center;
@@ -1576,7 +1576,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
     background: rgba(255, 255, 255, 0.15);
     padding: 8px 14px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     margin-bottom: 20px;
     backdrop-filter: blur(10px);
@@ -1619,11 +1619,11 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 }
 
 .carro-icono {
-    font-size: 24px;
+    font-size: 26px;
 }
 
 .destino-icono {
-    font-size: 24px;
+    font-size: 26px;
 }
 
 .instruccion-card {
@@ -1638,14 +1638,14 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 }
 
 .instruccion-icono {
-    font-size: 24px;
+    font-size: 26px;
     flex-shrink: 0;
     margin-top: 2px;
 }
 
 .instruccion-texto {
-    font-size: 14px;
-    color: #666;
+    font-size: 16px;
+    color: #444;
     line-height: 1.6;
     margin: 0;
 }
@@ -1690,16 +1690,16 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 }
 
 .tiempo-label {
-    font-size: 11px;
+    font-size: 13px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: #999;
+    color: #555;
     font-weight: 600;
     margin-bottom: 4px;
 }
 
 .tiempo-valor {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
     color: #d32f2f;
     display: flex;
@@ -1708,8 +1708,8 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 }
 
 .tiempo-unidad {
-    font-size: 12px;
-    color: #999;
+    font-size: 14px;
+    color: #555;
     font-weight: 500;
 }
 
@@ -1760,7 +1760,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
     }
 
     .titulo-subtexto {
-        font-size: 13px;
+        font-size: 15px;
         margin-bottom: 24px;
     }
 
@@ -1774,16 +1774,16 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
     }
 
     .campo-label {
-        font-size: 10px;
+        font-size: 12px;
     }
 
     .campo-valor {
-        font-size: 16px;
+        font-size: 18px;
     }
 
     .servicio-btn {
         padding: 18px 24px;
-        font-size: 16px;
+        font-size: 18px;
     }
 
     .informacion {
@@ -1795,11 +1795,11 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
     }
 
     .etiqueta-llegada {
-        font-size: 15px;
+        font-size: 17px;
     }
 
     .distancia-tag {
-        font-size: 11px;
+        font-size: 13px;
         padding: 7px 12px;
     }
 
@@ -1810,20 +1810,20 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
 
     .metodo-btn {
         padding: 12px 8px;
-        font-size: 12px;
+        font-size: 14px;
     }
 
     .metodo-btn .ico {
-        font-size: 22px;
+        font-size: 24px;
     }
 
     .btn-pagar {
         padding: 16px 24px;
-        font-size: 14px;
+        font-size: 16px;
     }
 
     .confirmacion-titulo {
-        font-size: 22px;
+        font-size: 24px;
     }
 
     .instruccion-card {
@@ -1832,7 +1832,7 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
     }
 
     .instruccion-texto {
-        font-size: 13px;
+        font-size: 15px;
     }
 
     .tiempo-card {
@@ -1841,11 +1841,11 @@ Media queries para .pago-section, .header, .valor-pago, .metodo-pago - COMENTADO
     }
 
     .tiempo-label {
-        font-size: 10px;
+        font-size: 12px;
     }
 
     .tiempo-valor {
-        font-size: 18px;
+        font-size: 20px;
     }
 }
 

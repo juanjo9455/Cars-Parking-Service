@@ -9,7 +9,7 @@
 
 .photo-title {
     color: #333;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
     margin-bottom: 15px;
     text-align: center;
@@ -22,7 +22,7 @@
     color: white;
     border: none;
     border-radius: 10px;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     cursor: pointer;
     display: flex;
@@ -42,7 +42,7 @@
     color: white;
     border: none;
     border-radius: 10px;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     cursor: pointer;
     display: flex;
@@ -87,7 +87,7 @@
 .photo-counter {
     text-align: center;
     color: #555;
-    font-size: 14px;
+    font-size: 16px;
     margin: 10px 0;
     font-weight: 600;
 }
@@ -171,7 +171,7 @@
 /* ===== Responsive para fotos ===== */
 @media (max-width: 480px) {
     .photo-btn {
-        font-size: 14px;
+        font-size: 16px;
         padding: 12px;
     }
 }
@@ -181,9 +181,9 @@
     z-index: 2;
     border: 1px solid #d1d5db;
     background: #ffffff;
-    color: #6b7280;
+    color: #4b5563;
     border-radius: 999px !important;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
     padding: 7px 12px;
     cursor: pointer;
@@ -196,7 +196,7 @@
 }
 
 .notas-toggle-btn i {
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1;
 }
 

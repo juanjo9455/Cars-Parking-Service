@@ -1,5 +1,5 @@
 ﻿html {
-    font-size: 14px;
+    font-size: 16px;
 }
 
 /*==================== Inicio ====================*/
@@ -83,7 +83,7 @@
 
 .home-greeting {
     margin: 0;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     color: #9a5959;
 }
@@ -98,8 +98,8 @@
 .home-subtitle {
     margin: 0 auto 24px;
     max-width: 560px;
-    color: #5f6773;
-    font-size: 15px;
+    color: #444;
+    font-size: 17px;
     line-height: 1.6;
 }
 
@@ -115,7 +115,7 @@
     text-decoration: none;
     border-radius: 10px;
     padding: 12px 18px;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
@@ -234,7 +234,7 @@
 }
 
 .liquidacion-alert-card p {
-    color: #666;
+    color: #444;
     line-height: 1.7;
     margin-bottom: 1.75rem;
 }
@@ -304,7 +304,7 @@
 .btn-volver-index i {
     position: absolute;
     color: white;
-    font-size: 22px;
+    font-size: 24px;
     transition: all .25s ease;
 }
 
@@ -380,7 +380,7 @@
 
 .div-abrir-menu .fa-bars {
     cursor: pointer;
-    font-size: 24px;
+    font-size: 26px;
     position: static;
 }
 
@@ -411,7 +411,7 @@
 .div-cerrar-menu .fa-x {
     width: 100%;
     height: 100%;
-    font-size: 10px;
+    font-size: 12px;
     color: white;
     cursor: pointer;
     text-align: center;
@@ -460,7 +460,7 @@
     text-decoration: none;
     border-radius: 8px;
     transition: all 0.3s ease;
-    font-size: 16px;
+    font-size: 18px;
 }
 
 .menu-lateral ol li a:hover {
@@ -520,7 +520,7 @@
     background: rgba(255, 255, 255, 0.18);
     color: #fffaf9;
     border-radius: 8px;
-    font-size: 16px;
+    font-size: 18px;
     transition: all 0.3s ease;
 }
 
@@ -567,7 +567,7 @@
     color: #fffaf9;
     border: none;
     border-radius: 8px;
-    font-size: 15px;
+    font-size: 17px;
     cursor: pointer;
     transition: background 0.3s ease;
 }
@@ -590,7 +590,7 @@
     color: #fffaf9;
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 16px;
     cursor: pointer;
     transition: background 0.3s ease;
 }
@@ -649,7 +649,7 @@
     margin-bottom: 20px;
     width: 100%;
     padding: 10px;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 300;
     display: flex;
     justify-content: flex-start;
@@ -658,7 +658,7 @@
 }
 
 .ingreso-container .input-check input {
-    font-size: 16px;
+    font-size: 18px;
     background: white;
     color: var(--ui-input-text);
     border: 1px solid var(--ui-input-border);
@@ -673,7 +673,7 @@
 .ingreso-container .input-group input {
     width: 100%;
     padding: 15px;
-    font-size: 16px;
+    font-size: 18px;
     background: white;
     color: var(--ui-input-text);
     border: 1px solid var(--ui-input-border);
@@ -703,7 +703,7 @@
 .ingreso-container .error-message {
     display: none;
     color: #d32f2f;
-    font-size: 13px;
+    font-size: 15px;
     text-align: left;
     margin-top: 6px;
     padding-left: 5px;
@@ -721,7 +721,7 @@
     color: white;
     border: none;
     border-radius: 8px;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
     cursor: pointer;
     margin-top: 10px;
@@ -765,7 +765,7 @@
     padding: 12px 15px;
     border: 1px solid var(--ui-input-border);
     border-radius: var(--ui-radius-sm);
-    font-size: 14px;
+    font-size: 16px;
     transition: all 0.3s ease;
     background: white;
 }
@@ -798,7 +798,7 @@
 }
 
 .header-info h2 {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     margin: 0;
     color: var(--text-primary);
@@ -806,7 +806,7 @@
 
 .header-info p {
     font-family: 'DM Mono', monospace;
-    font-size: 11px;
+    font-size: 13px;
     color: var(--text-muted);
     margin-top: 4px;
 }
@@ -824,7 +824,7 @@
     color: white;
     border: none;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
@@ -882,7 +882,7 @@
     border: 1px solid #e5e7eb;
     border-left: 5px solid #d32f2f;
     border-radius: 10px;
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 500;
     color: #444;
     display: flex;
@@ -893,12 +893,12 @@
 
 .total-registros-filtro i {
     color: #d32f2f;
-    font-size: 16px;
+    font-size: 18px;
 }
 
 .total-registros-filtro strong {
     color: #d32f2f;
-    font-size: 17px;
+    font-size: 19px;
 }
 
 .form-group {
@@ -907,7 +907,7 @@
 
 .form-group label {
     display: block;
-    font-size: 13px;
+    font-size: 15px;
     color: #555;
     margin-bottom: 8px;
     font-weight: 500;
@@ -918,7 +918,7 @@
     padding: 12px 15px;
     border: 1px solid var(--ui-input-border);
     border-radius: var(--ui-radius-sm);
-    font-size: 14px;
+    font-size: 16px;
     transition: all 0.3s ease;
     background: white;
 }
@@ -939,7 +939,7 @@
     padding: 12px 30px;
     border: none;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -958,7 +958,7 @@
 
 .btn-secondary {
     background: white;
-    color: #666;
+    color: #444;
     border: 1px solid #ddd;
 }
 
@@ -1037,7 +1037,7 @@ thead {
 thead th {
     padding: 15px 12px;
     text-align: left;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -1134,7 +1134,7 @@ tbody tr.alerta-sin-valet {
 }
 
 .alerta-icono {
-    font-size: 22px;
+    font-size: 24px;
     line-height: 1;
     margin-top: 2px;
     flex-shrink: 0;
@@ -1146,14 +1146,14 @@ tbody tr.alerta-sin-valet {
 
 .alerta-titulo {
     margin: 0 0 4px 0;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     color: #7B5800;
 }
 
 .alerta-mensaje {
     margin: 0;
-    font-size: 13px;
+    font-size: 15px;
     color: #7B5800;
     line-height: 1.5;
 }
@@ -1202,7 +1202,7 @@ tbody tr:last-child {
 thead th,
 tbody td {
     padding: 15px 12px;
-    font-size: 14px;
+    font-size: 16px;
     text-align: center;
     vertical-align: middle;
 }
@@ -1216,7 +1216,7 @@ tbody td:last-child {
     display: inline-block;
     padding: 6px 14px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     text-align: center;
 }
@@ -1300,7 +1300,7 @@ tbody td:last-child {
     }
 
     .header-info h2 {
-        font-size: 18px;
+        font-size: 20px;
     }
 
     .btn-nuevo {
@@ -1319,7 +1319,7 @@ tbody td:last-child {
         border-radius: var(--ui-radius-sm);
         background: #fff;
         color: #555;
-        font-size: 13px;
+        font-size: 15px;
         font-weight: 600;
         margin-bottom: 10px;
     }
@@ -1358,7 +1358,7 @@ tbody td:last-child {
 
     table {
         min-width: 300px;
-        font-size: 12px;
+        font-size: 14px;
     }
 
     thead th,
@@ -1367,16 +1367,19 @@ tbody td:last-child {
         white-space: nowrap;
     }
 
+    /* Los encabezados definen el ancho de las columnas: conservan su tamaño en el celular
+       (los datos sí crecen) para que las tablas no se alarguen */
     thead th {
         font-size: 11px;
     }
 
+    /* Solo íconos: no crecen con la letra, para que quepan las 4 columnas */
     tbody td:last-child {
         font-size: 18px;
     }
 
     .status-badge {
-        font-size: 10px;
+        font-size: 12px;
         padding: 3px 8px;
     }
 
@@ -1397,9 +1400,10 @@ tbody td:last-child {
         white-space: normal;
     }
 
+    /* Chips y placa crecen 1 px (no 2 como el resto) para que los íconos sigan lado a lado */
     .tabla-ingresos td .info-chip {
         padding: 4px 7px;
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .tabla-ingresos td.cell-action {
@@ -1410,7 +1414,7 @@ tbody td:last-child {
     .tabla-ingresos td.cell-action i.btn-info-ingreso {
         width: 28px;
         height: 28px;
-        font-size: 13px;
+        font-size: 15px;
     }
 }
  
@@ -1470,9 +1474,9 @@ tbody td:last-child {
     position: absolute;
     top: 15px;
     right: 20px;
-    font-size: 24px;
+    font-size: 26px;
     font-weight: bold;
-    color: #666;
+    color: #444;
     cursor: pointer;
     transition: color 0.2s;
 }
@@ -1484,7 +1488,7 @@ tbody td:last-child {
 .Card-Ingreso h3 {
     margin-top: 0;
     color: #333;
-    font-size: 20px;
+    font-size: 22px;
     border-bottom: 2px solid #f0f0f0;
     padding-bottom: 10px;
     margin-bottom: 20px;
@@ -1500,7 +1504,7 @@ tbody td:last-child {
 .info-auto p {
     margin: 5px 0;
     color: #555;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .info-auto p strong {
@@ -1515,7 +1519,7 @@ tbody td:last-child {
 
 .form-group-modal label {
     display: block;
-    font-size: 13px;
+    font-size: 15px;
     color: #555;
     margin-bottom: 5px;
     font-weight: 500;
@@ -1526,7 +1530,7 @@ tbody td:last-child {
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 16px;
     background: white;
 }
 
@@ -1559,7 +1563,7 @@ tbody td:last-child {
     }
 
     .Card-Ingreso h3 {
-        font-size: 18px;
+        font-size: 20px;
         margin-bottom: 15px;
     }
 
@@ -1590,27 +1594,27 @@ tbody td:last-child {
     }
 
     .close-btn {
-        font-size: 20px;
+        font-size: 22px;
         top: 10px;
         right: 12px;
     }
 
     .Card-Ingreso h3 {
-        font-size: 16px;
+        font-size: 18px;
         margin-bottom: 12px;
     }
 
     .form-group-modal label {
-        font-size: 12px;
+        font-size: 14px;
     }
 
     .form-group-modal .modal-select {
         padding: 8px;
-        font-size: 13px;
+        font-size: 15px;
     }
 
     .info-auto p {
-        font-size: 12px;
+        font-size: 14px;
     }
 }
 
@@ -1658,7 +1662,7 @@ tbody td:last-child {
 
 .edit-avatar-preview i {
     font-size: 50px;
-    color: #999;
+    color: #555;
 }
 
 /* ==================== Spinner Loading ==================== */
@@ -1687,7 +1691,7 @@ tbody td:last-child {
 }
 
 .section-tag {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: bold;
     color: #333;
     background: #f0f0f0;
@@ -1755,15 +1759,15 @@ tbody td:last-child {
 }
 
 .admin-card-content h3 {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
     color: #333;
     margin-bottom: 10px;
 }
 
 .admin-card-content p {
-    font-size: 14px;
-    color: #666;
+    font-size: 16px;
+    color: #444;
     line-height: 1.5;
     margin: 0;
 }
@@ -1775,7 +1779,7 @@ tbody td:last-child {
     background: rgba(211, 47, 47, 0.1);
     color: #d32f2f;
     border-radius: 20px;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
@@ -1917,8 +1921,8 @@ tbody td:last-child {
 }
 
 .firma-title {
-    color: #666;
-    font-size: 16px;
+    color: #444;
+    font-size: 18px;
     font-weight: 600;
     margin-bottom: 15px;
 }
@@ -1932,7 +1936,7 @@ tbody td:last-child {
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
     color: #555;
     transition: all 0.3s ease;
 }
@@ -1946,7 +1950,7 @@ tbody td:last-child {
 .firma-section .error-message {
     display: none;
     color: #d32f2f;
-    font-size: 13px;
+    font-size: 15px;
     text-align: left;
     margin-top: 10px;
     padding-left: 5px;
@@ -1962,7 +1966,7 @@ tbody td:last-child {
     }
 
     .firma-title {
-        font-size: 14px;
+        font-size: 16px;
     }
 }
 
@@ -1987,7 +1991,7 @@ tbody td:last-child {
     padding: 12px 14px;
     border: 1px solid var(--ui-input-border);
     border-radius: 8px;
-    font-size: 15px;
+    font-size: 17px;
     font-family: inherit;
     background: #fff;
     color: #333;
@@ -2010,7 +2014,7 @@ tbody td:last-child {
     border: 1.5px solid #d32f2f;
     border-radius: 8px;
     padding: 8px 18px;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -2026,7 +2030,7 @@ tbody td:last-child {
 }
 
 .input-group.notas-group .fa-shield-check {
-    font-size: 16px;
+    font-size: 18px;
     color: #2e7d32;
 }
 
@@ -2272,7 +2276,7 @@ tbody td:last-child {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 800;
     color: #fff;
     flex-shrink: 0;
@@ -2362,7 +2366,7 @@ tbody td:last-child {
 }
 
 #formReenviarWhatsapp input::placeholder {
-    color: #9ca3af;
+    color: #6b7280;
 }
 
 #formReenviarWhatsapp .error-message {
@@ -2439,7 +2443,7 @@ tbody td:last-child {
 
 #modal-acciones #contenido-modal-acciones > p {
     margin: 0 0 24px;
-    color: #6b7280;
+    color: #4b5563;
     font-size: 0.95rem;
     line-height: 1.5;
 }
@@ -2497,7 +2501,7 @@ i.btn-info-ingreso {
     border-radius: 50%;
     background: #fdecea;
     color: #c62828;
-    font-size: 15px;
+    font-size: 17px;
     box-shadow: 0 2px 6px rgba(198, 40, 40, 0.15);
 }
 
@@ -2517,7 +2521,7 @@ i.btn-pago-ingreso {
     border-radius: 50%;
     background: #e8f5e9;
     color: #2e7d32;
-    font-size: 15px;
+    font-size: 17px;
     box-shadow: 0 2px 6px rgba(46, 125, 50, 0.15);
 }
 
@@ -2544,7 +2548,7 @@ i.btn-pago-ingreso {
 .info-placa,
 .ingreso-placa {
     font-family: 'DM Mono', monospace;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 800;
     letter-spacing: 3px;
     color: #1f2937;
@@ -2558,7 +2562,7 @@ i.btn-pago-ingreso {
 .ingreso-placa {
     display: inline-block;
     margin: 6px 0;
-    font-size: 17px;
+    font-size: 19px;
     letter-spacing: 2px;
     line-height: 1.2;
     padding: 15px 20px;
@@ -2580,12 +2584,12 @@ i.btn-pago-ingreso {
 
 .tabla-ingresos .solicitud-hora {
     display: block;
-    font-size: 12px;
-    color: #6b7280;
+    font-size: 14px;
+    color: #4b5563;
 }
 
 .tabla-ingresos .solicitud-vacia {
-    color: #9ca3af;
+    color: #555;
 }
 
 /* En el celular no cabe una columna más: quién y cuándo se ven en Información */
@@ -2599,7 +2603,7 @@ i.btn-pago-ingreso {
 @media (max-width: 768px) {
     .ingreso-placa {
         margin: 4px 0;
-        font-size: 13px;
+        font-size: 14px;
         letter-spacing: 1px;
         padding: 2px 6px;
     }
@@ -2608,7 +2612,7 @@ i.btn-pago-ingreso {
 .info-chip {
     padding: 5px 12px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     text-transform: capitalize;
     background: #eef2f7;
@@ -2633,7 +2637,7 @@ i.btn-pago-ingreso {
     margin: 18px 0 8px;
     padding-bottom: 0;
     border-bottom: none;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
     color: #b71c1c;
     text-transform: uppercase;
@@ -2663,12 +2667,12 @@ i.btn-pago-ingreso {
 }
 
 .info-label {
-    font-size: 12px;
-    color: #6b7280;
+    font-size: 14px;
+    color: #4b5563;
 }
 
 .info-valor {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     color: #1f2937;
 }
@@ -2676,7 +2680,7 @@ i.btn-pago-ingreso {
 .info-vacio {
     font-weight: 400;
     font-style: italic;
-    color: #9ca3af;
+    color: #555;
 }
 
 /* Lugar de entrega distinto al de ingreso */
@@ -2707,7 +2711,7 @@ i.btn-pago-ingreso {
     border: 1px dashed #c62828;
     border-radius: 10px;
     color: #c62828;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     transition: background .2s ease;
@@ -2757,12 +2761,12 @@ i.btn-pago-ingreso {
     background: #fffbeb;
     border: 1px solid #f9a825;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 15px;
     color: #7a5200;
 }
 
 .solicitud-panel label {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     color: #374151;
 }
@@ -2828,13 +2832,13 @@ i.btn-pago-ingreso {
 
 .info-objetos > i {
     margin-top: 2px;
-    font-size: 16px;
+    font-size: 18px;
 }
 
 .info-objetos-titulo {
     display: block;
     margin-bottom: 4px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .4px;
@@ -2842,7 +2846,7 @@ i.btn-pago-ingreso {
 
 .info-objetos-texto {
     margin: 0;
-    font-size: 14px;
+    font-size: 16px;
     color: #1f2937;
     white-space: pre-line;
     word-break: break-word;
@@ -2863,7 +2867,7 @@ i.btn-pago-ingreso {
     background: #fafafa;
     border-color: #eee;
     border-left-color: #d1d5db;
-    color: #9ca3af;
+    color: #555;
     font-style: italic;
 }
 
@@ -2883,7 +2887,7 @@ i.btn-pago-ingreso {
 }
 
 .codigo-operador-label {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
     color: #2e7d32;
     text-transform: uppercase;
@@ -2900,7 +2904,7 @@ i.btn-pago-ingreso {
 
 .codigo-operador-ayuda {
     margin: 0;
-    font-size: 13px;
+    font-size: 15px;
     color: #4b5563;
 }
 
@@ -2926,15 +2930,15 @@ i.btn-pago-ingreso {
 }
 
 .wa-resumen-num {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 800;
     color: #1f2937;
 }
 
 .wa-resumen-lbl {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
-    color: #6b7280;
+    color: #4b5563;
     text-transform: uppercase;
     letter-spacing: .5px;
 }
@@ -2966,7 +2970,7 @@ i.btn-pago-ingreso {
 
 .wa-aviso {
     margin: 0 0 12px;
-    font-size: 13px;
+    font-size: 15px;
     color: #7a5200;
 }
 
@@ -2986,10 +2990,10 @@ i.btn-pago-ingreso {
 
 .tabla-despachos .dc-detalle {
     display: block;
-    font-size: 12px;
-    color: #6b7280;
+    font-size: 14px;
+    color: #4b5563;
 }
 
 .tabla-despachos .dc-vacio {
-    color: #9ca3af;
+    color: #555;
 }

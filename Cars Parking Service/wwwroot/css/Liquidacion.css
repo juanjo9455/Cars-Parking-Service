@@ -20,15 +20,15 @@
 }
 
 .header-left h1 {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 500;
     color: #8E0000;
     margin-bottom: 4px;
 }
 
 .header-left p {
-    font-size: 14px;
-    color: #666;
+    font-size: 16px;
+    color: #444;
 }
 
 .header-right {
@@ -39,8 +39,8 @@
 }
 
 .meta {
-    font-size: 13px;
-    color: #666;
+    font-size: 15px;
+    color: #444;
 }
 
 .meta strong {
@@ -53,7 +53,7 @@
     border: 0.5px solid #FFD54F;
     border-radius: 6px;
     padding: 4px 12px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
 }
 
@@ -68,7 +68,7 @@
     border: 1px solid #e5e7eb;
     border-left: 5px solid #d32f2f;
     border-radius: 10px;
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 500;
     color: #444;
     display: flex;
@@ -79,12 +79,12 @@
 
 .total-registros-filtro i {
     color: #d32f2f;
-    font-size: 16px;
+    font-size: 18px;
 }
 
 .total-registros-filtro strong {
     color: #d32f2f;
-    font-size: 17px;
+    font-size: 19px;
 }
 
 .cards-row {
@@ -119,7 +119,7 @@
     margin-bottom: 12px;
     background: #F5F5F5;
     color: #8E0000;
-    font-size: 18px;
+    font-size: 20px;
 }
 
 .stat-card.highlight .icon-wrap {
@@ -128,8 +128,8 @@
 }
 
 .slabel {
-    font-size: 12px;
-    color: #888;
+    font-size: 14px;
+    color: #4b5563;
     margin-bottom: 6px;
 }
 
@@ -138,7 +138,7 @@
 }
 
 .sval {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 500;
     color: #1a1a1a;
 }
@@ -160,7 +160,7 @@
 }
 
 .section h2 {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 500;
     color: #8E0000;
     margin-bottom: 1rem;
@@ -183,13 +183,13 @@
     gap: 10px;
     align-items: flex-start;
     color: #795000;
-    font-size: 13px;
+    font-size: 15px;
     line-height: 1.5;
 }
 
 .alert-y i {
     color: #E6A817;
-    font-size: 16px;
+    font-size: 18px;
     margin-top: 2px;
 }
 
@@ -201,7 +201,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
-    font-size: 13px;
+    font-size: 15px;
 }
 
 thead tr {
@@ -211,8 +211,8 @@ thead tr {
 th {
     text-align: left;
     padding: 8px 12px;
-    color: #888;
-    font-size: 12px;
+    color: #4b5563;
+    font-size: 14px;
     font-weight: 500;
 }
 
@@ -243,7 +243,7 @@ tbody tr {
 }
 
 .valet-total span {
-    font-size: 13px;
+    font-size: 15px;
     color: #555;
 }
 
@@ -252,7 +252,7 @@ tbody tr {
     color: #C62828;
     border-radius: 6px;
     padding: 4px 12px;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 500;
 }
 
@@ -264,7 +264,7 @@ tbody tr {
     display: inline-block;
     padding: 2px 8px;
     border-radius: 4px;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 500;
 }
 
@@ -292,8 +292,8 @@ tbody tr {
 }
 
 .table-count {
-    font-size: 12px;
-    color: #999;
+    font-size: 14px;
+    color: #555;
 }
 
 .btn-show {
@@ -306,7 +306,7 @@ tbody tr {
     align-items: center;
     gap: 6px;
     color: #555;
-    font-size: 13px;
+    font-size: 15px;
     transition: .15s;
 }
 
@@ -332,14 +332,14 @@ tbody tr {
 
 .confirm-card h2 {
     color: #8E0000;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 500;
     margin-bottom: 8px;
 }
 
 .confirm-card p {
-    color: #666;
-    font-size: 13px;
+    color: #444;
+    font-size: 15px;
     line-height: 1.6;
     margin-bottom: 1.5rem;
 }
@@ -362,14 +362,14 @@ tbody tr {
 }
 
 .ci .cl {
-    color: #999;
-    font-size: 11px;
+    color: #555;
+    font-size: 13px;
     margin-bottom: 4px;
 }
 
 .ci .cv {
     color: #222;
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 500;
 }
 
@@ -384,7 +384,7 @@ tbody tr {
 
 .total-card .cv {
     color: #C62828;
-    font-size: 17px;
+    font-size: 19px;
 }
 
 /* =========================
@@ -403,7 +403,7 @@ tbody tr {
     border-radius: 8px;
     padding: 11px 28px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     display: flex;
     align-items: center;
@@ -474,12 +474,12 @@ tbody tr {
 }
 
 .modal-hdr h3 {
-    font-size: 17px;
+    font-size: 19px;
     font-weight: 500;
 }
 
 .modal-confirmar p {
-    font-size: 13px;
+    font-size: 15px;
     color: #555;
     line-height: 1.6;
     margin-bottom: 1.25rem;
@@ -498,7 +498,7 @@ tbody tr {
     justify-content: space-between;
     padding: 6px 0;
     border-bottom: 0.5px solid #eee;
-    font-size: 13px;
+    font-size: 15px;
 }
 
 .mrow:last-child {
@@ -523,7 +523,7 @@ tbody tr {
     border-radius: 8px;
     padding: 14px 18px;
     color: #1B5E20;
-    font-size: 14px;
+    font-size: 16px;
 }
 
     .success-banner.visible {

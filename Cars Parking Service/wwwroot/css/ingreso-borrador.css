@@ -23,7 +23,7 @@
 
 .borrador-texto > i {
     margin-top: 3px;
-    font-size: 18px;
+    font-size: 20px;
 }
 
 .borrador-texto strong {
@@ -33,13 +33,13 @@
 
 .borrador-detalle {
     display: block;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .borrador-texto small {
     display: block;
     margin-top: 2px;
-    font-size: 12px;
+    font-size: 14px;
     color: #92400e;
 }
 
