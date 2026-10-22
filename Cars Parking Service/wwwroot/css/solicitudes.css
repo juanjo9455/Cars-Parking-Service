@@ -471,6 +471,7 @@
 .panel-list {
     max-height: 220px;
     overflow-y: auto;
+    background-color: #c4c1c1;
 }
 
 .req-item {
