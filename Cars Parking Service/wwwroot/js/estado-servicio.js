@@ -147,10 +147,28 @@ if (btnSolicitar) {
                     <option value="">Cargando ubicaciones...</option>
                 </select>
 
+                <input type="text" id="lugar-entrega-otra" class="lugar-entrega-otra" maxlength="50"
+                       placeholder="Escribe dónde quieres recibirlo" hidden />
+
+                <p class="lugar-entrega-error" id="lugar-entrega-error" hidden></p>
+
                 <button type="button" class="btn-confirmacion btn-pagar" id="btn-confirmacion-lugar">
                     Aceptar
                 </button>
             `;
+
+            // Con "Otra ubicación…" aparece el campo para escribir el lugar (igual que para los operadores)
+            const selectLugar = document.getElementById('lugar-entrega');
+            const campoOtra = document.getElementById('lugar-entrega-otra');
+            const avisoLugar = document.getElementById('lugar-entrega-error');
+
+            selectLugar.addEventListener('change', function () {
+                campoOtra.hidden = selectLugar.value !== OTRA_UBICACION;
+                avisoLugar.hidden = true;
+                if (!campoOtra.hidden) campoOtra.focus();
+            });
+
+            campoOtra.addEventListener('input', () => { avisoLugar.hidden = true; });
 
             const btnConfirmacionLugar = document.getElementById('btn-confirmacion-lugar');
 
@@ -158,10 +176,14 @@ if (btnSolicitar) {
                 btnConfirmacionLugar.addEventListener('click', function (e) {
                     e.preventDefault();
 
-                    const lugarEntrega = document.getElementById('lugar-entrega')?.value;
+                    const lugarEntrega = lugarEntregaElegido();
 
                     if (!lugarEntrega) {
-                        alert('Por favor selecciona una ubicación de entrega.');
+                        avisoLugar.textContent = selectLugar.value === OTRA_UBICACION
+                            ? 'Escribe el lugar donde quieres recibir el vehículo.'
+                            : 'Selecciona en qué lugar quieres recibir el vehículo.';
+                        avisoLugar.hidden = false;
+                        window.reproducirSonido?.('error');
                         return;
                     }
 
@@ -197,6 +219,13 @@ if (btnSolicitar) {
                     option.textContent = u.nombre;
                     fragment.appendChild(option);
                 });
+
+                // Al final, la opción para escribir un lugar que no está en la lista
+                // (OTRA_UBICACION viene de site.js, la misma de los operadores)
+                const otra = document.createElement('option');
+                otra.value = OTRA_UBICACION;
+                otra.textContent = 'Otra ubicación…';
+                fragment.appendChild(otra);
 
                 select.appendChild(fragment);
 
@@ -348,14 +377,24 @@ function formatearMoneda(cantidad) {
 // SOLICITAR VEHÍCULO
 // ============================================================
 
+// Lugar de entrega que eligió el cliente: una ubicación de la lista o el que escribió en "Otra ubicación…"
+function lugarEntregaElegido() {
+    const select = document.getElementById('lugar-entrega');
+    if (!select) return '';
+
+    return select.value === OTRA_UBICACION
+        ? (document.getElementById('lugar-entrega-otra')?.value.trim() || '')
+        : select.value;
+}
+
 function solicitarVehiculo() {
 
     console.log("Evento agregado correctamente");
 
     const contenidoConfirmacion = document.getElementById('confirmacion');
 
-    // Obtenemos lugar de entrega del vehiculo
-    const lugarEntrega = document.getElementById('lugar-entrega')?.value;
+    // Obtenemos lugar de entrega del vehiculo (de la lista o escrito con "Otra ubicación…")
+    const lugarEntrega = lugarEntregaElegido();
 
 
     contenidoConfirmacion.innerHTML = `
@@ -420,10 +459,10 @@ function solicitarVehiculo() {
 
             if (LugarLI && LugarLabel) {
                 LugarLI.style.display = "block";
-                LugarLabel.innerHTML = `
-            <strong>📍 Punto de entrega:</strong>
-            ${lugarEntrega}
-        `;
+
+                // El lugar puede venir escrito por el cliente: se pone como texto, no como HTML
+                LugarLabel.innerHTML = '<strong>📍 Punto de entrega:</strong> ';
+                LugarLabel.append(lugarEntrega);
             }
 
             // Cerrar modal de confirmación

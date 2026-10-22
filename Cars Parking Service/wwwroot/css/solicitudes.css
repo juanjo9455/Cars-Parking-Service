@@ -36,7 +36,7 @@
 }
 
 .bubble i {
-    font-size: 24px;
+    font-size: 26px;
     color: #fff;
     flex-shrink: 0;
 }
@@ -44,7 +44,7 @@
 /* Número visible dentro de la burbuja */
 .bubble-count {
     color: #fff;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 500;
     line-height: 1;
     min-width: 0;
@@ -158,7 +158,7 @@
 }
 
 .bubble-whatsapp i {
-    font-size: 24px;
+    font-size: 26px;
     color: #fff;
     flex-shrink: 0;
 }
@@ -201,15 +201,15 @@
 }
 
 .notif-app-name {
-    font-size: 11px;
-    color: #666;
+    font-size: 13px;
+    color: #444;
     flex: 1;
     font-family: sans-serif;
 }
 
 .notif-app-time {
-    font-size: 11px;
-    color: #aaa;
+    font-size: 13px;
+    color: #555;
     font-family: sans-serif;
 }
 
@@ -218,15 +218,15 @@
 }
 
 .notif-title {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 500;
     color: #111;
     font-family: sans-serif;
 }
 
 .notif-sub {
-    font-size: 12px;
-    color: #666;
+    font-size: 14px;
+    color: #444;
     margin-top: 2px;
     font-family: sans-serif;
 }
@@ -239,7 +239,7 @@
 .notif-act {
     flex: 1;
     padding: 9px 0;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     color: #C0392B;
     background: transparent;
@@ -289,7 +289,7 @@
 
 .panel-header-left {
     color: #fff;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     display: flex;
     align-items: center;
@@ -298,7 +298,7 @@
 }
 
 .panel-header-left i {
-    font-size: 17px;
+    font-size: 19px;
 }
 
 .panel-close {
@@ -326,13 +326,13 @@
 
 .total-banner-txt {
     color: #fff;
-    font-size: 12px;
+    font-size: 14px;
     font-family: sans-serif;
 }
 
 .total-banner-num {
     color: #fff;
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 500;
     line-height: 1;
     font-family: sans-serif;
@@ -357,9 +357,9 @@
 
 .panel-split-title {
     padding: 8px 12px;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
-    color: #666;
+    color: #444;
     background: #fafafa;
     border-bottom: 0.5px solid #eee;
     font-family: sans-serif;
@@ -416,7 +416,7 @@
 }
 
 .stat-num {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 500;
     line-height: 1;
     font-family: sans-serif;
@@ -431,12 +431,12 @@
 }
 
 .stat-num.gray {
-    color: #888;
+    color: #4b5563;
 }
 
 .stat-lbl {
-    font-size: 10px;
-    color: #aaa;
+    font-size: 12px;
+    color: #555;
     margin-top: 3px;
     font-family: sans-serif;
 }
@@ -451,11 +451,11 @@
 .tab-btn {
     flex: 1;
     padding: 8px 0;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 500;
     border: none;
     background: transparent;
-    color: #888;
+    color: #4b5563;
     cursor: pointer;
     border-bottom: 2px solid transparent;
     transition: color .15s, border-color .15s;
@@ -467,9 +467,9 @@
     border-bottom-color: #C0392B;
 }
 
-/* Lista de solicitudes */
+/* Lista de solicitudes (más alta: cada vehículo muestra también su lugar de entrega) */
 .panel-list {
-    max-height: 220px;
+    max-height: 280px;
     overflow-y: auto;
     background-color: #c4c1c1;
 }
@@ -505,7 +505,7 @@
 }
 
 .req-item-icon i {
-    font-size: 17px;
+    font-size: 19px;
     color: #C0392B;
 }
 
@@ -515,7 +515,7 @@
 }
 
 .req-item-title {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     color: #111;
     white-space: nowrap;
@@ -524,30 +524,55 @@
     font-family: sans-serif;
 }
 
-/* Placa amarilla (.ingreso-placa de site.css) en tamaño de la burbuja */
-.req-item .ingreso-placa {
-    margin: 0 0 2px;
-    font-size: 13px;
-    letter-spacing: 1px;
-    padding: 2px 8px;
-}
-
 .req-item-sub {
-    font-size: 11px;
-    color: #666;
+    font-size: 13px;
+    color: #444;
     margin-top: 2px;
     font-family: sans-serif;
 }
 
 .req-item-time {
-    font-size: 11px;
-    color: #aaa;
+    font-size: 13px;
+    color: #555;
     flex-shrink: 0;
     padding-top: 1px;
     font-family: sans-serif;
 }
 
-/* Detalle al tocar un vehículo solicitado: lugar de entrega y Despachar (puntos 25 y 33) */
+/* Placa, banco y valet en una sola fila; si no caben, pasan a la siguiente línea */
+.req-item-fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+}
+
+.req-item-fila .req-item-sub {
+    margin-top: 0;
+    color: #1f2937;
+    white-space: nowrap;
+}
+
+.req-item-etq {
+    color: #444;
+}
+
+/* Placa con aspecto de placa de carro, como en la tabla de ingresos (punto 22), pero compacta */
+.req-item-placa {
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    line-height: 1.3;
+    color: #1f2937;
+    background: #ffd54f;
+    border: 2px solid #1f2937;
+    border-radius: 5px;
+    padding: 1px 7px;
+    white-space: nowrap;
+}
+
+/* Al tocar un vehículo solicitado: Despachar y Reversar (puntos 33 y 21) */
 .req-item.abierta {
     background: #fff5f5;
 }
@@ -561,10 +586,13 @@
     font-family: sans-serif;
 }
 
+/* Lugar de entrega: siempre visible debajo de los datos (punto 25) */
 .req-item-lugar {
-    font-size: 12px;
+    margin-top: 6px;
+    font-size: 14px;
     color: #374151;
     white-space: normal;
+    font-family: sans-serif;
 }
 
 .req-item-lugar i {
@@ -582,7 +610,7 @@
     border-radius: 8px;
     background: #C0392B;
     color: #fff;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
 }
@@ -603,7 +631,7 @@
     border-radius: 8px;
     background: #fff;
     color: #922B21;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
 }
@@ -638,8 +666,8 @@
 .panel-empty {
     padding: 24px 0;
     text-align: center;
-    color: #aaa;
-    font-size: 12px;
+    color: #555;
+    font-size: 14px;
     display: none;
     flex-direction: column;
     align-items: center;
@@ -664,7 +692,7 @@
     flex: 1;
     padding: 7px 0;
     border-radius: 8px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     border: 1.5px solid #C0392B;
@@ -700,7 +728,7 @@
     color: #fff;
     padding: 8px 16px;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 500;
     white-space: nowrap;
     z-index: 1100;
@@ -717,7 +745,7 @@
 }
 
 .req-toast i {
-    font-size: 15px;
+    font-size: 17px;
 }
 
 /* Pestañas para solicitudes y vehiculos en curso */
@@ -733,8 +761,8 @@
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 13px;
-    color: #888;
+    font-size: 15px;
+    color: #4b5563;
     border-bottom: 2px solid transparent;
     display: flex;
     align-items: center;
@@ -752,7 +780,7 @@
     background: #f0f0f0;
     border-radius: 10px;
     padding: 1px 7px;
-    font-size: 11px;
+    font-size: 13px;
 }
 
 .tab-btn.active .tab-badge {
@@ -779,7 +807,7 @@
     border: 1.5px solid #C0392B;
     background: #fff5f5;
     color: #922B21;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all .15s;
@@ -799,8 +827,10 @@
         display: none;
     }
 
+    /* Solo ícono: conserva su tamaño para que quepa al lado de Información */
     .btn-tomar-vehiculo {
         padding: 5px 6px;
+        font-size: 12px;
     }
 }
 

@@ -16,13 +16,13 @@
 }
 
 .adm-fecha-bar-left i {
-    font-size: 16px;
-    color: #aaa;
+    font-size: 18px;
+    color: #555;
 }
 
 .adm-fecha-label {
-    font-size: 13px;
-    color: #888;
+    font-size: 15px;
+    color: #4b5563;
 }
 
 .adm-fecha-badge {
@@ -32,7 +32,7 @@
     gap: 5px;
     padding: 3px 11px;
     border-radius: 20px;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 500;
     background: #eafaf1;
     color: #1e5631;
@@ -58,7 +58,7 @@
     border: 0.5px solid #ccc;
     background: #fff;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 500;
     color: #1a1a1a;
     transition: border-color .15s;
@@ -74,8 +74,8 @@
 }
 
 .adm-chevron {
-    font-size: 12px;
-    color: #888;
+    font-size: 14px;
+    color: #4b5563;
     transition: transform .2s;
 }
 
@@ -100,8 +100,8 @@
 
 .adm-fecha-list-header {
     padding: 6px 14px 4px;
-    font-size: 11px;
-    color: #aaa;
+    font-size: 13px;
+    color: #555;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: .4px;
@@ -112,7 +112,7 @@
     align-items: center;
     gap: 10px;
     padding: 9px 14px;
-    font-size: 13px;
+    font-size: 15px;
     color: #333;
     text-decoration: none;
     transition: background .1s;
@@ -133,11 +133,11 @@
 }
 
 .adm-item-badge {
-    font-size: 11px;
+    font-size: 13px;
     padding: 2px 7px;
     border-radius: 10px;
     background: #f0f0f0;
-    color: #888;
+    color: #4b5563;
 }
 
 .adm-badge-activo {
@@ -146,7 +146,7 @@
 }
 
 .adm-item-check {
-    font-size: 13px;
+    font-size: 15px;
     color: #C0392B;
 }
 
@@ -169,17 +169,17 @@
 }
 
 .adm-fecha-bar i {
-    font-size: 16px;
-    color: #aaa;
+    font-size: 18px;
+    color: #555;
 }
 
 .adm-fecha-label {
-    font-size: 13px;
-    color: #888;
+    font-size: 15px;
+    color: #4b5563;
 }
 
 .adm-fecha-val {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     color: #1a1a1a;
     text-transform: capitalize;
@@ -192,7 +192,7 @@
     gap: 5px;
     padding: 4px 12px;
     border-radius: 20px;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     background: #eafaf1;
     color: #1e5631;
@@ -200,7 +200,7 @@
 }
 
 .adm-fecha-badge i {
-    font-size: 8px;
+    font-size: 10px;
 }
 
 /* ── Navegación de fecha ── */
@@ -219,7 +219,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 14px;
     color: #555;
     text-decoration: none;
     transition: all .15s;
@@ -241,7 +241,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 14px;
     color: #ccc;
     cursor: not-allowed;
     flex-shrink: 0;
@@ -268,9 +268,9 @@
     border: none;
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 500;
-    color: #888;
+    color: #4b5563;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -288,12 +288,12 @@
 }
 
 .adm-tab-badge {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 600;
     padding: 1px 7px;
     border-radius: 10px;
     background: #f0f0f0;
-    color: #888;
+    color: #4b5563;
     transition: background .15s, color .15s;
 }
 
@@ -327,7 +327,7 @@
 .adm-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
+    font-size: 15px;
     font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
@@ -341,7 +341,7 @@
     padding: 11px 14px;
     text-align: left;
     white-space: nowrap;
-    font-size: 12px;
+    font-size: 14px;
     letter-spacing: .3px;
 }
 
@@ -368,8 +368,8 @@
 }
 
 .adm-num-col {
-    color: #bbb;
-    font-size: 12px;
+    color: #555;
+    font-size: 14px;
     width: 36px;
 }
 
@@ -389,7 +389,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     flex-shrink: 0;
 }
@@ -412,16 +412,16 @@
 /* ── Deuda ── */
 .adm-deuda-neg {
     font-family: 'Courier New', monospace;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     color: #C0392B;
 }
 
 .adm-deuda-cero {
     font-family: 'Courier New', monospace;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
-    color: #aaa;
+    color: #555;
 }
 
 /* ── Pills de números ── */
@@ -431,13 +431,13 @@
     gap: 5px;
     padding: 4px 10px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     white-space: nowrap;
 }
 
 .adm-num-pill i {
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .adm-pill-recibidos {
@@ -471,7 +471,7 @@
     gap: 5px;
     padding: 4px 10px;
     border-radius: 20px;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 500;
     white-space: nowrap;
 }
@@ -495,7 +495,7 @@
     gap: 5px;
     padding: 3px 9px;
     border-radius: 20px;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 500;
     background: #f5f5f5;
     color: #555;
@@ -504,22 +504,22 @@
 }
 
 .adm-badge-lugar i {
-    font-size: 11px;
+    font-size: 13px;
     color: #C0392B;
 }
 
 /* ── Texto muted ── */
 .adm-text-muted {
-    font-size: 12px;
-    color: #bbb;
+    font-size: 14px;
+    color: #555;
 }
 
 /* ── Empty state ── */
 .adm-empty {
     text-align: center;
     padding: 32px 20px;
-    color: #bbb;
-    font-size: 13px;
+    color: #555;
+    font-size: 15px;
 }
 
 .adm-empty i {
@@ -535,9 +535,15 @@
         overflow-x: auto;
     }
 
+    /* Los encabezados definen el ancho de las columnas: en el celular conservan su tamaño
+       (los datos sí crecen) para no alargar más la tabla */
+    .adm-table thead th {
+        font-size: 12px;
+    }
+
     .adm-tab {
         padding: 9px 12px;
-        font-size: 12px;
+        font-size: 14px;
         white-space: nowrap;
     }
 
@@ -643,15 +649,15 @@
 }
 
 .adm-liq-num {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 800;
     color: #1f2937;
 }
 
 .adm-liq-lbl {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
-    color: #6b7280;
+    color: #4b5563;
     text-transform: uppercase;
     letter-spacing: .5px;
 }
@@ -676,7 +682,7 @@
     border: 1px solid #c62828;
     border-radius: 8px;
     color: #c62828;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
@@ -694,7 +700,7 @@
 .adm-liq-modal-total {
     margin: 12px 0 0;
     text-align: right;
-    font-size: 14px;
+    font-size: 16px;
     color: #374151;
 }
 

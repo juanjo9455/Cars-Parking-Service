@@ -86,6 +86,15 @@ namespace CarsParkingService.Controllers
                 return Ok(new { mensaje = "Ya estaba solicitado", fechaFinServicio = ingreso.fecha_fin_servicio });
             }
 
+            // Con "Otra ubicación" el cliente escribe el lugar: tbl_ingresos.lugar_entrega es VARCHAR(50)
+            var lugarEntrega = data.lugarEntrega?.Trim();
+
+            if (string.IsNullOrEmpty(lugarEntrega))
+                return BadRequest(new { mensaje = "Selecciona el lugar de entrega." });
+
+            if (lugarEntrega.Length > 50)
+                return BadRequest(new { mensaje = "El lugar de entrega no puede tener más de 50 caracteres." });
+
             Console.WriteLine("ANTES DE GUARDAR:");
             Console.WriteLine(ingreso.estado_servicio);
 
@@ -97,7 +106,7 @@ namespace CarsParkingService.Controllers
 
             ingreso.estado_servicio = "solicitado";
             ingreso.fecha_fin_servicio = fechaFinServicio;
-            ingreso.lugar_entrega = data.lugarEntrega;
+            ingreso.lugar_entrega = lugarEntrega;
 
             _context.SaveChanges(); // ⚠️ te faltaba esto
 

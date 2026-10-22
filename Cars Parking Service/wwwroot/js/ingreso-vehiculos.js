@@ -1,7 +1,6 @@
 ﻿document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('ingresoForm');
     const placaInput = document.getElementById('placa');
-    const submitBtn = document.getElementById('acceder');
     const noValuablesBtn = document.getElementById('noValuablesBtn');
     const notasInput = document.getElementById('notas');
     const btnObjetosImagenes = document.getElementById("tomarFotoObjetosBtn");
@@ -89,121 +88,89 @@
     // La firma se toma en firma-cliente.js y queda guardada como imagen en #firmaBase64
 
     // ========== VALIDACIÓN ANTES DE ENVÍO ==========
-    // Este script SOLO valida los campos del formulario
-    // NO previene el envío a menos que haya errores de validación
-    // El controlador maneja todo lo demás (redirecciones, respuestas, etc)
+    // El formulario tiene novalidate: en vez de la burbuja del navegador, cada campo que falta se marca
+    // en rojo con su aviso debajo, la alerta dice qué falta y la pantalla baja hasta el primero.
+    // Solo se cancela el envío si falta algo; el controlador maneja todo lo demás
 
-    if (submitBtn && form) {
-        submitBtn.addEventListener('click', function () {
-            if (!form.checkValidity()) {
-                mostrarAlerta('Por favor, completa todos los campos requeridos correctamente.', 'error');
-            }
+    // Marca o limpia un campo (el borde rojo solo en campos, no en los botones de video y firma).
+    // El aviso se muestra con la clase .visible (se quita el display en línea que dejan otros scripts,
+    // por ejemplo firma-cliente.js al aceptar la firma)
+    const marcarCampo = (campo, idError, hayError) => {
+        if (campo && campo.tagName !== 'BUTTON') campo.classList.toggle('input-error', hayError);
+
+        const aviso = document.getElementById(idError);
+        if (!aviso) return;
+
+        aviso.style.display = '';
+        aviso.classList.toggle('visible', hayError);
+    };
+
+    const placaValida = valor => /^[A-Z]{3}[0-9]{3}$/.test(valor.toUpperCase());
+    const telefonoValido = valor => /^[0-9]{7,15}$/.test(valor.replace(/[\s\-()]/g, ''));
+
+    // Al corregir un campo se le quita el aviso, sin esperar al siguiente intento
+    [
+        ['placa', 'errorPlaca', placaValida],
+        ['nombre_cliente', 'errorNombre', valor => valor !== ''],
+        ['telefono', 'errorTelefono', telefonoValido],
+        ['id_parqueadero', 'errorParqueadero', valor => valor !== ''],
+        ['id_ubicacion', 'errorUbicacion', valor => valor !== '']
+    ].forEach(([id, idError, esValido]) => {
+        const campo = document.getElementById(id);
+
+        campo?.addEventListener(campo.tagName === 'SELECT' ? 'change' : 'input', () => {
+            if (esValido(campo.value.trim())) marcarCampo(campo, idError, false);
         });
-    }
+    });
 
-    form.addEventListener('submit', function(e) {
-        console.log('📝 Validando formulario...');
-        
-        let errores = [];
+    form.addEventListener('submit', function (e) {
+        const valor = id => document.getElementById(id)?.value.trim() || '';
 
-        // Validar campos básicos
-        const placaNormalizada = (document.getElementById('placa')?.value.trim() || '').toUpperCase();
-        const placa = placaNormalizada;
-        const telefono = document.getElementById('telefono')?.value.trim() || '';
-        const idValet = document.getElementById('id_valet')?.value || '';
-        const idBanco = document.querySelector('input[name="id_banco"]')?.value || '';
-        const idParqueadero = document.getElementById('id_parqueadero')?.value || '';
-        const videoBase64 = document.getElementById('videoBase64Input')?.value || '';
-        //const idUbicacion = document.getElementById('id_ubicacion')?.value || '';
+        // Lo que falta, en el orden del formulario: nombre para la lista y mensaje si es lo único
+        const faltantes = [];
 
-        console.log('=== VALIDACIÓN DE CAMPOS ===');
-        console.log('Placa:', placa);
-        console.log('Teléfono:', telefono);
-        console.log('ID Valet:', idValet);
-        console.log('ID Banco:', idBanco);
-        console.log('ID Parqueadero:', idParqueadero);
-        console.log('Video capturado:', !!videoBase64);
-        //console.log('ID Ubicación:', idUbicacion);
-
-        if (!placa || !/^[A-Z]{3}[0-9]{3}$/.test(placa)) {
-            errores.push('Placa inválida');
-            const errorPlaca = document.getElementById('errorPlaca');
-            if (errorPlaca) errorPlaca.style.display = 'block';
-        }
-
-        if (!telefono) {
-            errores.push('Teléfono requerido');
-            const errorTelefono = document.getElementById('errorTelefono');
-            if (errorTelefono) errorTelefono.style.display = 'block';
-        }
-
-        if (idValet === 'Selecciona un Valet') {
-            errores.push('Valet requerido');
-            const errorValet = document.getElementById('errorValet');
-            if (errorValet) errorValet.style.display = 'block';
-        }
-
-        if (!idBanco) {
-            errores.push('Banco requerido');
-            const errorBanco = document.getElementById('errorBanco');
-            if (errorBanco) errorBanco.style.display = 'block';
-        }
-
-        if (!idParqueadero) {
-            errores.push('Parqueadero requerido');
-            const errorParqueadero = document.getElementById('errorParqueadero');
-            if (errorParqueadero) errorParqueadero.style.display = 'block';
-        }
-
-        /*if (!idUbicacion) {
-            errores.push('Ubicación requerida');
-            const errorUbicacion = document.getElementById('errorUbicacion');
-            if (errorUbicacion) errorUbicacion.style.display = 'block';
-        }*/
+        const revisar = (id, idError, hayError, nombre, mensaje) => {
+            const campo = document.getElementById(id);
+            marcarCampo(campo, idError, hayError);
+            if (hayError) faltantes.push({ campo, nombre, mensaje });
+        };
 
         const videoEsValido = typeof window.videoVehiculoEsValido === 'function'
             ? window.videoVehiculoEsValido()
-            : !!videoBase64;
+            : !!valor('videoBase64Input');
 
-        if (!videoEsValido) {
-            errores.push('Video obligatorio de mínimo 15 segundos');
-            const errorMedia = document.getElementById('errorMedia');
-            if (errorMedia) errorMedia.style.display = 'block';
-            mostrarAlerta('Debes grabar y guardar un video de mínimo 15 segundos antes de ingresar el vehículo.', 'error');
-        } else {
-            const errorMedia = document.getElementById('errorMedia');
-            if (errorMedia) errorMedia.style.display = 'none';
+        revisar('placa', 'errorPlaca', !placaValida(valor('placa')),
+            'la placa', 'Escribe la placa del vehículo (formato ABC123).');
+        revisar('nombre_cliente', 'errorNombre', !valor('nombre_cliente'),
+            'el nombre del cliente', 'Escribe el nombre del cliente.');
+        revisar('telefono', 'errorTelefono', !telefonoValido(valor('telefono')),
+            'el WhatsApp', 'Escribe el WhatsApp del cliente (solo números).');
+        revisar('id_parqueadero', 'errorParqueadero', !valor('id_parqueadero'),
+            'el parqueadero', 'Selecciona el parqueadero donde quedará el vehículo.');
+        revisar('id_ubicacion', 'errorUbicacion', !valor('id_ubicacion'),
+            'la ubicación', 'Selecciona la ubicación.');
+        revisar('grabarVideoBtn', 'errorMedia', !videoEsValido,
+            'el video', 'Graba un video del vehículo de mínimo 15 segundos.');
+        revisar('btnAbrirFirma', 'errorFirma', !valor('firmaBase64'),
+            'la firma del cliente', 'Falta la firma del cliente.');
+
+        // Sin banco en la sesión no hay campo que corregir: hay que volver a entrar
+        if (!document.querySelector('input[name="id_banco"]')?.value) {
+            faltantes.push({ campo: null, nombre: 'el banco de la sesión', mensaje: 'No se encontró tu sesión. Vuelve a iniciar sesión.' });
         }
 
-        // Validar firma (ya guardada como imagen al aceptarla en la ventana de firma)
-        const firmaGuardada = !!document.getElementById('firmaBase64')?.value;
+        if (faltantes.length === 0) return;   // todo bien: el formulario se envía
 
-        console.log('=== VALIDACIÓN DE FIRMA ===');
-        console.log('Firma guardada:', firmaGuardada);
+        e.preventDefault();
 
-        if (!firmaGuardada) {
-            errores.push('Firma requerida');
-            const errorFirma = document.getElementById('errorFirma');
-            if (errorFirma) errorFirma.style.display = 'block';
-            console.error('❌ Firma NO realizada');
-        }
+        const nombres = faltantes.map(f => f.nombre);
+        const lista = nombres.length > 1
+            ? nombres.slice(0, -1).join(', ') + ' y ' + nombres[nombres.length - 1]
+            : '';
 
-        // Si hay errores de validación, PREVENIR el envío
-        if (errores.length > 0) {
-            console.error('❌ ERRORES DE VALIDACIÓN:', errores);
-            e.preventDefault();
-            if (!errores.includes('Video obligatorio de 30 segundos')) {
-                mostrarAlerta('Por favor, completa todos los campos requeridos correctamente.', 'error');
-            }
-            return false;
-        }
+        mostrarAlerta(faltantes.length === 1 ? faltantes[0].mensaje : `Falta ${lista}.`, 'error');
 
-        // ✅ Sin errores - permitir que el formulario se envíe
-        // El controlador manejará todo lo demás (validación de negocio, redirecciones, etc)
-        console.log('=== VALIDACIÓN EXITOSA - PERMITIENDO ENVÍO AL CONTROLADOR ===');
-        // NO hacer preventDefault - dejar que el formulario se envíe
+        faltantes[0].campo?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
-
-    console.log('✅ Evento submit del formulario configurado');
 });
 

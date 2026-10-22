@@ -11,6 +11,18 @@
         mensaje: '/sounds/Reenviado.wav'
     };
 
+    // Cada sonido vibra con su propio patrón, para notarlo con el celular en silencio o en el bolsillo.
+    // En milisegundos: vibra, pausa, vibra... (iPhone no deja vibrar desde una página web)
+    const vibraciones = {
+        solicitud: [400, 150, 400, 150, 400],
+        confirmacion: [120],
+        error: [250, 100, 250],
+        advertencia: [300, 150, 300],
+        codigo: [300, 150, 300],
+        pago: [150, 80, 150, 80, 400],
+        mensaje: [100, 80, 100]
+    };
+
     const audios = {};
 
     for (const tipo in archivos) {
@@ -18,7 +30,8 @@
         audios[tipo].preload = 'auto';
     }
 
-    // Devuelve true si sonó; sin un toque previo del usuario el navegador lo bloquea y devuelve false
+    // Devuelve true si sonó; sin un toque previo del usuario el navegador lo bloquea y devuelve false.
+    // Vibra solo cuando suena: así no vibra de nuevo en cada reintento de sonarSiHayNuevos
     window.reproducirSonido = function (tipo) {
         const audio = audios[tipo];
         if (!audio) return Promise.resolve(false);
@@ -27,7 +40,10 @@
         audio.muted = false;
         audio.currentTime = 0;
 
-        return audio.play().then(() => true, () => {
+        return audio.play().then(() => {
+            try { navigator.vibrate?.(vibraciones[tipo]); } catch { }
+            return true;
+        }, () => {
             audio.usado = false;
             return false;
         });

@@ -142,8 +142,9 @@
         </div>
     }
 
-    @* data-error-servidor: si el servidor rechazó el ingreso, ingreso-borrador.js ofrece recuperarlo *@
-    <form method="post" asp-action="IngresoVehiculos" asp-controller="Home" id="ingresoForm" enctype="multipart/form-data"
+    @* data-error-servidor: si el servidor rechazó el ingreso, ingreso-borrador.js ofrece recuperarlo.
+       novalidate: los avisos de campos faltantes son los de ingreso-vehiculos.js, no la burbuja del navegador *@
+    <form method="post" asp-action="IngresoVehiculos" asp-controller="Home" id="ingresoForm" enctype="multipart/form-data" novalidate
           data-error-servidor="@((TempData.Peek("Error") != null || ViewBag.Error != null) ? "true" : "false")">
         <div class="input-group">
             <input type="text"
@@ -165,6 +166,7 @@
                    placeholder="Nombre del Cliente"
                    maxlength="100"
                    required>
+            <div class="error-message" id="errorNombre">⚠️ El nombre del cliente es obligatorio</div>
         </div>
 
         <!-- Teléfono / WhatsApp -->
@@ -218,7 +220,7 @@
                     }
                 }
             </select>
-            <div class="error-message" id="errorParqueadero">⚠️ Selecciona un parqueadero</div>
+            <div class="error-message" id="errorParqueadero">⚠️ Selecciona el parqueadero donde quedará el vehículo</div>
         </div>
 
         <!-- Ubicación: obligatoria para todos. Al banco le llega seleccionada la de su turno -->
@@ -234,6 +236,7 @@
                     }
                 }
             </select>
+            <div class="error-message" id="errorUbicacion">⚠️ Selecciona la ubicación</div>
 
                 <script>
                     (function () {
@@ -348,7 +351,7 @@
             <input type="file" id="videoInput" accept="video/*" style="display:none;">
 
             <input type="hidden" name="videoBase64" id="videoBase64Input" />
-            <div class="error-message" id="errorMedia" style="display:none;"></div>
+            <div class="error-message" id="errorMedia">⚠️ Graba un video del vehículo de mínimo 15 segundos</div>
         </div>
 
         <!-- Firma del cliente: se firma en una ventana aparte y queda guardada como imagen (firma-cliente.js) -->
