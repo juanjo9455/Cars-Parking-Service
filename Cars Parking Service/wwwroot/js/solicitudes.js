@@ -224,6 +224,18 @@ async function cargarEsperandoValet() {
 }
 
 // ============= Mostrar Estados ============= //
+
+// Datos de un vehículo en la burbuja: placa, banco y valet uno al lado del otro, para aprovechar
+// el ancho del panel (se acomodan en otra línea si no caben). Los textos se escapan
+function filaVehiculoBurbuja(vehiculo) {
+    return `
+        <div class="req-item-fila">
+            <span class="req-item-placa">${escaparHtml(vehiculo.placa ?? '')}</span>
+            <span class="req-item-sub"><span class="req-item-etq">Banco:</span> ${escaparHtml(vehiculo.nombre_banco ?? '')}</span>
+            <span class="req-item-sub"><span class="req-item-etq">Valet:</span> ${escaparHtml(vehiculo.nombre_valet ?? '')}</span>
+        </div>`;
+}
+
 // Funcion para mostrar los vehiculos solicitados en el html
 function mostrarSolicitados() {
 
@@ -255,17 +267,14 @@ function mostrarSolicitados() {
     // Recorremos las solicitudes
     solicitudes.forEach(solicitud => {
 
-        // Al tocar un vehículo se abre su detalle: lugar de entrega (punto 25) y Despachar (punto 33)
+        // Al tocar un vehículo se abren sus acciones: Despachar (punto 33) y Reversar (punto 21).
+        // El lugar de entrega (punto 25) se ve siempre, debajo de los datos
         const abierta = solicitud.id === solicitudAbierta;
         const despachando = solicitud.id === despachandoId;
         const confirmandoReversar = solicitud.id === reversarConfirmandoId;
 
         const detalle = abierta
             ? `<div class="req-item-detalle" onclick="event.stopPropagation()">
-                   <div class="req-item-lugar">
-                       <i class="fa-solid fa-location-dot"></i>
-                       Entrega en: <strong>${escaparHtml(solicitud.lugar_entrega || 'Sin lugar registrado')}</strong>
-                   </div>
                    <button type="button" class="btn-despachar-burbuja" ${despachando ? 'disabled' : ''}
                            onclick="despacharDesdeBurbuja(${solicitud.id})">
                        <i class="fa-solid fa-right-from-bracket"></i>
@@ -287,22 +296,13 @@ function mostrarSolicitados() {
             <div class="req-item${abierta ? ' abierta' : ''}" role="button" tabindex="0"
                  onclick="alternarSolicitud(${solicitud.id})">
 
-                <div class="req-item-icon">
-                    <i class="fa-solid fa-car-side"></i>
-                </div>
-
                 <div class="req-item-info">
 
-                    <div class="req-item-title">
-                        ${escaparHtml(solicitud.placa ?? '')}
-                    </div>
+                    ${filaVehiculoBurbuja(solicitud)}
 
-                    <div class="req-item-sub">
-                        Banco: ${escaparHtml(solicitud.nombre_banco)}
-                    </div>
-
-                    <div class="req-item-sub">
-                        Valet: ${escaparHtml(solicitud.nombre_valet)}
+                    <div class="req-item-lugar">
+                        <i class="fa-solid fa-location-dot"></i>
+                        Entrega en: <strong>${escaparHtml(solicitud.lugar_entrega || 'Sin lugar registrado')}</strong>
                     </div>
 
                     ${detalle}
@@ -420,27 +420,9 @@ function mostrarDespachados() {
         const DespachadosHTML = `
 
             <div class="req-item">
-
-                <div class="req-item-icon">
-                    <i class="fa-solid fa-car-side"></i>
-                </div>
-
                 <div class="req-item-info">
-
-                    <div class="req-item-title">
-                        ${vehiculos.placa}
-                    </div>
-
-                    <div class="req-item-sub">
-                        Banco: ${vehiculos.nombre_banco}
-                    </div>
-
-                    <div class="req-item-sub">
-                        Valet: ${vehiculos.nombre_valet}
-                    </div>
-
+                    ${filaVehiculoBurbuja(vehiculos)}
                 </div>
-
             </div>
 
         `;
@@ -482,27 +464,9 @@ function mostrarEperandoValet() {
         const EsperandoValetHTML = `
 
             <div class="req-item">
-
-                <div class="req-item-icon">
-                    <i class="fa-solid fa-car-side"></i>
-                </div>
-
                 <div class="req-item-info">
-
-                    <div class="req-item-title">
-                        ${vehiculos.placa}
-                    </div>
-
-                    <div class="req-item-sub">
-                        Banco: ${vehiculos.nombre_banco}
-                    </div>
-
-                    <div class="req-item-sub">
-                        Valet: ${vehiculos.nombre_valet}
-                    </div>
-
+                    ${filaVehiculoBurbuja(vehiculos)}
                 </div>
-
             </div>
 
         `;
