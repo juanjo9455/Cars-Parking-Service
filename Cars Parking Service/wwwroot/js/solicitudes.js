@@ -269,7 +269,7 @@ function mostrarSolicitados() {
                    <button type="button" class="btn-despachar-burbuja" ${despachando ? 'disabled' : ''}
                            onclick="despacharDesdeBurbuja(${solicitud.id})">
                        <i class="fa-solid fa-right-from-bracket"></i>
-                       ${despachando ? 'Despachando...' : 'Despachar (quedo como valet de despacho)'}
+                       ${despachando ? 'Despachando...' : 'Despachar (asignarme como valet de despacho)'}
                    </button>
                    <button type="button" class="btn-reversar-burbuja" ${despachando ? 'disabled' : ''}
                            ${confirmandoReversar ? 'data-confirmar="true"' : ''}
