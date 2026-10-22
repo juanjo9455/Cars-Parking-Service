@@ -62,8 +62,8 @@
                             <li><a asp-controller="Home" asp-action="Ingreso_Vehiculos"><i class="fa-solid fa-car-side"></i>Nuevo Ingreso</a></li>
                             <li><a asp-controller="Home" asp-action="VistaKey"><i class="fa-solid fa-square-parking"></i>Parqueaderos</a></li>
                             <li><a asp-controller="Home" asp-action="Administrador"><i class="fa-solid fa-gear"></i>Configuraciones Admin</a></li>
-                            <li><a asp-controller="Home" asp-action="WhatsAppEnviados"><i class="fa-brands fa-whatsapp"></i>WhatsApp Enviados</a></li>
-                            <li><a asp-controller="Home" asp-action="DespachosCobros"><i class="fa-solid fa-receipt"></i>Despachos y cobros</a></li>
+                            <!--<li><a asp-controller="Home" asp-action="WhatsAppEnviados"><i class="fa-brands fa-whatsapp"></i>WhatsApp Enviados</a></li>
+                            <li><a asp-controller="Home" asp-action="DespachosCobros"><i class="fa-solid fa-receipt"></i>Despachos y cobros</a></li>-->
 
                         }
                         @if (idRol == 1)
@@ -78,7 +78,7 @@
                         {
                             <li>
                                 <a asp-controller="Liquidacion" asp-action="Liquidacion">
-                                    <i class="fa-solid fa-sack-dollar"></i>Liquidación
+                                    <i class="fa-solid fa-sack-dollar"></i>Liquidaciï¿½n
                                 </a>
                             </li>
                         }
@@ -89,20 +89,20 @@
                             @if ((ViewBag.estadoLiquidacion ?? false) == false)
                             {
 
-                                <li><a id="cerrar-sesion" onclick="abrirModalAlerta()"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
+                                <li><a id="cerrar-sesion" onclick="abrirModalAlerta()"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesiï¿½n</a></li>
 
                             }
                             else
                             {
 
-                                <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
+                                <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesiï¿½n</a></li>
 
                             }
                         }
                         else
                         {
 
-                            <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
+                            <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesiï¿½n</a></li>
 
                         }
 
@@ -140,11 +140,11 @@
         headers: {
         'Content-Type': 'application/json'
         },
-        credentials: 'same-origin' // <-- Esta opción adjunta las cookies de sesión
+        credentials: 'same-origin' // <-- Esta opciï¿½n adjunta las cookies de sesiï¿½n
         })
         .then(response => {
         if (!response.ok) {
-        console.warn('KeepAlive falló con estado:', response.status);
+        console.warn('KeepAlive fallï¿½ con estado:', response.status);
         }
         })
         .catch(error => console.error('Error en KeepAlive:', error));
