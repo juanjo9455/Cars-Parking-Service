@@ -78,7 +78,7 @@
                         {
                             <li>
                                 <a asp-controller="Liquidacion" asp-action="Liquidacion">
-                                    <i class="fa-solid fa-sack-dollar"></i>Liquidaci�n
+                                    <i class="fa-solid fa-sack-dollar"></i>Liquidación
                                 </a>
                             </li>
                         }
@@ -89,20 +89,20 @@
                             @if ((ViewBag.estadoLiquidacion ?? false) == false)
                             {
 
-                                <li><a id="cerrar-sesion" onclick="abrirModalAlerta()"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesi�n</a></li>
+                                <li><a id="cerrar-sesion" onclick="abrirModalAlerta()"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
 
                             }
                             else
                             {
 
-                                <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesi�n</a></li>
+                                <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
 
                             }
                         }
                         else
                         {
 
-                            <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesi�n</a></li>
+                            <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
 
                         }
 
@@ -140,11 +140,11 @@
         headers: {
         'Content-Type': 'application/json'
         },
-        credentials: 'same-origin' // <-- Esta opci�n adjunta las cookies de sesi�n
+        credentials: 'same-origin' // <-- Esta opción adjunta las cookies de sesión
         })
         .then(response => {
         if (!response.ok) {
-        console.warn('KeepAlive fall� con estado:', response.status);
+        console.warn('KeepAlive falló con estado:', response.status);
         }
         })
         .catch(error => console.error('Error en KeepAlive:', error));
