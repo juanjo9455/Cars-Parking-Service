@@ -18,8 +18,7 @@
         : estado == "parqueado" ? "status-pagado"
         : "status-en-uso";
 
-    @* data-id: el refresco lo usa para sonar la campana una sola vez por solicitud nueva *@
-    <tr class="@claseAlerta" data-id="@item.id_ingreso">
+    <tr class="@claseAlerta">
         <td data-label="Placa"><span class="ingreso-placa">@item.placa</span></td>
         <td data-label="Estado">
             <span class="status-badge @claseEstado">

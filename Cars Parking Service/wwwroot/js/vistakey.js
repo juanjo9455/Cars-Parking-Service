@@ -196,10 +196,8 @@ async function actualizarTabla() {
 
         tbody.innerHTML = html;
 
-        // Campana una sola vez por cada solicitud nueva de este parqueadero
-        const idsSolicitados = [...tbody.querySelectorAll('tr.alerta-solicitado')]
-            .map(fila => Number(fila.dataset.id));
-        window.sonarSiHayNuevos?.('sonido-solicitudes-key', idsSolicitados, 'solicitud');
+        // Mientras haya solicitados suena y vibra en cada refresco, para que siempre estén alertas
+        if (tbody.querySelector('tr.alerta-solicitado')) window.reproducirSonido?.('solicitud');
 
     } catch (error) {
         console.error('Error al actualizar la tabla:', error);

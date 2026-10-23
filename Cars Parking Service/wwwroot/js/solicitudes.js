@@ -102,6 +102,9 @@ let vehiculosDespachados = [];
 
 let vehiculosEsperandoValet = [];
 
+// Hora de la última campana de solicitados (la burbuja consulta cada 5 s, pero suena como máximo cada 10 s)
+let ultimaCampana = 0;
+
 
 // ============= Cargar Estados ============= //
 // Creamos metodo para leer el JSON de las solicitudes de HomeController //
@@ -151,8 +154,12 @@ async function cargarSolicitudes(){
     // Llenamos el array global con solicitudes
     solicitudes = ingresos.solicitudes;
 
-    // Campana una sola vez por cada solicitud nueva
-    window.sonarSiHayNuevos?.('sonido-solicitudes', solicitudes.map(s => s.id), 'solicitud');
+    // Mientras haya solicitados suena y vibra en cada refresco, para que siempre estén alertas
+    // (7,5 s y no 10: si una respuesta llega tarde no se salta un turno; igual suena una consulta sí y otra no)
+    if (solicitudes.length && Date.now() - ultimaCampana >= 7500) {
+        ultimaCampana = Date.now();
+        window.reproducirSonido?.('solicitud');
+    }
 
     // Buscamos el elemento donde mostrar resultados
     const contadorBurbuja = document.getElementById('bubbleCount');
