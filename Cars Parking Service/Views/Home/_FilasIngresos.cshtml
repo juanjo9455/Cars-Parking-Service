@@ -4,6 +4,10 @@
     // Mismos datos de sesión que usa Tabla_Vehiculos para decidir qué botones ve cada rol
     var idRol = Context.Session.GetInt32("id_rol");
     var idUsuarioSesion = Context.Session.GetInt32("id");
+
+    // Valor de cada ubicación para el título del modal de cobrar, en pesos colombianos
+    var valoresUbicacion = ViewBag.ValoresUbicacion as Dictionary<int, decimal> ?? new Dictionary<int, decimal>();
+    var moneda = System.Globalization.CultureInfo.GetCultureInfo("es-CO");
 }
 @* Filas de la tabla de ingresos. Las usan la página y su refresco automático (FilasIngresos, punto 16),
    así los botones salen siempre de las mismas reglas *@
@@ -127,6 +131,7 @@
                                 data-cliente="@ingresos.nombre_cliente"
                                 data-metodo-pago="@(ingresos.metodo_pago ?? "No especificado")"
                                 data-estado-servicio="@(ingresos.estado_servicio ?? "No especificado")"
+                                data-valor="@(valoresUbicacion.TryGetValue(ingresos.id_ubicacion, out var valorUbicacion) ? valorUbicacion.ToString("C0", moneda) : "")"
                                 style="cursor:pointer;">
                             </i>
                         }

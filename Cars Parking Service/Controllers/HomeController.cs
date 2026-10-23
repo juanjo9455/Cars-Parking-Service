@@ -886,6 +886,7 @@ namespace CarsParkingService.Controllers
 
             var ingresos = IngresosTabla(idUsuario, placa, lugar, estado_servicio, estado_pago, parqueadero, fechaInicio, fechaFin);
             ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
+            ViewBag.ValoresUbicacion = ValoresUbicacion();
             int totalRegistros = ingresos.Count();
 
             ViewBag.TotalRegistros = totalRegistros;
@@ -989,9 +990,14 @@ namespace CarsParkingService.Controllers
 
             var ingresos = IngresosTabla(idUsuario.Value, placa, lugar, estado_servicio, estado_pago, parqueadero, fechaInicio, fechaFin);
             ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
+            ViewBag.ValoresUbicacion = ValoresUbicacion();
 
             return PartialView("_FilasIngresos", ingresos);
         }
+
+        // Valor del servicio de cada ubicación: el título del modal de cobrar en la tabla de ingresos
+        private Dictionary<int, decimal> ValoresUbicacion() =>
+            _context.ubicacion_servicios.AsNoTracking().ToDictionary(u => u.id_ubicacion, u => u.valor_servicio);
 
         // Nombre de quien solicitó cada vehículo de la tabla (columna Solicitud, punto 26)
         private Dictionary<int, string> NombresSolicitud(List<ingresos> ingresos)
@@ -2041,6 +2047,16 @@ namespace CarsParkingService.Controllers
 
                 ingreso.estado_servicio = dto.EstadoServicio;
                 ingreso.estado_pago = "pagado";
+
+                // Si el cliente no pagó por su enlace el valor sigue en 0: se guarda el de la ubicación,
+                // para que liquidaciones y reportes no lo sumen en 0
+                if ((ingreso.valor_servicio ?? 0) == 0)
+                {
+                    ingreso.valor_servicio = _context.ubicacion_servicios
+                        .Where(u => u.id_ubicacion == ingreso.id_ubicacion)
+                        .Select(u => (decimal?)u.valor_servicio)
+                        .FirstOrDefault() ?? 0;
+                }
 
                 // El cobro terminó: el código ya no sirve (con o sin validación del cliente)
                 ingreso.codigo_seguridad = null;

@@ -1212,11 +1212,15 @@ function abrirModalPago(btn) {
     const nombre_cliente = btn.getAttribute('data-cliente');
     const metodo_pago = btn.getAttribute('data-metodo-pago');
     const estado_servicio = btn.getAttribute('data-estado-servicio');
+    const valor = btn.getAttribute('data-valor');
 
     document.getElementById("contenido-modal-acciones").innerHTML = `
-    
+
         <span class="close-btn" onclick="cerrarModalPago('${id}')">&times;</span>
         <h3>Pago para Vehículo</h3>
+
+        <!-- Cuánto se cobra por la ubicación de servicio del ingreso -->
+        ${valor ? `<div class="cobro-valor"><span class="cobro-valor-label">Valor a cobrar</span><span class="cobro-valor-precio">${valor}</span></div>` : ''}
 
         <!-- Información del vehículo -->
         <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
