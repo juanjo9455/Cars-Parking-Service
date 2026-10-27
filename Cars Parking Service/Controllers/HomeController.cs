@@ -861,7 +861,7 @@ namespace CarsParkingService.Controllers
             return View();
         }
 
-        public IActionResult Tabla_Vehiculos(string placa, string? lugar, string estado_servicio, string estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
+        public IActionResult Tabla_Vehiculos(string placa, string? lugar, string[]? estado_servicio, string estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
         {
             var idUsuarioSesion = HttpContext.Session.GetInt32("id");
 
@@ -884,7 +884,10 @@ namespace CarsParkingService.Controllers
 
             ViewBag.ubicacion = ubicacionUsuario;
 
-            var ingresos = IngresosTabla(idUsuario, placa, lugar, estado_servicio, estado_pago, parqueadero, fechaInicio, fechaFin);
+            var estadosFiltro = EstadosFiltro();
+            var estados = EstadosMarcados(estado_servicio, estadosFiltro);
+
+            var ingresos = IngresosTabla(idUsuario, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, fechaFin);
             ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
             ViewBag.ValoresUbicacion = ValoresUbicacion();
             int totalRegistros = ingresos.Count();
@@ -895,11 +898,12 @@ namespace CarsParkingService.Controllers
             ViewBag.Ubicaciones = _context.ubicacion_servicios.OrderBy(u => u.nombre_ubicacion).ToList();
             ViewBag.Parqueaderos = _context.parqueaderos.OrderBy(p => p.nombre_parqueadero).ToList();
             ViewBag.Valets = ValetsDisponibles();
+            ViewBag.EstadosFiltro = estadosFiltro;
 
 
             ViewData["FiltroPlaca"] = placa;
             ViewData["FiltroLugar"] = lugar;
-            ViewData["FiltroEstadoServicio"] = estado_servicio;
+            ViewData["FiltroEstadoServicio"] = estados;
             ViewData["FiltroEstadoPago"] = estado_pago;
             ViewData["FiltroParqueadero"] = parqueadero;
             ViewData["FiltroFechaInicio"] = fechaInicio;
@@ -910,7 +914,7 @@ namespace CarsParkingService.Controllers
 
         // Ingresos de la tabla según los filtros y el rol (procedimiento sp_consultarRegistros). Los usan
         // la página y su refresco automático (FilasIngresos, punto 16) para mostrar exactamente lo mismo
-        private List<ingresos> IngresosTabla(int idUsuario, string? placa, string? lugar, string? estado_servicio,
+        private List<ingresos> IngresosTabla(int idUsuario, string? placa, string? lugar, string[] estados,
             string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
         {
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
@@ -924,7 +928,8 @@ namespace CarsParkingService.Controllers
             // Convertir placa a mayúsculas
             string? placaUpper = !string.IsNullOrEmpty(placa) ? placa.Trim().ToUpper() : null;
             string? nombreUbicacion = !string.IsNullOrEmpty(lugar) ? lugar : null;
-            string? estadoServicio = !string.IsNullOrEmpty(estado_servicio) ? estado_servicio : null;
+            // Varios estados van separados por coma; con "todos" (o ninguno) se consulta sin filtrar
+            string? estadoServicio = estados.Length == 0 || estados.Contains("todos") ? null : string.Join(",", estados);
             string? estadoPago = !string.IsNullOrEmpty(estado_pago) ? estado_pago : null;
             string? nombreParqueadero = !string.IsNullOrEmpty(parqueadero) ? parqueadero : null;
 
@@ -979,7 +984,7 @@ namespace CarsParkingService.Controllers
         // con sus filtros, armadas por la misma vista parcial (_FilasIngresos)
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult FilasIngresos(string? placa, string? lugar, string? estado_servicio, string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
+        public IActionResult FilasIngresos(string? placa, string? lugar, string[]? estado_servicio, string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
         {
             // Sin sesión, OnActionExecuting ya redirige al login
             var idUsuario = HttpContext.Session.GetInt32("id");
@@ -988,11 +993,32 @@ namespace CarsParkingService.Controllers
                 return Unauthorized();
             }
 
-            var ingresos = IngresosTabla(idUsuario.Value, placa, lugar, estado_servicio, estado_pago, parqueadero, fechaInicio, fechaFin);
+            var estados = EstadosMarcados(estado_servicio, EstadosFiltro());
+            var ingresos = IngresosTabla(idUsuario.Value, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, fechaFin);
             ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
             ViewBag.ValoresUbicacion = ValoresUbicacion();
 
             return PartialView("_FilasIngresos", ingresos);
+        }
+
+        // Estados del filtro de la tabla de ingresos y cuáles van marcados al entrar. Salen de
+        // sp_estadosFiltroIngresos para cambiarlos en la BD sin publicar
+        private List<estados_filtro_ingresos> EstadosFiltro() =>
+            _context.Database.SqlQueryRaw<estados_filtro_ingresos>("EXEC sp_estadosFiltroIngresos").ToList();
+
+        // Estados marcados en el filtro. Sin estados en la URL (al entrar, con Limpiar y en el refresco
+        // de esa misma página) van los marcados por defecto, para no mezclar los finalizados
+        private static string[] EstadosMarcados(string[]? estado_servicio, List<estados_filtro_ingresos> estadosFiltro)
+        {
+            var marcados = (estado_servicio ?? [])
+                .Where(e => !string.IsNullOrWhiteSpace(e))
+                .Select(e => e.Trim().ToLower())
+                .Distinct()
+                .ToArray();
+
+            return marcados.Length > 0
+                ? marcados
+                : estadosFiltro.Where(e => e.por_defecto).Select(e => e.valor).ToArray();
         }
 
         // Valor del servicio de cada ubicación: el título del modal de cobrar en la tabla de ingresos

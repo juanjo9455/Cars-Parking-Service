@@ -203,16 +203,33 @@
                     </select>
                 </div>
 
+                @* Varios estados a la vez. La lista y los marcados al entrar salen de sp_estadosFiltroIngresos *@
+                @{
+                    var estadosFiltro = ViewBag.EstadosFiltro as List<estados_filtro_ingresos> ?? new();
+                    var estadosMarcados = ViewData["FiltroEstadoServicio"] as string[] ?? [];
+                    var todosMarcados = estadosMarcados.Length == 0 || estadosMarcados.Contains("todos");
+                    var nombresMarcados = estadosFiltro.Where(e => estadosMarcados.Contains(e.valor)).Select(e => e.nombre).ToList();
+                }
                 <div class="form-group col-md-4 mb-3 ms-md-3" style="min-width:220px;">
-                    <label>Estado</label>
-                    <select name="estado_servicio" style="width:100%;">
-                        <option value="">Todos</option>
-                        <option value="activo" selected="@(ViewData["FiltroEstadoServicio"]?.ToString() == "activo")">Activo</option>
-                        <option value="finalizado" selected="@(ViewData["FiltroEstadoServicio"]?.ToString() == "finalizado")">Finalizado</option>
-                        <option value="despachado" selected="@(ViewData["FiltroEstadoServicio"]?.ToString() == "despachado")">Despachado</option>
-                        <option value="parqueado" selected="@(ViewData["FiltroEstadoServicio"]?.ToString() == "parqueado")">Parqueado</option>
-                        <option value="solicitado" selected="@(ViewData["FiltroEstadoServicio"]?.ToString() == "solicitado")">Solicitado</option>
-                    </select>
+                    <label id="etiquetaEstados">Estado</label>
+                    <div class="dropdown filtro-estados" id="filtroEstados">
+                        <button type="button" class="filtro-estados-boton" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                aria-expanded="false" aria-labelledby="etiquetaEstados filtroEstadosTexto" data-no-spinner="true">
+                            <span id="filtroEstadosTexto">@(todosMarcados || nombresMarcados.Count == 0 ? "Todos" : string.Join(", ", nombresMarcados))</span>
+                        </button>
+                        <div class="dropdown-menu filtro-estados-menu">
+                            <label class="dropdown-item">
+                                <input type="checkbox" name="estado_servicio" value="todos" checked="@todosMarcados"> Todos
+                            </label>
+                            <div class="dropdown-divider"></div>
+                            @foreach (var e in estadosFiltro)
+                            {
+                                <label class="dropdown-item">
+                                    <input type="checkbox" name="estado_servicio" value="@e.valor" checked="@(todosMarcados || estadosMarcados.Contains(e.valor))"> @e.nombre
+                                </label>
+                            }
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group col-md-4 mb-3 ms-md-3" style="min-width:220px;">
@@ -581,6 +598,38 @@
 
             // Para refrescar en el momento después de una acción sin recargar (p. ej. despachar desde la burbuja)
             window.refrescarTablaIngresos = refrescarFilas;
+        })();
+    </script>
+
+    <script>
+        // Filtro de estados: "Todos" marca o desmarca todos y el botón muestra lo marcado. Marcar las casillas
+        // una a una no marca "Todos": con "Todos" no se filtra y saldrían también estados que no están en la lista
+        (function () {
+            const filtro = document.getElementById('filtroEstados');
+            if (!filtro) return;
+
+            const todos = filtro.querySelector('input[value="todos"]');
+            const estados = Array.from(filtro.querySelectorAll('input[name="estado_servicio"]:not([value="todos"])'));
+            const texto = document.getElementById('filtroEstadosTexto');
+
+            filtro.addEventListener('change', function (e) {
+                if (e.target === todos) {
+                    estados.forEach(c => c.checked = todos.checked);
+                } else if (!e.target.checked) {
+                    todos.checked = false;
+                }
+
+                const marcados = estados.filter(c => c.checked);
+                texto.textContent = todos.checked || marcados.length === 0
+                    ? 'Todos'
+                    : marcados.map(c => c.parentElement.textContent.trim()).join(', ');
+            });
+
+            // Sin nada marcado el navegador no manda el estado y el servidor pondría los de por defecto:
+            // se manda "todos", que es lo que dice el botón
+            filtro.closest('form').addEventListener('submit', function () {
+                if (!estados.some(c => c.checked)) todos.checked = true;
+            });
         })();
     </script>
 }
