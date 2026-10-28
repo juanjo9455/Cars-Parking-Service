@@ -613,6 +613,20 @@
     max-height: 90vh;
 }
 
+/* En el celular no cabe al lado del menú (se salía de la pantalla): se abre adentro, debajo de la
+   opción, y el menú hace scroll si la lista es larga */
+@media (max-width: 768px) {
+    .menu-lateral .switch-flotante {
+        position: static;
+        width: auto;
+        max-height: none;
+        margin-top: 6px;
+        padding: 6px;
+        background: rgba(0, 0, 0, 0.15);
+        box-shadow: none;
+    }
+}
+
 
 /*==================== Fin Menu Lateral ====================*/
 
