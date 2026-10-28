@@ -31,6 +31,18 @@ namespace CarsParkingService.Helpers
                    ingreso.estado_pago?.Trim().ToLower() != "pagado";
         }
 
+        // Se solicita (el cliente desde su enlace o el operador) lo que está activo o parqueado, con valet
+        // asignado y sin pagar. El que ya está solicitado, despachado o finalizado no se vuelve a solicitar;
+        // al reversar la solicitud vuelve a su estado anterior y se puede solicitar otra vez
+        public static bool PuedeSolicitarse(ingresos ingreso)
+        {
+            var estado = ingreso.estado_servicio?.Trim().ToLower();
+
+            return ingreso.id_valet != null &&
+                   (estado == "activo" || estado == "parqueado") &&
+                   ingreso.estado_pago?.Trim().ToLower() != "pagado";
+        }
+
         // Una solicitud se puede reversar mientras el vehículo siga solicitado (antes de despacharlo, punto 21)
         public static bool PuedeReversarSolicitud(ingresos ingreso)
         {

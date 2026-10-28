@@ -2664,7 +2664,7 @@ namespace CarsParkingService.Controllers
                 fotoTransferencia = ingreso.foto_transferencia != null
                     ? Url.Action(nameof(FotoTransferenciaIngreso), new { idIngreso = ingreso.id_ingreso })
                     : null,
-                puedeSolicitar = PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio, ingreso.estado_pago),
+                puedeSolicitar = PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso),
                 // Banco y admin pueden asignar valet a un vehículo que no tiene (punto 4)
                 puedeAsignarValet = (HttpContext.Session.GetInt32("id_rol") is 2 or 3) && IngresoReglas.PuedeRecibirValet(ingreso),
                 // Valet, banco y admin parquean desde Información sin ir a VistaKey (puntos 13 y 18);
@@ -2755,16 +2755,10 @@ namespace CarsParkingService.Controllers
             return File(foto, "image/jpeg");
         }
 
-        // Valet, banco o admin pueden solicitar el vehículo solo si está activo o parqueado
-        // y todavía no está pagado (un vehículo pagado nunca se vuelve a solicitar)
-        private static bool PuedeSolicitarOperador(int? rol, string? estadoServicio, string? estadoPago)
+        // Valet, banco o admin solicitan con la misma regla que el cliente (IngresoReglas.PuedeSolicitarse)
+        private static bool PuedeSolicitarOperador(int? rol, ingresos ingreso)
         {
-            var estado = estadoServicio?.Trim().ToLower();
-            var pago = estadoPago?.Trim().ToLower();
-
-            return (rol == 1 || rol == 2 || rol == 3) &&
-                   (estado == "activo" || estado == "parqueado") &&
-                   pago != "pagado";
+            return (rol == 1 || rol == 2 || rol == 3) && IngresoReglas.PuedeSolicitarse(ingreso);
         }
 
         // El operador solicita el vehículo cuando el cliente llama y no lo pidió desde su enlace
@@ -2779,7 +2773,7 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("Tabla_Vehiculos");
             }
 
-            if (!PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio, ingreso.estado_pago))
+            if (!PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso))
             {
                 TempData["Error"] = "El vehículo no se puede solicitar en su estado actual o no tienes permiso.";
                 return RedirectToAction("Tabla_Vehiculos");

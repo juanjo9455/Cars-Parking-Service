@@ -76,9 +76,10 @@
                     <span>🔒</span> Solicitar Pago
                 </button>
             }
-            else
+            else if (Model != null && CarsParkingService.Helpers.IngresoReglas.PuedeSolicitarse(Model))
             {
-                <button type="button" class="servicio-btn" id="btn-solicitar" style="display:@(Model?.estado_servicio == "finalizado" ? "none" : "block")">
+                @* Solo con valet asignado y sin despachar: un vehículo entregado no se vuelve a solicitar *@
+                <button type="button" class="servicio-btn" id="btn-solicitar" style="display:block">
                     🚗 Solicitar Vehículo
                 </button>
             }

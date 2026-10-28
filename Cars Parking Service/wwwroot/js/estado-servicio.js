@@ -438,7 +438,17 @@ function solicitarVehiculo() {
                 lugarEntrega: lugarEntrega
             })
         })
-        .then(response => {
+        .then(async response => {
+
+            // El servidor no deja solicitar un vehículo ya entregado o sin valet: se avisa con su
+            // mensaje y se recarga para mostrar el estado real (sin el botón)
+            if (response.status === 409) {
+                const data = await response.json().catch(() => ({}));
+                window.reproducirSonido?.('error');
+                alert(data.mensaje || 'Tu vehículo no se puede solicitar en este momento.');
+                location.reload();
+                return new Promise(() => {});
+            }
 
             if (!response.ok)
                 throw new Error(`HTTP ${response.status}`);
