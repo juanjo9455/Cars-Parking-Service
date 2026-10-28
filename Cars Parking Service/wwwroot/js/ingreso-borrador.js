@@ -19,6 +19,7 @@
         if (hayCambios) return true;
         if (document.getElementById('firmaBase64')?.value) return true;
         if (document.getElementById('videoBase64Input')?.value) return true;
+        if (document.getElementById('videoInput')?.files.length) return true;
         return form.querySelectorAll('input[name^="fotos["]').length > 0;
     }
 

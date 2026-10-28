@@ -169,16 +169,22 @@ document.addEventListener('submit', function (event) {
 // con los mismos filtros de la página. Así los botones salen de las mismas reglas que valida el
 // servidor; antes se armaban aquí en JS con otras reglas.
 let actualizacionEnProceso = false;
+let actualizacionPendiente = false;
 
 // Cada 10 s: suficiente para enterarse de una solicitud sin cargar de más el servidor
 const INTERVALO_ACTUALIZACION = 10000;
 
 async function actualizarTabla() {
-    if (actualizacionEnProceso) return;
-
     // Si se está enviando un formulario (Parqueando..., Despachando...) no se cambian las filas:
     // el formulario quedaría fuera de la página y no se enviaría
     if (document.querySelector('form[data-debug-submitting="true"]')) return;
+
+    // Con una consulta en curso se repite al terminar: un cambio de filtro nunca se queda
+    // con las filas de los filtros anteriores
+    if (actualizacionEnProceso) {
+        actualizacionPendiente = true;
+        return;
+    }
 
     actualizacionEnProceso = true;
 
@@ -203,12 +209,19 @@ async function actualizarTabla() {
         console.error('Error al actualizar la tabla:', error);
     } finally {
         actualizacionEnProceso = false;
+        if (actualizacionPendiente) {
+            actualizacionPendiente = false;
+            actualizarTabla();
+        }
     }
 }
 
-// Inicializar solo al cargar la página
+// Inicializar solo al cargar la página (aquí ya cargó site.js, que trae activarFiltrosAutomaticos)
 document.addEventListener('DOMContentLoaded', function() {
     setInterval(actualizarTabla, INTERVALO_ACTUALIZACION);
+
+    // Los filtros se aplican solos, sin botón Buscar
+    activarFiltrosAutomaticos(document.querySelector('.search-section form'), actualizarTabla);
 });
 
 // Limpiar al cerrar la página

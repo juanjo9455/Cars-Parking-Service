@@ -71,7 +71,8 @@
 }
 
 /* ===================== Custom Select Arrow ===================== */
-select, .form-group select, .input-group select {
+/* .filtro-estados-boton: el filtro de varios estados (tabla de ingresos) se ve como un select */
+select, .form-group select, .input-group select, .filtro-estados-boton {
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -93,7 +94,7 @@ select, .form-group select, .input-group select {
     box-sizing: border-box;
 }
 
-select:focus, .form-group select:focus, .input-group select:focus {
+select:focus, .form-group select:focus, .input-group select:focus, .filtro-estados-boton:focus {
     border-color: var(--ui-input-border-focus);
     box-shadow: var(--ui-input-focus-shadow);
     outline: none;

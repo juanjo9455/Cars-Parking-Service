@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const videoPreviewContainer = document.getElementById('videoPreviewContainer');
     const photoCounter = document.getElementById('photoCounter');
     const videoBase64Input = document.getElementById('videoBase64Input');
+    const videoInput = document.getElementById('videoInput');
     const errorMedia = document.getElementById('errorMedia');
     const recordTimer = document.getElementById('recordTimer');
 
@@ -69,8 +70,27 @@ document.addEventListener('DOMContentLoaded', () => {
     let videoCompletoYConfirmado = false;
 
     window.videoVehiculoEsValido = function () {
-        return videoCompletoYConfirmado && !!videoBase64Input.value;
+        return videoCompletoYConfirmado && (videoInput?.files.length > 0 || !!videoBase64Input.value);
     };
+
+    // El video se manda como archivo (pesa un 25 % menos que en base64). Devuelve false si el navegador
+    // no deja poner archivos en el campo (Safari viejo): entonces se manda en base64 como antes
+    function ponerVideoEnArchivo(blob) {
+        try {
+            const extension = blob.type.includes('mp4') ? 'mp4' : 'webm';
+            const datos = new DataTransfer();
+            datos.items.add(new File([blob], `video.${extension}`, { type: blob.type }));
+            videoInput.files = datos.files;
+            return videoInput.files.length === 1;
+        } catch {
+            return false;
+        }
+    }
+
+    function quitarVideoDelFormulario() {
+        videoBase64Input.value = '';
+        if (videoInput) videoInput.value = '';
+    }
 
     let archivosObjetosCapturados = [];
     let cameraInputObjetosClicking = false; // Previene doble click
@@ -244,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ================= VIDEO NATIVO =================
     function resetVideoPreview() {
         videoPreviewContainer.innerHTML = '';
-        videoBase64Input.value = '';
+        quitarVideoDelFormulario();
         videoBlob = null;
         videoGrabado = false;
         videoCompletoYConfirmado = false;
@@ -360,15 +380,27 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!mediaStream) return;
             recordedChunks = [];
             descartarGrabacionActual = false;
-            // VP9 da la misma nitidez que VP8 con mucho menos peso (sube más rápido con datos).
-            // Siempre en WebM: el servidor reconoce los videos por ese formato.
-            // Si el celular no soporta VP9 (por ejemplo iPhone), se graba en VP8 con tope de calidad:
-            // sin el tope, Safari grababa ~10 veces más pesado que Android (videos de 20-30 MB).
-            const opcionesGrabacion = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-                ? { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 1500000 }
-                : { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 };
+            // El primer formato que sepa grabar el celular, siempre con tope de calidad (sin tope, Safari
+            // grababa videos de 20-30 MB). El servidor reconoce WebM y MP4.
+            // - VP9 (Android): la misma nitidez que VP8 con mucho menos peso.
+            // - MP4 H.264 (iPhone): lo graba el chip del iPhone, con cualquier iOS desde 14.5 (WebM solo desde 18.4).
+            // - VP8: equipos sin los anteriores. Si no sabe ninguno, el formato que traiga el celular.
+            const formatosVideo = [
+                { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 1200000 },
+                { mimeType: 'video/mp4;codecs=avc1', videoBitsPerSecond: 1500000 },
+                { mimeType: 'video/mp4', videoBitsPerSecond: 1500000 },
+                { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 }
+            ];
+            const opcionesGrabacion = formatosVideo.find(f => MediaRecorder.isTypeSupported(f.mimeType))
+                ?? { videoBitsPerSecond: 1500000 };
 
-            mediaRecorder = new MediaRecorder(mediaStream, opcionesGrabacion);
+            try {
+                mediaRecorder = new MediaRecorder(mediaStream, opcionesGrabacion);
+            } catch (error) {
+                console.error('No se pudo iniciar la grabación:', error);
+                mostrarError('Este celular no pudo grabar el video. Intenta desde otro navegador o equipo.');
+                return;
+            }
             mediaRecorder.ondataavailable = e => {
                 if (e.data.size > 0) recordedChunks.push(e.data);
             };
@@ -477,7 +509,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         videoCompletoYConfirmado = false;
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        // Con el formato real (WebM o MP4), para que el celular lo pueda mostrar en la revisión
+        const blob = new Blob(recordedChunks, { type: (mediaRecorder?.mimeType || 'video/webm').split(';')[0] });
         const url = URL.createObjectURL(blob);
         liveVideo.style.display = 'none';
         videoReviewSection.style.display = 'flex';
@@ -519,7 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
             removeBtn.style.zIndex = '2';
             removeBtn.onclick = function() {
                 videoPreviewContainer.innerHTML = '';
-                videoBase64Input.value = '';
+                quitarVideoDelFormulario();
                 grabarVideoBtn.classList.remove('disabled-photo-btn');
                 grabarVideoBtn.disabled = false;
                 videoGrabado = false;
@@ -529,12 +562,17 @@ document.addEventListener('DOMContentLoaded', () => {
             wrapper.appendChild(removeBtn);
             videoPreviewContainer.appendChild(wrapper);
 
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                videoBase64Input.value = ev.target.result;
+            if (ponerVideoEnArchivo(blob)) {
+                videoBase64Input.value = '';
                 videoCompletoYConfirmado = true;
-            };
-            reader.readAsDataURL(blob);
+            } else {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    videoBase64Input.value = ev.target.result;
+                    videoCompletoYConfirmado = true;
+                };
+                reader.readAsDataURL(blob);
+            }
 
             videoModal.style.display = 'none';
             recordedVideo.src = '';

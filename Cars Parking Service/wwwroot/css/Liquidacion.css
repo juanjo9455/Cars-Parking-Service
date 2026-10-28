@@ -1,7 +1,60 @@
 .page {
     background: #F5F5F5;
     padding: 2rem;
+    /* Arriba deja espacio para la casita (fija, 52 px desde los 20 px): así no tapa el título */
+    padding-top: 84px;
     font-family: var(--font-sans);
+}
+
+/* Casita para volver al menú: la misma .btn-volver-index de site.css, que este layout no carga */
+.btn-volver-index {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #C62828;
+    border-radius: 14px;
+    text-decoration: none;
+    overflow: hidden;
+    transition: .25s ease;
+    box-shadow: 0 6px 16px rgba(0,0,0,.18);
+    z-index: 998; /* debajo del modal de confirmar (.modal-wrap, 999) */
+}
+
+.btn-volver-index:hover {
+    background: #B71C1C;
+    transform: translateY(-2px);
+}
+
+.btn-volver-index i {
+    position: absolute;
+    color: white;
+    font-size: 24px;
+    transition: all .25s ease;
+}
+
+.icon-home {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.icon-back {
+    opacity: 0;
+    transform: translateX(-18px);
+}
+
+.btn-volver-index:hover .icon-home {
+    opacity: 0;
+    transform: translateX(18px);
+}
+
+.btn-volver-index:hover .icon-back {
+    opacity: 1;
+    transform: translateX(0);
 }
 
 /* =========================
@@ -216,12 +269,11 @@ th {
     font-weight: 500;
 }
 
+/* El texto largo (nombres de quien cobró, del valet) baja de renglón en vez de cortarse con "..." */
 td {
     padding: 10px 12px;
     color: #333;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
 }
 
 tbody tr {
@@ -662,4 +714,70 @@ tbody tr {
 
 .ubicacion-grupo[open] summary {
     border-bottom: 1px solid #eee;
+}
+
+/* En el celular las 5 columnas quedaban de 55 px y se cortaba todo: cada vehículo pasa a ser un bloque
+   de tres renglones (placa y valor; hora y método; quién cobró) */
+@media (max-width: 768px) {
+    .liq-detalle thead {
+        display: none;
+    }
+
+    .liq-detalle,
+    .liq-detalle tbody {
+        display: block;
+    }
+
+    .liq-detalle tr {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "placa valor"
+            "hora metodo"
+            "cobro cobro";
+        gap: 2px 12px;
+        padding: 10px 16px;
+    }
+
+    .liq-detalle td {
+        padding: 0;
+    }
+
+    .liq-detalle .liq-placa {
+        grid-area: placa;
+        font-weight: 700;
+        font-size: 16px;
+        letter-spacing: 1px;
+    }
+
+    .liq-detalle .liq-valor {
+        grid-area: valor;
+        font-weight: 700;
+        font-size: 16px;
+        text-align: right;
+    }
+
+    .liq-detalle .liq-hora,
+    .liq-detalle .liq-metodo,
+    .liq-detalle .liq-cobro {
+        font-size: 14px;
+        color: #4b5563;
+    }
+
+    .liq-detalle .liq-hora {
+        grid-area: hora;
+    }
+
+    .liq-detalle .liq-metodo {
+        grid-area: metodo;
+        text-align: right;
+    }
+
+    .liq-detalle .liq-cobro {
+        grid-area: cobro;
+    }
+
+    .liq-detalle .liq-cobro::before {
+        content: "Cobró: ";
+    }
 }

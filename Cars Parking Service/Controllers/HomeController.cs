@@ -861,7 +861,7 @@ namespace CarsParkingService.Controllers
             return View();
         }
 
-        public IActionResult Tabla_Vehiculos(string placa, string? lugar, string estado_servicio, string estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
+        public IActionResult Tabla_Vehiculos(string placa, string? lugar, string[]? estado_servicio, string estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
         {
             var idUsuarioSesion = HttpContext.Session.GetInt32("id");
 
@@ -884,7 +884,10 @@ namespace CarsParkingService.Controllers
 
             ViewBag.ubicacion = ubicacionUsuario;
 
-            var ingresos = IngresosTabla(idUsuario, placa, lugar, estado_servicio, estado_pago, parqueadero, fechaInicio, fechaFin);
+            var estadosFiltro = EstadosFiltro();
+            var estados = EstadosMarcados(estado_servicio, estadosFiltro);
+
+            var ingresos = IngresosTabla(idUsuario, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, fechaFin);
             ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
             ViewBag.ValoresUbicacion = ValoresUbicacion();
             int totalRegistros = ingresos.Count();
@@ -895,11 +898,12 @@ namespace CarsParkingService.Controllers
             ViewBag.Ubicaciones = _context.ubicacion_servicios.OrderBy(u => u.nombre_ubicacion).ToList();
             ViewBag.Parqueaderos = _context.parqueaderos.OrderBy(p => p.nombre_parqueadero).ToList();
             ViewBag.Valets = ValetsDisponibles();
+            ViewBag.EstadosFiltro = estadosFiltro;
 
 
             ViewData["FiltroPlaca"] = placa;
             ViewData["FiltroLugar"] = lugar;
-            ViewData["FiltroEstadoServicio"] = estado_servicio;
+            ViewData["FiltroEstadoServicio"] = estados;
             ViewData["FiltroEstadoPago"] = estado_pago;
             ViewData["FiltroParqueadero"] = parqueadero;
             ViewData["FiltroFechaInicio"] = fechaInicio;
@@ -910,7 +914,7 @@ namespace CarsParkingService.Controllers
 
         // Ingresos de la tabla según los filtros y el rol (procedimiento sp_consultarRegistros). Los usan
         // la página y su refresco automático (FilasIngresos, punto 16) para mostrar exactamente lo mismo
-        private List<ingresos> IngresosTabla(int idUsuario, string? placa, string? lugar, string? estado_servicio,
+        private List<ingresos> IngresosTabla(int idUsuario, string? placa, string? lugar, string[] estados,
             string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
         {
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
@@ -924,7 +928,8 @@ namespace CarsParkingService.Controllers
             // Convertir placa a mayúsculas
             string? placaUpper = !string.IsNullOrEmpty(placa) ? placa.Trim().ToUpper() : null;
             string? nombreUbicacion = !string.IsNullOrEmpty(lugar) ? lugar : null;
-            string? estadoServicio = !string.IsNullOrEmpty(estado_servicio) ? estado_servicio : null;
+            // Varios estados van separados por coma; con "todos" (o ninguno) se consulta sin filtrar
+            string? estadoServicio = estados.Length == 0 || estados.Contains("todos") ? null : string.Join(",", estados);
             string? estadoPago = !string.IsNullOrEmpty(estado_pago) ? estado_pago : null;
             string? nombreParqueadero = !string.IsNullOrEmpty(parqueadero) ? parqueadero : null;
 
@@ -979,7 +984,7 @@ namespace CarsParkingService.Controllers
         // con sus filtros, armadas por la misma vista parcial (_FilasIngresos)
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult FilasIngresos(string? placa, string? lugar, string? estado_servicio, string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
+        public IActionResult FilasIngresos(string? placa, string? lugar, string[]? estado_servicio, string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
         {
             // Sin sesión, OnActionExecuting ya redirige al login
             var idUsuario = HttpContext.Session.GetInt32("id");
@@ -988,11 +993,32 @@ namespace CarsParkingService.Controllers
                 return Unauthorized();
             }
 
-            var ingresos = IngresosTabla(idUsuario.Value, placa, lugar, estado_servicio, estado_pago, parqueadero, fechaInicio, fechaFin);
+            var estados = EstadosMarcados(estado_servicio, EstadosFiltro());
+            var ingresos = IngresosTabla(idUsuario.Value, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, fechaFin);
             ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
             ViewBag.ValoresUbicacion = ValoresUbicacion();
 
             return PartialView("_FilasIngresos", ingresos);
+        }
+
+        // Estados del filtro de la tabla de ingresos y cuáles van marcados al entrar. Salen de
+        // sp_estadosFiltroIngresos para cambiarlos en la BD sin publicar
+        private List<estados_filtro_ingresos> EstadosFiltro() =>
+            _context.Database.SqlQueryRaw<estados_filtro_ingresos>("EXEC sp_estadosFiltroIngresos").ToList();
+
+        // Estados marcados en el filtro. Sin estados en la URL (al entrar, con Limpiar y en el refresco
+        // de esa misma página) van los marcados por defecto, para no mezclar los finalizados
+        private static string[] EstadosMarcados(string[]? estado_servicio, List<estados_filtro_ingresos> estadosFiltro)
+        {
+            var marcados = (estado_servicio ?? [])
+                .Where(e => !string.IsNullOrWhiteSpace(e))
+                .Select(e => e.Trim().ToLower())
+                .Distinct()
+                .ToArray();
+
+            return marcados.Length > 0
+                ? marcados
+                : estadosFiltro.Where(e => e.por_defecto).Select(e => e.valor).ToArray();
         }
 
         // Valor del servicio de cada ubicación: el título del modal de cobrar en la tabla de ingresos
@@ -1100,7 +1126,7 @@ namespace CarsParkingService.Controllers
         // Este atributo indica que este método responde a peticiones HTTP POST
         // Es decir, cuando el formulario de registro se envía (method="post")
         [HttpPost]
-        public async Task<IActionResult> IngresoVehiculos(ingresos obj_ingreso, int? id_valet, int id_banco, string? firmaBase64, bool sin_objetos_valor = false, List<string>? fotos = null, string? videoBase64 = null)
+        public async Task<IActionResult> IngresoVehiculos(ingresos obj_ingreso, int? id_valet, int id_banco, string? firmaBase64, bool sin_objetos_valor = false, List<string>? fotos = null, string? videoBase64 = null, IFormFile? video = null)
         {
             // DEBUG TEMPORAL
             System.Diagnostics.Debug.WriteLine("=== ENTRÓ AL POST ===");
@@ -1400,14 +1426,28 @@ namespace CarsParkingService.Controllers
                 }
 
 
-                // Guardar el video si existe
-                if (!string.IsNullOrEmpty(videoBase64))
+                // Guardar el video si existe. Llega como archivo; el navegador que no puede mandarlo así
+                // lo manda en base64 como antes
+                byte[]? datoVideo = null;
+
+                if (video != null && video.Length > 0)
+                {
+                    using var memoria = new MemoryStream();
+                    await video.CopyToAsync(memoria);
+                    datoVideo = memoria.ToArray();
+                }
+                else if (!string.IsNullOrEmpty(videoBase64))
                 {
                     var base64Data = videoBase64.Contains(",") ? videoBase64.Split(',')[1] : videoBase64;
+                    datoVideo = Convert.FromBase64String(base64Data);
+                }
+
+                if (datoVideo != null)
+                {
                     var videoImagen = new imagenes
                     {
                         id_ingreso = obj_ingreso.id_ingreso,
-                        dato_imagen = Convert.FromBase64String(base64Data)
+                        dato_imagen = datoVideo
                     };
                     _context.imagenes.Add(videoImagen);
                     _context.SaveChanges();
@@ -2638,7 +2678,7 @@ namespace CarsParkingService.Controllers
                 fotoTransferencia = ingreso.foto_transferencia != null
                     ? Url.Action(nameof(FotoTransferenciaIngreso), new { idIngreso = ingreso.id_ingreso })
                     : null,
-                puedeSolicitar = PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio, ingreso.estado_pago),
+                puedeSolicitar = PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso),
                 // Banco y admin pueden asignar valet a un vehículo que no tiene (punto 4)
                 puedeAsignarValet = (HttpContext.Session.GetInt32("id_rol") is 2 or 3) && IngresoReglas.PuedeRecibirValet(ingreso),
                 // Valet, banco y admin parquean desde Información sin ir a VistaKey (puntos 13 y 18);
@@ -2729,16 +2769,10 @@ namespace CarsParkingService.Controllers
             return File(foto, "image/jpeg");
         }
 
-        // Valet, banco o admin pueden solicitar el vehículo solo si está activo o parqueado
-        // y todavía no está pagado (un vehículo pagado nunca se vuelve a solicitar)
-        private static bool PuedeSolicitarOperador(int? rol, string? estadoServicio, string? estadoPago)
+        // Valet, banco o admin solicitan con la misma regla que el cliente (IngresoReglas.PuedeSolicitarse)
+        private static bool PuedeSolicitarOperador(int? rol, ingresos ingreso)
         {
-            var estado = estadoServicio?.Trim().ToLower();
-            var pago = estadoPago?.Trim().ToLower();
-
-            return (rol == 1 || rol == 2 || rol == 3) &&
-                   (estado == "activo" || estado == "parqueado") &&
-                   pago != "pagado";
+            return (rol == 1 || rol == 2 || rol == 3) && IngresoReglas.PuedeSolicitarse(ingreso);
         }
 
         // El operador solicita el vehículo cuando el cliente llama y no lo pidió desde su enlace
@@ -2753,7 +2787,7 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("Tabla_Vehiculos");
             }
 
-            if (!PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso.estado_servicio, ingreso.estado_pago))
+            if (!PuedeSolicitarOperador(HttpContext.Session.GetInt32("id_rol"), ingreso))
             {
                 TempData["Error"] = "El vehículo no se puede solicitar en su estado actual o no tienes permiso.";
                 return RedirectToAction("Tabla_Vehiculos");
@@ -2837,16 +2871,22 @@ namespace CarsParkingService.Controllers
             System.Diagnostics.Debug.WriteLine("[ObtenerVideosIngreso] Inicio de consulta de videos.");
             Console.WriteLine("[ObtenerVideosIngreso] Inicio de consulta de videos.");
 
+            // WebM (Android y los de antes) o MP4 (iPhone: empieza con la caja "ftyp" desde el byte 4)
             var videos = _context.imagenes
                 .AsNoTracking()
                 .Where(i =>
                     i.id_ingreso == idIngreso &&
                     i.dato_imagen != null &&
-                    i.dato_imagen.Length >= 4 &&
-                    i.dato_imagen[0] == 0x1A &&
-                    i.dato_imagen[1] == 0x45 &&
-                    i.dato_imagen[2] == 0xDF &&
-                    i.dato_imagen[3] == 0xA3
+                    ((i.dato_imagen.Length >= 4 &&
+                      i.dato_imagen[0] == 0x1A &&
+                      i.dato_imagen[1] == 0x45 &&
+                      i.dato_imagen[2] == 0xDF &&
+                      i.dato_imagen[3] == 0xA3) ||
+                     (i.dato_imagen.Length >= 8 &&
+                      i.dato_imagen[4] == 0x66 &&
+                      i.dato_imagen[5] == 0x74 &&
+                      i.dato_imagen[6] == 0x79 &&
+                      i.dato_imagen[7] == 0x70))
                 )
                 .OrderBy(i => i.id_imagen)
                 // Solo se envía la URL: el video se descarga aparte y por partes cuando se reproduce
@@ -2895,7 +2935,10 @@ namespace CarsParkingService.Controllers
                 return NotFound();
             }
 
-            return File(dato, "video/webm", enableRangeProcessing: true);
+            // MP4 (iPhone) empieza con la caja "ftyp" desde el byte 4; lo demás es WebM
+            var esMp4 = dato.Length >= 8 && dato[4] == 0x66 && dato[5] == 0x74 && dato[6] == 0x79 && dato[7] == 0x70;
+
+            return File(dato, esMp4 ? "video/mp4" : "video/webm", enableRangeProcessing: true);
         }
 
         // Metodo para guardar la ubicacion del banco
