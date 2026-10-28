@@ -2632,10 +2632,23 @@ i.btn-pago-ingreso {
     color: #555;
 }
 
-/* En el celular no cabe una columna más: quién y cuándo se ven en Información */
+/* Quién solicitó, debajo del estado: solo en el celular, donde no cabe la columna Solicitud */
+.tabla-ingresos .solicitud-movil {
+    display: none;
+}
+
 @media (max-width: 768px) {
     .tabla-ingresos .col-solicitud {
         display: none;
+    }
+
+    .tabla-ingresos .solicitud-movil {
+        display: block;
+        margin-top: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #4b5563;
+        white-space: nowrap;
     }
 }
 
