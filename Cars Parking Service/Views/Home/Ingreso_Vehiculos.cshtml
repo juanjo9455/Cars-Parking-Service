@@ -348,7 +348,9 @@
                 <div id="videoPreviewContainer" style="margin-top: 12px;"></div>
             </div>
 
-            <input type="file" id="videoInput" accept="video/*" style="display:none;">
+            @* El video viaja como archivo en este campo: pesa un 25 % menos que en base64. Si el navegador
+               no deja ponerlo aquí, va en videoBase64 como antes (ingreso-vehiculos-camera.js) *@
+            <input type="file" name="video" id="videoInput" accept="video/*" style="display:none;">
 
             <input type="hidden" name="videoBase64" id="videoBase64Input" />
             <div class="error-message" id="errorMedia">⚠️ Graba un video del vehículo de mínimo 15 segundos</div>

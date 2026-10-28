@@ -1126,7 +1126,7 @@ namespace CarsParkingService.Controllers
         // Este atributo indica que este método responde a peticiones HTTP POST
         // Es decir, cuando el formulario de registro se envía (method="post")
         [HttpPost]
-        public async Task<IActionResult> IngresoVehiculos(ingresos obj_ingreso, int? id_valet, int id_banco, string? firmaBase64, bool sin_objetos_valor = false, List<string>? fotos = null, string? videoBase64 = null)
+        public async Task<IActionResult> IngresoVehiculos(ingresos obj_ingreso, int? id_valet, int id_banco, string? firmaBase64, bool sin_objetos_valor = false, List<string>? fotos = null, string? videoBase64 = null, IFormFile? video = null)
         {
             // DEBUG TEMPORAL
             System.Diagnostics.Debug.WriteLine("=== ENTRÓ AL POST ===");
@@ -1426,14 +1426,28 @@ namespace CarsParkingService.Controllers
                 }
 
 
-                // Guardar el video si existe
-                if (!string.IsNullOrEmpty(videoBase64))
+                // Guardar el video si existe. Llega como archivo; el navegador que no puede mandarlo así
+                // lo manda en base64 como antes
+                byte[]? datoVideo = null;
+
+                if (video != null && video.Length > 0)
+                {
+                    using var memoria = new MemoryStream();
+                    await video.CopyToAsync(memoria);
+                    datoVideo = memoria.ToArray();
+                }
+                else if (!string.IsNullOrEmpty(videoBase64))
                 {
                     var base64Data = videoBase64.Contains(",") ? videoBase64.Split(',')[1] : videoBase64;
+                    datoVideo = Convert.FromBase64String(base64Data);
+                }
+
+                if (datoVideo != null)
+                {
                     var videoImagen = new imagenes
                     {
                         id_ingreso = obj_ingreso.id_ingreso,
-                        dato_imagen = Convert.FromBase64String(base64Data)
+                        dato_imagen = datoVideo
                     };
                     _context.imagenes.Add(videoImagen);
                     _context.SaveChanges();
@@ -2857,16 +2871,22 @@ namespace CarsParkingService.Controllers
             System.Diagnostics.Debug.WriteLine("[ObtenerVideosIngreso] Inicio de consulta de videos.");
             Console.WriteLine("[ObtenerVideosIngreso] Inicio de consulta de videos.");
 
+            // WebM (Android y los de antes) o MP4 (iPhone: empieza con la caja "ftyp" desde el byte 4)
             var videos = _context.imagenes
                 .AsNoTracking()
                 .Where(i =>
                     i.id_ingreso == idIngreso &&
                     i.dato_imagen != null &&
-                    i.dato_imagen.Length >= 4 &&
-                    i.dato_imagen[0] == 0x1A &&
-                    i.dato_imagen[1] == 0x45 &&
-                    i.dato_imagen[2] == 0xDF &&
-                    i.dato_imagen[3] == 0xA3
+                    ((i.dato_imagen.Length >= 4 &&
+                      i.dato_imagen[0] == 0x1A &&
+                      i.dato_imagen[1] == 0x45 &&
+                      i.dato_imagen[2] == 0xDF &&
+                      i.dato_imagen[3] == 0xA3) ||
+                     (i.dato_imagen.Length >= 8 &&
+                      i.dato_imagen[4] == 0x66 &&
+                      i.dato_imagen[5] == 0x74 &&
+                      i.dato_imagen[6] == 0x79 &&
+                      i.dato_imagen[7] == 0x70))
                 )
                 .OrderBy(i => i.id_imagen)
                 // Solo se envía la URL: el video se descarga aparte y por partes cuando se reproduce
@@ -2915,7 +2935,10 @@ namespace CarsParkingService.Controllers
                 return NotFound();
             }
 
-            return File(dato, "video/webm", enableRangeProcessing: true);
+            // MP4 (iPhone) empieza con la caja "ftyp" desde el byte 4; lo demás es WebM
+            var esMp4 = dato.Length >= 8 && dato[4] == 0x66 && dato[5] == 0x74 && dato[6] == 0x79 && dato[7] == 0x70;
+
+            return File(dato, esMp4 ? "video/mp4" : "video/webm", enableRangeProcessing: true);
         }
 
         // Metodo para guardar la ubicacion del banco
