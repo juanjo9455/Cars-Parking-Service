@@ -23,6 +23,20 @@
                     claseAlerta = "alerta-sin-valet";
                 }
 
+                // Quién y a qué hora se solicitó (puntos 26 y 27). Sin usuario = el cliente desde su enlace.
+                // Va en la columna Solicitud y, en el celular (donde esa columna no cabe), debajo del estado
+                string? quienSolicito = null;
+                string? horaSolicitud = null;
+                if (ingresos.fecha_solicitud.HasValue)
+                {
+                    var nombresSolicitud = ViewBag.NombresSolicitud as Dictionary<int, string>;
+                    quienSolicito = ingresos.usuario_solicitud.HasValue
+                        ? nombresSolicitud?.GetValueOrDefault(ingresos.usuario_solicitud.Value) ?? "Operador"
+                        : "Cliente";
+                    // Solo la hora si fue hoy; si no, también el día
+                    horaSolicitud = ingresos.fecha_solicitud.Value.ToString(ingresos.fecha_solicitud.Value.Date == DateTime.Today ? "HH:mm" : "dd/MM HH:mm");
+                }
+
                 <tr class="@claseAlerta">
 
                     @* La placa va en un span: la celda conserva su relleno y la placa no queda pegada a los bordes *@
@@ -30,6 +44,10 @@
 
                     <td data-label="Estado Servicio">
                         <span class="info-chip">@(string.IsNullOrWhiteSpace(ingresos.estado_servicio) ? "—" : ingresos.estado_servicio)</span>
+                        @if (quienSolicito != null)
+                        {
+                            <span class="solicitud-movil">Pidió: @quienSolicito · @horaSolicitud</span>
+                        }
                     </td>
 
                     @* Chips de estado: mismos colores que tenía el panel de información *@
@@ -48,18 +66,11 @@
                         }
                     </td>
 
-                    @* Quién y a qué hora se solicitó (puntos 26 y 27). Sin usuario = el cliente desde su enlace *@
                     <td data-label="Solicitud" class="col-solicitud">
-                        @if (ingresos.fecha_solicitud.HasValue)
+                        @if (quienSolicito != null)
                         {
-                            var nombresSolicitud = ViewBag.NombresSolicitud as Dictionary<int, string>;
-                            var quien = ingresos.usuario_solicitud.HasValue
-                                ? nombresSolicitud?.GetValueOrDefault(ingresos.usuario_solicitud.Value) ?? "Operador"
-                                : "Cliente";
-
-                            <span class="solicitud-quien">@quien</span>
-                            @* Solo la hora si fue hoy; si no, también el día *@
-                            <span class="solicitud-hora">@ingresos.fecha_solicitud.Value.ToString(ingresos.fecha_solicitud.Value.Date == DateTime.Today ? "HH:mm" : "dd/MM HH:mm")</span>
+                            <span class="solicitud-quien">@quienSolicito</span>
+                            <span class="solicitud-hora">@horaSolicitud</span>
                         }
                         else
                         {

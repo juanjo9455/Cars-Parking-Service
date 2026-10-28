@@ -1,5 +1,6 @@
 using AspNetCoreGeneratedDocument;
 using CarsParkingService.Data;
+using CarsParkingService.Helpers;
 using CarsParkingService.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -84,6 +85,17 @@ namespace CarsParkingService.Controllers
                 }
 
                 return Ok(new { mensaje = "Ya estaba solicitado", fechaFinServicio = ingreso.fecha_fin_servicio });
+            }
+
+            // Despachado, finalizado o sin valet no se solicita (misma regla que el operador)
+            if (!IngresoReglas.PuedeSolicitarse(ingreso))
+            {
+                var estado = ingreso.estado_servicio?.Trim().ToLower();
+                var mensaje = estado == "despachado" || estado == "finalizado"
+                    ? "Tu vehículo ya fue entregado."
+                    : "Tu vehículo todavía no se puede solicitar. Intenta en unos minutos.";
+
+                return Conflict(new { mensaje });
             }
 
             // Con "Otra ubicación" el cliente escribe el lugar: tbl_ingresos.lugar_entrega es VARCHAR(50)

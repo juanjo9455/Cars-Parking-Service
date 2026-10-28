@@ -828,29 +828,7 @@
 
     // =========================== Spinner Loading para Botones de Filtros =========================== \\
 
-    // Spinner para botón Buscar
-    const btnBuscar = document.getElementById('btnBuscar');
-    const formularioFiltros = document.querySelector('form[asp-action="Tabla_Vehiculos"]');
-
-    if (btnBuscar && formularioFiltros) {
-        formularioFiltros.addEventListener('submit', function(e) {
-            if (!btnBuscar.classList.contains('loading')) {
-                e.preventDefault();
-                btnBuscar.classList.add('loading');
-                btnBuscar.innerHTML = `
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <span class="btn-text">Buscando...</span>
-                `;
-                btnBuscar.disabled = true;
-
-                setTimeout(() => {
-                    formularioFiltros.submit();
-                }, 100);
-            }
-        });
-    }
-
-    // Spinner para botón Limpiar
+    // Spinner para botón Limpiar (Buscar ya no existe: los filtros se aplican solos, activarFiltrosAutomaticos)
     const btnLimpiar = document.getElementById('btnLimpiar');
 
     if (btnLimpiar) {
@@ -873,6 +851,46 @@
     }
 
 });  // ← Cierre del DOMContentLoaded
+
+// =========================== Filtros automáticos =========================== \\
+// Tabla de ingresos y vista Key: al cambiar un filtro la tabla se actualiza sola, sin recargar la página.
+// Los filtros quedan en la URL, así el refresco de cada 10 s (que usa location.search) y recargar la
+// página muestran lo mismo. La placa se aplica medio segundo después de dejar de escribir (o con Enter).
+function activarFiltrosAutomaticos(form, refrescar) {
+    if (!form) return;
+
+    let espera = null;
+
+    const aplicar = () => {
+        clearTimeout(espera);
+
+        const filtros = new URLSearchParams(new FormData(form));
+
+        // Estado (casillas) sin nada marcado es "Todos", como dice el botón: sin nada en la URL
+        // el servidor pondría los estados por defecto
+        if (form.querySelector('input[type="checkbox"][name="estado_servicio"]') && !filtros.has('estado_servicio')) {
+            filtros.append('estado_servicio', 'todos');
+        }
+
+        history.replaceState(null, '', `${location.pathname}?${filtros}`);
+        refrescar();
+    };
+
+    form.addEventListener('change', e => {
+        if (e.target.type !== 'text') aplicar();
+    });
+
+    form.addEventListener('input', e => {
+        if (e.target.type !== 'text') return;
+        clearTimeout(espera);
+        espera = setTimeout(aplicar, 500);
+    });
+
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        aplicar();
+    });
+}
 
 // =========================== Usuario =========================== \\
 

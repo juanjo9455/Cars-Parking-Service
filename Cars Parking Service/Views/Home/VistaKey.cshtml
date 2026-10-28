@@ -98,10 +98,8 @@
                 </select>
             </div>
 
+            @* Sin botón Buscar: los filtros se aplican solos al cambiarlos (activarFiltrosAutomaticos, site.js) *@
             <div class="col-12 mt-2 d-flex justify-content-end gap-2">
-                <button type="submit" class="btn btn-primary px-4">
-                    <span class="btn-text">Buscar</span>
-                </button>
                 <a href="@Url.Action("VistaKey", "Home")" class="btn btn-secondary px-4">
                     <span class="btn-text">Limpiar</span>
                 </a>
@@ -183,7 +181,8 @@
 
                     <div class="summary-top">
                         <span class="summary-label">Placa del vehículo</span>
-                        <span class="summary-value" id="modalPlacaKey"></span>
+                        @* Placa amarilla con borde negro, como en Información y en la tabla (info-placa, site.css) *@
+                        <span class="info-placa" id="modalPlacaKey"></span>
                     </div>
 
                     <div class="summary-status">
