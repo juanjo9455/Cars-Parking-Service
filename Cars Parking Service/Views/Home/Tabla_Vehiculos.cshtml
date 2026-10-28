@@ -269,10 +269,8 @@
                     <input type="date" id="fechaFin" name="fechaFin" value="@(((DateTime?)ViewData["FiltroFechaFin"])?.ToString("yyyy-MM-dd"))" class="form-control">
                 </div>
 
+                @* Sin botón Buscar: los filtros se aplican solos al cambiarlos (activarFiltrosAutomaticos, site.js) *@
                 <div class="col-12 mt-2 d-flex justify-content-end gap-2">
-                    <button type="submit" id="btnBuscar" class="btn btn-primary px-4">
-                        <span class="btn-text">Buscar</span>
-                    </button>
                     <a id="btnLimpiar" asp-action="Tabla_Vehiculos" class="btn btn-secondary px-4">
                         <span class="btn-text">Limpiar</span>
                     </a>
@@ -567,13 +565,21 @@
         (function () {
             const INTERVALO = 10000;
             let enProceso = false;
+            let pendiente = false;
 
             async function refrescarFilas() {
                 const tbody = document.querySelector('table.tabla-ingresos tbody');
                 const modal = document.getElementById('modal-acciones');
 
                 // Con un modal abierto (información, cobro, foto...) no se cambia nada debajo
-                if (!tbody || enProceso || (modal && modal.style.display !== 'none')) return;
+                if (!tbody || (modal && modal.style.display !== 'none')) return;
+
+                // Con una consulta en curso se repite al terminar: un cambio de filtro nunca se queda
+                // con las filas de los filtros anteriores
+                if (enProceso) {
+                    pendiente = true;
+                    return;
+                }
 
                 enProceso = true;
 
@@ -591,6 +597,10 @@
                     console.error('Error al refrescar la tabla de ingresos:', error);
                 } finally {
                     enProceso = false;
+                    if (pendiente) {
+                        pendiente = false;
+                        refrescarFilas();
+                    }
                 }
             }
 
@@ -598,6 +608,9 @@
 
             // Para refrescar en el momento después de una acción sin recargar (p. ej. despachar desde la burbuja)
             window.refrescarTablaIngresos = refrescarFilas;
+
+            // Los filtros se aplican solos, sin botón Buscar (site.js)
+            activarFiltrosAutomaticos(document.querySelector('#filtersPanel form'), refrescarFilas);
         })();
     </script>
 
@@ -624,12 +637,7 @@
                     ? 'Todos'
                     : marcados.map(c => c.parentElement.textContent.trim()).join(', ');
             });
-
-            // Sin nada marcado el navegador no manda el estado y el servidor pondría los de por defecto:
-            // se manda "todos", que es lo que dice el botón
-            filtro.closest('form').addEventListener('submit', function () {
-                if (!estados.some(c => c.checked)) todos.checked = true;
-            });
+            // Sin nada marcado se consulta "todos", que es lo que dice el botón (activarFiltrosAutomaticos, site.js)
         })();
     </script>
 }
