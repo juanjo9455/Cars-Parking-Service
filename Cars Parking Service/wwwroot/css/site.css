@@ -390,15 +390,16 @@
     pointer-events: none;
 }
 
-/* Boton cerrar menu */
+/* Boton cerrar menu: 44 px para tocarlo con el dedo. El clic está en el ícono, que ocupa todo el círculo */
 .div-cerrar-menu {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    height: 18px;
-    width: 18px;
+    top: 8px;
+    right: 8px;
+    height: 44px;
+    width: 44px;
     border-radius: 50%;
     border: 2px solid white;
+    background: rgba(255, 255, 255, 0.15);
     display: flex;
     cursor: pointer;
     transition: background 0.3s ease;
@@ -411,11 +412,11 @@
 .div-cerrar-menu .fa-x {
     width: 100%;
     height: 100%;
-    font-size: 12px;
+    font-size: 20px;
     color: white;
     cursor: pointer;
     text-align: center;
-    line-height: 14.5px;
+    line-height: 40px;
 }
 
 
@@ -1524,19 +1525,40 @@ tbody td:last-child {
     }
 }
 
+/* X de los modales: círculo de 44 px (lo mínimo para tocar con el dedo) con fondo, para que se vea */
 .close-btn {
     position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 26px;
+    top: 10px;
+    right: 12px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #f3f4f6;
+    font-size: 32px;
     font-weight: bold;
-    color: #444;
+    line-height: 1;
+    color: #374151;
     cursor: pointer;
-    transition: color 0.2s;
+    z-index: 5;
+    transition: color 0.2s, background 0.2s;
 }
 
 .close-btn:hover {
     color: #d32f2f;
+    background: #fee2e2;
+}
+
+/* Las X de Bootstrap (modal de despacho del Key, avisos de Configuraciones) eran de 16 px */
+.btn-close {
+    width: 1.5em;
+    height: 1.5em;
+    padding: 0.5em;
+    background-size: 1.2em;
+    opacity: 0.85;
+    flex-shrink: 0;
 }
 
 .Card-Ingreso h3 {
@@ -1648,9 +1670,8 @@ tbody td:last-child {
     }
 
     .close-btn {
-        font-size: 22px;
-        top: 10px;
-        right: 12px;
+        top: 8px;
+        right: 8px;
     }
 
     .Card-Ingreso h3 {
