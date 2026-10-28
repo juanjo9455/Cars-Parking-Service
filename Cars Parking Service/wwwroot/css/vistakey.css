@@ -528,13 +528,6 @@
     font-weight: 700;
 }
 
-.summary-value {
-    font-size: 1.5rem;
-    font-weight: 900;
-    color: #b71c1c;
-    letter-spacing: 3px;
-}
-
 .summary-status {
     margin-top: 12px;
     display: inline-flex;
@@ -664,10 +657,6 @@
 
     .modal-title {
         font-size: 1.15rem;
-    }
-
-    .summary-value {
-        font-size: 1.2rem;
     }
 
     .modal-actions-key {
