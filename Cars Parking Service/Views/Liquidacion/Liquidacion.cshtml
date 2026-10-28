@@ -10,6 +10,12 @@
 
 <div class="page">
 
+    @* Volver al menú: la misma casita de las demás páginas (este layout no carga site.css: el estilo está en Liquidacion.css) *@
+    <a asp-controller="Home" asp-action="Index" class="btn-volver-index" aria-label="Volver al inicio">
+        <i class="fa-solid fa-house icon-home"></i>
+        <i class="fa-solid fa-arrow-left icon-back"></i>
+    </a>
+
     <!-- Header -->
     <div class="header">
         <div class="header-left">
@@ -88,7 +94,8 @@
                     <strong>$@(((decimal)u.Total).ToString("N0"))</strong>
                 </summary>
 
-                <table>
+                @* Las clases liq-* ubican cada dato en el celular, donde cada vehículo se ve como un bloque *@
+                <table class="liq-detalle">
                     <thead>
                         <tr>
                             <th>Placa</th>
@@ -102,11 +109,11 @@
                         @foreach (var d in u.Detalle)
                         {
                             <tr>
-                                <td>@d.Placa</td>
-                                <td>@(((DateTime?)d.Hora)?.ToString("dd/MM HH:mm"))</td>
-                                <td>@d.Cobro</td>
-                                <td>@d.Metodo</td>
-                                <td>$@(((decimal)d.Valor).ToString("N0"))</td>
+                                <td class="liq-placa">@d.Placa</td>
+                                <td class="liq-hora">@(((DateTime?)d.Hora)?.ToString("dd/MM HH:mm"))</td>
+                                <td class="liq-cobro">@d.Cobro</td>
+                                <td class="liq-metodo">@d.Metodo</td>
+                                <td class="liq-valor">$@(((decimal)d.Valor).ToString("N0"))</td>
                             </tr>
                         }
                     </tbody>
