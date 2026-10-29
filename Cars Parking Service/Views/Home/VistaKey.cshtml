@@ -69,6 +69,24 @@
         <div class="header-info">
             <h2>@ViewData["NombreParqueadero"]</h2>
             <p>Gestión de vehículos en la sucursal</p>
+
+            @* Cambiar de parqueadero sin salir: al escoger otro se envía solo (CambiarParqueaderoVista) *@
+            @{
+                var idParqueaderoActual = (int?)ViewBag.IdParqueaderoActual;
+                var parqueaderosActivos = ((IEnumerable<parqueaderos>)ViewBag.Parqueaderos).Where(p => p.estado == "activo");
+            }
+            @if (idParqueaderoActual.HasValue && ViewBag.MostrarModal != true)
+            {
+                <form method="post" asp-action="CambiarParqueaderoVista" class="cambiar-parqueadero">
+                    <label for="cambiarParqueadero"><i class="fa-solid fa-square-parking"></i> Cambiar parqueadero</label>
+                    <select id="cambiarParqueadero" name="id_parqueadero" onchange="this.form.submit()">
+                        @foreach (var p in parqueaderosActivos)
+                        {
+                            <option value="@p.id_parqueadero" selected="@(p.id_parqueadero == idParqueaderoActual)">@p.nombre_parqueadero</option>
+                        }
+                    </select>
+                </form>
+            }
         </div>
 
         <div class="titulo-rol">

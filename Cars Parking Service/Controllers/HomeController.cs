@@ -394,6 +394,7 @@ namespace CarsParkingService.Controllers
             ViewData["FiltroPlaca"] = placa;
             ViewData["FiltroEstado"] = estado_servicio;
             ViewData["NombreParqueadero"] = parqueadero?.nombre_parqueadero ?? "Parqueadero";
+            ViewBag.IdParqueaderoActual = parqueadero?.id_parqueadero;
             ViewBag.valets = ValetsDisponibles();
             ViewBag.idRol = rolUsuario;
             ViewBag.EstaEnParqueadero = idParqueaderoSesion.HasValue;
@@ -577,6 +578,36 @@ namespace CarsParkingService.Controllers
             );
 
             return Json(new { success = true });
+        }
+
+        // Cambiar de parqueadero desde la vista Key sin salir y volver a entrar. El Key cambia su turno (su
+        // parqueadero sale de tbl_sesiones); valet, banco y admin solo el que eligieron para esta sesión
+        [HttpPost]
+        public IActionResult CambiarParqueaderoVista(int id_parqueadero)
+        {
+            var idUsuario = HttpContext.Session.GetInt32("id");
+            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
+
+            if (!idUsuario.HasValue || rolUsuario is not (1 or 2 or 3 or 4))
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            if (!_context.parqueaderos.Any(p => p.id_parqueadero == id_parqueadero && p.estado == "activo"))
+            {
+                return RedirectToAction("VistaKey");
+            }
+
+            if (rolUsuario == 4)
+            {
+                SesionTurno.AbrirTurno(_context, HttpContext, idUsuario.Value, 4, null, id_parqueadero);
+            }
+            else
+            {
+                HttpContext.Session.SetInt32("id_parqueadero_sesion", id_parqueadero);
+            }
+
+            return RedirectToAction("VistaKey");
         }
 
         // Metodo para obtener las solicitudes de ingresos de vehiculos en estado "solicitado" para el valet y banco

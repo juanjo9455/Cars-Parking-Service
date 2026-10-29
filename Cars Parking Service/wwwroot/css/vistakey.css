@@ -733,3 +733,31 @@
         stroke-dashoffset: -125px;
     }
 }
+
+/* Cambiar de parqueadero sin salir de la vista: debajo del nombre del parqueadero */
+.cambiar-parqueadero {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+}
+
+.cambiar-parqueadero label {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.cambiar-parqueadero select {
+    min-width: 220px;
+    max-width: 100%;
+}
+
+/* En el celular el encabezado va centrado (site.css): el selector también */
+@media (max-width: 768px) {
+    .cambiar-parqueadero {
+        justify-content: center;
+    }
+}
