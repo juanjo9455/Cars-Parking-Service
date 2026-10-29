@@ -1,6 +1,10 @@
 ﻿@model List<CarsParkingService.Models.ubicacion_servicios>
 @{
     ViewData["Title"] = "Administrador";
+
+    // Zonas (Database/zonas.sql): nombre en la columna Zona y opciones del campo Zona
+    var zonasConfig = ViewBag.Zonas as List<zonas> ?? new List<zonas>();
+    string NombreZonaConfig(int? id) => zonasConfig.FirstOrDefault(z => z.id_zona == id)?.nombre_zona ?? "Sin zona";
 }
 
 <div class="container mt-4 admin-container">
@@ -411,6 +415,7 @@
                     <thead>
                         <tr>
                             <th>Nombre Ubicacion</th>
+                            <th class="col-movil-oculta">Zona</th>
                             <th class="col-movil-oculta">Direccion</th>
                             <th class="col-movil-oculta">Ciudad</th>
                             <th>Valor Servicio</th>
@@ -425,6 +430,7 @@
                             {
                                 <tr class="@(ubicacion.estado == "activo" ? "ubicacion-activa" : "ubicacion-inactiva")">
                                     <td>@ubicacion.nombre_ubicacion</td>
+                                    <td class="col-movil-oculta">@NombreZonaConfig((int?)ubicacion.id_zona)</td>
                                     <td class="col-movil-oculta">@ubicacion.direccion</td>
                                     <td class="col-movil-oculta">@ubicacion.ciudad</td>
                                     <!-- Formateamos el valor para no mostrar los decimales (,0000) -->
@@ -441,7 +447,7 @@
                                     </td>
                                     <td>
                                         <!-- Enviamos el valor también formateado al JavaScript -->
-                                        <button class="btn-action" title="Editar" onclick="abrirModalEditarUbicacion('@ubicacion.id_ubicacion', '@ubicacion.nombre_ubicacion', '@ubicacion.direccion', '@ubicacion.ciudad', '@ubicacion.valor_servicio.ToString("0")')">
+                                        <button class="btn-action" title="Editar" onclick="abrirModalEditarUbicacion('@ubicacion.id_ubicacion', '@ubicacion.nombre_ubicacion', '@ubicacion.direccion', '@ubicacion.ciudad', '@ubicacion.valor_servicio.ToString("0")', '@ubicacion.id_zona')">
                                             <i class="fa-solid fa-pen-to-square" style="color: #2196F3;"></i>
                                         </button>
                                         <button class="btn-action" title="Deshabilitar" onclick="confirmarDeshabilitarUbicacion('@ubicacion.id_ubicacion')">
@@ -480,6 +486,16 @@
                             <label>Valor Servicio</label>
                             <!-- Importante: En C# estás esperando 'decimal valor_servicio', este input tipo 'number' y step='any' ayuda a su conversión correcta -->
                             <input type="number" step="any" id="edit_valor_servicio" name="valor_servicio" class="modal-select" required />
+                        </div>
+                        <div class="form-group-modal">
+                            <label>Zona</label>
+                            <select id="edit_zona_ubicacion" name="id_zona" class="modal-select">
+                                <option value="">Sin zona</option>
+                                @foreach (var z in zonasConfig)
+                                {
+                                    <option value="@z.id_zona">@z.nombre_zona</option>
+                                }
+                            </select>
                         </div>
                         <div class="modal-actions">
                             <button type="button" class="btn btn-secondary" onclick="cerrarModalEditarUbicacion()">Cancelar</button>
@@ -539,6 +555,7 @@
                     <thead>
                         <tr>
                             <th>Nombre Parqueadero</th>
+                            <th class="col-movil-oculta">Zona</th>
                             <th class="col-movil-oculta">Dirección</th>
                             <th class="col-movil-oculta">Ciudad</th>
                             <th>Tarifa</th>
@@ -553,6 +570,7 @@
                             {
                                 <tr class="@(parqueadero.estado == "activo" ? "parqueadero-activo" : "parqueadero-inactivo")">
                                     <td>@parqueadero.nombre_parqueadero</td>
+                                    <td class="col-movil-oculta">@NombreZonaConfig((int?)parqueadero.id_zona)</td>
                                     <td class="col-movil-oculta">@parqueadero.direccion</td>
                                     <td class="col-movil-oculta">@parqueadero.ciudad</td>
                                     <td>@parqueadero.tarifa.ToString("0")</td>
@@ -567,7 +585,7 @@
                                         }
                                     </td>
                                     <td>
-                                        <button class="btn-action" title="Editar" onclick="abrirModalEditarParqueadero('@parqueadero.id_parqueadero', '@parqueadero.nombre_parqueadero', '@parqueadero.direccion', '@parqueadero.ciudad', '@parqueadero.tarifa.ToString("0")')">
+                                        <button class="btn-action" title="Editar" onclick="abrirModalEditarParqueadero('@parqueadero.id_parqueadero', '@parqueadero.nombre_parqueadero', '@parqueadero.direccion', '@parqueadero.ciudad', '@parqueadero.tarifa.ToString("0")', '@parqueadero.id_zona')">
                                             <i class="fa-solid fa-pen-to-square" style="color: #2196F3;"></i>
                                         </button>
                                         <button class="btn-action" title="Deshabilitar" onclick="confirmarDeshabilitarParqueadero('@parqueadero.id_parqueadero')">
@@ -605,6 +623,16 @@
                         <div class="form-group-modal">
                             <label>Tarifa</label>
                             <input type="number" step="any" id="edit_tarifa_parqueadero" name="tarifa" class="modal-select" required />
+                        </div>
+                        <div class="form-group-modal">
+                            <label>Zona</label>
+                            <select id="edit_zona_parqueadero" name="id_zona" class="modal-select">
+                                <option value="">Sin zona</option>
+                                @foreach (var z in zonasConfig)
+                                {
+                                    <option value="@z.id_zona">@z.nombre_zona</option>
+                                }
+                            </select>
                         </div>
                         <div class="modal-actions">
                             <button type="button" class="btn btn-secondary" onclick="cerrarModalEditarParqueadero()">Cancelar</button>
@@ -717,6 +745,16 @@
 
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label for="id_zona_ubicacion">Zona</label>
+                        <select id="id_zona_ubicacion" name="id_zona" class="form-control" required>
+                            <option value="" disabled selected hidden>Selecciona la zona</option>
+                            @foreach (var z in zonasConfig)
+                            {
+                                <option value="@z.id_zona">@z.nombre_zona</option>
+                            }
+                        </select>
+                    </div>
                     <div class="form-group" style="text-align: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
                         <button class="btn btn-primary" type="submit">
                             <span class="btn-text"><i class="fa-solid fa-location-dot"></i> Registrar Ubicación</span>
@@ -748,6 +786,16 @@
                     <div class="form-group">
                         <label for="Tarifa">Tarifa</label>
                         <input type="number" step="any" id="tarifa" name="tarifa" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="id_zona_parqueadero">Zona</label>
+                        <select id="id_zona_parqueadero" name="id_zona" class="form-control" required>
+                            <option value="" disabled selected hidden>Selecciona la zona</option>
+                            @foreach (var z in zonasConfig)
+                            {
+                                <option value="@z.id_zona">@z.nombre_zona</option>
+                            }
+                        </select>
                     </div>
                     <div class="form-group" style="text-align: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
                         <button class="btn btn-primary" type="submit">

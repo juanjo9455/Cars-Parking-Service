@@ -207,14 +207,21 @@ namespace CarsParkingService.Controllers
             }
         }
 
+        // Lugares de entrega: las ubicaciones activas de la zona del carro (sp_ubicacionesServicio, en orden
+        // alfabético). Sin carro o sin zona, todas
         [HttpGet]
-        public IActionResult ObtenerUbicaciones()
+        public IActionResult ObtenerUbicaciones(int? idIngreso)
         {
             try
             {
+                var zona = _context.ingresos
+                    .Where(i => i.id_ingreso == idIngreso)
+                    .Select(i => i.id_zona ?? (i.Ubicacion != null ? i.Ubicacion.id_zona : null))
+                    .FirstOrDefault();
+
                 var ubicaciones = _context.ubicacion_servicios
-                    .Where(u => u.estado != null && u.estado.Trim().ToLower() == "activo")
-                    .OrderBy(u => u.nombre_ubicacion)   // lugar de entrega en orden alfabético (punto 15)
+                    .FromSqlRaw("EXEC sp_ubicacionesServicio @id_zona", new SqlParameter("@id_zona", (object?)zona ?? DBNull.Value))
+                    .AsEnumerable()
                     .Select(u => new
                     {
                         id = u.id_ubicacion,

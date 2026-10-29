@@ -1,38 +1,7 @@
 ﻿document.addEventListener("DOMContentLoaded", function () {
 
-    // Metodo para validar roles con parqueaderos y ubicaciones
+    // Metodo para validar roles con zona y parqueadero
     mostrarCamposRol();
-
-    // Guardar ubicacion en sesion
-    window.guardarUbicacionSesion = function (valorUbicacion) {
-        console.log("[guardarUbicacionSesion] Cambio detectado en la ubicación:", valorUbicacion);
-
-        fetch('/Auth/GuardarUbicacionSesion', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                'Accept': 'application/json'
-            },
-            body: `id_ubicacion=${encodeURIComponent(valorUbicacion || '')}`
-        })
-            .then(async response => {
-                console.log("[guardarUbicacionSesion] Respuesta HTTP:", response.status, response.statusText);
-
-                const contentType = response.headers.get('content-type') || '';
-                if (!contentType.includes('application/json')) {
-                    const texto = await response.text();
-                    throw new Error(`Respuesta no JSON. Primeros caracteres: ${texto.substring(0, 80)}`);
-                }
-
-                return response.json();
-            })
-            .then(data => {
-                console.log("[guardarUbicacionSesion] Respuesta JSON:", data);
-            })
-            .catch(error => {
-                console.error("[guardarUbicacionSesion] Error guardando la ubicación en sesión:", error);
-            });
-    };
 
     // Utilidades de validacion
     function showError(input, errorEl) {
@@ -151,15 +120,21 @@
         if (formCambiarRol) {
             formCambiarRol.addEventListener('submit', function (e) {
                 const contenedorParqueadero = document.getElementById('contenedorParqueadero');
-                const contenedorUbicacion = document.getElementById('contenedorUbicacion');
+                const contenedorZona = document.getElementById('contenedorZona');
                 const selectParqueadero = contenedorParqueadero ? contenedorParqueadero.querySelector('select[name="id_parqueadero"]') : null;
-                const selectUbicacion = contenedorUbicacion ? contenedorUbicacion.querySelector('select[name="id_ubicacion"]') : null;
-
-                const rolSeleccionado = selectRolGlobal.value;
+                const selectZona = contenedorZona ? contenedorZona.querySelector('select[name="id_zona"]') : null;
 
                 // Limpiar errores previos
                 clearSelectError(contenedorParqueadero);
-                clearSelectError(contenedorUbicacion);
+                clearSelectError(contenedorZona);
+
+                // Todos los roles entran a una zona
+                if (selectZona && !selectZona.value) {
+                    e.preventDefault();
+                    showSelectError(contenedorZona, '⚠️ Debes seleccionar tu zona antes de continuar.');
+                    selectZona.focus();
+                    return;
+                }
 
                 // Si se muestra contenedorParqueadero y no se seleccionó un parqueadero => impedir envío
                 if (contenedorParqueadero && contenedorParqueadero.style.display !== 'none' && selectParqueadero) {
@@ -171,19 +146,6 @@
                     }
                 }
 
-                // Si se muestra contenedorUbicacion y no se seleccionó una ubicación => impedir envío
-                if (contenedorUbicacion && contenedorUbicacion.style.display !== 'none' && selectUbicacion) {
-                    if (!selectUbicacion.value || selectUbicacion.value.trim() === '') {
-                        e.preventDefault();
-                        showSelectError(contenedorUbicacion, '⚠️ Debes seleccionar una ubicación válida antes de continuar.');
-                        selectUbicacion.focus();
-                        return;
-                    }
-                }
-
-                // Adicional: si el rol requiere ambas (banco y parqueadero) se puede validar aquí.
-                // Por petición actual: validar que se introduzca banco y parqueadero cuando corresponda.
-                // (Si el select de id_parqueadero/ubicacion no está presente o no visible, no se fuerza.)
             });
 
             // limpiar errores al cambiar selección
@@ -191,19 +153,19 @@
                 const target = ev.target;
                 if (!target) return;
                 const contParq = document.getElementById('contenedorParqueadero');
-                const contUb = document.getElementById('contenedorUbicacion');
+                const contZona = document.getElementById('contenedorZona');
 
                 if (target.name === 'id_parqueadero' && contParq) {
                     clearSelectError(contParq);
                 }
-                if (target.name === 'id_ubicacion' && contUb) {
-                    clearSelectError(contUb);
+                if (target.name === 'id_zona' && contZona) {
+                    clearSelectError(contZona);
                 }
 
                 // Si cambian rol, actualizar visibilidad y limpiar errores
                 if (target.id === 'selectRol') {
                     if (contParq) clearSelectError(contParq);
-                    if (contUb) clearSelectError(contUb);
+                    if (contZona) clearSelectError(contZona);
                 }
 
                 actualizarBotonIniciar();
@@ -553,49 +515,49 @@
     }
 });
 
-// Validacion de roles con parqueaderos y ubicaciones
+// Todos escogen zona; el Key (4) además un parqueadero de esa zona
 function mostrarCamposRol() {
 
-    // Obtenemos el select de roles
     const selectRol = document.getElementById('selectRol');
-
-    // Contenedores
     const contenedorParqueadero = document.getElementById('contenedorParqueadero');
-    const contenedorUbicacion = document.getElementById('contenedorUbicacion');
 
     // Si no existe el bloque en esta vista, no hacemos nada
-    if (!selectRol || !contenedorParqueadero || !contenedorUbicacion) {
+    if (!selectRol || !contenedorParqueadero) {
         return;
     }
 
-    // Valor seleccionado
-    const rolSeleccionado = selectRol.value;
+    contenedorParqueadero.style.display = selectRol.value == 4 ? 'block' : 'none';
 
-    // Ocultamos todo primero
-    contenedorParqueadero.style.display = 'none';
-    contenedorUbicacion.style.display = 'none';
+    filtrarParqueaderosZona();
+}
 
-    // 1 = valet
-    // 2 = banco
-    // 4 = key
-    if (rolSeleccionado == 2) {
-        contenedorUbicacion.style.display = 'block';
-    }
-    else if (rolSeleccionado == 4) {
-        contenedorParqueadero.style.display = 'block';
+// En la lista de parqueaderos solo quedan los de la zona elegida y los que aún no tienen zona (data-zona vacío)
+function filtrarParqueaderosZona() {
+    const zona = document.getElementById('selectZona')?.value || '';
+    const select = document.querySelector('#contenedorParqueadero select');
+
+    if (select) {
+        select.querySelectorAll('option[data-zona]').forEach(opcion => {
+            const visible = zona !== '' && (opcion.dataset.zona === '' || opcion.dataset.zona === zona);
+            opcion.hidden = !visible;
+            opcion.disabled = !visible;
+        });
+
+        // Si el que estaba escogido quedó fuera de la zona, se vuelve a escoger
+        if (select.selectedOptions[0]?.disabled) select.value = '';
     }
 
     actualizarBotonIniciar();
 }
 
-// El botón Iniciar queda desactivado mientras falte la ubicación (banco) o el parqueadero (Key):
-// los mismos casos que rechaza AuthController.cambiarRol. Valet y admin no eligen ninguno
+// El botón Iniciar queda desactivado mientras falte la zona (todos) o el parqueadero (Key):
+// los mismos casos que rechaza AuthController.cambiarRol
 function actualizarBotonIniciar() {
     const form = document.getElementById('selectRol')?.closest('form');
     const boton = form?.querySelector('button[type="submit"]');
     if (!boton) return;
 
-    const faltaSeleccion = ['contenedorParqueadero', 'contenedorUbicacion'].some(id => {
+    const faltaSeleccion = ['contenedorParqueadero', 'contenedorZona'].some(id => {
         const contenedor = document.getElementById(id);
         return contenedor && contenedor.style.display !== 'none' && !contenedor.querySelector('select')?.value;
     });
@@ -603,5 +565,6 @@ function actualizarBotonIniciar() {
     boton.disabled = faltaSeleccion;
 }
 
-// Exponerla globalmente para usarla desde onchange en Razor
+// Exponerlas globalmente para usarlas desde onchange en Razor
 window.mostrarCamposRol = mostrarCamposRol;
+window.filtrarParqueaderosZona = filtrarParqueaderosZona;

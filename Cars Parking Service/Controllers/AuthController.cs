@@ -330,14 +330,16 @@ namespace CarsParkingService.Controllers
 
             }
 
-            ViewBag.Parqueaderos = _context.parqueaderos.OrderBy(p => p.nombre_parqueadero).ToList();
-            ViewBag.Ubicaciones = _context.ubicacion_servicios.OrderBy(u => u.nombre_ubicacion).ToList();
+            // Zonas y parqueaderos activos (Database/zonas.sql). Todos escogen zona; el Key además un parqueadero,
+            // y en la vista solo se le muestran los de la zona elegida
+            ViewBag.Zonas = _context.zonas.FromSqlRaw("EXEC sp_zonas").ToList();
+            ViewBag.Parqueaderos = _context.parqueaderos.FromSqlRaw("EXEC sp_parqueaderos").ToList();
 
             return View("Login");
         }
 
         [HttpPost]
-        public IActionResult cambiarRol(int id_rol, int? id_parqueadero, int? id_ubicacion)
+        public IActionResult cambiarRol(int id_rol, int? id_parqueadero, int? id_zona)
         {
             var userId = HttpContext.Session.GetInt32("id_usuario") ??
                          HttpContext.Session.GetInt32("id");
@@ -371,22 +373,22 @@ namespace CarsParkingService.Controllers
 
             }
 
-            if (id_rol == 2 && (!id_ubicacion.HasValue || id_ubicacion.Value <= 0))
+            // Todos entran a una zona activa (Database/zonas.sql)
+            if (!id_zona.HasValue || !_context.zonas.Any(z => z.id_zona == id_zona && z.estado == "activo"))
             {
-                
                 return RedirectToAction("Login");
-
             }
 
-            if (id_rol == 4 && (!id_parqueadero.HasValue || id_parqueadero.Value <= 0))
+            // El Key escoge un parqueadero activo de esa zona (o uno que todavía no tenga zona)
+            if (id_rol == 4 && !_context.parqueaderos.Any(p => p.id_parqueadero == id_parqueadero &&
+                                                               p.estado == "activo" &&
+                                                               (p.id_zona == id_zona || p.id_zona == null)))
             {
-                
                 return RedirectToAction("Login");
-
             }
 
             // Cierra el turno anterior y abre el nuevo (tbl_sesiones + sesión web)
-            SesionTurno.AbrirTurno(_context, HttpContext, user.id_usuario, id_rol, id_ubicacion, id_parqueadero);
+            SesionTurno.AbrirTurno(_context, HttpContext, user.id_usuario, id_rol, null, id_parqueadero, id_zona);
 
             // Datos del usuario en la sesión web
             HttpContext.Session.SetInt32("id", user.id_usuario);
@@ -455,21 +457,6 @@ namespace CarsParkingService.Controllers
             HttpContext.Session.Clear();
 
             return RedirectToAction("Login");
-        }
-
-        [HttpPost]
-        public IActionResult GuardarUbicacionSesion(int? id_ubicacion)
-        {
-            Debug.WriteLine($"[Auth.GuardarUbicacionSesion] id_ubicacion={id_ubicacion}");
-
-            if (id_ubicacion.HasValue && id_ubicacion.Value > 0)
-            {
-                HttpContext.Session.SetInt32("id_ubicacion", id_ubicacion.Value);
-                return Json(new { success = true, id_ubicacion = id_ubicacion.Value });
-            }
-
-            HttpContext.Session.Remove("id_ubicacion");
-            return Json(new { success = false, message = "Ubicación no válida" });
         }
 
         private async Task EnviarCodigoRecuperacionAsync(string toEmail, string code, DateTime expirationUtc)

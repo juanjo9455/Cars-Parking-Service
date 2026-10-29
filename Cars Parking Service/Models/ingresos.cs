@@ -63,6 +63,9 @@ namespace CarsParkingService.Models
         // Columnas de Database/rama4-usuario-parqueo.sql: quién tocó Parquear (Key u operador) y a qué hora
         public int? usuario_parqueo { get; set; }
         public DateTime? fecha_parqueo { get; set; }
+
+        // Database/zonas.sql: zona del ingreso, guardada al crearlo (la de su ubicación)
+        public int? id_zona { get; set; }
     }
 
     public class SolicitudDto

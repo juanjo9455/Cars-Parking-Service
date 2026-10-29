@@ -142,13 +142,14 @@
         <div class="header-info">
             <h2>
                 Ingresos
+                @* La zona en la que entró; el admin además ve su corona *@
                 @if (!string.IsNullOrEmpty(ViewBag.ubicacion))
                 {
                     <span style="color: #b00020; font-weight: 600;">
                         - @ViewBag.ubicacion
                     </span>
                 }
-                else if (idRol == 3)
+                @if (idRol == 3)
                 {
                     <span style="color: #D4AF37; font-weight: 600;">
                         <i class="fa-solid fa-crown"></i> Administrador

@@ -200,7 +200,9 @@ if (btnSolicitar) {
         }
 
         // 4. Cargar las ubicaciones activas desde la BD (evitando caché en móviles)
-        fetch(`/Payment/ObtenerUbicaciones?_=${Date.now()}`, { cache: 'no-store' })
+        // Solo las de la zona del carro
+        const idIngresoCarro = document.getElementById('idIngreso')?.value || '';
+        fetch(`/Payment/ObtenerUbicaciones?idIngreso=${encodeURIComponent(idIngresoCarro)}&_=${Date.now()}`, { cache: 'no-store' })
             .then(response => response.json())
             .then(data => {
 

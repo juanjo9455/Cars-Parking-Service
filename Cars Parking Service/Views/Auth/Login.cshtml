@@ -35,7 +35,23 @@
                 </div>
 
 
-                <!-- CONTENEDOR PARQUEADERO -->
+                <!-- CONTENEDOR ZONA: todos los roles entran a una zona (sp_zonas) -->
+                <div id="contenedorZona" class="input-group">
+
+                    <select name="id_zona" id="selectZona" class="form-control" onchange="filtrarParqueaderosZona()">
+                        <option value="" disabled selected hidden>
+                            Selecciona tu zona
+                        </option>
+                        @foreach (var zona in ViewBag.Zonas)
+                        {
+                            <option value="@zona.id_zona">@zona.nombre_zona</option>
+                        }
+                    </select>
+
+                </div>
+
+
+                <!-- CONTENEDOR PARQUEADERO: solo el Key, y solo los de la zona elegida (data-zona; vacío = sin zona) -->
                 <div
                      id="contenedorParqueadero"
                      style="display:none;">
@@ -46,42 +62,9 @@
                         </option>
                         @foreach (var parqueadero in ViewBag.Parqueaderos)
                         {
-                            @if(parqueadero.estado == "activo")
-                            {
-                                <option value="@parqueadero.id_parqueadero">
-                                    @parqueadero.nombre_parqueadero
-                                </option>
-                            }
-                        }
-
-                    </select>
-
-                </div>
-
-
-                <!-- CONTENEDOR UBICACIONES -->
-                <div
-                     id="contenedorUbicacion"
-                     style="display:none;">
-
-                    <select name="id_ubicacion"
-                            id="selectUbicacion"
-                            class="form-control"
-                            onchange="guardarUbicacionSesion(this.value)">
-
-                        <option value="" disabled selected hidden>
-                            Selecciona una ubicación
-                        </option>
-                        @foreach (var ubicacion in ViewBag.Ubicaciones)
-                        {
-                            @if (ubicacion.estado == "activo")
-                            {
-                                
-                                <option value="@ubicacion.id_ubicacion">
-                                    @ubicacion.nombre_ubicacion
-                                </option>
-
-                            }
+                            <option value="@parqueadero.id_parqueadero" data-zona="@parqueadero.id_zona">
+                                @parqueadero.nombre_parqueadero
+                            </option>
                         }
 
                     </select>

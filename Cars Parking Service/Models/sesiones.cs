@@ -32,6 +32,9 @@ namespace CarsParkingService.Models
         [ForeignKey("id_ubicacion")]
         public ubicacion_servicios? Ubicacion { get; set; }
 
+        // Database/zonas.sql: zona en la que entró el operador en este turno
+        public int? id_zona { get; set; }
+
         // Fecha y hora de inicio
         public DateTime fecha_inicio { get; set; }
 

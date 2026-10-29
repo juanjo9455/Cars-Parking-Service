@@ -51,15 +51,9 @@ namespace CarsParkingService.Controllers
 
             var usuarioId = HttpContext.Session.GetInt32("id");
 
-            var nombreUbicacion = (from s in _context.sesiones
-                                   join u in _context.ubicacion_servicios
-                                   on s.id_ubicacion equals u.id_ubicacion
-                                   where s.id_usuario == usuarioId
-                                         && s.fecha_fin == null
-                                   select u.nombre_ubicacion)
-                                  .FirstOrDefault();
-
-            ViewBag.ubicacion = nombreUbicacion ?? "Ubicación no disponible";
+            // El banco ve la zona en la que entró (ya no escoge ubicación)
+            var nombreZona = NombreZona(ZonaSesion());
+            ViewBag.ubicacion = nombreZona != null ? $"Zona {nombreZona}" : "Zona no disponible";
 
             // Lo que este usuario tiene pagado sin liquidar (una ubicación por cada vehículo)
             var pendientes = usuarioId.HasValue
@@ -215,10 +209,14 @@ namespace CarsParkingService.Controllers
                     Nombres = grupo.First().u.nombres ?? "",
                     Apellidos = grupo.First().u.apellidos ?? "",
 
-                    LugarActual = grupo.First().s.Ubicacion.nombre_ubicacion ?? "Sin Ubicacion",
+                    // La zona en la que entró (turnos de antes de las zonas: su ubicación)
+                    LugarActual = _context.zonas.Where(z => z.id_zona == grupo.First().s.id_zona).Select(z => z.nombre_zona).FirstOrDefault()
+                                  ?? grupo.First().s.Ubicacion.nombre_ubicacion ?? "Sin zona",
 
                     VehiculosUbicacion = _context.ingresos.Count(i =>
-                        i.id_ubicacion == grupo.First().s.id_ubicacion &&
+                        (grupo.First().s.id_zona != null
+                            ? i.id_zona == grupo.First().s.id_zona
+                            : i.id_ubicacion == grupo.First().s.id_ubicacion) &&
                         i.estado_servicio != "despachado" &&
                         i.estado_servicio != "finalizado" &&
                         i.fecha_ingreso.HasValue &&
@@ -398,9 +396,8 @@ namespace CarsParkingService.Controllers
             ViewBag.valets = ValetsDisponibles();
             ViewBag.idRol = rolUsuario;
             ViewBag.EstaEnParqueadero = idParqueaderoSesion.HasValue;
-            ViewBag.Parqueaderos = _context.parqueaderos
-                .OrderBy(p => p.nombre_parqueadero)
-                .ToList();
+            // Modal y selector de parqueadero: solo los de la zona en la que entró
+            ViewBag.Parqueaderos = ParqueaderosZona(ZonaSesion());
 
             return View(ingresos);
         }
@@ -593,14 +590,17 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("Login", "Auth");
             }
 
-            if (!_context.parqueaderos.Any(p => p.id_parqueadero == id_parqueadero && p.estado == "activo"))
+            // Activo y de la zona en la que entró (o sin zona todavía)
+            var zona = ZonaSesion();
+            if (!_context.parqueaderos.Any(p => p.id_parqueadero == id_parqueadero && p.estado == "activo" &&
+                                                (zona == null || p.id_zona == null || p.id_zona == zona)))
             {
                 return RedirectToAction("VistaKey");
             }
 
             if (rolUsuario == 4)
             {
-                SesionTurno.AbrirTurno(_context, HttpContext, idUsuario.Value, 4, null, id_parqueadero);
+                SesionTurno.AbrirTurno(_context, HttpContext, idUsuario.Value, 4, null, id_parqueadero, zona);
             }
             else
             {
@@ -629,24 +629,8 @@ namespace CarsParkingService.Controllers
                 )
                 .AsQueryable();
 
-            // Filtramos según el rol
-            if (rolUsuario == 2 && idUsuario.HasValue)
-            {
-                // Buscar sesión activa del usuario banco
-                var sesionBanco = _context.sesiones
-                    .FirstOrDefault(s =>
-                        s.id_usuario == idUsuario.Value &&
-                        s.fecha_fin == null
-                    );
-
-                // Filtrar por ubicación de la sesión
-                if (sesionBanco != null)
-                {
-                    query = query.Where(i =>
-                        i.id_ubicacion == sesionBanco.id_ubicacion
-                    );
-                }
-            }
+            // Solo las de la zona en la que entró (antes el banco veía las de su ubicación)
+            query = DeLaZona(query, ZonaSesion());
 
             // Convertimos los datos en un objeto más limpio
             var solicitudes = query
@@ -723,6 +707,9 @@ namespace CarsParkingService.Controllers
                 }
             }
 
+            // Solo los de la zona en la que entró
+            query = DeLaZona(query, ZonaSesion());
+
             // Convertimos datos
             var despachados = query
                 .Select(i => new
@@ -765,6 +752,9 @@ namespace CarsParkingService.Controllers
                     i.estado_servicio.Trim().ToLower() == "esperando valet"
                 )
                 .AsQueryable();
+
+            // Solo los de la zona en la que entró
+            query = DeLaZona(query, ZonaSesion());
 
             // Convertimos datos
             var esperandoValet = query
@@ -852,6 +842,9 @@ namespace CarsParkingService.Controllers
                 .ThenBy(u => u.nombre_ubicacion)
                 .ToList();
 
+            // Zonas para el campo Zona de ubicaciones y parqueaderos (Database/zonas.sql)
+            ViewBag.Zonas = _context.zonas.AsNoTracking().OrderBy(z => z.nombre_zona).ToList();
+
             // Consultamos todos los parqueaderos del sistema, dejando los activos arriba y los inactivos al final
             ViewBag.Parqueaderos = _context.parqueaderos
                 .OrderByDescending(p => p.estado)
@@ -886,16 +879,10 @@ namespace CarsParkingService.Controllers
             }
 
             int idUsuario = idUsuarioSesion.Value;
+            var zona = ZonaSesion();
 
-            var ubicacionUsuario = (from s in _context.sesiones
-                                    join u in _context.ubicacion_servicios
-                                    on s.id_ubicacion equals u.id_ubicacion
-                                    where s.id_usuario == idUsuario
-                                          && s.fecha_fin == null
-                                    select u.nombre_ubicacion)
-           .FirstOrDefault();
-
-            ViewBag.ubicacion = ubicacionUsuario;
+            // En el título: la zona en la que entró
+            ViewBag.ubicacion = NombreZona(zona);
 
             var estadosFiltro = EstadosFiltro();
             var estados = EstadosMarcados(estado_servicio, estadosFiltro);
@@ -907,9 +894,9 @@ namespace CarsParkingService.Controllers
 
             ViewBag.TotalRegistros = totalRegistros;
 
-            // Listas de los filtros en orden alfabético (punto 15)
-            ViewBag.Ubicaciones = _context.ubicacion_servicios.OrderBy(u => u.nombre_ubicacion).ToList();
-            ViewBag.Parqueaderos = _context.parqueaderos.OrderBy(p => p.nombre_parqueadero).ToList();
+            // Listas de los filtros: solo las de su zona, en orden alfabético (punto 15)
+            ViewBag.Ubicaciones = UbicacionesZona(zona);
+            ViewBag.Parqueaderos = ParqueaderosZona(zona);
             ViewBag.Valets = ValetsDisponibles();
             ViewBag.EstadosFiltro = estadosFiltro;
 
@@ -967,10 +954,13 @@ namespace CarsParkingService.Controllers
 
             parametros.Add(new SqlParameter("@id_usuario", idUsuarioParam));
             parametros.Add(new SqlParameter("@id_ubicacion", idUbicacionFiltro ?? (object)DBNull.Value));
-            
+
+            // Solo los ingresos de la zona en la que entró (el banco, además, solo los suyos)
+            parametros.Add(new SqlParameter("@id_zona", (object?)ZonaSesion() ?? DBNull.Value));
+
             // ✔ conversión a array (ESTO ES LO CLAVE)
             return _context.ingresos.FromSqlRaw(
-                "EXEC sp_consultarRegistros @placa, @lugar, @estado_servicio, @estado_pago, @id_usuario, @parqueadero, @fecha_inicio, @fecha_fin, @id_ubicacion", 
+                "EXEC sp_consultarRegistros @placa, @lugar, @estado_servicio, @estado_pago, @id_usuario, @parqueadero, @fecha_inicio, @fecha_fin, @id_ubicacion, @id_zona",
                 parametros.ToArray()
             )
             .AsEnumerable()
@@ -1019,6 +1009,38 @@ namespace CarsParkingService.Controllers
                 ? marcados
                 : estadosFiltro.Where(e => e.por_defecto).Select(e => e.valor).ToArray();
         }
+
+        // Zona del turno (Database/zonas.sql): cada operador la escoge al entrar y solo ve lo de ella.
+        // Null en turnos abiertos antes de las zonas: entonces no se filtra
+        private int? ZonaSesion() => HttpContext.Session.GetInt32("id_zona");
+
+        private string? NombreZona(int? idZona) => idZona.HasValue
+            ? _context.zonas.Where(z => z.id_zona == idZona).Select(z => z.nombre_zona).FirstOrDefault()
+            : null;
+
+        // Ubicaciones y parqueaderos activos de una zona (los que aún no tienen zona salen en todas).
+        // Salen de los SPs para poder ajustarlos desde la BD
+        private List<ubicacion_servicios> UbicacionesZona(int? idZona) =>
+            _context.ubicacion_servicios
+                .FromSqlRaw("EXEC sp_ubicacionesServicio @id_zona", new SqlParameter("@id_zona", (object?)idZona ?? DBNull.Value))
+                .AsNoTracking()
+                .ToList();
+
+        private List<parqueaderos> ParqueaderosZona(int? idZona) =>
+            _context.parqueaderos
+                .FromSqlRaw("EXEC sp_parqueaderos @id_zona", new SqlParameter("@id_zona", (object?)idZona ?? DBNull.Value))
+                .AsNoTracking()
+                .ToList();
+
+        // Ingresos de una zona. Los que todavía no la tienen guardada toman la de su ubicación
+        private static IQueryable<ingresos> DeLaZona(IQueryable<ingresos> query, int? idZona) =>
+            idZona.HasValue
+                ? query.Where(i => i.id_zona == idZona || (i.id_zona == null && i.Ubicacion != null && i.Ubicacion.id_zona == idZona))
+                : query;
+
+        // Zona que llega de Configuraciones: solo si existe (vacía = sin zona)
+        private int? ZonaValida(int? idZona) =>
+            idZona.HasValue && _context.zonas.Any(z => z.id_zona == idZona) ? idZona : null;
 
         // Valor del servicio de cada ubicación: el título del modal de cobrar en la tabla de ingresos
         private Dictionary<int, decimal> ValoresUbicacion() =>
@@ -1222,21 +1244,24 @@ namespace CarsParkingService.Controllers
                     obj_ingreso.id_parqueadero = sesionUsuario.id_parqueadero.Value;
                 }
 
-                // Ubicación: viene del formulario para todos (campo obligatorio)
-                bool ubicacionValida = obj_ingreso.id_ubicacion > 0 &&
-                    _context.ubicacion_servicios.Any(u => u.id_ubicacion == obj_ingreso.id_ubicacion && u.estado == "activo");
+                // Ubicación: viene del formulario para todos (campo obligatorio), activa y de la zona en la que
+                // entró (o sin zona todavía). El turno se queda en la zona aunque cambie de restaurante
+                var zonaSesion = ZonaSesion();
+                var ubicacionIngreso = obj_ingreso.id_ubicacion > 0
+                    ? _context.ubicacion_servicios.AsNoTracking()
+                        .FirstOrDefault(u => u.id_ubicacion == obj_ingreso.id_ubicacion && u.estado == "activo")
+                    : null;
 
-                if (!ubicacionValida)
+                if (ubicacionIngreso == null ||
+                    (zonaSesion.HasValue && ubicacionIngreso.id_zona.HasValue && ubicacionIngreso.id_zona != zonaSesion))
                 {
                     ViewBag.Error = "Selecciona una ubicación válida.";
                     CargarDatosFormulario();
                     return View("Ingreso_Vehiculos");
                 }
 
-                // Si es banco y eligió otra ubicación, su turno se moverá allá (después de guardar el ingreso)
-                bool moverTurno = HttpContext.Session.GetInt32("id_rol") == 2 &&
-                                  idUsuarioSesion.HasValue &&
-                                  sesionUsuario?.id_ubicacion != obj_ingreso.id_ubicacion;
+                // El ingreso guarda su zona: la de la ubicación o, si aún no tiene, la del turno
+                obj_ingreso.id_zona = ubicacionIngreso.id_zona ?? zonaSesion;
 
 
                 // validar si el vehiculo ya esta en el parqueadero
@@ -1346,12 +1371,6 @@ namespace CarsParkingService.Controllers
                     TempData["Error"] = "No se pudo registrar el ingreso en la base de datos.";
                     CargarDatosFormulario();
                     return View("Ingreso_Vehiculos", obj_ingreso);
-                }
-
-                // El ingreso ya quedó guardado: si el banco eligió otra ubicación, su turno pasa a esa ubicación
-                if (moverTurno)
-                {
-                    SesionTurno.AbrirTurno(_context, HttpContext, idUsuarioSesion.Value, 2, obj_ingreso.id_ubicacion, null);
                 }
 
 
@@ -1831,9 +1850,9 @@ namespace CarsParkingService.Controllers
             // Listas del formulario de ingreso en orden alfabético (punto 15)
             ViewBag.Bancos = _context.usuarios.Where(u => u.id_rol == 2 && u.estado == true)
                 .OrderBy(u => u.nombres).ThenBy(u => u.apellidos).ToList();
-            ViewBag.Parqueaderos = _context.parqueaderos.OrderBy(p => p.nombre_parqueadero).ToList();
-            ViewBag.UbicacionesS = _context.ubicacion_servicios.Where(u => u.estado == "activo")
-                .OrderBy(u => u.nombre_ubicacion).ToList();
+            // Parqueaderos y ubicaciones: solo los de la zona en la que entró
+            ViewBag.Parqueaderos = ParqueaderosZona(ZonaSesion());
+            ViewBag.UbicacionesS = UbicacionesZona(ZonaSesion());
 
             // Obtener el usuario de la sesion
             var nombres = HttpContext.Session.GetString("nombre");
@@ -2245,7 +2264,7 @@ namespace CarsParkingService.Controllers
 
         // Acción para registrar una nueva ubicación
         [HttpPost]
-        public IActionResult RegistrarUbicacion(string nombre_ubicacion, string direccion, string ciudad, decimal valor_servicio)
+        public IActionResult RegistrarUbicacion(string nombre_ubicacion, string direccion, string ciudad, decimal valor_servicio, int? id_zona)
         {
             try
             {
@@ -2273,7 +2292,8 @@ namespace CarsParkingService.Controllers
                     nombre_ubicacion = nombre_ubicacion,
                     direccion = direccion,
                     ciudad = ciudad,
-                    valor_servicio = valor_servicio
+                    valor_servicio = valor_servicio,
+                    id_zona = ZonaValida(id_zona)
                 };
 
                 _context.ubicacion_servicios.Add(nuevaUbicacion);
@@ -2291,7 +2311,7 @@ namespace CarsParkingService.Controllers
 
         // Acción para editar una ubicación desde el panel de admin
         [HttpPost]
-        public IActionResult EditarUbicacion(int id_ubicacion, string nombre_ubicacion, string direccion, string ciudad, decimal valor_servicio)
+        public IActionResult EditarUbicacion(int id_ubicacion, string nombre_ubicacion, string direccion, string ciudad, decimal valor_servicio, int? id_zona)
         {
             // Validar nombre duplicado (excluyendo el actual)
             bool existeNombre = _context.ubicacion_servicios
@@ -2319,6 +2339,7 @@ namespace CarsParkingService.Controllers
                 ubicacion.direccion = direccion;
                 ubicacion.ciudad = ciudad;
                 ubicacion.valor_servicio = valor_servicio;
+                ubicacion.id_zona = ZonaValida(id_zona);
                 _context.SaveChanges();
                 TempData["Mensaje"] = "La ubicación se actualizó correctamente.";
             }
@@ -2333,7 +2354,7 @@ namespace CarsParkingService.Controllers
 
         // Acción para registrar un nuevo parqueadero
         [HttpPost]
-        public IActionResult RegistrarParqueadero(string nombre_parqueadero, string direccion, string ciudad, decimal tarifa)
+        public IActionResult RegistrarParqueadero(string nombre_parqueadero, string direccion, string ciudad, decimal tarifa, int? id_zona)
         {
             try
             {
@@ -2361,7 +2382,8 @@ namespace CarsParkingService.Controllers
                     nombre_parqueadero = nombre_parqueadero,
                     direccion = direccion,
                     ciudad = ciudad,
-                    tarifa = tarifa
+                    tarifa = tarifa,
+                    id_zona = ZonaValida(id_zona)
                 };
 
                 _context.parqueaderos.Add(nuevoParqueadero);
@@ -2380,7 +2402,7 @@ namespace CarsParkingService.Controllers
 
         // Acción para editar un parqueadero desde el panel de admin
         [HttpPost]
-        public IActionResult EditarParqueadero(int id_parqueadero, string nombre_parqueadero, string direccion, string ciudad, decimal tarifa)
+        public IActionResult EditarParqueadero(int id_parqueadero, string nombre_parqueadero, string direccion, string ciudad, decimal tarifa, int? id_zona)
         {
             // Validar nombre duplicado (excluyendo el actual)
             bool existeNombre = _context.parqueaderos
@@ -2408,6 +2430,7 @@ namespace CarsParkingService.Controllers
                 parqueadero.direccion = direccion;
                 parqueadero.ciudad = ciudad;
                 parqueadero.tarifa = tarifa;
+                parqueadero.id_zona = ZonaValida(id_zona);
                 _context.SaveChanges();
                 TempData["Mensaje"] = "Los datos del parqueadero se actualizaron correctamente.";
             }
@@ -2938,39 +2961,6 @@ namespace CarsParkingService.Controllers
             var esMp4 = dato.Length >= 8 && dato[4] == 0x66 && dato[5] == 0x74 && dato[6] == 0x79 && dato[7] == 0x70;
 
             return File(dato, esMp4 ? "video/mp4" : "video/webm", enableRangeProcessing: true);
-        }
-
-        // Metodo para guardar la ubicacion del banco
-
-        [HttpPost]
-        public IActionResult GuardarUbicacionSesion(int? id_ubicacion)
-        {
-            System.Diagnostics.Debug.WriteLine($"[GuardarUbicacionSesion] Inicio. id_ubicacion={id_ubicacion}");
-            Console.WriteLine($"[GuardarUbicacionSesion] Inicio. id_ubicacion={id_ubicacion}");
-
-            if (id_ubicacion.HasValue && id_ubicacion.Value > 0)
-            {
-                HttpContext.Session.SetInt32("id_ubicacion", id_ubicacion.Value);
-                System.Diagnostics.Debug.WriteLine($"[GuardarUbicacionSesion] Ubicación guardada en sesión: {id_ubicacion.Value}");
-                Console.WriteLine($"[GuardarUbicacionSesion] Ubicación guardada en sesión: {id_ubicacion.Value}");
-
-                return Json(new
-                {
-                    success = true,
-                    id_ubicacion = id_ubicacion.Value,
-                    message = "Ubicación guardada en sesión."
-                });
-            }
-
-            HttpContext.Session.Remove("id_ubicacion");
-            System.Diagnostics.Debug.WriteLine("[GuardarUbicacionSesion] Se eliminó la ubicación de la sesión.");
-            Console.WriteLine("[GuardarUbicacionSesion] Se eliminó la ubicación de la sesión.");
-
-            return Json(new
-            {
-                success = false,
-                message = "No se recibió una ubicación válida."
-            });
         }
 
         [HttpPost]

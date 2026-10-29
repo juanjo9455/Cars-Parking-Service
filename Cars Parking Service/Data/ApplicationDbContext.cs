@@ -19,5 +19,6 @@ namespace CarsParkingService.Data
         public DbSet<sesiones> sesiones { get; set; }
         public DbSet<liquidacion> liquidaciones { get; set; }
         public DbSet<whatsapp_enviados> whatsapp_enviados { get; set; }
+        public DbSet<zonas> zonas { get; set; }
     }
 }

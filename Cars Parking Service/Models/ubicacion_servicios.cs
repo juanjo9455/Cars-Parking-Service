@@ -13,5 +13,8 @@ namespace CarsParkingService.Models
         public string? ciudad { get; set; }
         public decimal valor_servicio { get; set; }
         public string estado { get; set; } = "activo";
+
+        // Database/zonas.sql: zona a la que pertenece (null = sin zona, sale en todas)
+        public int? id_zona { get; set; }
     }
 }

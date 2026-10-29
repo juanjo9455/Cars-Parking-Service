@@ -970,12 +970,13 @@ function confirmarGuardarUsuario() {
 
 // Modal para editar en tabla ubicaciones
 // Abrir modal y cargar datos de la ubicacion en los inputs
-function abrirModalEditarUbicacion(id, nombre_ubicacion, direccion, ciudad, valor_servicio) {
+function abrirModalEditarUbicacion(id, nombre_ubicacion, direccion, ciudad, valor_servicio, id_zona) {
     document.getElementById('edit_id_ubicacion').value = id;
     document.getElementById('edit_nombre_ubicacion').value = nombre_ubicacion;
     document.getElementById('edit_direccion').value = direccion;
     document.getElementById('edit_ciudad').value = ciudad;
     document.getElementById('edit_valor_servicio').value = valor_servicio;
+    document.getElementById('edit_zona_ubicacion').value = id_zona || '';   // vacío = sin zona
 
     document.getElementById('ModalEditarUbicacion').style.display = 'flex';
 }
@@ -1007,12 +1008,13 @@ function confirmarDeshabilitarUbicacion(id) {
 
 // Modal para editar en tabla parqueaderos
 // Abrir modal y cargar datos del parqueadero en los inputs
-function abrirModalEditarParqueadero(id, nombre_parqueadero, direccion, ciudad, tarifa) {
+function abrirModalEditarParqueadero(id, nombre_parqueadero, direccion, ciudad, tarifa, id_zona) {
     document.getElementById('edit_id_parqueadero').value = id;
     document.getElementById('edit_nombre_parqueadero').value = nombre_parqueadero;
     document.getElementById('edit_direccion_parqueadero').value = direccion;
     document.getElementById('edit_ciudad_parqueadero').value = ciudad;
     document.getElementById('edit_tarifa_parqueadero').value = tarifa;
+    document.getElementById('edit_zona_parqueadero').value = id_zona || '';   // vacío = sin zona
 
     document.getElementById('ModalEditarParqueadero').style.display = 'flex';
 }
@@ -2245,10 +2247,11 @@ function mostrarSolicitudOperador() {
 
     contenido.classList.add('modo-solicitud');
 
-    // Las ubicaciones se cargan una sola vez
+    // Las ubicaciones se cargan una sola vez, solo las de la zona del carro
     if (select.dataset.cargado === 'true') return;
 
-    fetch(`/Payment/ObtenerUbicaciones?_=${Date.now()}`, { cache: 'no-store' })
+    const idIngreso = contenido.querySelector('input[name="id_ingreso"]')?.value || '';
+    fetch(`/Payment/ObtenerUbicaciones?idIngreso=${encodeURIComponent(idIngreso)}&_=${Date.now()}`, { cache: 'no-store' })
         .then(response => response.json())
         .then(data => {
 
