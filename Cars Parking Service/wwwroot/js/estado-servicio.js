@@ -15,7 +15,9 @@ let idIngresoActual = null;
 let claveTemporizador = null;
 
 let intervaloCodigo = null;
-let estadoActual = null; // ← guarda el estado global para bloquear cierre
+// El modal de pago no se cierra solo mientras el pago está solicitado (pantalla del código). Es solo del
+// pago: antes compartía variable con la solicitud del vehículo y el modal quedaba bloqueado desde que se abría
+let pagoBloqueado = false;
 
 // ============================================================
 // DOM READY
@@ -49,7 +51,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 console.log("📦 Estado BD:", data.estadoPago);
 
-                estadoActual = data.estadoPago;
+                pagoBloqueado = data.estadoPago === 'solicitado';
 
                 if (data.lugarEntrega) {
 
@@ -268,12 +270,10 @@ if (btnSolicitar) {
         actualizarPropinayTotal();
     }
 
-    // ── Evitar cierre del modal haciendo click fuera si está en "solicitado" ──
+    // ── Tocar afuera del modal lo cierra, salvo con el pago ya solicitado (cerrarModalPagar lo revisa) ──
     if (modal) {
         modal.addEventListener('click', function (e) {
-            if (estadoActual === 'solicitado' && e.target === modal) {
-                e.stopPropagation();
-            }
+            if (e.target === modal) cerrarModalPagar();
         });
     }
 
@@ -290,7 +290,7 @@ function bloquearCierreModal() {
     if (btnCerrar) btnCerrar.style.display = 'none';
 
     // Deshabilitar la función cerrarModalPagar
-    estadoActual = 'solicitado';
+    pagoBloqueado = true;
 
     console.log('🔒 Modal bloqueado — no se puede cerrar');
 }
@@ -327,8 +327,8 @@ function abrirModalPagar(modal, informacion1, informacion2) {
 }
 
 function cerrarModalPagar() {
-    // Si está en estado solicitado NO se puede cerrar
-    if (estadoActual === 'solicitado') {
+    // Con el pago solicitado NO se puede cerrar
+    if (pagoBloqueado) {
         console.warn('🔒 Modal bloqueado — pago en proceso');
         return;
     }
@@ -460,9 +460,6 @@ function solicitarVehiculo() {
             console.log('✅ Vehículo solicitado');
             window.reproducirSonido?.('confirmacion');
 
-            // Actualizar estado localmente
-            estadoActual = 'solicitado';
-
             // Mostrar ubicación seleccionada
             const LugarLI = document.getElementById('lugar_entrega');
             const LugarLabel = document.getElementById('lugar_entrega_label');
@@ -534,7 +531,7 @@ function Pagar(informacion1, informacion2) {
                 console.log('✅ Pago guardado');
                 window.reproducirSonido?.('confirmacion');
 
-                estadoActual = 'solicitado'; // ← bloquear cierre desde este momento
+                pagoBloqueado = true; // ← bloquear cierre desde este momento
 
                 // Sincronizar método y total en pantalla 2
                 const ico = metodoSeleccionado?.querySelector('.ico')?.innerHTML ?? '💵';
