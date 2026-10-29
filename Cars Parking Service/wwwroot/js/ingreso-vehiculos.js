@@ -150,7 +150,7 @@
         revisar('id_ubicacion', 'errorUbicacion', !valor('id_ubicacion'),
             'la ubicación', 'Selecciona la ubicación.');
         revisar('grabarVideoBtn', 'errorMedia', !videoEsValido,
-            'el video', 'Graba un video del vehículo de mínimo 15 segundos.');
+            'el video', 'Graba un video del vehículo de mínimo 10 segundos.');
         revisar('btnAbrirFirma', 'errorFirma', !valor('firmaBase64'),
             'la firma del cliente', 'Falta la firma del cliente.');
 

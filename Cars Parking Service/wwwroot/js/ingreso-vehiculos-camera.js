@@ -334,8 +334,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let timerInterval = null;
     let secondsElapsed = 0;
     let descartarGrabacionActual = false;
-    const MIN_SECONDS = 15;
-    const MAX_SECONDS = 30;
+    const MIN_SECONDS = 10;
+    const MAX_SECONDS = 20;
 
     if (typeof grabarVideoBtn !== 'undefined' && grabarVideoBtn) {
         grabarVideoBtn.addEventListener('click', function() {
@@ -423,12 +423,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (typeof stopRecordingBtn !== 'undefined' && stopRecordingBtn) {
-        stopRecordingBtn.addEventListener('click', stopRecording);
+        // Sin argumentos: si se pasara directo, el evento del clic llegaba como "forzado" y no se revisaba
+        // el mínimo (el video corto se descartaba sin aviso)
+        stopRecordingBtn.addEventListener('click', () => stopRecording());
     }
 
         function stopRecording(forzado = false) {
         if (!forzado && secondsElapsed < MIN_SECONDS) {
-            mostrarError('Debes grabar y completar al menos 15 segundos de video antes de continuar.');
+            mostrarError(`Debes grabar y completar al menos ${MIN_SECONDS} segundos de video antes de continuar.`);
             return;
         }
 

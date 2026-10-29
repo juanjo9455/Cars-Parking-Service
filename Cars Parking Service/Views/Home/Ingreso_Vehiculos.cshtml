@@ -353,7 +353,7 @@
             <input type="file" name="video" id="videoInput" accept="video/*" style="display:none;">
 
             <input type="hidden" name="videoBase64" id="videoBase64Input" />
-            <div class="error-message" id="errorMedia">⚠️ Graba un video del vehículo de mínimo 15 segundos</div>
+            <div class="error-message" id="errorMedia">⚠️ Graba un video del vehículo de mínimo 10 segundos</div>
         </div>
 
         <!-- Firma del cliente: se firma en una ventana aparte y queda guardada como imagen (firma-cliente.js) -->
@@ -420,8 +420,9 @@
         <button id="stopRecordingBtn" style="display:none;position:absolute;bottom:40px;left:50%;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:#e53935;border:none;box-shadow:0 2px 8px #0006;z-index:3;align-items:center;justify-content:center;pointer-events:auto;">
             <span style="display:inline-block;width:32px;height:32px;background:#fff;border-radius:8px;margin:10px auto;"></span>
         </button>
-        @* Círculo oscuro de 48 px: se ve sobre cualquier imagen de la cámara *@
-        <button id="closeVideoModalBtn" aria-label="Cerrar" style="position:absolute;top:18px;right:18px;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;line-height:1;color:#fff;background:rgba(0,0,0,0.55);border:2px solid #fff;z-index:4;pointer-events:auto; margin-top: 15px;">&times;</button>
+        @* Círculo oscuro de 48 px: se ve sobre cualquier imagen de la cámara. Va debajo de la barra y del
+           contador de segundos (top 56px): arriba se le montaba al contador *@
+        <button id="closeVideoModalBtn" aria-label="Cerrar" style="position:absolute;top:56px;right:18px;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;line-height:1;color:#fff;background:rgba(0,0,0,0.55);border:2px solid #fff;z-index:4;pointer-events:auto;">&times;</button>
         <div id="videoReviewSection" style="display:none;position:absolute;top:0;left:0;width:100vw;height:100vh;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.92);z-index:10;">
             <video id="recordedVideo" controls style="width:100vw;height:100vh;object-fit:cover;background:#000;"></video>
             <button id="acceptVideoBtn" style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:transparent;border:none;box-shadow:none;display:flex;align-items:center;justify-content:center;pointer-events:auto;">
