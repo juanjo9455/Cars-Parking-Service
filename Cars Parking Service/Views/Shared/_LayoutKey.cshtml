@@ -51,11 +51,13 @@
                 {
                     <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-crown"></i>Panel Admin</a></li>
                 }
+                @* El banco entra a Parqueaderos desde su men√∫: as√≠ vuelve (Index tambi√©n le quita el parqueadero) *@
+                @if (ViewBag.idRol == 2)
+                {
+                    <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-building-columns"></i>Vista Banco</a></li>
+                }
 
-
-                <partial name="_SwitchRol" />
-
-                <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar SesiÛn</a></li>
+                <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesi√≥n</a></li>
             </ol>
         </div>
     </aside>
@@ -70,11 +72,11 @@
         headers: {
         'Content-Type': 'application/json'
         },
-        credentials: 'same-origin' // <-- Esta opciÛn adjunta las cookies de sesiÛn
+        credentials: 'same-origin' // <-- Esta opci√≥n adjunta las cookies de sesi√≥n
         })
         .then(response => {
         if (!response.ok) {
-        console.warn('KeepAlive fallÛ con estado:', response.status);
+        console.warn('KeepAlive fall√≥ con estado:', response.status);
         }
         })
         .catch(error => console.error('Error en KeepAlive:', error));

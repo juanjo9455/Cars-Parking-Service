@@ -339,7 +339,10 @@ namespace CarsParkingService.Controllers
             System.Diagnostics.Debug.WriteLine($"rolUsuario: {rolUsuario}");
 
             if (!idUsuarioSesion.HasValue ||
-                (rolUsuario != 4 && rolUsuario != 1 && rolUsuario != 3))
+                (rolUsuario != 4 &&
+                 rolUsuario != 1 &&
+                  rolUsuario != 3 &&
+                  rolUsuario != 2))
             {
                 System.Diagnostics.Debug.WriteLine($"Acceso denegado: no es rol Key");
                 return RedirectToAction("Login", "Auth");
@@ -362,7 +365,7 @@ namespace CarsParkingService.Controllers
 
             List<ingresos> ingresos;
 
-            if (rolUsuario == 1 || rolUsuario == 3)
+            if (rolUsuario == 1 || rolUsuario == 3 || rolUsuario == 2)
             {
                 if (!idParqueaderoSesion.HasValue)
                 {
@@ -919,12 +922,6 @@ namespace CarsParkingService.Controllers
         {
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
 
-            var idUbicacionUsuario = (from s in _context.sesiones
-                                      where s.id_usuario == idUsuario
-                                      && s.fecha_fin == null
-                                      select s.id_ubicacion)
-                                      .FirstOrDefault();
-
             // Convertir placa a mayúsculas
             string? placaUpper = !string.IsNullOrEmpty(placa) ? placa.Trim().ToUpper() : null;
             string? nombreUbicacion = !string.IsNullOrEmpty(lugar) ? lugar : null;
@@ -949,14 +946,6 @@ namespace CarsParkingService.Controllers
 
             int? idUbicacionFiltro = null;
             object idUsuarioParam = DBNull.Value;
-
-            // Condicion cuando sea banco
-            if (rolUsuario == 2)
-            {
-
-                idUbicacionFiltro = idUbicacionUsuario;
-
-            }
 
             // Condicion cuando no sea admin ni valet (el valet ve todos los ingresos)
             if (rolUsuario != 3 && rolUsuario != 1)
@@ -2468,7 +2457,7 @@ namespace CarsParkingService.Controllers
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
 
             // Mismos roles que pueden entrar a VistaKey: Key (4), Valet (1) y Admin (3)
-            if (!idUsuarioSesion.HasValue || (rolUsuario != 4 && rolUsuario != 1 && rolUsuario != 3))
+            if (!idUsuarioSesion.HasValue || (rolUsuario != 4 && rolUsuario != 1 && rolUsuario != 3 && rolUsuario != 2))
             {
                 return Unauthorized();
             }
