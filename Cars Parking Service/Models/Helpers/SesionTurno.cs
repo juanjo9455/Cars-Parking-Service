@@ -6,7 +6,8 @@ namespace CarsParkingService.Helpers
     public static class SesionTurno
     {
         // Cierra el turno abierto del usuario y abre uno nuevo con el rol y el lugar indicados.
-        // Lo usan el switch del menú (cambiarRol) y el ingreso de vehículos cuando el banco cambia de ubicación.
+        // Lo usan el login (AuthController.cambiarRol, al escoger rol) y el ingreso de vehículos cuando el banco
+        // cambia de ubicación.
         public static void AbrirTurno(ApplicationDbContext db, HttpContext http, int idUsuario,
             int idRol, int? idUbicacion, int? idParqueadero)
         {

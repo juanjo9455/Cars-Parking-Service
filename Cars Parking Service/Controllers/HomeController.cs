@@ -579,27 +579,6 @@ namespace CarsParkingService.Controllers
             return Json(new { success = true });
         }
 
-                // El admin cambia de parqueadero desde el menú de la vista Key
-        [HttpPost]
-        public IActionResult CambiarParqueaderoAdmin(int id_parqueadero)
-        {
-            if (HttpContext.Session.GetInt32("id_rol") != 3)
-            {
-                return Forbid();
-            }
-
-            bool existe = _context.parqueaderos
-                .Any(p => p.id_parqueadero == id_parqueadero && p.estado == "activo");
-
-            if (existe)
-            {
-                HttpContext.Session.SetInt32("id_parqueadero_sesion", id_parqueadero);
-            }
-
-            return RedirectToAction("VistaKey");
-        }
-
-
         // Metodo para obtener las solicitudes de ingresos de vehiculos en estado "solicitado" para el valet y banco
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
