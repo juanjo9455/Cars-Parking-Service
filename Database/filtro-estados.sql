@@ -8,6 +8,8 @@
    - No modifica ni borra datos. Solo crea un procedimiento y cambia otro.
    - Se puede correr más de una vez.
    - Para deshacerlo: filtro-estados-revertir.sql
+   - ¡OJO! Ya se corrió zonas.sql: NO volver a correr este script. Dejaría
+     sp_consultarRegistros sin @id_zona y la tabla de ingresos fallaría.
    ===================================================================== */
 
 USE BD_CARS_PARKING;

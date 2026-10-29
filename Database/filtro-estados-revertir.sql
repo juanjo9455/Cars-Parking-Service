@@ -7,6 +7,8 @@
    - Deja sp_consultarRegistros exactamente como estaba y borra
      sp_estadosFiltroIngresos. No toca datos.
    - Se puede correr más de una vez.
+   - ¡OJO! Con zonas.sql ya corrido, primero va zonas-revertir.sql: este
+     script deja sp_consultarRegistros sin @id_zona.
    ===================================================================== */
 
 USE BD_CARS_PARKING;
