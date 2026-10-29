@@ -59,6 +59,30 @@
                            class="form-control" style="text-transform: uppercase;">
                 </div>
 
+                @* Usuario y en qué participó: con "Cobró" o "Liquidó" el resumen muestra lo de esa persona *@
+                <div class="form-group col-md-4 mb-3">
+                    <label>Usuario</label>
+                    <select name="usuario" style="width:100%;">
+                        <option value="">Todos</option>
+                        @foreach (var u in (List<usuarios>)ViewBag.UsuariosFiltro)
+                        {
+                            <option value="@u.id_usuario" selected="@((int?)ViewData["FiltroUsuario"] == u.id_usuario)">@u.nombres @u.apellidos</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group col-md-4 mb-3">
+                    <label>Cómo participó</label>
+                    <select name="como" style="width:100%;">
+                        @foreach (var (valor, texto) in new[] { ("", "En cualquier paso"), ("ingreso", "Registró el ingreso"), ("recibio", "Recibió (valet)"),
+                                                                 ("parqueo", "Parqueó"), ("solicito", "Solicitó"), ("despacho", "Despachó"),
+                                                                 ("cobro", "Cobró"), ("liquido", "Liquidó") })
+                        {
+                            <option value="@valor" selected="@((ViewData["FiltroComo"] as string ?? "") == valor)">@texto</option>
+                        }
+                    </select>
+                </div>
+
                 <div class="col-12 mt-2 d-flex justify-content-end gap-2">
                     <button type="submit" class="btn btn-primary px-4">Buscar</button>
                     <a asp-action="DespachosCobros" class="btn btn-secondary px-4">Limpiar</a>
@@ -67,11 +91,11 @@
         </div>
     </div>
 
-    <!-- Resumen del período (mismos criterios que la liquidación) -->
+    <!-- Resumen del período (mismos criterios que la liquidación): arriba los vehículos, abajo el dinero -->
     <div class="wa-resumen dc-resumen">
         <div class="wa-resumen-item">
             <span class="wa-resumen-num">@ViewBag.Vehiculos</span>
-            <span class="wa-resumen-lbl">Vehículos</span>
+            <span class="wa-resumen-lbl">Total vehículos</span>
         </div>
         <div class="wa-resumen-item">
             <span class="wa-resumen-num">@ViewBag.Despachados</span>
@@ -80,6 +104,10 @@
         <div class="wa-resumen-item wa-ok">
             <span class="wa-resumen-num">@ViewBag.Cobrados</span>
             <span class="wa-resumen-lbl">Cobrados</span>
+        </div>
+        <div class="wa-resumen-item @(((int)ViewBag.SinLiquidar) > 0 ? "wa-error" : "wa-ok")">
+            <span class="wa-resumen-num">@ViewBag.SinLiquidar</span>
+            <span class="wa-resumen-lbl">Cobrados sin liquidar</span>
         </div>
         <div class="wa-resumen-item">
             <span class="wa-resumen-num">@(((decimal)ViewBag.TotalEfectivo).ToString("C0", moneda))</span>
@@ -93,9 +121,9 @@
             <span class="wa-resumen-num">@(((decimal)ViewBag.TotalPropinas).ToString("C0", moneda))</span>
             <span class="wa-resumen-lbl">Propinas</span>
         </div>
-        <div class="wa-resumen-item @(((int)ViewBag.SinLiquidar) > 0 ? "wa-error" : "wa-ok")">
-            <span class="wa-resumen-num">@ViewBag.SinLiquidar</span>
-            <span class="wa-resumen-lbl">Cobrados sin liquidar</span>
+        <div class="wa-resumen-item">
+            <span class="wa-resumen-num">@(((decimal)ViewBag.TotalEfectivo + (decimal)ViewBag.TotalTransferencias).ToString("C0", moneda))</span>
+            <span class="wa-resumen-lbl">Total cobrado</span>
         </div>
     </div>
 

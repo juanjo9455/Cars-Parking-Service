@@ -1722,7 +1722,7 @@ namespace CarsParkingService.Controllers
         // Despachos y cobros (punto 28, solo administrador): cada vehículo con ingreso, despacho o cobro en el
         // período, con quién lo recibió, quién lo solicitó, quién lo despachó, quién lo cobró y su liquidación
         [HttpGet]
-        public IActionResult DespachosCobros(DateTime? desde, DateTime? hasta, string? placa)
+        public IActionResult DespachosCobros(DateTime? desde, DateTime? hasta, string? placa, int? usuario, string? como)
         {
             if (HttpContext.Session.GetInt32("id_rol") != 3)
             {
@@ -1744,6 +1744,26 @@ namespace CarsParkingService.Controllers
             {
                 var placaFiltro = placa.Trim().ToUpper();
                 consulta = consulta.Where(i => i.placa != null && i.placa.Contains(placaFiltro));
+            }
+
+            // Usuario: los vehículos en los que participó, en el papel escogido o en cualquiera. El resumen de
+            // arriba se calcula con estos (con "cobró", lo que cobró esa persona; con "liquidó", lo que liquidó)
+            if (usuario.HasValue)
+            {
+                var u = usuario.Value;
+                consulta = como switch
+                {
+                    "ingreso" => consulta.Where(i => i.id_banco == u),
+                    "recibio" => consulta.Where(i => i.id_valet == u),
+                    "parqueo" => consulta.Where(i => i.usuario_parqueo == u),
+                    "solicito" => consulta.Where(i => i.usuario_solicitud == u),
+                    "despacho" => consulta.Where(i => i.valet_despacho == u),
+                    "cobro" => consulta.Where(i => i.usuario_cobro == u),
+                    "liquido" => consulta.Where(i => i.Liquidacion != null && i.Liquidacion.id_usuario == u),
+                    _ => consulta.Where(i => i.id_banco == u || i.id_valet == u || i.usuario_parqueo == u ||
+                                             i.usuario_solicitud == u || i.valet_despacho == u || i.usuario_cobro == u ||
+                                             (i.Liquidacion != null && i.Liquidacion.id_usuario == u))
+                };
             }
 
             // Máximo 500 filas para que la página no se vuelva pesada
@@ -1777,9 +1797,16 @@ namespace CarsParkingService.Controllers
             ViewBag.TotalPropinas = cobrados.Sum(i => i.valor_propina ?? 0);
             ViewBag.SinLiquidar = cobrados.Count(i => i.estado_liquidacion != true);
 
+            // Usuarios del filtro, en orden alfabético (punto 15)
+            ViewBag.UsuariosFiltro = _context.usuarios.AsNoTracking()
+                .OrderBy(x => x.nombres).ThenBy(x => x.apellidos)
+                .ToList();
+
             ViewData["FiltroDesde"] = fechaDesde;
             ViewData["FiltroHasta"] = fechaHasta.AddDays(-1);
             ViewData["FiltroPlaca"] = placa;
+            ViewData["FiltroUsuario"] = usuario;
+            ViewData["FiltroComo"] = como;
 
             return View(ingresos);
         }

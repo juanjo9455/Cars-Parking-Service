@@ -2964,9 +2964,15 @@ i.btn-pago-ingreso {
 
 /* ==================== Despachos y cobros (admin, punto 28) ==================== */
 
-/* Siete tarjetas de resumen: se acomodan solas según el ancho */
+/* Ocho tarjetas de resumen, de a 4: arriba los vehículos, abajo el dinero (en el celular, de a 2) */
 .wa-resumen.dc-resumen {
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 768px) {
+    .wa-resumen.dc-resumen {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 /* Cada celda: hora (y método) arriba, quién debajo */
