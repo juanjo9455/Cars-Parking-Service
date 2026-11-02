@@ -233,13 +233,14 @@ async function cargarEsperandoValet() {
 // ============= Mostrar Estados ============= //
 
 // Datos de un vehículo en la burbuja: placa, banco y valet uno al lado del otro, para aprovechar
-// el ancho del panel (se acomodan en otra línea si no caben). Los textos se escapan
-function filaVehiculoBurbuja(vehiculo) {
+// el ancho del panel (se acomodan en otra línea si no caben). Los textos se escapan.
+// En despachados el valet es el de despacho, por eso cambia la etiqueta
+function filaVehiculoBurbuja(vehiculo, etiquetaValet = 'Valet') {
     return `
         <div class="req-item-fila">
             <span class="req-item-placa">${escaparHtml(vehiculo.placa ?? '')}</span>
             <span class="req-item-sub"><span class="req-item-etq">Banco:</span> ${escaparHtml(vehiculo.nombre_banco ?? '')}</span>
-            <span class="req-item-sub"><span class="req-item-etq">Valet:</span> ${escaparHtml(vehiculo.nombre_valet ?? '')}</span>
+            <span class="req-item-sub"><span class="req-item-etq">${etiquetaValet}:</span> ${escaparHtml(vehiculo.nombre_valet ?? '')}</span>
         </div>`;
 }
 
@@ -428,7 +429,7 @@ function mostrarDespachados() {
 
             <div class="req-item">
                 <div class="req-item-info">
-                    ${filaVehiculoBurbuja(vehiculos)}
+                    ${filaVehiculoBurbuja(vehiculos, 'Valet despacho')}
                 </div>
             </div>
 
