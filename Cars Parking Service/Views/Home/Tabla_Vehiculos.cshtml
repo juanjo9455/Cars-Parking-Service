@@ -641,4 +641,54 @@
             // Sin nada marcado se consulta "todos", que es lo que dice el botón (activarFiltrosAutomaticos, site.js)
         })();
     </script>
+
+    <script>
+        // Atrás en la tabla: si hay algo abierto, cierra lo de encima y se queda en la tabla; sin nada abierto va a
+        // la página anterior como siempre. Para atajar el atrás, el primer toque en la página agrega una entrada al
+        // historial (Chrome se salta las que no vienen de un toque). Se vuelve a ella con history.forward(), que
+        // conserva la URL con los filtros que usa el refresco de la tabla
+        (function () {
+            const abierto = id => {
+                const el = document.getElementById(id);
+                return !!el && el.style.display !== '' && el.style.display !== 'none';
+            };
+
+            // De la capa de más arriba a la de más abajo, cada una con su cierre de siempre
+            const capas = [
+                [() => abierto('visor-imagen'), () => cerrarVisorImagen()],
+                [() => abierto('modal-acciones'), () => cerrarModalAcciones()],
+                [() => document.getElementById('menu-lateral')?.classList.contains('mostrar'), () => document.getElementById('cerrar-menu-lateral').click()],
+                [() => abierto('reqPanel'), () => cerrarPanelSolicitudes()],
+                [() => !!document.querySelector('#filtroEstados .dropdown-menu.show'), () => bootstrap.Dropdown.getOrCreateInstance(document.querySelector('#filtroEstados [data-bs-toggle="dropdown"]')).hide()],
+                [() => document.getElementById('filtersWrapper')?.classList.contains('open'), () => document.getElementById('filtersToggle').click()]
+            ];
+
+            let entradaAgregada = false;
+            let regresando = false;
+
+            document.addEventListener('click', function () {
+                if (entradaAgregada) return;
+                history.pushState({ atrasTabla: true }, '');
+                entradaAgregada = true;
+            }, true);
+
+            window.addEventListener('popstate', function () {
+                // Es la vuelta a la entrada agregada (history.forward de abajo)
+                if (regresando) {
+                    regresando = false;
+                    return;
+                }
+
+                const capa = capas.find(([estaAbierta]) => estaAbierta());
+
+                if (capa) {
+                    capa[1]();
+                    regresando = true;
+                    history.forward();
+                } else {
+                    history.back();
+                }
+            });
+        })();
+    </script>
 }

@@ -30,6 +30,16 @@
         fondo_menu_lateral.addEventListener("click", cerrarMenuLateral);
     }
 
+    // Al volver con atrás, el celular puede mostrar la página tal como quedó en memoria (bfcache), con el
+    // botón que se tocó para salir todavía cargando y bloqueado: se le quita la carga
+    window.addEventListener("pageshow", function (e) {
+        if (!e.persisted) return;
+        document.querySelectorAll(".btn-loading").forEach(function (el) {
+            el.classList.remove("btn-loading");
+            if (el.tagName === "BUTTON") el.disabled = false;
+        });
+    });
+
     // ============================ validacion campos registrar vehiculo ============================ //
 
     function showError(input, errorEl) {
