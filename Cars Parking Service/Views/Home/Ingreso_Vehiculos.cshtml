@@ -6,6 +6,7 @@
 
 <link rel="stylesheet" href="~/css/firma-cliente.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/ingreso-borrador.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/buscador-lista.css" asp-append-version="true" />
 
 <div id="client-error-container" style="display:none;position:fixed;top:10px;left:10px;right:10px;z-index:9999;background:#fee;border:1px solid #f99;padding:10px;border-radius:6px;color:#600;max-height:40vh;overflow:auto;"></div>
 
@@ -176,18 +177,24 @@
             <div class="error-message" id="errorTelefono">⚠️ El WhatsApp es obligatorio</div>
         </div>
 
-        <!-- Selección de Valet (Opcional, valor 0 envía 'Aún sin valet') -->
+        <!-- Selección de Valet (Opcional, valor 0 envía 'Aún sin valet').
+             Valet, parqueadero y ubicación se eligen con la lupa (buscador-lista.js); el select es el que se envía -->
         <div class="input-group">
-            <select name="id_valet" id="id_valet" style="width:100%;">
-                <option value="0">Aún sin valet</option>
-                @if (ViewBag.Valets != null)
-                {
-                    foreach (var valet in ViewBag.Valets)
+            <div class="campo-buscador">
+                <select name="id_valet" id="id_valet" style="width:100%;" tabindex="-1">
+                    <option value="0">Aún sin valet</option>
+                    @if (ViewBag.Valets != null)
                     {
-                        <option value="@valet.id_usuario">@valet.nombres @valet.apellidos</option>
+                        foreach (var valet in ViewBag.Valets)
+                        {
+                            <option value="@valet.id_usuario">@valet.nombres @valet.apellidos</option>
+                        }
                     }
-                }
-            </select>
+                </select>
+                <button type="button" class="btn-buscador" data-titulo="Selecciona el valet" aria-label="Buscar valet">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Banco / Cajero (Informativo, envía el ID oculto) -->
@@ -206,31 +213,41 @@
 
         <!-- Selección de Parqueadero -->
         <div class="input-group">
-            <select name="id_parqueadero" id="id_parqueadero" style="width:100%;" required>
-                <option value="">Selecciona un Parqueadero</option>
-                @if (ViewBag.Parqueaderos != null)
-                {
-                    foreach (var parqueadero in ViewBag.Parqueaderos)
+            <div class="campo-buscador">
+                <select name="id_parqueadero" id="id_parqueadero" style="width:100%;" tabindex="-1" required>
+                    <option value="">Selecciona un Parqueadero</option>
+                    @if (ViewBag.Parqueaderos != null)
                     {
-                        <option value="@parqueadero.id_parqueadero">@parqueadero.nombre_parqueadero</option>
+                        foreach (var parqueadero in ViewBag.Parqueaderos)
+                        {
+                            <option value="@parqueadero.id_parqueadero">@parqueadero.nombre_parqueadero</option>
+                        }
                     }
-                }
-            </select>
+                </select>
+                <button type="button" class="btn-buscador" data-titulo="Selecciona el parqueadero" aria-label="Buscar parqueadero">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </div>
             <div class="error-message" id="errorParqueadero">⚠️ Selecciona el parqueadero donde quedará el vehículo</div>
         </div>
 
         <!-- Ubicación: obligatoria para todos, solo las de su zona. Cambiar de restaurante no cambia el turno -->
         <div class="input-group">
-            <select name="id_ubicacion" id="id_ubicacion" style="width:100%;" required>
-                <option value="">Selecciona una Ubicación</option>
-                @if (ViewBag.UbicacionesS != null)
-                {
-                    foreach (var u in ViewBag.UbicacionesS)
+            <div class="campo-buscador">
+                <select name="id_ubicacion" id="id_ubicacion" style="width:100%;" tabindex="-1" required>
+                    <option value="">Selecciona una Ubicación</option>
+                    @if (ViewBag.UbicacionesS != null)
                     {
-                        <option value="@u.id_ubicacion">@u.nombre_ubicacion</option>
+                        foreach (var u in ViewBag.UbicacionesS)
+                        {
+                            <option value="@u.id_ubicacion">@u.nombre_ubicacion</option>
+                        }
                     }
-                }
-            </select>
+                </select>
+                <button type="button" class="btn-buscador" data-titulo="Selecciona la ubicación" aria-label="Buscar ubicación">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </div>
             <div class="error-message" id="errorUbicacion">⚠️ Selecciona la ubicación</div>
         </div>
 
@@ -458,6 +475,7 @@
     <script src="~/js/ingreso-vehiculos.js" asp-append-version="true" defer></script>
     <script src="~/js/ingreso-vehiculos-camera.js" asp-append-version="true" defer></script>
     <script src="~/js/ingreso-borrador.js" asp-append-version="true" defer></script>
+    <script src="~/js/buscador-lista.js" asp-append-version="true" defer></script>
 
     <script>
         (function () {

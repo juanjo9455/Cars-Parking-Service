@@ -1,0 +1,187 @@
+/* ==================== Buscador de listas del ingreso (buscador-lista.js) ==================== */
+
+/* El campo: la lista con una lupa donde estaba la flecha. Tocar cualquier parte abre el buscador */
+.campo-buscador {
+    position: relative;
+    width: 100%;
+    cursor: pointer;
+}
+
+/* El select ya no abre la lista del celular: el toque le llega al campo */
+.campo-buscador select {
+    pointer-events: none;
+    background-image: none;
+    padding-right: 52px;
+}
+
+.campo-buscador .btn-buscador {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ui-primary);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.campo-buscador .btn-buscador:hover {
+    background: #fce8e6;
+}
+
+.campo-buscador .btn-buscador:focus-visible {
+    outline: 2px solid var(--ui-input-border-focus);
+    outline-offset: 1px;
+}
+
+/* La ventana: encima de la página, la burbuja y su panel. Va arriba y no centrada: así no salta al filtrar
+   (la lista se achica) y el buscador queda visible con el teclado del celular abierto */
+.buscador-fondo {
+    position: fixed;
+    inset: 0;
+    z-index: 1060;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 8vh 16px 16px;
+}
+
+.buscador-fondo[hidden] {
+    display: none;
+}
+
+.buscador-ventana {
+    width: min(420px, 100%);
+    max-height: 80vh;
+    max-height: min(560px, 80dvh);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.buscador-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 10px 10px 16px;
+    background: #C0392B;
+    color: #fff;
+}
+
+.buscador-cabecera h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+/* 44 px para tocarla con el dedo, como la X del panel de solicitudes */
+.buscador-cerrar {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.buscador-campo {
+    position: relative;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.buscador-campo i {
+    position: absolute;
+    left: 26px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    pointer-events: none;
+}
+
+/* 16 px: con menos, el iPhone hace zoom al escribir */
+.buscador-campo input {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px 10px 40px;
+    border: 1px solid var(--ui-input-border);
+    border-radius: var(--ui-radius-sm);
+    color: var(--ui-input-text);
+    font-size: 16px;
+}
+
+.buscador-campo input:focus {
+    outline: none;
+    border-color: var(--ui-input-border-focus);
+    box-shadow: var(--ui-input-focus-shadow);
+}
+
+.buscador-lista {
+    flex: 1;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-y: auto;
+}
+
+.buscador-opcion {
+    width: 100%;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    border-bottom: 1px solid #f1f1f1;
+    background: none;
+    color: #1f2937;
+    font-size: 16px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.buscador-opcion:hover,
+.buscador-opcion:focus-visible {
+    background: #fafafa;
+    outline: none;
+}
+
+/* La opción que ya está elegida, con un chulo */
+.buscador-opcion.elegida {
+    background: #fff5f5;
+    color: #922B21;
+    font-weight: 600;
+}
+
+.buscador-opcion.elegida::after {
+    content: "\f00c";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    color: #C0392B;
+}
+
+.buscador-vacio {
+    margin: 0;
+    padding: 24px 16px;
+    color: #555;
+    text-align: center;
+}
