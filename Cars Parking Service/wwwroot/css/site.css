@@ -1945,6 +1945,25 @@ tbody td:last-child {
     overflow: hidden;
 }
 
+/* Pestaña "Objetos de valor" centrada encima del bloque: va afuera porque el bloque corta lo que sobresale (overflow) */
+.notas-pestana {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+    margin: 0 auto;
+    padding: 5px 14px;
+    background: #d32f2f;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px 8px 0 0;
+}
+
+.notas-pestana + .input-group.notas-group {
+    margin-top: 0;
+}
+
 .input-group.notas-group textarea {
     width: 100%;
     min-height: 60px;
