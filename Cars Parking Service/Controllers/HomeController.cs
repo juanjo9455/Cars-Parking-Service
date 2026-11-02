@@ -672,40 +672,14 @@ namespace CarsParkingService.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult ObtenerDespachados()
         {
-            // Obtenemos usuario y rol
-            var idUsuario = HttpContext.Session.GetInt32("id");
-            var rolUsuario = HttpContext.Session.GetInt32("id_rol");
-
-            // Consulta base
+            // Consulta base: todos los usuarios ven todos los despachados, como en solicitados y esperando valet
             var query = _context.ingresos
-                .Include(i => i.Valet)
                 .Include(i => i.Banco)
                 .Where(i =>
                     i.estado_servicio != null &&
                     i.estado_servicio.Trim().ToLower() == "despachado"
                 )
                 .AsQueryable();
-
-            // Filtrado por rol
-            if (idUsuario.HasValue)
-            {
-                // Valet: ve todos los despachados, sin filtro
-
-                // Banco
-                if (rolUsuario == 2)
-                {
-                    query = query.Where(i => i.id_banco == idUsuario.Value);
-                }
-
-                // Otros roles
-                else if (rolUsuario != 3 && rolUsuario != 1)
-                {
-                    query = query.Where(i =>
-                        i.id_valet == idUsuario.Value ||
-                        i.id_banco == idUsuario.Value
-                    );
-                }
-            }
 
             // Solo los de la zona en la que entró
             query = DeLaZona(query, ZonaSesion());
@@ -717,9 +691,11 @@ namespace CarsParkingService.Controllers
                     id = i.id_ingreso,
                     placa = i.placa,
 
-                    nombre_valet = i.Valet != null
-                        ? i.Valet.nombres
-                        : "Sin valet",
+                    // Aquí interesa el valet que lo despachó, no el que lo recibió
+                    nombre_valet = _context.usuarios
+                        .Where(u => u.id_usuario == i.valet_despacho)
+                        .Select(u => u.nombres)
+                        .FirstOrDefault() ?? "Sin valet",
 
                     nombre_banco = i.Banco != null
                         ? i.Banco.nombres
