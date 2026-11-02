@@ -2051,6 +2051,16 @@ namespace CarsParkingService.Controllers
                     });
                 }
 
+                // Cobran el banco y el admin. El valet ya no cobra: solo toma la foto de la transferencia (fotoTransferencia)
+                if (rolUsuario is not (2 or 3))
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Solo el banco o el administrador pueden cobrar."
+                    });
+                }
+
                 var ingreso = _context.ingresos
                     .FirstOrDefault(i => i.id_ingreso == dto.Id);
 
@@ -2073,11 +2083,11 @@ namespace CarsParkingService.Controllers
                     });
                 }
 
-                // Si el método de pago es transferencia o QR,
-                // la foto es obligatoria.
+                // Si el método de pago es transferencia o QR, la foto es obligatoria: la nueva que manden
+                // o, si no mandan, la que ya tomó el valet
                 if (ingreso.metodo_pago == "Transferencia" || ingreso.metodo_pago == "QR")
                 {
-                    if (string.IsNullOrWhiteSpace(dto.FotoBase64))
+                    if (string.IsNullOrWhiteSpace(dto.FotoBase64) && ingreso.foto_transferencia == null)
                     {
                         return Json(new
                         {
@@ -2086,23 +2096,26 @@ namespace CarsParkingService.Controllers
                         });
                     }
 
-                    try
+                    if (!string.IsNullOrWhiteSpace(dto.FotoBase64))
                     {
-                        string base64Limpio = dto.FotoBase64.Contains(",")
-                            ? dto.FotoBase64.Split(',')[1]
-                            : dto.FotoBase64;
-
-                        // Validar que realmente sea Base64 válido
-                        ingreso.foto_transferencia =
-                            Convert.FromBase64String(base64Limpio);
-                    }
-                    catch
-                    {
-                        return Json(new
+                        try
                         {
-                            success = false,
-                            message = "La imagen recibida no es válida."
-                        });
+                            string base64Limpio = dto.FotoBase64.Contains(",")
+                                ? dto.FotoBase64.Split(',')[1]
+                                : dto.FotoBase64;
+
+                            // Validar que realmente sea Base64 válido
+                            ingreso.foto_transferencia =
+                                Convert.FromBase64String(base64Limpio);
+                        }
+                        catch
+                        {
+                            return Json(new
+                            {
+                                success = false,
+                                message = "La imagen recibida no es válida."
+                            });
+                        }
                     }
                 }
 
@@ -2578,24 +2591,22 @@ namespace CarsParkingService.Controllers
             }
         }
 
+        // Foto de la transferencia (o del pago por QR) que toma el valet, que ya no cobra: queda en Información
+        // y el banco la encuentra cargada al cobrar (FinalizarServicio). Responde JSON: la tabla no se recarga
         [HttpPost]
         public IActionResult fotoTransferencia(int id_ingreso, string fotoBase64)
         {
-            var idUsuarioSesion = HttpContext.Session.GetInt32("id");
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
 
-            // Verificamos que llegue el id
-            if (id_ingreso <= 0)
+            if (rolUsuario is not (1 or 2 or 3))
             {
-                TempData["Error"] = "El ingreso no es válido.";
-                return RedirectToAction("Tabla_Vehiculos");
+                return Json(new { success = false, mensaje = "No tienes permiso para registrar la foto." });
             }
 
             // Verificamos que llegue la foto
             if (string.IsNullOrWhiteSpace(fotoBase64))
             {
-                TempData["Error"] = "Debe capturar una foto de la transferencia.";
-                return RedirectToAction("Tabla_Vehiculos");
+                return Json(new { success = false, mensaje = "Toma la foto de la transferencia antes de guardar." });
             }
 
             var ingreso = _context.ingresos
@@ -2603,14 +2614,19 @@ namespace CarsParkingService.Controllers
 
             if (ingreso == null)
             {
-                TempData["Error"] = "No se encontró el ingreso.";
-                return RedirectToAction("Tabla_Vehiculos");
+                return Json(new { success = false, mensaje = "No se encontró el vehículo." });
             }
 
+            // Mismo criterio que el ícono QR y el cobro: despachado, con valet de despacho y sin pagar
+            if (!IngresoReglas.PuedeCobrar(ingreso))
+            {
+                return Json(new { success = false, mensaje = $"El vehículo {ingreso.placa} ya no está pendiente de pago." });
+            }
+
+            // La evidencia no se cambia desde aquí; si no es correcta, el banco toma otra al cobrar
             if (ingreso.foto_transferencia != null)
             {
-                TempData["Error"] = "La evidencia de la transferencia ya fue registrada.";
-                return RedirectToAction("Tabla_Vehiculos");
+                return Json(new { success = false, mensaje = "La foto de la transferencia ya fue registrada." });
             }
 
             try
@@ -2623,34 +2639,21 @@ namespace CarsParkingService.Controllers
                     : fotoBase64;
 
                 // Validar que realmente sea Base64 válido
-                byte[] imagenBytes = Convert.FromBase64String(base64Data);
-
-                // Guardar el Base64 completo o solo la parte limpia
-                // Recomiendo guardar el Base64 completo para mostrarlo directamente en HTML
-
-                ingreso.foto_transferencia = imagenBytes;
-
-                _context.ingresos.Update(ingreso);
+                ingreso.foto_transferencia = Convert.FromBase64String(base64Data);
                 _context.SaveChanges();
 
-                TempData["Success"] = "Foto de la transferencia registrada correctamente.";
-
-                return RedirectToAction("Tabla_Vehiculos");
+                return Json(new { success = true, mensaje = $"Foto de la transferencia de {ingreso.placa} guardada. El banco la verá al cobrar." });
             }
             catch (FormatException)
             {
-                TempData["Error"] = "La imagen recibida no tiene un formato válido.";
-                return RedirectToAction("Tabla_Vehiculos");
+                return Json(new { success = false, mensaje = "La imagen recibida no tiene un formato válido." });
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(
                     $"Error en fotoTransferencia: {ex.Message}");
 
-                TempData["Error"] =
-                    "No fue posible guardar la foto de la transferencia.";
-
-                return RedirectToAction("Tabla_Vehiculos");
+                return Json(new { success = false, mensaje = "No fue posible guardar la foto de la transferencia." });
             }
         }
 

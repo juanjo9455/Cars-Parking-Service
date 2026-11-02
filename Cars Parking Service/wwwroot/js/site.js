@@ -1249,6 +1249,7 @@ function abrirModalPago(btn) {
     const metodo_pago = btn.getAttribute('data-metodo-pago');
     const estado_servicio = btn.getAttribute('data-estado-servicio');
     const valor = btn.getAttribute('data-valor');
+    const tieneFoto = btn.getAttribute('data-tiene-foto') === 'true';
 
     document.getElementById("contenido-modal-acciones").innerHTML = `
 
@@ -1269,6 +1270,12 @@ function abrirModalPago(btn) {
                 </span>
             </p>
         </div>
+
+        <!-- El valet ya tomó la foto del pago: al finalizar con QR o Transferencia sale cargada -->
+        ${tieneFoto ? `
+            <p style="background: #e8f5e9; color: #1b5e20; padding: 10px 12px; border-radius: 8px; margin: 0 0 10px;">
+                <i class="fa-solid fa-camera"></i> El valet ya tomó la foto de la transferencia: elige QR o Transferencia.
+            </p>` : ''}
         <br />
         <p> Editar Metodo De Pago </p>
         <select id="metodo-pago-${id}" onchange="mostrarDatosPago('${id}')" style="width:100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 20px;">
@@ -1331,6 +1338,15 @@ function abrirModalPago(btn) {
     if (modalAcciones) { modalAcciones.style.display = 'flex'; }
 }
 
+// QR y cuenta para pagar: los muestran el cobro (según el método) y la ventana del valet (los dos)
+const HTML_QR_PAGO = `
+    <img src="/img/qr-pago.png" alt="QR para pagar" class="imagen-galeria"
+         style="width: 100%; max-width: 240px; border-radius: 8px; cursor: pointer;" />`;
+
+const HTML_CUENTA_PAGO = `
+    <p style="margin: 0;">Cuenta de ahorros Bancolombia</p>
+    <p style="margin: 0; font-size: 1.4rem; font-weight: bold;">23681691537</p>`;
+
 // Muestra el QR (QR) o la cuenta de ahorros (Transferencia); en efectivo no muestra nada
 function mostrarDatosPago(id) {
     const metodo = document.getElementById(`metodo-pago-${id}`)?.value;
@@ -1339,16 +1355,111 @@ function mostrarDatosPago(id) {
     if (!contenedor) return;
 
     if (metodo === 'QR') {
-        contenedor.innerHTML = `
-            <img src="/img/qr-pago.png" alt="QR para pagar" class="imagen-galeria"
-                 style="width: 100%; max-width: 240px; border-radius: 8px; cursor: pointer;" />`;
+        contenedor.innerHTML = HTML_QR_PAGO;
     } else if (metodo === 'Transferencia') {
-        contenedor.innerHTML = `
-            <p style="margin: 0;">Cuenta de ahorros Bancolombia</p>
-            <p style="margin: 0; font-size: 1.4rem; font-weight: bold;">23681691537</p>`;
+        contenedor.innerHTML = HTML_CUENTA_PAGO;
     } else {
         contenedor.innerHTML = '';
     }
+}
+
+// Ventana del valet (ícono QR): el valet ya no cobra. Le muestra al cliente el QR y la cuenta, y si paga
+// por ahí toma la foto de la transferencia: queda en Información y el banco la encuentra cargada al cobrar
+function abrirModalQrValet(btn) {
+    const id = btn.dataset.id;
+    const valor = btn.dataset.valor;
+    const tieneFoto = btn.dataset.tieneFoto === 'true';
+
+    const foto = tieneFoto
+        ? `
+            <div class="photo-section">
+                <h4 class="photo-title">Foto de la transferencia</h4>
+                <img src="/Home/FotoTransferenciaIngreso?idIngreso=${id}" alt="Foto de la transferencia" class="imagen-galeria"
+                     style="width: 100%; max-width: 240px; border-radius: 8px; cursor: pointer;" />
+                <p style="margin: 8px 0 0;">La foto ya quedó registrada. El banco la verá al cobrar.</p>
+            </div>`
+        : `
+            <div class="photo-section">
+                <h4 class="photo-title">Si pagó por QR o transferencia</h4>
+                <button type="button" class="photo-btn" id="tomarFotoTransferenciaBtn">
+                    <svg class="camera-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    Tomar foto de la transferencia
+                </button>
+                <p class="photo-counter" id="photoCounterTransferencia">0 fotos seleccionadas (max. 1)</p>
+                <div class="Media-Preview">
+                    <div class="photos-preview" id="photosPreviewTransferencia"></div>
+                </div>
+                <input type="file" id="cameraInputTransferencia" accept="image/*" capture style="display:none;">
+                <div id="fotosTransferenciaBase64Container"></div>
+            </div>
+            <button type="button" class="btn btn-success" id="btnGuardarFotoTransferencia"
+                    onclick="guardarFotoTransferencia('${id}')" style="width: 100%;">
+                Guardar foto
+            </button>`;
+
+    document.getElementById('contenido-modal-acciones').innerHTML = `
+        <span class="close-btn" onclick="cerrarModalAcciones()">&times;</span>
+        <h3>Pago con QR o transferencia</h3>
+
+        ${valor ? `<div class="cobro-valor"><span class="cobro-valor-label">Valor a pagar</span><span class="cobro-valor-precio">${escaparHtml(valor)}</span></div>` : ''}
+
+        <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+            <p><strong>Placa:</strong> ${escaparHtml(btn.dataset.placa)}</p>
+            <p style="margin-bottom: 0;"><strong>Cliente:</strong> ${escaparHtml(btn.dataset.cliente)}</p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            ${HTML_QR_PAGO}
+            <div style="margin-top: 12px;">${HTML_CUENTA_PAGO}</div>
+        </div>
+
+        ${foto}
+    `;
+
+    document.getElementById('modal-acciones').style.display = 'flex';
+
+    if (!tieneFoto) inicializarCamaraTransferencia();
+}
+
+// Guarda la foto que tomó el valet (fotoTransferencia) sin recargar la página
+function guardarFotoTransferencia(idIngreso) {
+    const foto = document.querySelector('#fotosTransferenciaBase64Container input[name^="fotoTransferencia"]')?.value;
+
+    if (!foto) {
+        mostrarAlertaWhatsApp('Toma la foto de la transferencia antes de guardar.', 'error');
+        return;
+    }
+
+    const boton = document.getElementById('btnGuardarFotoTransferencia');
+    boton.disabled = true;
+    boton.textContent = 'Guardando...';
+
+    const datos = new FormData();
+    datos.append('id_ingreso', idIngreso);
+    datos.append('fotoBase64', foto);
+
+    fetch('/Home/fotoTransferencia', { method: 'POST', body: datos })
+        .then(response => response.json())
+        .then(data => {
+            mostrarAlertaWhatsApp(data.mensaje, data.success ? 'success' : 'error');
+
+            if (data.success) {
+                cerrarModalAcciones();
+                window.refrescarTablaIngresos?.();
+            } else {
+                boton.disabled = false;
+                boton.textContent = 'Guardar foto';
+            }
+        })
+        .catch(error => {
+            console.error('Error guardando la foto de la transferencia:', error);
+            mostrarAlertaWhatsApp('No se pudo guardar la foto. Intenta otra vez.', 'error');
+            boton.disabled = false;
+            boton.textContent = 'Guardar foto';
+        });
 }
 
 // Cerrar modal de pago
@@ -1654,6 +1765,16 @@ function abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, m
                     Foto de la Transferencia
                 </h4>
 
+                <!-- La que tomó el valet, si existe: si no hay, la imagen falla y el bloque se quita -->
+                <div class="foto-valet" hidden>
+                    <img src="/Home/FotoTransferenciaIngreso?idIngreso=${idIngreso}&v=${Date.now()}"
+                         alt="Foto que tomó el valet" class="imagen-galeria"
+                         style="width: 100%; max-width: 240px; border-radius: 8px; cursor: pointer;"
+                         onload="this.parentElement.hidden = false"
+                         onerror="this.parentElement.remove()" />
+                    <p style="margin: 8px 0 12px;">Foto que tomó el valet. Si no es correcta, toma otra.</p>
+                </div>
+
                 <button type="button"
                         class="photo-btn"
                         id="tomarFotoTransferenciaBtn">
@@ -1746,12 +1867,15 @@ function finalizarServicio(idIngreso, metodoPago) {
             '#fotosTransferenciaBase64Container input[name^="fotoTransferencia"]'
         );
 
-        if (!inputFoto || !inputFoto.value) {
+        // Sin foto nueva sirve la que tomó el valet (FinalizarServicio conserva la guardada)
+        const hayFotoValet = !!document.querySelector('#modal-acciones .foto-valet:not([hidden])');
+
+        if (inputFoto && inputFoto.value) {
+            fotoBase64 = inputFoto.value;
+        } else if (!hayFotoValet) {
             mostrarAlertaWhatsApp('Debes capturar la foto de la transferencia', 'error');
             return;
         }
-
-        fotoBase64 = inputFoto.value;
     }
 
     const btnConfirmar = document.querySelector(

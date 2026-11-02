@@ -132,19 +132,40 @@
                         }
 
                         @* 3. Cobrar: solo despachado, con valet de despacho y sin pagar (punto 32).
-                              Misma regla que valida FinalizarServicio (IngresoReglas.PuedeCobrar) *@
+                              Misma regla que valida FinalizarServicio (IngresoReglas.PuedeCobrar).
+                              El valet no cobra: con el QR le muestra al cliente cómo pagar y toma la foto de la
+                              transferencia, que el banco encuentra cargada al cobrar *@
                         @if (IngresoReglas.PuedeCobrar(ingresos))
                         {
-                            <i class="fa-solid fa-credit-card btn-action btn-pago-ingreso" title="Cobrar"
-                                onclick="abrirModalPago(this)"
-                                data-id="@ingresos.id_ingreso"
-                                data-placa="@ingresos.placa"
-                                data-cliente="@ingresos.nombre_cliente"
-                                data-metodo-pago="@(ingresos.metodo_pago ?? "No especificado")"
-                                data-estado-servicio="@(ingresos.estado_servicio ?? "No especificado")"
-                                data-valor="@(valoresUbicacion.TryGetValue(ingresos.id_ubicacion, out var valorUbicacion) ? valorUbicacion.ToString("C0", moneda) : "")"
-                                style="cursor:pointer;">
-                            </i>
+                            var valorCobro = valoresUbicacion.TryGetValue(ingresos.id_ubicacion, out var valorUbicacion) ? valorUbicacion.ToString("C0", moneda) : "";
+                            var tieneFoto = ingresos.foto_transferencia != null ? "true" : "false";
+
+                            if (idRol == 1)
+                            {
+                                <i class="fa-solid fa-qrcode btn-action btn-pago-ingreso" title="QR de pago"
+                                    onclick="abrirModalQrValet(this)"
+                                    data-id="@ingresos.id_ingreso"
+                                    data-placa="@ingresos.placa"
+                                    data-cliente="@ingresos.nombre_cliente"
+                                    data-valor="@valorCobro"
+                                    data-tiene-foto="@tieneFoto"
+                                    style="cursor:pointer;">
+                                </i>
+                            }
+                            else
+                            {
+                                <i class="fa-solid fa-credit-card btn-action btn-pago-ingreso" title="Cobrar"
+                                    onclick="abrirModalPago(this)"
+                                    data-id="@ingresos.id_ingreso"
+                                    data-placa="@ingresos.placa"
+                                    data-cliente="@ingresos.nombre_cliente"
+                                    data-metodo-pago="@(ingresos.metodo_pago ?? "No especificado")"
+                                    data-estado-servicio="@(ingresos.estado_servicio ?? "No especificado")"
+                                    data-valor="@valorCobro"
+                                    data-tiene-foto="@tieneFoto"
+                                    style="cursor:pointer;">
+                                </i>
+                            }
                         }
 
                         @* 4. Información: siempre visible *@
