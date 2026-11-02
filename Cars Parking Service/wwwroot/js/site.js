@@ -8,20 +8,26 @@
     // removemos clase que usamos mas adelante //
     if (notas) notas.classList.remove("inactivo"); // ✅ CAMBIO
 
-    //Abrir Menu Lateral
-    if (abrir_menu_lateral && menu_lateral && div_abrir_menu) {
+    //Abrir y Cerrar Menu Lateral. Tocar el fondo, fuera del menú, también lo cierra
+    if (abrir_menu_lateral && cerrar_menu_lateral && menu_lateral && div_abrir_menu) {
+        const fondo_menu_lateral = document.createElement("div");
+        fondo_menu_lateral.className = "menu-lateral-fondo";
+        document.body.appendChild(fondo_menu_lateral);
+
+        const cerrarMenuLateral = function () {
+            menu_lateral.classList.remove("mostrar");
+            div_abrir_menu.classList.remove("oculto");
+            fondo_menu_lateral.classList.remove("mostrar");
+        };
+
         abrir_menu_lateral.addEventListener("click", function () {
             menu_lateral.classList.add("mostrar");
             div_abrir_menu.classList.add("oculto");
+            fondo_menu_lateral.classList.add("mostrar");
         });
-    }
 
-    //Cerrar Menu Lateral
-    if (cerrar_menu_lateral && menu_lateral && div_abrir_menu) {
-        cerrar_menu_lateral.addEventListener("click", function () {
-            menu_lateral.classList.remove("mostrar");
-            div_abrir_menu.classList.remove("oculto");
-        });
+        cerrar_menu_lateral.addEventListener("click", cerrarMenuLateral);
+        fondo_menu_lateral.addEventListener("click", cerrarMenuLateral);
     }
 
     // ============================ validacion campos registrar vehiculo ============================ //
