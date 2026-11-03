@@ -1,0 +1,10 @@
+﻿@* Ventana con los vehículos de una liquidación. La usan Estado de turnos y Liquidaciones;
+   la abre verDetalleLiquidacion (wwwroot/js/detalle-liquidacion.js) *@
+<div class="Editar-Ingreso" id="modal-detalle-liquidacion" style="display:none;">
+    <div class="modal-overlay" onclick="cerrarDetalleLiquidacion()"></div>
+    <div class="Card-Ingreso adm-liq-modal" role="dialog" aria-modal="true" aria-labelledby="detalle-liquidacion-titulo">
+        <span class="close-btn" onclick="cerrarDetalleLiquidacion()">&times;</span>
+        <h3 id="detalle-liquidacion-titulo">Detalle de la liquidación</h3>
+        <div id="detalle-liquidacion-contenido"></div>
+    </div>
+</div>

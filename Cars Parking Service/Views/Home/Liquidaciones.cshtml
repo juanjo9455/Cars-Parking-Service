@@ -92,27 +92,25 @@
 
                 @foreach (var l in Model)
                 {
+                    var funcionario = string.IsNullOrWhiteSpace(l.funcionario) ? "—" : l.funcionario;
+
                     <tr class="liq-fila">
-                        <td>
-                            <button type="button" class="liq-desplegar" data-id="@l.id_liquidacion" data-no-spinner="true"
-                                    aria-expanded="false" aria-controls="liq-vehiculos-@l.id_liquidacion"
-                                    aria-label="Ver los vehículos de la liquidación @l.id_liquidacion">
-                                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
-                                #@l.id_liquidacion
-                            </button>
-                        </td>
+                        <td class="liq-numero">#@l.id_liquidacion</td>
                         <td>@(l.fecha?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
-                        <td>@(string.IsNullOrWhiteSpace(l.funcionario) ? "—" : l.funcionario)</td>
+                        <td>@funcionario</td>
                         <td class="liq-dinero">@l.total_efectivo.ToString("C0", moneda)</td>
                         <td class="liq-dinero">@l.total_transferencias.ToString("C0", moneda)</td>
                         <td class="liq-dinero"><strong>@l.total_liquidado.ToString("C0", moneda)</strong></td>
-                        <td>@l.total_vehiculos</td>
-                    </tr>
-
-                    @* Se llena la primera vez que se despliega *@
-                    <tr class="liq-detalle" id="liq-vehiculos-@l.id_liquidacion" hidden>
-                        <td colspan="7">
-                            <div class="liq-vehiculos"></div>
+                        <td>
+                            @* Abre la ventana con los vehículos (mismo botón que Estado de turnos) *@
+                            <button type="button" class="adm-btn-detalle liq-btn-vehiculos" data-no-spinner="true"
+                                    data-id="@l.id_liquidacion"
+                                    data-usuario="@funcionario"
+                                    data-fecha="@(l.fecha?.ToString("dd/MM/yyyy HH:mm") ?? "—")"
+                                    onclick="verDetalleLiquidacion(this)"
+                                    aria-label="Ver los @l.total_vehiculos vehículos de la liquidación @l.id_liquidacion">
+                                <i class="fa-solid fa-car-side" aria-hidden="true"></i> @l.total_vehiculos
+                            </button>
                         </td>
                     </tr>
                 }
@@ -121,82 +119,18 @@
     </div>
 </div>
 
+<partial name="_ModalDetalleLiquidacion" />
+
 @section Scripts {
+    <script src="~/js/detalle-liquidacion.js" asp-append-version="true"></script>
     <script>
-        // Desplegar una liquidación: la primera vez pide sus vehículos a DetalleLiquidacion y los deja en la
-        // página; después solo se muestra u oculta. La fila completa sirve para desplegar, no solo el botón
-        (function () {
-            const tabla = document.getElementById('tablaLiquidaciones');
-            if (!tabla) return;
+        // Tocar cualquier parte de la fila abre los vehículos, como su botón: en el celular el botón queda
+        // al final de la tabla y habría que desplazarla para verlo
+        document.getElementById('tablaLiquidaciones')?.addEventListener('click', function (e) {
+            const fila = e.target.closest('tr.liq-fila');
+            if (!fila || e.target.closest('.liq-btn-vehiculos')) return;
 
-            const pesos = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
-
-            async function cargarVehiculos(id, contenedor) {
-                contenedor.innerHTML = '<p class="liq-vacio">Cargando vehículos...</p>';
-
-                try {
-                    const respuesta = await fetch(`/Home/DetalleLiquidacion?id=${encodeURIComponent(id)}`, { cache: 'no-store' });
-                    const data = await respuesta.json();
-
-                    if (!data.success) {
-                        contenedor.innerHTML = `<p class="liq-vacio">${escaparHtml(data.message)}</p>`;
-                        return;
-                    }
-
-                    if (data.vehiculos.length === 0) {
-                        contenedor.innerHTML = '<p class="liq-vacio">Esta liquidación no tiene vehículos asociados.</p>';
-                        contenedor.dataset.cargado = 'true';
-                        return;
-                    }
-
-                    const filas = data.vehiculos.map(v => `
-                        <tr>
-                            <td><span class="ingreso-placa">${escaparHtml(v.placa ?? '—')}</span></td>
-                            <td>${escaparHtml(v.entrega)}</td>
-                            <td>${escaparHtml(v.cobro)}${v.rol ? ` <span class="liq-rol">(${escaparHtml(v.rol)})</span>` : ''}</td>
-                            <td>${escaparHtml(v.metodo ?? '—')}</td>
-                            <td>${escaparHtml(v.ubicacion)}</td>
-                            <td class="liq-dinero">${pesos.format(v.valor)}</td>
-                        </tr>`).join('');
-
-                    contenedor.innerHTML = `
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Placa</th>
-                                    <th>Entrega</th>
-                                    <th>Cobró</th>
-                                    <th>Método</th>
-                                    <th>Ubicación</th>
-                                    <th>Valor</th>
-                                </tr>
-                            </thead>
-                            <tbody>${filas}</tbody>
-                        </table>`;
-                    contenedor.dataset.cargado = 'true';
-                } catch (error) {
-                    console.error('Error cargando los vehículos de la liquidación:', error);
-                    contenedor.innerHTML = '<p class="liq-vacio">No se pudieron cargar los vehículos. Toca otra vez para reintentar.</p>';
-                }
-            }
-
-            tabla.addEventListener('click', function (e) {
-                const fila = e.target.closest('tr.liq-fila');
-                if (!fila) return;
-
-                const boton = fila.querySelector('.liq-desplegar');
-                const detalle = document.getElementById(boton.getAttribute('aria-controls'));
-                const abrir = boton.getAttribute('aria-expanded') !== 'true';
-
-                boton.setAttribute('aria-expanded', abrir);
-                fila.classList.toggle('abierta', abrir);
-                detalle.hidden = !abrir;
-
-                const contenedor = detalle.querySelector('.liq-vehiculos');
-                if (abrir && contenedor.dataset.cargado !== 'true') {
-                    cargarVehiculos(boton.dataset.id, contenedor);
-                }
-            });
-        })();
+            fila.querySelector('.liq-btn-vehiculos').click();
+        });
     </script>
 }

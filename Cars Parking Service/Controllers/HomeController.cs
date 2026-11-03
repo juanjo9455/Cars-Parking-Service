@@ -33,6 +33,9 @@ namespace CarsParkingService.Controllers
             public int Id { get; set; }
             public string? EstadoServicio { get; set; }
             public string? FotoBase64 { get; set; }
+
+            // Lo que pagó el cliente, si el banco lo escribió (solo cuando no pagó por la app)
+            public decimal? ValorCobrado { get; set; }
         }
 
         public class ParqueaderoDTO
@@ -2134,6 +2137,22 @@ namespace CarsParkingService.Controllers
                     }
                 }
 
+                // El cliente que pagó por su enlace ya dejó servicio, propina y total (PaymentController.GuardarPago):
+                // eso no se cambia. Si no, el banco puede cobrar otro valor (lo que el cliente pagó con propina)
+                var pagoPorApp = (ingreso.total_servicio ?? 0) > 0;
+                var valorCobrado = pagoPorApp || !dto.ValorCobrado.HasValue
+                    ? (decimal?)null
+                    : decimal.Round(dto.ValorCobrado.Value, 0);
+
+                if (valorCobrado <= 0)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "El valor cobrado debe ser mayor que 0."
+                    });
+                }
+
                 ingreso.estado_servicio = dto.EstadoServicio;
                 ingreso.estado_pago = "pagado";
 
@@ -2145,6 +2164,26 @@ namespace CarsParkingService.Controllers
                         .Where(u => u.id_ubicacion == ingreso.id_ubicacion)
                         .Select(u => (decimal?)u.valor_servicio)
                         .FirstOrDefault() ?? 0;
+                }
+
+                // Lo que pase del servicio es propina, como cuando el cliente paga por la app (la liquidación suma
+                // solo el servicio); si pagó menos que el servicio, ese es el valor del servicio (descuento)
+                if (valorCobrado.HasValue)
+                {
+                    var cobrado = valorCobrado.Value;
+                    var servicio = ingreso.valor_servicio ?? 0;
+
+                    if (cobrado >= servicio)
+                    {
+                        ingreso.valor_propina = cobrado - servicio;
+                    }
+                    else
+                    {
+                        ingreso.valor_servicio = cobrado;
+                        ingreso.valor_propina = 0;
+                    }
+
+                    ingreso.total_servicio = cobrado;
                 }
 
                 // El cobro terminó: el código ya no sirve (con o sin validación del cliente)

@@ -1250,14 +1250,32 @@ function abrirModalPago(btn) {
     const estado_servicio = btn.getAttribute('data-estado-servicio');
     const valor = btn.getAttribute('data-valor');
     const tieneFoto = btn.getAttribute('data-tiene-foto') === 'true';
+    const tarifa = btn.getAttribute('data-tarifa');
+    const pagoApp = btn.getAttribute('data-pago-app') === 'true';
+
+    // Cuánto se cobra: si el cliente pagó por la app, su total con propina (no se cambia); si no, la tarifa
+    // de la ubicación, que el banco cambia por lo que pagó el cliente (lo de más queda como propina)
+    const cajaValor = !pagoApp && tarifa
+        ? `<div class="cobro-valor">
+               <label class="cobro-valor-label" for="valor-cobrado-${id}">Valor a cobrar</label>
+               <input type="number" id="valor-cobrado-${id}" class="cobro-valor-input" data-tarifa="${tarifa}"
+                      value="${tarifa}" min="1" step="1" inputmode="numeric" />
+               <span class="cobro-valor-ayuda">Servicio ${PESOS.format(tarifa)}. Si el cliente paga más (propina), escribe lo que pagó.</span>
+           </div>`
+        : valor
+            ? `<div class="cobro-valor">
+                   <span class="cobro-valor-label">Valor a cobrar</span>
+                   <span class="cobro-valor-precio">${valor}</span>
+                   ${pagoApp ? '<span class="cobro-valor-ayuda">Lo puso el cliente en la app, con la propina</span>' : ''}
+               </div>`
+            : '';
 
     document.getElementById("contenido-modal-acciones").innerHTML = `
 
         <span class="close-btn" onclick="cerrarModalPago('${id}')">&times;</span>
         <h3>Pago para Vehículo</h3>
 
-        <!-- Cuánto se cobra por la ubicación de servicio del ingreso -->
-        ${valor ? `<div class="cobro-valor"><span class="cobro-valor-label">Valor a cobrar</span><span class="cobro-valor-precio">${valor}</span></div>` : ''}
+        ${cajaValor}
 
         <!-- Información del vehículo -->
         <div class="info-auto" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
@@ -1337,6 +1355,9 @@ function abrirModalPago(btn) {
 
     if (modalAcciones) { modalAcciones.style.display = 'flex'; }
 }
+
+// Pesos colombianos sin decimales, como el C0 de las vistas: $ 12.000
+const PESOS = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 
 // QR y cuenta para pagar: los muestran el cobro (según el método) y la ventana del valet (los dos)
 const HTML_QR_PAGO = `
@@ -1515,6 +1536,12 @@ function limpiarModalPago(idIngreso) {
     if (metodoSelect) {
         metodoSelect.disabled = false;
     }
+
+    const valorInput = document.getElementById(`valor-cobrado-${idIngreso}`);
+
+    if (valorInput) {
+        valorInput.readOnly = false;
+    }
 }
 
 // Contador de expiración activo por ingreso
@@ -1531,6 +1558,15 @@ function generarCodigoSeguridad(idIngreso) {
 
     if (!metodoPago) {
         alert('Selecciona un método de pago');
+        return;
+    }
+
+    // Si el banco puede cambiar el valor, tiene que ser un número mayor que 0
+    const valorInput = document.getElementById(`valor-cobrado-${idIngreso}`);
+
+    if (valorInput && !(Number(valorInput.value) > 0)) {
+        mostrarAlertaWhatsApp('Escribe el valor que pagó el cliente.', 'error');
+        valorInput.focus();
         return;
     }
 
@@ -1580,6 +1616,7 @@ function generarCodigoSeguridad(idIngreso) {
             }
 
             metodoSelect.disabled = true;
+            if (valorInput) valorInput.readOnly = true;
 
             const contadorElemento =
                 document.getElementById(`contador-codigo-${idIngreso}`);
@@ -1724,6 +1761,19 @@ function abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, m
         // Se usa el método elegido en el modal (pudo cambiar al generar el código)
         metodo_pago = document.getElementById(`metodo-pago-${idIngreso}`)?.value || metodo_pago;
 
+        // Valor que escribió el banco (solo si el cliente no pagó por la app): lo de más sobre el servicio es
+        // propina y lo de menos, descuento. Se lee antes de cambiar el contenido del modal
+        const valorInput = document.getElementById(`valor-cobrado-${idIngreso}`);
+        const valorCobrado = valorInput ? Number(valorInput.value) : null;
+        const tarifaCobro = valorInput ? Number(valorInput.dataset.tarifa) : null;
+
+        let detalleValor = '';
+        if (valorCobrado > tarifaCobro) {
+            detalleValor = ` (servicio ${PESOS.format(tarifaCobro)} + propina ${PESOS.format(valorCobrado - tarifaCobro)})`;
+        } else if (valorCobrado < tarifaCobro) {
+            detalleValor = ` (menos que el servicio de ${PESOS.format(tarifaCobro)}: queda como descuento)`;
+        }
+
         cerrarModalPago(idIngreso);
 
         const modalAcciones =
@@ -1754,6 +1804,7 @@ function abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, m
             <p><strong>Estado Actual:</strong>
                 ${estado_servicio}
             </p>
+            ${valorCobrado ? `<p><strong>Valor cobrado:</strong> ${PESOS.format(valorCobrado)}${detalleValor}</p>` : ''}
 
         </div>
 
@@ -1837,7 +1888,7 @@ function abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, m
 
             <button type="button"
                     class="btn btn-success"
-                    onclick="finalizarServicio('${idIngreso}','${metodo_pago}')">
+                    onclick="finalizarServicio('${idIngreso}','${metodo_pago}', ${valorCobrado ?? 'null'})">
 
                 Finalizar Servicio
 
@@ -1854,7 +1905,7 @@ function abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, m
 }
 
 // Finalizar servicio
-function finalizarServicio(idIngreso, metodoPago) {
+function finalizarServicio(idIngreso, metodoPago, valorCobrado = null) {
 
     const estadoServicio = 'finalizado';
 
@@ -1895,7 +1946,8 @@ function finalizarServicio(idIngreso, metodoPago) {
         body: JSON.stringify({
             id: idIngreso,
             estadoServicio: estadoServicio,
-            fotoBase64: fotoBase64
+            fotoBase64: fotoBase64,
+            valorCobrado: valorCobrado
         })
     })
     .then(response => response.json())

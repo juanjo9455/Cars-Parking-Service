@@ -2891,6 +2891,38 @@ i.btn-pago-ingreso {
     color: #1f2937;
 }
 
+/* El banco escribe lo que pagó el cliente (si no pagó por la app): grande, como el precio */
+.cobro-valor-input {
+    width: 100%;
+    max-width: 220px;
+    min-height: 48px;
+    padding: 4px 10px;
+    border: 2px solid #ffd54f;
+    border-radius: 8px;
+    background: #fff;
+    color: #1f2937;
+    font-size: 28px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.cobro-valor-input:focus {
+    outline: none;
+    border-color: #2196F3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
+}
+
+.cobro-valor-input:read-only {
+    background: #f5f5f5;
+}
+
+.cobro-valor-ayuda {
+    margin-top: 4px;
+    font-size: 14px;
+    color: #6b4f00;
+    text-align: center;
+}
+
 /* ==================== Código de seguridad en el modal de pago ==================== */
 
 /* El operador ve el código grande para compararlo con el del cliente */
@@ -3038,89 +3070,28 @@ i.btn-pago-ingreso {
     white-space: nowrap;
 }
 
-/* La fila completa despliega sus vehículos */
+/* El número va como texto; los vehículos se abren con el botón de la última columna o tocando la fila */
+.tabla-liquidaciones .liq-numero {
+    font-weight: 700;
+    color: #1f2937;
+    white-space: nowrap;
+}
+
 .tabla-liquidaciones .liq-fila {
     cursor: pointer;
 }
 
-.tabla-liquidaciones .liq-fila:hover,
-.tabla-liquidaciones .liq-fila.abierta {
+.tabla-liquidaciones .liq-fila:hover {
     background: #fff5f5;
 }
 
-/* Botón con el número: va en la primera columna, así en el celular se ve sin desplazar la tabla */
-.liq-desplegar {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+/* Botón de vehículos: 44 px para tocarlo con el dedo */
+.liq-btn-vehiculos {
     min-height: 44px;
-    padding: 6px 12px;
-    border: 1.5px solid #d32f2f;
-    border-radius: 8px;
-    background: #fff;
-    color: #b71c1c;
-    font-weight: 700;
     white-space: nowrap;
-    cursor: pointer;
 }
 
-.liq-desplegar i {
-    transition: transform .2s ease;
-}
-
-.liq-desplegar[aria-expanded="true"] {
-    background: #d32f2f;
-    color: #fff;
-}
-
-.liq-desplegar[aria-expanded="true"] i {
-    transform: rotate(180deg);
-}
-
-.liq-desplegar:focus-visible {
+.liq-btn-vehiculos:focus-visible {
     outline: 3px solid #2196F3;
     outline-offset: 2px;
-}
-
-/* Vehículos de la liquidación, debajo de su fila */
-.tabla-liquidaciones .liq-detalle > td {
-    padding: 10px 12px 16px;
-    background: #fafafa;
-}
-
-.liq-vehiculos table {
-    font-size: 15px;
-}
-
-.liq-vehiculos thead {
-    background: #f3f4f6;
-    color: #1f2937;
-}
-
-.liq-vehiculos thead th {
-    padding: 8px 10px;
-    font-size: 14px;
-    text-transform: none;
-    letter-spacing: 0;
-    border-radius: 0;
-}
-
-.liq-vehiculos tbody td {
-    padding: 8px 10px;
-}
-
-.liq-vehiculos .liq-rol {
-    color: #4b5563;
-    font-size: 14px;
-}
-
-.liq-vacio {
-    margin: 0;
-    color: #555;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .liq-desplegar i {
-        transition: none;
-    }
 }
