@@ -1,0 +1,202 @@
+﻿@model List<CarsParkingService.Models.liquidacion_consulta>
+@{
+    ViewData["Title"] = "Liquidaciones";
+    var funcionarios = ViewBag.Funcionarios as List<CarsParkingService.Models.funcionario_liquidacion> ?? new();
+    var moneda = System.Globalization.CultureInfo.GetCultureInfo("es-CO");
+}
+
+@* Liquidaciones (solo administrador): todas, o filtradas por funcionario y fechas
+   (sp_consultarLiquidaciones). Cada fila se despliega y muestra sus vehículos (DetalleLiquidacion).
+   Mismo estilo que Despachos y cobros *@
+<div class="container mt-4 admin-container">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-info" style="flex-grow: 1;">
+            <h2 style="margin: 0;">
+                <i class="fa-solid fa-sack-dollar" style="color: #d32f2f;"></i> Liquidaciones
+            </h2>
+            <p>Todas las liquidaciones de los turnos. Toca una para ver sus vehículos</p>
+        </div>
+
+        <a asp-controller="Home" asp-action="Administrador" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Volver al panel
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-wrapper" id="filtersWrapper">
+        <button type="button" class="filters-toggle" id="filtersToggle" aria-expanded="false" aria-controls="filtersPanel" data-no-spinner="true">
+            <span><i class="fa-solid fa-filter"></i> Filtros</span>
+            <i class="fa-solid fa-chevron-down filters-chevron"></i>
+        </button>
+
+        <div class="search-section filters-panel" id="filtersPanel">
+            <form method="get" asp-action="Liquidaciones" class="row">
+                <div class="form-group col-md-4 mb-3">
+                    <label for="filtroUsuario">Funcionario</label>
+                    <select id="filtroUsuario" name="usuario" style="width:100%;">
+                        <option value="">Todos</option>
+                        @foreach (var f in funcionarios)
+                        {
+                            <option value="@f.id_usuario" selected="@((int?)ViewData["FiltroUsuario"] == f.id_usuario)">@f.funcionario</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group col-md-4 mb-3">
+                    <label for="filtroDesde">Desde</label>
+                    <input type="date" id="filtroDesde" name="desde" class="form-control"
+                           value="@(((DateTime?)ViewData["FiltroDesde"])?.ToString("yyyy-MM-dd"))">
+                </div>
+
+                <div class="form-group col-md-4 mb-3">
+                    <label for="filtroHasta">Hasta</label>
+                    <input type="date" id="filtroHasta" name="hasta" class="form-control"
+                           value="@(((DateTime?)ViewData["FiltroHasta"])?.ToString("yyyy-MM-dd"))">
+                </div>
+
+                <div class="col-12 mt-2 d-flex justify-content-end gap-2">
+                    <button type="submit" class="btn btn-primary px-4">Buscar</button>
+                    <a asp-action="Liquidaciones" class="btn btn-secondary px-4">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <p class="liq-cantidad">@Model.Count liquidaciones</p>
+
+    <!-- Tabla -->
+    <div class="table-container">
+        <table class="tabla-liquidaciones">
+            <thead>
+                <tr>
+                    <th>Nº liquidación</th>
+                    <th>Fecha</th>
+                    <th>Funcionario</th>
+                    <th>Total efectivo</th>
+                    <th>Total transferencia</th>
+                    <th>Total liquidación</th>
+                    <th>Cant. vehículos</th>
+                </tr>
+            </thead>
+            <tbody id="tablaLiquidaciones">
+                @if (Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" style="text-align:center; color:#555;">
+                            No hay liquidaciones con estos filtros
+                        </td>
+                    </tr>
+                }
+
+                @foreach (var l in Model)
+                {
+                    <tr class="liq-fila">
+                        <td>
+                            <button type="button" class="liq-desplegar" data-id="@l.id_liquidacion" data-no-spinner="true"
+                                    aria-expanded="false" aria-controls="liq-vehiculos-@l.id_liquidacion"
+                                    aria-label="Ver los vehículos de la liquidación @l.id_liquidacion">
+                                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                                #@l.id_liquidacion
+                            </button>
+                        </td>
+                        <td>@(l.fecha?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+                        <td>@(string.IsNullOrWhiteSpace(l.funcionario) ? "—" : l.funcionario)</td>
+                        <td class="liq-dinero">@l.total_efectivo.ToString("C0", moneda)</td>
+                        <td class="liq-dinero">@l.total_transferencias.ToString("C0", moneda)</td>
+                        <td class="liq-dinero"><strong>@l.total_liquidado.ToString("C0", moneda)</strong></td>
+                        <td>@l.total_vehiculos</td>
+                    </tr>
+
+                    @* Se llena la primera vez que se despliega *@
+                    <tr class="liq-detalle" id="liq-vehiculos-@l.id_liquidacion" hidden>
+                        <td colspan="7">
+                            <div class="liq-vehiculos"></div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Desplegar una liquidación: la primera vez pide sus vehículos a DetalleLiquidacion y los deja en la
+        // página; después solo se muestra u oculta. La fila completa sirve para desplegar, no solo el botón
+        (function () {
+            const tabla = document.getElementById('tablaLiquidaciones');
+            if (!tabla) return;
+
+            const pesos = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+
+            async function cargarVehiculos(id, contenedor) {
+                contenedor.innerHTML = '<p class="liq-vacio">Cargando vehículos...</p>';
+
+                try {
+                    const respuesta = await fetch(`/Home/DetalleLiquidacion?id=${encodeURIComponent(id)}`, { cache: 'no-store' });
+                    const data = await respuesta.json();
+
+                    if (!data.success) {
+                        contenedor.innerHTML = `<p class="liq-vacio">${escaparHtml(data.message)}</p>`;
+                        return;
+                    }
+
+                    if (data.vehiculos.length === 0) {
+                        contenedor.innerHTML = '<p class="liq-vacio">Esta liquidación no tiene vehículos asociados.</p>';
+                        contenedor.dataset.cargado = 'true';
+                        return;
+                    }
+
+                    const filas = data.vehiculos.map(v => `
+                        <tr>
+                            <td><span class="ingreso-placa">${escaparHtml(v.placa ?? '—')}</span></td>
+                            <td>${escaparHtml(v.entrega)}</td>
+                            <td>${escaparHtml(v.cobro)}${v.rol ? ` <span class="liq-rol">(${escaparHtml(v.rol)})</span>` : ''}</td>
+                            <td>${escaparHtml(v.metodo ?? '—')}</td>
+                            <td>${escaparHtml(v.ubicacion)}</td>
+                            <td class="liq-dinero">${pesos.format(v.valor)}</td>
+                        </tr>`).join('');
+
+                    contenedor.innerHTML = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Placa</th>
+                                    <th>Entrega</th>
+                                    <th>Cobró</th>
+                                    <th>Método</th>
+                                    <th>Ubicación</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>${filas}</tbody>
+                        </table>`;
+                    contenedor.dataset.cargado = 'true';
+                } catch (error) {
+                    console.error('Error cargando los vehículos de la liquidación:', error);
+                    contenedor.innerHTML = '<p class="liq-vacio">No se pudieron cargar los vehículos. Toca otra vez para reintentar.</p>';
+                }
+            }
+
+            tabla.addEventListener('click', function (e) {
+                const fila = e.target.closest('tr.liq-fila');
+                if (!fila) return;
+
+                const boton = fila.querySelector('.liq-desplegar');
+                const detalle = document.getElementById(boton.getAttribute('aria-controls'));
+                const abrir = boton.getAttribute('aria-expanded') !== 'true';
+
+                boton.setAttribute('aria-expanded', abrir);
+                fila.classList.toggle('abierta', abrir);
+                detalle.hidden = !abrir;
+
+                const contenedor = detalle.querySelector('.liq-vehiculos');
+                if (abrir && contenedor.dataset.cargado !== 'true') {
+                    cargarVehiculos(boton.dataset.id, contenedor);
+                }
+            });
+        })();
+    </script>
+}

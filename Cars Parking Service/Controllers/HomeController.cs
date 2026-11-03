@@ -279,7 +279,8 @@ namespace CarsParkingService.Controllers
 
         }
 
-        // Vehículos que forman una liquidación (botón "Ver detalle" de Estado Turnos)
+        // Vehículos que forman una liquidación: "Ver detalle" de Estado Turnos y filas desplegables de
+        // Liquidaciones. Salen de sp_vehiculosLiquidacion (Database/liquidaciones-admin.sql)
         [HttpGet]
         public IActionResult DetalleLiquidacion(int id)
         {
@@ -288,34 +289,20 @@ namespace CarsParkingService.Controllers
                 return Json(new { success = false, message = "No tienes permiso para ver liquidaciones." });
             }
 
-            var vehiculos = (
-                from i in _context.ingresos.AsNoTracking()
-                where i.id_liquidacion == id
-                join u in _context.usuarios on i.usuario_cobro equals (int?)u.id_usuario into cobradores
-                from u in cobradores.DefaultIfEmpty()
-                orderby i.fecha_entrega
-                select new
+            var vehiculos = _context.Database
+                .SqlQueryRaw<vehiculo_liquidado>("EXEC sp_vehiculosLiquidacion @id_liquidacion",
+                    new SqlParameter("@id_liquidacion", id))
+                .ToList()
+                .Select(v => new
                 {
-                    placa = i.placa,
-                    entrega = i.fecha_entrega,
-                    cobro = u != null ? u.nombres + " " + u.apellidos : "—",
-                    rol = i.rol_cobrador,
-                    metodo = i.metodo_pago,
-                    valor = i.valor_servicio ?? 0,
-                    ubicacion = i.Ubicacion != null ? i.Ubicacion.nombre_ubicacion : "—"
-                }
-            )
-            .ToList()
-            .Select(v => new
-            {
-                v.placa,
-                entrega = v.entrega?.ToString("dd/MM HH:mm") ?? "—",
-                v.cobro,
-                v.rol,
-                v.metodo,
-                v.valor,
-                v.ubicacion
-            });
+                    placa = v.placa,
+                    entrega = v.fecha_entrega?.ToString("dd/MM HH:mm") ?? "—",
+                    cobro = string.IsNullOrWhiteSpace(v.cobro) ? "—" : v.cobro,
+                    rol = v.rol_cobrador,
+                    metodo = v.metodo_pago,
+                    valor = v.valor_servicio,
+                    ubicacion = v.nombre_ubicacion ?? "—"
+                });
 
             return Json(new { success = true, vehiculos });
         }
@@ -1693,6 +1680,34 @@ namespace CarsParkingService.Controllers
             ViewData["FiltroTipo"] = tipo;
 
             return View(registros);
+        }
+
+        // Liquidaciones (solo administrador): todas, o las de un funcionario y un rango de fechas.
+        // Los vehículos de cada una se piden al desplegarla (DetalleLiquidacion), no al cargar la página
+        [HttpGet]
+        public IActionResult Liquidaciones(int? usuario, DateTime? desde, DateTime? hasta)
+        {
+            if (HttpContext.Session.GetInt32("id_rol") != 3)
+            {
+                return RedirectToAction("Index");
+            }
+
+            var liquidaciones = _context.Database
+                .SqlQueryRaw<liquidacion_consulta>("EXEC sp_consultarLiquidaciones @id_usuario, @fecha_inicio, @fecha_fin",
+                    new SqlParameter("@id_usuario", (object?)usuario ?? DBNull.Value),
+                    new SqlParameter("@fecha_inicio", System.Data.SqlDbType.Date) { Value = (object?)desde?.Date ?? DBNull.Value },
+                    new SqlParameter("@fecha_fin", System.Data.SqlDbType.Date) { Value = (object?)hasta?.Date ?? DBNull.Value })
+                .ToList();
+
+            ViewBag.Funcionarios = _context.Database
+                .SqlQueryRaw<funcionario_liquidacion>("EXEC sp_funcionariosLiquidaciones")
+                .ToList();
+
+            ViewData["FiltroUsuario"] = usuario;
+            ViewData["FiltroDesde"] = desde;
+            ViewData["FiltroHasta"] = hasta;
+
+            return View(liquidaciones);
         }
 
         // Despachos y cobros (punto 28, solo administrador): cada vehículo con ingreso, despacho o cobro en el

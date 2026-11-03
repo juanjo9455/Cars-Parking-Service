@@ -3023,3 +3023,104 @@ i.btn-pago-ingreso {
 .tabla-despachos .dc-vacio {
     color: #555;
 }
+
+/* ==================== Liquidaciones (admin) ==================== */
+
+.liq-cantidad {
+    margin: 12px 0 8px;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+/* Montos alineados para compararlos de una fila a otra */
+.tabla-liquidaciones .liq-dinero {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* La fila completa despliega sus vehículos */
+.tabla-liquidaciones .liq-fila {
+    cursor: pointer;
+}
+
+.tabla-liquidaciones .liq-fila:hover,
+.tabla-liquidaciones .liq-fila.abierta {
+    background: #fff5f5;
+}
+
+/* Botón con el número: va en la primera columna, así en el celular se ve sin desplazar la tabla */
+.liq-desplegar {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 6px 12px;
+    border: 1.5px solid #d32f2f;
+    border-radius: 8px;
+    background: #fff;
+    color: #b71c1c;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.liq-desplegar i {
+    transition: transform .2s ease;
+}
+
+.liq-desplegar[aria-expanded="true"] {
+    background: #d32f2f;
+    color: #fff;
+}
+
+.liq-desplegar[aria-expanded="true"] i {
+    transform: rotate(180deg);
+}
+
+.liq-desplegar:focus-visible {
+    outline: 3px solid #2196F3;
+    outline-offset: 2px;
+}
+
+/* Vehículos de la liquidación, debajo de su fila */
+.tabla-liquidaciones .liq-detalle > td {
+    padding: 10px 12px 16px;
+    background: #fafafa;
+}
+
+.liq-vehiculos table {
+    font-size: 15px;
+}
+
+.liq-vehiculos thead {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.liq-vehiculos thead th {
+    padding: 8px 10px;
+    font-size: 14px;
+    text-transform: none;
+    letter-spacing: 0;
+    border-radius: 0;
+}
+
+.liq-vehiculos tbody td {
+    padding: 8px 10px;
+}
+
+.liq-vehiculos .liq-rol {
+    color: #4b5563;
+    font-size: 14px;
+}
+
+.liq-vacio {
+    margin: 0;
+    color: #555;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .liq-desplegar i {
+        transition: none;
+    }
+}
