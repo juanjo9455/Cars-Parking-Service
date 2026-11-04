@@ -2280,6 +2280,12 @@ namespace CarsParkingService.Controllers
         [HttpPost]
         public IActionResult EditarUsuario(int id_usuario, string dni, string nombre, string apellido, string telefono, int edad, int id_rol, string correo, bool estado, string? avatarBase64 = null)
         {
+            // Solo el administrador: sin esto, cualquiera con sesión podía editar usuarios enviando el formulario
+            if (!EsAdmin())
+            {
+                return RedirectToAction("Index");
+            }
+
             // Validar si el nuevo DNI ya le pertenece a OTRO usuario
             bool existeDni = _context.usuarios
                 .Any(u => u.dni == dni && u.id_usuario != id_usuario && u.estado == true);
@@ -2312,40 +2318,30 @@ namespace CarsParkingService.Controllers
                 usuario.estado = estado;
 
                 // Procesar imagen si viene en base64
+                var fotoAnterior = usuario.imagen_usuario;
+                var fotoNoGuardada = false;
                 if (!string.IsNullOrWhiteSpace(avatarBase64))
                 {
-                    try
-                    {
-                        // Crear directorio si no existe
-                        string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "usuarios");
-                        if (!Directory.Exists(uploadsFolder))
-                        {
-                            Directory.CreateDirectory(uploadsFolder);
-                        }
-
-                        // Generar nombre único para la imagen
-                        string fileName = $"usuario_{id_usuario}_{DateTime.Now:yyyyMMddHHmmss}.jpg";
-                        string filePath = Path.Combine(uploadsFolder, fileName);
-
-                        // Convertir base64 a bytes y guardar
-                        var base64Data = avatarBase64.Contains(",") ? avatarBase64.Split(',')[1] : avatarBase64;
-                        byte[] imageBytes = Convert.FromBase64String(base64Data);
-
-                        System.IO.File.WriteAllBytes(filePath, imageBytes);
-
-                        // Guardar la URL relativa en la BD
-                        usuario.imagen_usuario = $"/uploads/usuarios/{fileName}";
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error al guardar imagen: {ex.Message}");
-                    }
+                    var foto = GuardarFotoUsuario(id_usuario, avatarBase64);
+                    fotoNoGuardada = foto == null;
+                    usuario.imagen_usuario = foto ?? usuario.imagen_usuario;
                 }
 
                 _context.SaveChanges();
 
-                // Guardar la URL de imagen en la sesión (siempre, sea nueva o existente)
-                if (!string.IsNullOrEmpty(usuario.imagen_usuario))
+                if (usuario.imagen_usuario != fotoAnterior)
+                {
+                    BorrarFotoAnterior(id_usuario, fotoAnterior);
+                }
+
+                if (fotoNoGuardada)
+                {
+                    TempData["Error"] = "Los datos se guardaron, pero la foto no: elige otra imagen.";
+                }
+
+                // La foto del menú es la de quien tiene la sesión: solo cambia si el admin se editó a sí mismo
+                // (antes le quedaba la foto del usuario que editaba)
+                if (id_usuario == HttpContext.Session.GetInt32("id") && !string.IsNullOrEmpty(usuario.imagen_usuario))
                 {
                     HttpContext.Session.SetString("imagen_usuario_url", usuario.imagen_usuario);
                 }
@@ -2353,6 +2349,244 @@ namespace CarsParkingService.Controllers
                 TempData["Mensaje"] = "Los datos del usuario se actualizaron correctamente.";
             }
             return RedirectToAction("Administrador");
+        }
+
+        private bool EsAdmin() => HttpContext.Session.GetInt32("id_rol") == 3;
+
+        // Fotos de usuario: un solo archivo por usuario, wwwroot/uploads/usuarios/usuario_{id}.jpg, que la foto
+        // nueva reemplaza (no se acumulan). La ruta lleva ?v= para que el navegador no muestre la anterior, y las
+        // rutas viejas siguen sirviendo: nadie queda con la foto rota. La usan Editar usuario (admin) y Mi perfil
+        private static string CarpetaFotosUsuario() =>
+            Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "usuarios");
+
+        // Guarda la foto (JPEG en base64, ya achicada en el navegador por perfil.js) y devuelve su ruta;
+        // null si no es un JPEG o no se pudo guardar
+        private string? GuardarFotoUsuario(int idUsuario, string avatarBase64)
+        {
+            try
+            {
+                var bytes = Convert.FromBase64String(avatarBase64.Contains(",") ? avatarBase64.Split(',')[1] : avatarBase64);
+
+                // JPEG: empieza con FF D8 FF
+                if (bytes.Length < 4 || bytes[0] != 0xFF || bytes[1] != 0xD8 || bytes[2] != 0xFF)
+                {
+                    return null;
+                }
+
+                Directory.CreateDirectory(CarpetaFotosUsuario());   // si ya existe no hace nada
+                System.IO.File.WriteAllBytes(Path.Combine(CarpetaFotosUsuario(), $"usuario_{idUsuario}.jpg"), bytes);
+
+                return $"/uploads/usuarios/usuario_{idUsuario}.jpg?v={DateTime.Now:yyyyMMddHHmmss}";
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error al guardar imagen: {ex.Message}");
+                return null;
+            }
+        }
+
+        // Antes cada foto tenía la fecha en el nombre (usuario_{id}_fecha.jpg) y se iban acumulando: se borra la que
+        // tenía el usuario. Se llama después de guardar en la base, para no dejarla apuntando a un archivo borrado
+        private void BorrarFotoAnterior(int idUsuario, string? fotoAnterior)
+        {
+            if (fotoAnterior == null || !fotoAnterior.StartsWith("/uploads/usuarios/")) return;
+
+            // Solo el nombre (sin carpetas ni ?v=) y solo si es de este usuario con el nombre de antes
+            var nombre = Path.GetFileName(fotoAnterior.Split('?')[0]);
+            if (!nombre.StartsWith($"usuario_{idUsuario}_")) return;
+
+            try
+            {
+                System.IO.File.Delete(Path.Combine(CarpetaFotosUsuario(), nombre));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"No se pudo borrar la foto anterior {nombre}: {ex.Message}");
+            }
+        }
+
+        // Reglas de una contraseña nueva (las mismas revisa perfil.js antes de enviar): null si está bien
+        private static string? ErrorContrasena(string? nueva, string? confirmar)
+        {
+            if (string.IsNullOrEmpty(nueva)) return "Escribe la nueva contraseña.";
+            if (nueva.Length < 6) return "La contraseña debe tener al menos 6 caracteres.";
+            if (nueva.Length > 50) return "La contraseña puede tener máximo 50 caracteres.";
+            if (nueva != nueva.Trim()) return "La contraseña no puede empezar ni terminar con espacios.";
+            if (nueva != confirmar) return "La confirmación no coincide con la contraseña.";
+            return null;
+        }
+
+        // Contraseña de un usuario para el ojo de "Editar usuario" (solo administrador). No va escrita en la
+        // página: se pide solo cuando el admin toca el ojo
+        [HttpGet]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult ContrasenaUsuario(int id)
+        {
+            if (!EsAdmin())
+            {
+                return Json(new { success = false, mensaje = "No tienes permiso para ver contraseñas." });
+            }
+
+            var usuario = _context.usuarios.AsNoTracking()
+                .Where(u => u.id_usuario == id)
+                .Select(u => new { u.contraseña })
+                .FirstOrDefault();
+
+            return usuario == null
+                ? Json(new { success = false, mensaje = "No se encontró el usuario." })
+                : Json(new { success = true, contrasena = usuario.contraseña ?? "" });
+        }
+
+        // El administrador le pone una contraseña nueva a un usuario (Editar usuario, con dos toques)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CambiarContrasenaUsuario(int id_usuario, string? nueva, string? confirmar)
+        {
+            if (!EsAdmin())
+            {
+                return Json(new { success = false, mensaje = "Solo el administrador puede cambiar la contraseña de otro usuario." });
+            }
+
+            var error = ErrorContrasena(nueva, confirmar);
+            if (error != null)
+            {
+                return Json(new { success = false, mensaje = error });
+            }
+
+            var usuario = _context.usuarios.FirstOrDefault(u => u.id_usuario == id_usuario);
+            if (usuario == null)
+            {
+                return Json(new { success = false, mensaje = "No se encontró el usuario." });
+            }
+
+            usuario.contraseña = nueva;
+            _context.SaveChanges();
+
+            return Json(new { success = true, mensaje = $"Contraseña de {usuario.nombres} {usuario.apellidos} cambiada." });
+        }
+
+        // =========================== Mi perfil =========================== \\
+
+        // Mi perfil (todos los roles): sus datos, y cambiar correo, teléfono, foto y contraseña.
+        // Siempre el usuario de la sesión, nunca uno que llegue en el formulario
+        [HttpGet]
+        public IActionResult MiPerfil()
+        {
+            var usuario = _context.usuarios.AsNoTracking()
+                .FirstOrDefault(u => u.id_usuario == HttpContext.Session.GetInt32("id"));
+
+            return usuario == null ? RedirectToAction("Login", "Auth") : VistaPerfil(usuario);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult MiPerfil(string? correo, string? telefono, string? avatarBase64)
+        {
+            var usuario = _context.usuarios.FirstOrDefault(u => u.id_usuario == HttpContext.Session.GetInt32("id"));
+            if (usuario == null)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            correo = correo?.Trim() ?? "";
+            // Solo números; al escribirlo se aceptan espacios, guiones y paréntesis
+            telefono = System.Text.RegularExpressions.Regex.Replace(telefono ?? "", @"[\s\-()]", "");
+
+            string? error = null;
+            if (correo.Length == 0 || correo.Length > 100 || !new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(correo))
+            {
+                error = "Escribe un correo válido.";
+            }
+            else if (_context.usuarios.Any(u => u.correo != null && u.correo.Trim().ToLower() == correo.ToLower() &&
+                                                u.id_usuario != usuario.id_usuario && u.estado))
+            {
+                error = $"El correo '{correo}' ya está en uso por otro usuario.";
+            }
+            else if (!System.Text.RegularExpressions.Regex.IsMatch(telefono, @"^[0-9]{7,15}$"))
+            {
+                error = "Escribe un teléfono de 7 a 15 números.";
+            }
+
+            // La foto llega achicada en JPEG (perfil.js): cualquier otra cosa no se guarda
+            string? foto = null;
+            if (error == null && !string.IsNullOrWhiteSpace(avatarBase64))
+            {
+                foto = GuardarFotoUsuario(usuario.id_usuario, avatarBase64);
+                if (foto == null)
+                {
+                    error = "No se pudo guardar la foto. Elige otra imagen.";
+                }
+            }
+
+            if (error != null)
+            {
+                // Se muestra lo que escribió, sin guardarlo
+                usuario.correo = correo;
+                usuario.telefono = telefono;
+                ViewBag.Error = error;
+                return VistaPerfil(usuario);
+            }
+
+            var fotoAnterior = usuario.imagen_usuario;
+            usuario.correo = correo;
+            usuario.telefono = telefono;
+            if (foto != null)
+            {
+                usuario.imagen_usuario = foto;
+                HttpContext.Session.SetString("imagen_usuario_url", foto);   // la foto del menú
+            }
+
+            _context.SaveChanges();
+
+            if (foto != null)
+            {
+                BorrarFotoAnterior(usuario.id_usuario, fotoAnterior);
+            }
+
+            TempData["PerfilExito"] = "Tus datos se guardaron.";
+            return RedirectToAction("MiPerfil");
+        }
+
+        // Cambiar la contraseña propia: pide la actual, así nadie la cambia con un celular que quedó con la sesión abierta
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CambiarMiContrasena(string? actual, string? nueva, string? confirmar)
+        {
+            var usuario = _context.usuarios.FirstOrDefault(u => u.id_usuario == HttpContext.Session.GetInt32("id"));
+            if (usuario == null)
+            {
+                return Json(new { success = false, mensaje = "Tu sesión terminó. Vuelve a entrar." });
+            }
+
+            if (string.IsNullOrEmpty(actual) || actual != usuario.contraseña)
+            {
+                return Json(new { success = false, mensaje = "La contraseña actual no es correcta." });
+            }
+
+            var error = ErrorContrasena(nueva, confirmar) ??
+                        (nueva == actual ? "La nueva contraseña debe ser distinta de la actual." : null);
+            if (error != null)
+            {
+                return Json(new { success = false, mensaje = error });
+            }
+
+            usuario.contraseña = nueva;
+            _context.SaveChanges();
+
+            return Json(new { success = true, mensaje = "Tu contraseña se cambió. Úsala la próxima vez que entres." });
+        }
+
+        private IActionResult VistaPerfil(usuarios usuario)
+        {
+            ViewBag.Rol = _context.roles.AsNoTracking()
+                .Where(r => r.id_rol == usuario.id_rol)
+                .Select(r => r.nombre_rol)
+                .FirstOrDefault() ?? "—";
+
+            // El Key vuelve a su vista de parqueaderos; los demás, al inicio
+            ViewBag.Volver = usuario.id_rol == 4 ? "VistaKey" : "Index";
+
+            return View("MiPerfil", usuario);
         }
 
         // =========================== Ubicacion =========================== \\

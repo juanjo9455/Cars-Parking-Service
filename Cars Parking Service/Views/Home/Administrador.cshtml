@@ -371,6 +371,36 @@
                             </div>
                         </div>
 
+                        @* Contraseña: se ve con el ojo y se cambia con su propio botón y dos toques (perfil.js);
+                           Guardar no la toca. Los campos van sin name: no viajan con el formulario *@
+                        <div class="bloque-contrasena bloque-contrasena-admin" id="bloqueContrasenaAdmin"
+                             data-url="/Home/CambiarContrasenaUsuario" data-id-campo="edit_id_usuario">
+                            @Html.AntiForgeryToken()
+                            <h4>Contraseña</h4>
+
+                            <div class="form-group-modal">
+                                <label for="adminContrasenaActual">Contraseña actual</label>
+                                <div class="contrasena-ver">
+                                    <input type="password" id="adminContrasenaActual" class="modal-select contrasena-actual-admin"
+                                           placeholder="••••••" readonly autocomplete="off" />
+                                    <button type="button" class="btn-ver-contrasena" aria-label="Ver la contraseña" data-no-spinner="true">
+                                        <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group-modal">
+                                <label for="adminContrasenaNueva">Nueva contraseña</label>
+                                <input type="password" id="adminContrasenaNueva" class="modal-select contrasena-nueva" autocomplete="new-password" maxlength="50" />
+                            </div>
+                            <div class="form-group-modal">
+                                <label for="adminContrasenaConfirmar">Confirmar nueva contraseña</label>
+                                <input type="password" id="adminContrasenaConfirmar" class="modal-select contrasena-confirmar" autocomplete="new-password" maxlength="50" />
+                            </div>
+
+                            <p class="contrasena-aviso" role="alert" hidden></p>
+                            <button type="button" class="btn btn-warning btn-cambiar-contrasena" data-no-spinner="true">Cambiar contraseña</button>
+                        </div>
+
                         <div class="modal-actions">
                             <button type="button" class="btn btn-secondary" onclick="cerrarModalEditarUsuario()">Cancelar</button>
                             <button type="button" class="btn btn-primary" onclick="confirmarGuardarUsuario()">Guardar</button>
@@ -889,3 +919,7 @@
         }
     })();
 </script>
+
+@section Scripts {
+    <script src="~/js/perfil.js" asp-append-version="true"></script>
+}

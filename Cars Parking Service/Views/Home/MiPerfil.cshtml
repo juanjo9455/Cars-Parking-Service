@@ -1,0 +1,102 @@
+﻿@model CarsParkingService.Models.usuarios
+@{
+    ViewData["Title"] = "Mi perfil";
+    var exito = TempData["PerfilExito"] as string;
+    var error = ViewBag.Error as string;
+}
+
+@* Mi perfil (todos los roles): nombre, identificación y rol solo los cambia el administrador.
+   Correo, teléfono y foto se guardan con el formulario; la contraseña aparte, con dos toques (perfil.js) *@
+<div class="container mt-4 admin-container">
+
+    <div class="header">
+        <div class="header-info" style="flex-grow: 1;">
+            <h2 style="margin: 0;">
+                <i class="fa-solid fa-user-gear" style="color: #d32f2f;"></i> Mi perfil
+            </h2>
+            <p>Tus datos y tu contraseña</p>
+        </div>
+
+        <a asp-controller="Home" asp-action="@ViewBag.Volver" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(exito))
+    {
+        <p class="perfil-mensaje ok" role="status"><i class="fa-solid fa-circle-check"></i> @exito</p>
+    }
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <p class="perfil-mensaje error" role="alert"><i class="fa-solid fa-circle-exclamation"></i> @error</p>
+    }
+
+    <div class="perfil-grid">
+
+        <!-- Mis datos -->
+        <section class="perfil-card" aria-labelledby="tituloMisDatos">
+            <h3 id="tituloMisDatos">Mis datos</h3>
+
+            <form method="post" asp-action="MiPerfil" id="formPerfil">
+                <div class="perfil-foto">
+                    <div class="perfil-foto-marco">
+                        <img id="perfilFotoPreview" alt="Tu foto" src="@Model.imagen_usuario"
+                             style="@(string.IsNullOrEmpty(Model.imagen_usuario) ? "display:none;" : "")" />
+                        <i id="perfilFotoIcono" class="fa-solid fa-user" aria-hidden="true"
+                           style="@(string.IsNullOrEmpty(Model.imagen_usuario) ? "" : "display:none;")"></i>
+                    </div>
+                    <input type="file" id="perfilFotoInput" accept="image/*" style="display:none;" />
+                    <input type="hidden" id="perfilFotoBase64" name="avatarBase64" />
+                    <button type="button" class="btn btn-secondary" id="btnPerfilFoto" data-no-spinner="true">
+                        <i class="fa-solid fa-camera"></i> Cambiar foto
+                    </button>
+                </div>
+
+                <div class="perfil-dato"><span>Nombre</span><span>@Model.nombres @Model.apellidos</span></div>
+                <div class="perfil-dato"><span>Identificación</span><span>@Model.dni</span></div>
+                <div class="perfil-dato"><span>Rol</span><span>@ViewBag.Rol</span></div>
+
+                <div class="form-group mt-3">
+                    <label for="perfilCorreo">Correo</label>
+                    <input type="email" id="perfilCorreo" name="correo" class="form-control" value="@Model.correo"
+                           maxlength="100" autocomplete="email" required />
+                </div>
+
+                <div class="form-group mt-3">
+                    <label for="perfilTelefono">Teléfono</label>
+                    <input type="tel" id="perfilTelefono" name="telefono" class="form-control" value="@Model.telefono"
+                           maxlength="20" inputmode="tel" autocomplete="tel" required />
+                </div>
+
+                <button type="submit" class="btn btn-primary perfil-guardar">Guardar mis datos</button>
+            </form>
+        </section>
+
+        <!-- Contraseña -->
+        <section class="perfil-card bloque-contrasena" aria-labelledby="tituloContrasena"
+                 data-url="/Home/CambiarMiContrasena">
+            <h3 id="tituloContrasena">Cambiar contraseña</h3>
+
+            <div class="form-group">
+                <label for="perfilContrasenaActual">Contraseña actual</label>
+                <input type="password" id="perfilContrasenaActual" class="form-control contrasena-actual-propia" autocomplete="current-password" />
+            </div>
+            <div class="form-group mt-3">
+                <label for="perfilContrasenaNueva">Nueva contraseña</label>
+                <input type="password" id="perfilContrasenaNueva" class="form-control contrasena-nueva" autocomplete="new-password" maxlength="50" />
+            </div>
+            <div class="form-group mt-3">
+                <label for="perfilContrasenaConfirmar">Confirmar nueva contraseña</label>
+                <input type="password" id="perfilContrasenaConfirmar" class="form-control contrasena-confirmar" autocomplete="new-password" maxlength="50" />
+            </div>
+            <p class="perfil-ayuda">Mínimo 6 caracteres.</p>
+
+            <p class="contrasena-aviso" role="alert" hidden></p>
+            <button type="button" class="btn btn-primary btn-cambiar-contrasena" data-no-spinner="true">Cambiar contraseña</button>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/perfil.js" asp-append-version="true"></script>
+}

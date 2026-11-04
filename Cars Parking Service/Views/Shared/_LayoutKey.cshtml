@@ -28,7 +28,8 @@
         <div class="div-cerrar-menu">
             <i class="fa-solid fa-x" id="cerrar-menu-lateral"></i>
         </div>
-        <div class="usuario" style="width: 2.8cm; height: 2.8cm;">
+        @* La foto también abre Mi perfil *@
+        <a class="usuario" asp-controller="Home" asp-action="MiPerfil" title="Mi perfil" aria-label="Mi perfil" style="display: block; width: 2.8cm; height: 2.8cm;">
             @if (!string.IsNullOrEmpty(imagenUsuario))
             {
                 <img src="@imagenUsuario" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />
@@ -37,7 +38,7 @@
             {
                 <i class="fa-solid fa-user"></i>
             }
-        </div>
+        </a>
         <div class="menu-lateral">
             <ol>
 
@@ -57,6 +58,7 @@
                     <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-building-columns"></i>Vista Banco</a></li>
                 }
 
+                <li><a asp-controller="Home" asp-action="MiPerfil"><i class="fa-solid fa-user-gear"></i>Mi perfil</a></li>
                 <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
             </ol>
         </div>

@@ -959,6 +959,9 @@ function abrirModalEditarUsuario(id, dni, nombre, apellido, telefono, edad, rol,
         }
     }
 
+    // Bloque de contraseña vacío y oculta, para no mostrar la del usuario anterior (perfil.js)
+    window.reiniciarBloqueContrasena?.(document.getElementById('bloqueContrasenaAdmin'));
+
     document.getElementById('ModalEditarUsuario').style.display = 'flex';
 }
 
@@ -1079,16 +1082,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const file = e.target.files && e.target.files[0];
         if (!file || !file.type.startsWith('image/')) return;
 
-        const reader = new FileReader();
-        reader.onload = function (ev) {
-            const base64 = ev.target.result;
-            avatarPreview.src = base64;
-            avatarPreview.style.display = 'block';
-            avatarPreview.style.transform = 'scaleX(-1)'; // Aplicar flip para evitar espejo
-            avatarIcon.style.display = 'none';
-            avatarBase64.value = base64;
-        };
-        reader.readAsDataURL(file);
+        // Achicada antes de subirla, como en Mi perfil (perfil.js): la foto completa podía pasar los 4 MB del formulario
+        window.achicarFotoUsuario(file)
+            .then(function (base64) {
+                avatarPreview.src = base64;
+                avatarPreview.style.display = 'block';
+                avatarPreview.style.transform = 'scaleX(-1)'; // Aplicar flip para evitar espejo
+                avatarIcon.style.display = 'none';
+                avatarBase64.value = base64;
+            })
+            .catch(() => mostrarAlertaWhatsApp('No se pudo leer esa imagen. Elige otra.', 'error'));
     });
 });
 
