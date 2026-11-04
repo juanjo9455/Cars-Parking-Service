@@ -32,7 +32,7 @@ async function verDetalleLiquidacion(btn) {
 
         const filas = data.vehiculos.map(v => `
             <tr>
-                <td><strong>${escaparTexto(v.placa)}</strong></td>
+                <td><span class="ingreso-placa">${escaparTexto(v.placa)}</span></td>
                 <td>${escaparTexto(v.entrega)}</td>
                 <td>${escaparTexto(v.cobro)} <span class="adm-text-muted">(${escaparTexto(v.rol)})</span></td>
                 <td>${escaparTexto(v.metodo)}</td>

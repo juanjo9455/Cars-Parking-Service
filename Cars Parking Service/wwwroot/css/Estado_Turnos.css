@@ -704,6 +704,14 @@
     color: #374151;
 }
 
+/* Placa amarilla como en la tabla de ingresos, más compacta para que quepan las 6 columnas */
+.adm-liq-modal .ingreso-placa {
+    margin: 0;
+    padding: 2px 8px;
+    font-size: 15px;
+    letter-spacing: 1.5px;
+}
+
 /* En celular, el resumen en dos columnas */
 @media (max-width: 600px) {
     .adm-liq-resumen {

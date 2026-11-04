@@ -33,11 +33,4 @@
         public decimal valor_servicio { get; set; }
         public string? nombre_ubicacion { get; set; }
     }
-
-    // Una fila de sp_funcionariosLiquidaciones: un funcionario para el filtro
-    public class funcionario_liquidacion
-    {
-        public int id_usuario { get; set; }
-        public string funcionario { get; set; } = "";
-    }
 }

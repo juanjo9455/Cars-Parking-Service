@@ -1,0 +1,40 @@
+﻿@model List<CarsParkingService.Models.liquidacion_consulta>
+@{
+    var moneda = System.Globalization.CultureInfo.GetCultureInfo("es-CO");
+}
+@* Filas de Liquidaciones. Las usan la página y sus filtros automáticos (FilasLiquidaciones) *@
+
+@if (Model.Count == 0)
+{
+    <tr>
+        <td colspan="7" style="text-align:center; color:#555;">
+            No hay liquidaciones con estos filtros
+        </td>
+    </tr>
+}
+
+@foreach (var l in Model)
+{
+    var funcionario = string.IsNullOrWhiteSpace(l.funcionario) ? "—" : l.funcionario;
+    var fecha = l.fecha?.ToString("dd/MM/yyyy HH:mm") ?? "—";
+
+    <tr class="liq-fila">
+        <td class="liq-numero">#@l.id_liquidacion</td>
+        <td>@fecha</td>
+        <td>@funcionario</td>
+        <td class="liq-dinero">@l.total_efectivo.ToString("C0", moneda)</td>
+        <td class="liq-dinero">@l.total_transferencias.ToString("C0", moneda)</td>
+        <td class="liq-dinero"><strong>@l.total_liquidado.ToString("C0", moneda)</strong></td>
+        <td>
+            @* Abre la ventana con los vehículos (mismo botón que Estado de turnos) *@
+            <button type="button" class="adm-btn-detalle liq-btn-vehiculos" data-no-spinner="true"
+                    data-id="@l.id_liquidacion"
+                    data-usuario="@funcionario"
+                    data-fecha="@fecha"
+                    onclick="verDetalleLiquidacion(this)"
+                    aria-label="Ver los @l.total_vehiculos vehículos de la liquidación @l.id_liquidacion">
+                <i class="fa-solid fa-car-side" aria-hidden="true"></i> @l.total_vehiculos
+            </button>
+        </td>
+    </tr>
+}

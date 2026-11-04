@@ -1,13 +1,12 @@
 ﻿@model List<CarsParkingService.Models.liquidacion_consulta>
 @{
     ViewData["Title"] = "Liquidaciones";
-    var funcionarios = ViewBag.Funcionarios as List<CarsParkingService.Models.funcionario_liquidacion> ?? new();
-    var moneda = System.Globalization.CultureInfo.GetCultureInfo("es-CO");
+    var usuariosFiltro = ViewBag.UsuariosFiltro as List<usuarios> ?? new();
 }
 
-@* Liquidaciones (solo administrador): todas, o filtradas por funcionario y fechas
-   (sp_consultarLiquidaciones). Cada fila se despliega y muestra sus vehículos (DetalleLiquidacion).
-   Mismo estilo que Despachos y cobros *@
+@* Liquidaciones (solo administrador): todas, o filtradas por usuario y fechas (sp_consultarLiquidaciones).
+   Los filtros se aplican solos, sin recargar (FilasLiquidaciones). Cada fila abre sus vehículos en una
+   ventana (DetalleLiquidacion). Mismo estilo que Despachos y cobros *@
 <div class="container mt-4 admin-container">
 
     <!-- Header -->
@@ -32,14 +31,15 @@
         </button>
 
         <div class="search-section filters-panel" id="filtersPanel">
-            <form method="get" asp-action="Liquidaciones" class="row">
+            <form method="get" asp-action="Liquidaciones" class="row" id="formFiltrosLiquidaciones">
+                @* Todos los usuarios: cualquiera puede llegar a cobrar *@
                 <div class="form-group col-md-4 mb-3">
-                    <label for="filtroUsuario">Funcionario</label>
+                    <label for="filtroUsuario">Usuario</label>
                     <select id="filtroUsuario" name="usuario" style="width:100%;">
                         <option value="">Todos</option>
-                        @foreach (var f in funcionarios)
+                        @foreach (var u in usuariosFiltro)
                         {
-                            <option value="@f.id_usuario" selected="@((int?)ViewData["FiltroUsuario"] == f.id_usuario)">@f.funcionario</option>
+                            <option value="@u.id_usuario" selected="@((int?)ViewData["FiltroUsuario"] == u.id_usuario)">@u.nombres @u.apellidos</option>
                         }
                     </select>
                 </div>
@@ -56,15 +56,15 @@
                            value="@(((DateTime?)ViewData["FiltroHasta"])?.ToString("yyyy-MM-dd"))">
                 </div>
 
+                @* Sin botón Buscar: los filtros se aplican solos al cambiarlos (activarFiltrosAutomaticos, site.js) *@
                 <div class="col-12 mt-2 d-flex justify-content-end gap-2">
-                    <button type="submit" class="btn btn-primary px-4">Buscar</button>
                     <a asp-action="Liquidaciones" class="btn btn-secondary px-4">Limpiar</a>
                 </div>
             </form>
         </div>
     </div>
 
-    <p class="liq-cantidad">@Model.Count liquidaciones</p>
+    <p class="liq-cantidad"><span id="cantidadLiquidaciones">@Model.Count</span> liquidaciones</p>
 
     <!-- Tabla -->
     <div class="table-container">
@@ -81,39 +81,7 @@
                 </tr>
             </thead>
             <tbody id="tablaLiquidaciones">
-                @if (Model.Count == 0)
-                {
-                    <tr>
-                        <td colspan="7" style="text-align:center; color:#555;">
-                            No hay liquidaciones con estos filtros
-                        </td>
-                    </tr>
-                }
-
-                @foreach (var l in Model)
-                {
-                    var funcionario = string.IsNullOrWhiteSpace(l.funcionario) ? "—" : l.funcionario;
-
-                    <tr class="liq-fila">
-                        <td class="liq-numero">#@l.id_liquidacion</td>
-                        <td>@(l.fecha?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
-                        <td>@funcionario</td>
-                        <td class="liq-dinero">@l.total_efectivo.ToString("C0", moneda)</td>
-                        <td class="liq-dinero">@l.total_transferencias.ToString("C0", moneda)</td>
-                        <td class="liq-dinero"><strong>@l.total_liquidado.ToString("C0", moneda)</strong></td>
-                        <td>
-                            @* Abre la ventana con los vehículos (mismo botón que Estado de turnos) *@
-                            <button type="button" class="adm-btn-detalle liq-btn-vehiculos" data-no-spinner="true"
-                                    data-id="@l.id_liquidacion"
-                                    data-usuario="@funcionario"
-                                    data-fecha="@(l.fecha?.ToString("dd/MM/yyyy HH:mm") ?? "—")"
-                                    onclick="verDetalleLiquidacion(this)"
-                                    aria-label="Ver los @l.total_vehiculos vehículos de la liquidación @l.id_liquidacion">
-                                <i class="fa-solid fa-car-side" aria-hidden="true"></i> @l.total_vehiculos
-                            </button>
-                        </td>
-                    </tr>
-                }
+                <partial name="_FilasLiquidaciones" model="Model" />
             </tbody>
         </table>
     </div>
@@ -124,13 +92,42 @@
 @section Scripts {
     <script src="~/js/detalle-liquidacion.js" asp-append-version="true"></script>
     <script>
-        // Tocar cualquier parte de la fila abre los vehículos, como su botón: en el celular el botón queda
-        // al final de la tabla y habría que desplazarla para verlo
-        document.getElementById('tablaLiquidaciones')?.addEventListener('click', function (e) {
-            const fila = e.target.closest('tr.liq-fila');
-            if (!fila || e.target.closest('.liq-btn-vehiculos')) return;
+        (function () {
+            const tbody = document.getElementById('tablaLiquidaciones');
+            if (!tbody) return;
 
-            fila.querySelector('.liq-btn-vehiculos').click();
-        });
+            // Tocar cualquier parte de la fila abre los vehículos, como su botón: en el celular el botón queda
+            // al final de la tabla y habría que desplazarla para verlo
+            tbody.addEventListener('click', function (e) {
+                const fila = e.target.closest('tr.liq-fila');
+                if (!fila || e.target.closest('.liq-btn-vehiculos')) return;
+
+                fila.querySelector('.liq-btn-vehiculos').click();
+            });
+
+            // Filtros automáticos: al cambiar uno se piden solo las filas, con los filtros que quedaron en la URL.
+            // Si llegan dos respuestas, solo cuenta la del último cambio
+            let ultimoPedido = 0;
+
+            async function refrescarFilas() {
+                const pedido = ++ultimoPedido;
+
+                try {
+                    // redirect 'manual': si la sesión venció, la página de login no termina dentro de la tabla
+                    const respuesta = await fetch(`/Home/FilasLiquidaciones${location.search}`, { cache: 'no-store', redirect: 'manual' });
+                    if (!respuesta.ok || pedido !== ultimoPedido) return;
+
+                    const html = await respuesta.text();
+                    if (pedido !== ultimoPedido) return;
+
+                    tbody.innerHTML = html;
+                    document.getElementById('cantidadLiquidaciones').textContent = tbody.querySelectorAll('tr.liq-fila').length;
+                } catch (error) {
+                    console.error('Error al filtrar las liquidaciones:', error);
+                }
+            }
+
+            activarFiltrosAutomaticos(document.getElementById('formFiltrosLiquidaciones'), refrescarFilas);
+        })();
     </script>
 }

@@ -4,7 +4,9 @@
    - Correr ANTES de publicar el código: la página Liquidaciones y el
      "Ver detalle" de Estado de turnos (DetalleLiquidacion) llaman a
      estos procedimientos.
-   - No modifica ni borra datos. Solo crea (o actualiza) 3 procedimientos.
+   - No modifica ni borra datos. Solo crea (o actualiza) 2 procedimientos y
+     borra sp_funcionariosLiquidaciones, que ya no se usa (el filtro lista
+     todos los usuarios con sp_consultarUsuarios).
    - Se puede correr más de una vez.
    - Para deshacerlo: liquidaciones-admin-revertir.sql
    ===================================================================== */
@@ -78,19 +80,9 @@ BEGIN
 END;
 GO
 
-/* 3. Funcionarios que han hecho al menos una liquidación (lista del filtro) */
-CREATE OR ALTER PROCEDURE dbo.sp_funcionariosLiquidaciones
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    SELECT
-        u.id_usuario,
-        LTRIM(RTRIM(CONCAT(u.nombres, ' ', u.apellidos))) AS funcionario
-    FROM dbo.tbl_usuarios u
-    WHERE EXISTS (SELECT 1 FROM dbo.tbl_liquidacion l WHERE l.id_usuario = u.id_usuario)
-    ORDER BY funcionario;
-END;
+/* 3. Ya no se usa: el filtro lista todos los usuarios, porque cualquiera puede llegar a cobrar.
+      Se borra si quedó de una versión anterior de este script */
+DROP PROCEDURE IF EXISTS dbo.sp_funcionariosLiquidaciones;
 GO
 
 PRINT 'Liquidaciones del administrador: procedimientos listos.';

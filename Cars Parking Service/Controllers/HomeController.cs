@@ -1685,8 +1685,8 @@ namespace CarsParkingService.Controllers
             return View(registros);
         }
 
-        // Liquidaciones (solo administrador): todas, o las de un funcionario y un rango de fechas.
-        // Los vehículos de cada una se piden al desplegarla (DetalleLiquidacion), no al cargar la página
+        // Liquidaciones (solo administrador): todas, o las de un usuario y un rango de fechas. Los filtros se
+        // aplican solos (FilasLiquidaciones); los vehículos de cada una se piden al abrirla (DetalleLiquidacion)
         [HttpGet]
         public IActionResult Liquidaciones(int? usuario, DateTime? desde, DateTime? hasta)
         {
@@ -1695,23 +1695,48 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("Index");
             }
 
-            var liquidaciones = _context.Database
-                .SqlQueryRaw<liquidacion_consulta>("EXEC sp_consultarLiquidaciones @id_usuario, @fecha_inicio, @fecha_fin",
-                    new SqlParameter("@id_usuario", (object?)usuario ?? DBNull.Value),
-                    new SqlParameter("@fecha_inicio", System.Data.SqlDbType.Date) { Value = (object?)desde?.Date ?? DBNull.Value },
-                    new SqlParameter("@fecha_fin", System.Data.SqlDbType.Date) { Value = (object?)hasta?.Date ?? DBNull.Value })
-                .ToList();
+            // Todos los usuarios, no solo los que ya liquidaron: cualquiera puede llegar a cobrar.
+            // Mismo procedimiento que la tabla de usuarios del administrador, sin filtros
+            var sinFiltros = new[] { "@nombre", "@apellido", "@documento", "@edad", "@rol", "@estado" }
+                .Select(nombre => new SqlParameter(nombre, DBNull.Value))
+                .ToArray();
 
-            ViewBag.Funcionarios = _context.Database
-                .SqlQueryRaw<funcionario_liquidacion>("EXEC sp_funcionariosLiquidaciones")
+            ViewBag.UsuariosFiltro = _context.usuarios
+                .FromSqlRaw("EXEC sp_consultarUsuarios @nombre, @apellido, @documento, @edad, @rol, @estado", sinFiltros)
+                .AsEnumerable()
+                .OrderBy(u => u.nombres)
+                .ThenBy(u => u.apellidos)
                 .ToList();
 
             ViewData["FiltroUsuario"] = usuario;
             ViewData["FiltroDesde"] = desde;
             ViewData["FiltroHasta"] = hasta;
 
-            return View(liquidaciones);
+            return View(ConsultarLiquidaciones(usuario, desde, hasta));
         }
+
+        // Filas de Liquidaciones con los filtros elegidos, para cambiarlas sin recargar la página
+        // (activarFiltrosAutomaticos, site.js). Las arma la misma vista parcial que la página
+        [HttpGet]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult FilasLiquidaciones(int? usuario, DateTime? desde, DateTime? hasta)
+        {
+            if (HttpContext.Session.GetInt32("id_rol") != 3)
+            {
+                return Unauthorized();
+            }
+
+            return PartialView("_FilasLiquidaciones", ConsultarLiquidaciones(usuario, desde, hasta));
+        }
+
+        // sp_consultarLiquidaciones (Database/liquidaciones-admin.sql); cada filtro es opcional
+        private List<liquidacion_consulta> ConsultarLiquidaciones(int? usuario, DateTime? desde, DateTime? hasta) =>
+            _context.Database
+                .SqlQueryRaw<liquidacion_consulta>("EXEC sp_consultarLiquidaciones @id_usuario, @fecha_inicio, @fecha_fin",
+                    new SqlParameter("@id_usuario", (object?)usuario ?? DBNull.Value),
+                    new SqlParameter("@fecha_inicio", System.Data.SqlDbType.Date) { Value = (object?)desde?.Date ?? DBNull.Value },
+                    new SqlParameter("@fecha_fin", System.Data.SqlDbType.Date) { Value = (object?)hasta?.Date ?? DBNull.Value })
+                .ToList();
 
         // Despachos y cobros (punto 28, solo administrador): cada vehículo con ingreso, despacho o cobro en el
         // período, con quién lo recibió, quién lo solicitó, quién lo despachó, quién lo cobró y su liquidación
