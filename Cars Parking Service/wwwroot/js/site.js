@@ -2719,8 +2719,7 @@ function abrirModalWhatsApp() {
     if (contenedor) {
         contenedor.innerHTML = `
 
-
-            <h2>Reenviar Comprobante por WhatsApp</h2>
+            <h2>Reenviar mensaje de ingreso</h2>
             <p>Ingresa la placa del vehículo para reenviar la notificación.</p>
 
             <form id="formReenviarWhatsapp">
@@ -2732,12 +2731,12 @@ function abrirModalWhatsApp() {
 
                 <!-- Opcional: Permitir actualizar el número si quedó mal digitado -->
                 <div class="input-group">
-                    <label for="telefonoNuevo">WhatsApp (opcional, si cambió o estuvo mal):</label>
+                    <label for="telefonoNuevo">WhatsApp:</label>
                     <input type="tel" id="telefonoNuevo" name="telefonoNuevo" placeholder="Dejar en blanco para usar el registrado">
                 </div>
 
                 <button type="submit" class="btn-submit" onclick="">
-                    🚀 Reenviar WhatsApp
+                    <i class="fa-brands fa-whatsapp"></i>Reenviar WhatsApp
                 </button>
             </form>
 
