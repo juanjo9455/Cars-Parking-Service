@@ -170,9 +170,10 @@
     let estadoUbicaciones = "principal";
     let estadoParqueaderos = "principal";
 
-    // Las cards de páginas aparte (WhatsApp, Despachos y cobros) se muestran/ocultan igual que la de
-    // Usuarios (menú principal)
-    const cardsPaginasAparte = document.querySelectorAll("#CardWhatsApp, #CardDespachosCobros");
+    // Las cards de páginas aparte (WhatsApp, Despachos y cobros, Liquidaciones...) se muestran/ocultan igual
+    // que la de Usuarios (menú principal). Son los enlaces del menú principal; las que abren opciones aquí
+    // mismo son div. Así una card de página nueva no hay que agregarla a mano
+    const cardsPaginasAparte = document.querySelectorAll(".admin-cards-container > a.admin-card");
     if (cardsPaginasAparte.length && usuariosCard) {
         new MutationObserver(() => {
             cardsPaginasAparte.forEach(card => card.style.display = usuariosCard.style.display === "none" ? "none" : "");
