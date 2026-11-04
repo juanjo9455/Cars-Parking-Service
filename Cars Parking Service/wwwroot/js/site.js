@@ -2736,7 +2736,7 @@ function abrirModalWhatsApp() {
                 </div>
 
                 <button type="submit" class="btn-submit" onclick="">
-                    <i class="fa-brands fa-whatsapp"></i>Reenviar WhatsApp
+                    <i class="fa-brands fa-whatsapp"></i> Reenviar WhatsApp
                 </button>
             </form>
 
