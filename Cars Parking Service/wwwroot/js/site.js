@@ -2417,19 +2417,21 @@ async function abrirModalInformacion(btn) {
 
             dataVideos.videos.forEach(video => {
 
-                const reproductor = document.createElement("video");
+                // Miniatura con un cuadro del video y "Ver en grande": al tocarla se abre el visor (abrirVisorVideo)
+                const miniatura = document.createElement("button");
 
-                reproductor.src = video.src;
-                reproductor.controls = true;
-                reproductor.preload = "metadata";
-                reproductor.playsInline = true;
-                reproductor.style.width = "100%";
-                reproductor.style.height = "120px";
-                reproductor.style.objectFit = "cover";
-                reproductor.style.borderRadius = "8px";
-                reproductor.style.background = "#000";
+                miniatura.type = "button";
+                miniatura.className = "video-miniatura";
+                miniatura.setAttribute("aria-label", "Ver el video en grande");
+                miniatura.innerHTML = `
+                    <video preload="metadata" muted playsinline></video>
+                    <span class="video-miniatura-play"><i class="fa-solid fa-play"></i>Ver en grande</span>`;
 
-                contenedorVideos.appendChild(reproductor);
+                // #t=0.5: muestra ese cuadro en la miniatura (sin él, en iPhone se ve negra)
+                miniatura.querySelector("video").src = `${video.src}#t=0.5`;
+                miniatura.addEventListener("click", () => abrirVisorVideo(video.src));
+
+                contenedorVideos.appendChild(miniatura);
 
             });
 
@@ -2446,6 +2448,40 @@ async function abrirModalInformacion(btn) {
             "<p>Ocurrió un error al obtener la información del vehículo.</p>";
 
     }
+}
+
+// Visor del video del ingreso a toda la pantalla: se ve completo, sin recortar ni deformar (cabe en la pantalla
+// con su forma, horizontal o vertical). Se cierra con la X, tocando la parte oscura o con Escape
+function abrirVisorVideo(src) {
+
+    const visor = document.createElement("div");
+
+    visor.className = "visor-video";
+    visor.setAttribute("role", "dialog");
+    visor.setAttribute("aria-label", "Video del vehículo");
+    visor.innerHTML = `
+        <button type="button" class="visor-video-cerrar" aria-label="Cerrar video">&times;</button>
+        <video controls autoplay playsinline></video>`;
+
+    const reproductor = visor.querySelector("video");
+    reproductor.src = src;
+
+    const conEscape = e => { if (e.key === "Escape") cerrar(); };
+
+    function cerrar() {
+        // Se suelta el video para que deje de descargarse
+        reproductor.pause();
+        reproductor.removeAttribute("src");
+        reproductor.load();
+        visor.remove();
+        document.removeEventListener("keydown", conEscape);
+    }
+
+    visor.querySelector(".visor-video-cerrar").addEventListener("click", cerrar);
+    visor.addEventListener("click", e => { if (e.target === visor) cerrar(); });
+    document.addEventListener("keydown", conEscape);
+
+    document.body.appendChild(visor);
 }
 
 // ======================================================

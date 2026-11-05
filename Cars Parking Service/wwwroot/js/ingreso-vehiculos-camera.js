@@ -337,10 +337,60 @@ document.addEventListener('DOMContentLoaded', () => {
     const MIN_SECONDS = 10;
     const MAX_SECONDS = 20;
 
+    // Linterna: se prende sola al abrir la cámara para que de noche el video salga claro, y el botón la apaga o
+    // prende. Solo donde el navegador deja controlarla (Android con Chrome); si no, el botón no aparece y se graba
+    // como antes. Se apaga sola cuando se detiene la cámara (track.stop)
+    const linternaBtn = document.getElementById('linternaBtn');
+    let linternaPrendida = false;
+
+    async function ponerLinterna(prender) {
+        const pista = mediaStream?.getVideoTracks()[0];
+        if (!pista) return;
+
+        try {
+            await pista.applyConstraints({ advanced: [{ torch: prender }] });
+            linternaPrendida = prender;
+        } catch (error) {
+            console.warn('No se pudo cambiar la linterna:', error);
+        }
+
+        if (linternaBtn) {
+            linternaBtn.style.background = linternaPrendida ? '#ffd54f' : 'rgba(0,0,0,0.55)';
+            linternaBtn.style.color = linternaPrendida ? '#000' : '#fff';
+            linternaBtn.setAttribute('aria-pressed', String(linternaPrendida));
+            linternaBtn.setAttribute('aria-label', linternaPrendida ? 'Apagar linterna' : 'Prender linterna');
+        }
+    }
+
+    // Algunos Android solo informan que tienen linterna cuando la cámara ya está dando imagen: se revisa
+    // al cargar el video y, si todavía no aparece, una vez más un momento después
+    function prepararLinterna(reintento = true) {
+        const pista = mediaStream?.getVideoTracks()[0];
+        const tieneLinterna = !!pista?.getCapabilities?.().torch;
+
+        if (linternaBtn) linternaBtn.hidden = !tieneLinterna;
+
+        if (tieneLinterna) {
+            ponerLinterna(true);
+        } else if (reintento && pista) {
+            setTimeout(() => prepararLinterna(false), 700);
+        }
+    }
+
+    function mostrarCamara(stream) {
+        mediaStream = stream;
+        liveVideo.addEventListener('loadedmetadata', () => prepararLinterna(), { once: true });
+        liveVideo.srcObject = stream;
+    }
+
+    linternaBtn?.addEventListener('click', () => ponerLinterna(!linternaPrendida));
+
     if (typeof grabarVideoBtn !== 'undefined' && grabarVideoBtn) {
         grabarVideoBtn.addEventListener('click', function() {
             if (videoGrabado) return; // Solo un video permitido
             videoCompletoYConfirmado = false;
+            linternaPrendida = false;
+            if (linternaBtn) linternaBtn.hidden = true;
             videoModal.style.display = 'flex';
             videoReviewSection.style.display = 'none';
             startRecordingBtn.style.display = '';
@@ -356,17 +406,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Cámara trasera preferida, SIN AUDIO
             navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: 'environment' }, ...resolucionVideo }, audio: false })
-                .then(stream => {
-                    mediaStream = stream;
-                    liveVideo.srcObject = stream;
-                })
+                .then(mostrarCamara)
                 .catch(err => {
                     // fallback a cualquier cámara si la trasera no está disponible
                     navigator.mediaDevices.getUserMedia({ video: resolucionVideo, audio: false })
-                        .then(stream => {
-                            mediaStream = stream;
-                            liveVideo.srcObject = stream;
-                        })
+                        .then(mostrarCamara)
                         .catch(err2 => {
                             mostrarError('No se pudo acceder a la cámara: ' + err2);
                             videoModal.style.display = 'none';
