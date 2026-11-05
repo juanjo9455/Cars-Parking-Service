@@ -1351,7 +1351,8 @@ tbody td:last-child {
     }
 
     .tabla-ingresos td.cell-action i.btn-pago-ingreso,
-    .tabla-ingresos td.cell-action i.btn-info-ingreso {
+    .tabla-ingresos td.cell-action i.btn-info-ingreso,
+    .tabla-ingresos td.cell-action i.btn-foto-ingreso {
         width: 28px;
         height: 28px;
         font-size: 15px;
@@ -2509,6 +2510,26 @@ i.btn-pago-ingreso {
     color: #fff;
 }
 
+/* Cámara para la foto del parqueo (solo el valet que lleva el carro): mismo círculo, en azul */
+i.btn-foto-ingreso {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    line-height: 1;
+    border-radius: 50%;
+    background: #e3f2fd;
+    color: #1565c0;
+    font-size: 16px;
+    box-shadow: 0 2px 6px rgba(21, 101, 192, 0.15);
+}
+
+.btn-foto-ingreso:hover {
+    background: #1565c0;
+    color: #fff;
+}
+
 .info-panel {
     display: flex;
     flex-direction: column;
@@ -3156,6 +3177,86 @@ i.btn-pago-ingreso {
     margin: 8px 2px 0;
     font-size: 14px;
     color: #4b5563;
+}
+
+/* Lápiz al final de la fila: también abre la información */
+.dc-lapiz-fila {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #1d4ed8;
+    font-size: 15px;
+    box-shadow: 0 2px 6px rgba(29, 78, 216, 0.15);
+    cursor: pointer;
+}
+
+.dc-lapiz-fila:hover {
+    background: #1d4ed8;
+    color: #fff;
+}
+
+/* En el celular la tabla se compacta para que quepan las 5 columnas sin moverse de lado */
+@media (max-width: 480px) {
+    .tabla-despachos th,
+    .tabla-despachos td {
+        padding: 8px 3px;
+    }
+
+    .tabla-despachos .dc-placa-btn {
+        font-size: 13px;
+        letter-spacing: 1px;
+        padding: 2px 5px;
+    }
+
+    .tabla-despachos .dc-principal {
+        font-size: 13px;
+    }
+
+    .tabla-despachos .dc-detalle,
+    .tabla-despachos .status-badge {
+        font-size: 12px;
+    }
+
+    .tabla-despachos .status-badge {
+        padding: 3px 8px;
+    }
+
+    .dc-lapiz-fila {
+        width: 30px;
+        height: 30px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 380px) {
+    .tabla-despachos th,
+    .tabla-despachos td {
+        padding: 8px 2px;
+    }
+
+    .tabla-despachos .dc-placa-btn {
+        font-size: 12px;
+        letter-spacing: 0;
+        padding: 2px 4px;
+    }
+
+    .tabla-despachos .dc-principal {
+        font-size: 12px;
+    }
+
+    .tabla-despachos .status-badge {
+        padding: 3px 6px;
+    }
+
+    .dc-lapiz-fila {
+        width: 28px;
+        height: 28px;
+    }
 }
 
 /* Campos de dinero (campo-pesos en site.js): el valor con formato debajo del campo ("$ 20.000") */
