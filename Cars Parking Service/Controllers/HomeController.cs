@@ -179,9 +179,9 @@ namespace CarsParkingService.Controllers
                                         i.estado_liquidacion == false)
                             .Sum(i => (decimal?)i.valor_servicio) ?? 0,
 
-                    // Consultamos los vehiculos recibidos por ese valet
-                    VehiculosRecibidos = _context.ingresos
-                            .Count(i => i.id_valet == grupo.Key &&
+                    // Los que ese valet marcó como parqueados (tocó Parquear; si los marcó el Key no le suman)
+                    VehiculosParqueados = _context.ingresos
+                            .Count(i => i.usuario_parqueo == grupo.Key &&
                                         i.fecha_ingreso.HasValue &&
                                         i.fecha_ingreso.Value.Date == FechaConsulta),
 
@@ -277,6 +277,9 @@ namespace CarsParkingService.Controllers
                     TotalLiquidado = l.total_liquidado ?? 0
                 })
                 .ToList();
+
+            // Todos los vehículos que entraron ese día, en todas las zonas (va fuera de la tabla de valets)
+            model.TotalVehiculos = _context.ingresos.Count(i => i.fecha_ingreso >= inicioDia && i.fecha_ingreso < finDia);
 
             return View(model);
 
@@ -930,7 +933,9 @@ namespace CarsParkingService.Controllers
                 parametros.ToArray()
             )
             .AsEnumerable()
+            // Arriba los solicitados, luego los despachados; en cada grupo, los más recientes primero
             .OrderByDescending(u => u.estado_servicio?.Trim().ToLower() == "solicitado")
+            .ThenByDescending(u => u.estado_servicio?.Trim().ToLower() == "despachado")
             .ThenByDescending(u => u.fecha_ingreso)
             .ToList();
         }

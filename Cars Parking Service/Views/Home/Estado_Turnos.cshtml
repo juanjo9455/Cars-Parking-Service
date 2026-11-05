@@ -140,6 +140,13 @@
        PANEL VALETS
     ══════════════════════════════════════ *@
     <div class="adm-panel active" id="adm-valets">
+        @* Todos los vehículos del día; en la tabla, los que parqueó cada valet *@
+        <div class="adm-total-dia">
+            <span class="adm-num-pill adm-pill-total">
+                <i class="fa-solid fa-car"></i>
+                Vehículos totales del día: <strong>@Model.TotalVehiculos</strong>
+            </span>
+        </div>
         <div class="adm-table-wrap">
             <div class="adm-table-scroll">
                 <table class="adm-table">
@@ -150,8 +157,8 @@
                             <th>Apellidos</th>
                             <th>Deuda con banco</th>
                             <th>
-                                <i class="fa-solid fa-key"></i>
-                                Vehículos recibidos
+                                <i class="fa-solid fa-square-parking"></i>
+                                Vehículos parqueados
                             </th>
                             <th>
                                 <i class="fa-solid fa-garage"></i>
@@ -199,8 +206,8 @@
                                     </td>
                                     <td>
                                         <span class="adm-num-pill adm-pill-recibidos">
-                                            <i class="fa-solid fa-key"></i>
-                                            @v.VehiculosRecibidos  
+                                            <i class="fa-solid fa-square-parking"></i>
+                                            @v.VehiculosParqueados
                                         </span>
                                     </td>
                                     <td>

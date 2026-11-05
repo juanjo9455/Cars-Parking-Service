@@ -8,6 +8,9 @@ namespace CarsParkingService.ViewModels
 
         public DateTime FechaHoy { get; set; }
 
+        // Vehículos que entraron en la fecha consultada, en todas las zonas
+        public int TotalVehiculos { get; set; }
+
         public List<ValetActivoVM> Valets { get; set; } = new();
 
         public List<BancoActivoVM> Bancos { get; set; } = new();

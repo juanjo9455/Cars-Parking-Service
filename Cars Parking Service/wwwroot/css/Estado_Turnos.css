@@ -452,6 +452,21 @@
     border: 0.5px solid #c5cae9;
 }
 
+/* Total del día, fuera de la tabla de valets (a la derecha) */
+.adm-total-dia {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.adm-pill-total {
+    padding: 6px 14px;
+    font-size: 15px;
+    background: rgba(211, 47, 47, .08);
+    color: #b71c1c;
+    border: 0.5px solid rgba(211, 47, 47, .35);
+}
+
 .adm-pill-ubicacion {
     background: #fce8e6;
     color: #922B21;

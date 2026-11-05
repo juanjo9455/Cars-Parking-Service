@@ -14,7 +14,8 @@ namespace CarsParkingService.ViewModels
 
         public decimal Deuda { get; set; }
 
-        public int VehiculosRecibidos { get; set; }
+        // Los que ese valet marcó como parqueados (usuario_parqueo)
+        public int VehiculosParqueados { get; set; }
 
         public int VehiculosDespachados { get; set; }
 
