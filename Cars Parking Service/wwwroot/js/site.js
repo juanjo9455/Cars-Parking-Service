@@ -1241,7 +1241,12 @@ function editarValorCobro(idIngreso) {
 
     caja.querySelector('.cobro-valor-precio').hidden = true;
     caja.querySelector('.cobro-valor-cambiar').hidden = true;
-    caja.querySelector('.cobro-valor-ayuda').hidden = false;
+
+    // Lo que puso el cliente en la app ya viene escrito en el campo
+    const notaApp = caja.querySelector('.cobro-valor-app');
+    if (notaApp) notaApp.hidden = true;
+
+    caja.querySelector('.cobro-valor-ayuda:not(.cobro-valor-app)').hidden = false;
     input.hidden = false;
     input.focus();
     input.select();
@@ -1272,16 +1277,24 @@ function abrirModalPago(btn) {
     const tieneFoto = btn.getAttribute('data-tiene-foto') === 'true';
     const tarifa = btn.getAttribute('data-tarifa');
     const pagoApp = btn.getAttribute('data-pago-app') === 'true';
+    const totalApp = Number(btn.getAttribute('data-total')) || 0;
 
-    // Cuánto se cobra: si el cliente pagó por la app, su total con propina (no se cambia); si no, la tarifa
-    // de la ubicación, que el banco cambia por lo que pagó el cliente (lo de más queda como propina).
-    // La tarifa se ve como texto; "Cambiar valor total" muestra el campo (editarValorCobro)
-    const cajaValor = !pagoApp && tarifa
+    // Cuánto se cobra: lo que el cliente puso en la app (con la propina) o, si no pagó por ella, la tarifa de la
+    // ubicación. Se ve como texto; "Cambiar valor total" muestra el campo (editarValorCobro) para escribir lo que
+    // pagó de verdad: lo de más sobre la tarifa queda como propina (FinalizarServicio)
+    const valorInicial = pagoApp && totalApp > 0 ? totalApp : Number(tarifa);
+    const servicioApp = Math.min(totalApp, Number(tarifa));
+    const notaApp = pagoApp && totalApp > 0
+        ? `<span class="cobro-valor-ayuda cobro-valor-app">Lo puso el cliente en la app: servicio ${PESOS.format(servicioApp)}${totalApp > servicioApp ? ` + propina ${PESOS.format(totalApp - servicioApp)}` : ''}</span>`
+        : '';
+
+    const cajaValor = tarifa
         ? `<div class="cobro-valor">
                <label class="cobro-valor-label" for="valor-cobrado-${id}">Valor a cobrar</label>
-               <span class="cobro-valor-precio">${PESOS.format(tarifa)}</span>
+               <span class="cobro-valor-precio">${PESOS.format(valorInicial)}</span>
+               ${notaApp}
                <input type="number" id="valor-cobrado-${id}" class="cobro-valor-input" data-tarifa="${tarifa}"
-                      value="${tarifa}" min="1" step="1" inputmode="numeric" hidden />
+                      value="${valorInicial}" min="1" step="1" inputmode="numeric" hidden />
                <span class="cobro-valor-ayuda" hidden>Servicio ${PESOS.format(tarifa)}. Si el cliente paga más (propina), escribe lo que pagó.</span>
                <button type="button" class="cobro-valor-cambiar" onclick="editarValorCobro('${id}')">Cambiar valor total</button>
            </div>`
@@ -1589,7 +1602,7 @@ function generarCodigoSeguridad(idIngreso) {
 
     if (valorInput && !(Number(valorInput.value) > 0)) {
         mostrarAlertaWhatsApp('Escribe el valor que pagó el cliente.', 'error');
-        valorInput.focus();
+        editarValorCobro(idIngreso);   // el campo puede estar escondido detrás de "Cambiar valor total"
         return;
     }
 

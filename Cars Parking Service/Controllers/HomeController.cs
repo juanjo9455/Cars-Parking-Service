@@ -2235,12 +2235,11 @@ namespace CarsParkingService.Controllers
                     }
                 }
 
-                // El cliente que pagó por su enlace ya dejó servicio, propina y total (PaymentController.GuardarPago):
-                // eso no se cambia. Si no, el banco puede cobrar otro valor (lo que el cliente pagó con propina)
-                var pagoPorApp = (ingreso.total_servicio ?? 0) > 0;
-                var valorCobrado = pagoPorApp || !dto.ValorCobrado.HasValue
-                    ? (decimal?)null
-                    : decimal.Round(dto.ValorCobrado.Value, 0);
+                // Lo que el cliente pagó de verdad, con propina. Llega con lo que puso en la app (con la solicitud y
+                // el pago juntos, casi todos) o con la tarifa, y el banco lo puede cambiar en los dos casos
+                var valorCobrado = dto.ValorCobrado.HasValue
+                    ? decimal.Round(dto.ValorCobrado.Value, 0)
+                    : (decimal?)null;
 
                 if (valorCobrado <= 0)
                 {

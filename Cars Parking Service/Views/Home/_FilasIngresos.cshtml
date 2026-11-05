@@ -137,8 +137,8 @@
                               transferencia, que el banco encuentra cargada al cobrar *@
                         @if (IngresoReglas.PuedeCobrar(ingresos))
                         {
-                            // Si el cliente pagó por su enlace ya dejó el total con propina (GuardarPago) y no se cambia;
-                            // si no, se cobra la tarifa de la ubicación y el banco puede escribir otro valor
+                            // Si el cliente pagó por su enlace ya dejó el total con propina; si no, se cobra la tarifa de la
+                            // ubicación. En los dos casos el banco puede escribir lo que pagó de verdad (abrirModalPago)
                             var tarifa = valoresUbicacion.TryGetValue(ingresos.id_ubicacion, out var valorUbicacion) ? valorUbicacion : (decimal?)null;
                             var pagoPorApp = (ingresos.total_servicio ?? 0) > 0;
                             var valorCobro = (pagoPorApp ? ingresos.total_servicio : tarifa)?.ToString("C0", moneda) ?? "";
@@ -168,6 +168,7 @@
                                     data-valor="@valorCobro"
                                     data-tarifa="@(tarifa?.ToString("0", System.Globalization.CultureInfo.InvariantCulture))"
                                     data-pago-app="@(pagoPorApp ? "true" : "false")"
+                                    data-total="@(pagoPorApp ? ingresos.total_servicio?.ToString("0", System.Globalization.CultureInfo.InvariantCulture) : "")"
                                     data-tiene-foto="@tieneFoto"
                                     style="cursor:pointer;">
                                 </i>
