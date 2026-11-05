@@ -179,9 +179,9 @@ namespace CarsParkingService.Controllers
                                         i.estado_liquidacion == false)
                             .Sum(i => (decimal?)i.valor_servicio) ?? 0,
 
-                    // Los que ese valet marcó como parqueados (tocó Parquear; si los marcó el Key no le suman)
-                    VehiculosParqueados = _context.ingresos
-                            .Count(i => i.usuario_parqueo == grupo.Key &&
+                    // Los vehículos asignados a ese valet (recibidos)
+                    VehiculosRecibidos = _context.ingresos
+                            .Count(i => i.id_valet == grupo.Key &&
                                         i.fecha_ingreso.HasValue &&
                                         i.fecha_ingreso.Value.Date == FechaConsulta),
 
