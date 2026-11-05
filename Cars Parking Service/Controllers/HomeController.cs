@@ -1760,6 +1760,7 @@ namespace CarsParkingService.Controllers
             var consulta = _context.ingresos
                 .AsNoTracking()
                 .Include(i => i.Ubicacion)
+                .Include(i => i.Parqueadero)
                 .Where(i => (i.fecha_ingreso >= fechaDesde && i.fecha_ingreso < fechaHasta) ||
                             (i.fecha_salida >= fechaDesde && i.fecha_salida < fechaHasta) ||
                             (i.fecha_entrega >= fechaDesde && i.fecha_entrega < fechaHasta));
@@ -1797,9 +1798,9 @@ namespace CarsParkingService.Controllers
                 .ToList();
 
             // Nombres de todos los que aparecen: valet que recibió, quien parqueó, quien solicitó, valet de despacho
-            // y quien cobró
+            // y quien cobró; y el banco que registró el ingreso (ventana de información)
             var idsUsuarios = ingresos
-                .SelectMany(i => new int?[] { i.id_valet, i.usuario_parqueo, i.usuario_solicitud, i.valet_despacho, i.usuario_cobro })
+                .SelectMany(i => new int?[] { i.id_valet, i.usuario_parqueo, i.usuario_solicitud, i.valet_despacho, i.usuario_cobro, i.id_banco })
                 .Where(id => id.HasValue)
                 .Select(id => id!.Value)
                 .Distinct()
@@ -1833,6 +1834,73 @@ namespace CarsParkingService.Controllers
             ViewData["FiltroComo"] = como;
 
             return View(ingresos);
+        }
+
+        private static readonly string[] MetodosPagoAdmin = { "Efectivo", "QR", "Transferencia", "Nequi" };
+
+        // Despachos y cobros > Información: el administrador corrige el método de pago o el valor total de un
+        // vehículo ya cobrado (uno de los dos por vez). Si ya está en una liquidación no se cambia: sus totales
+        // quedarían descuadrados. El valor se reparte como en el cobro del banco (FinalizarServicio): lo que pase
+        // de la tarifa de la ubicación es propina y lo que falte, descuento
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult EditarCobro(int id_ingreso, string? metodo_pago, decimal? valor_total)
+        {
+            if (!EsAdmin())
+            {
+                return Json(new { success = false, mensaje = "Solo el administrador puede cambiar un cobro." });
+            }
+
+            var ingreso = _context.ingresos.Include(i => i.Ubicacion).FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            if (ingreso == null)
+            {
+                return Json(new { success = false, mensaje = "No se encontró el vehículo." });
+            }
+
+            if (ingreso.estado_pago != "pagado")
+            {
+                return Json(new { success = false, mensaje = $"El vehículo {ingreso.placa} todavía no se ha cobrado." });
+            }
+
+            if (ingreso.id_liquidacion.HasValue || ingreso.estado_liquidacion == true)
+            {
+                var liquidacion = ingreso.id_liquidacion.HasValue ? $"en la liquidación #{ingreso.id_liquidacion}" : "liquidado";
+                return Json(new { success = false, mensaje = $"El vehículo {ingreso.placa} ya está {liquidacion}: no se puede cambiar." });
+            }
+
+            if (metodo_pago != null)
+            {
+                if (!MetodosPagoAdmin.Contains(metodo_pago))
+                {
+                    return Json(new { success = false, mensaje = "Elige un método de pago válido." });
+                }
+
+                ingreso.metodo_pago = metodo_pago;
+            }
+            else if (valor_total.HasValue)
+            {
+                var total = valor_total.Value;
+
+                if (total <= 0 || total > 10_000_000 || total != decimal.Truncate(total))
+                {
+                    return Json(new { success = false, mensaje = "El valor total debe ser un número entero mayor que 0." });
+                }
+
+                var tarifa = ingreso.Ubicacion?.valor_servicio ?? ingreso.valor_servicio ?? 0;
+
+                ingreso.valor_servicio = Math.Min(total, tarifa);
+                ingreso.valor_propina = total - ingreso.valor_servicio;
+                ingreso.total_servicio = total;
+            }
+            else
+            {
+                return Json(new { success = false, mensaje = "No hay nada que cambiar." });
+            }
+
+            _context.SaveChanges();
+
+            return Json(new { success = true, mensaje = $"Cobro del vehículo {ingreso.placa} actualizado." });
         }
 
         [HttpPost]

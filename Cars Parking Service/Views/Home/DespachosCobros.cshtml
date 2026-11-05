@@ -7,9 +7,8 @@
     string Nombre(int? id, string vacio = "—") =>
         id.HasValue ? nombres.GetValueOrDefault(id.Value, "Usuario #" + id) : vacio;
 
-    // Solo la hora si es de hoy; si no, también el día
-    string Hora(DateTime? fecha) =>
-        fecha.HasValue ? fecha.Value.ToString(fecha.Value.Date == DateTime.Today ? "HH:mm" : "dd/MM HH:mm") : "";
+    // Día y hora, para la ventana de información
+    string? FechaHora(DateTime? fecha) => fecha?.ToString("dd/MM HH:mm");
 
     var moneda = System.Globalization.CultureInfo.GetCultureInfo("es-CO");
 }
@@ -135,19 +134,16 @@
         </p>
     }
 
-    <!-- Tabla -->
+    <!-- Tabla: lo principal de cada vehículo; la placa abre toda la información (despachos-cobros.js) -->
+    <p class="dc-ayuda"><i class="fa-solid fa-hand-pointer"></i> Toca la placa para ver toda la información</p>
+
     <div class="table-container">
         <table class="tabla-despachos">
             <thead>
                 <tr>
                     <th>Placa</th>
-                    <th>Ubicación</th>
-                    <th>Ingreso</th>
-                    <th>Parqueo</th>
-                    <th>Solicitud</th>
-                    <th>Despacho</th>
+                    <th>Fecha</th>
                     <th>Cobro</th>
-                    <th>Valor</th>
                     <th>Liquidación</th>
                 </tr>
             </thead>
@@ -155,7 +151,7 @@
                 @if (Model.Count == 0)
                 {
                     <tr>
-                        <td colspan="9" style="text-align:center; color:#555;">
+                        <td colspan="4" style="text-align:center; color:#555;">
                             No hay vehículos con ingreso, despacho o cobro en este período
                         </td>
                     </tr>
@@ -165,75 +161,70 @@
                 {
                     var pagado = i.estado_pago == "pagado";
 
+                    // Lo que pagó el cliente con propina (cobros de antes sin total: servicio + propina)
+                    var total = (i.total_servicio ?? 0) > 0 ? i.total_servicio!.Value : (i.valor_servicio ?? 0) + (i.valor_propina ?? 0);
+                    var cobro = i.usuario_cobro.HasValue
+                        ? Nombre(i.usuario_cobro) + (string.IsNullOrEmpty(i.rol_cobrador) ? "" : $" ({i.rol_cobrador})")
+                        : null;
+
+                    // Todo lo del vehículo para la ventana de información (se escribe como texto, no como HTML)
+                    var info = System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        id = i.id_ingreso,
+                        placa = i.placa,
+                        ubicacion = i.Ubicacion?.nombre_ubicacion,
+                        estado = i.estado_servicio,
+                        pagado,
+                        liquidacion = i.id_liquidacion,
+                        liquidado = i.id_liquidacion.HasValue || i.estado_liquidacion == true,
+                        metodo = i.metodo_pago,
+                        total = pagado ? total : 0,
+                        servicio = i.valor_servicio ?? 0,
+                        propina = i.valor_propina ?? 0,
+                        tarifa = i.Ubicacion?.valor_servicio ?? i.valor_servicio ?? 0,
+                        horaCobro = FechaHora(i.fecha_entrega),
+                        cobro,
+                        horaSolicitud = FechaHora(i.fecha_solicitud),
+                        solicito = i.fecha_solicitud.HasValue ? (i.usuario_solicitud.HasValue ? Nombre(i.usuario_solicitud) : "Cliente, desde su enlace") : null,
+                        lugarEntrega = i.lugar_entrega,
+                        horaDespacho = i.valet_despacho.HasValue ? FechaHora(i.fecha_salida) : null,
+                        despacho = i.valet_despacho.HasValue ? Nombre(i.valet_despacho) : null,
+                        horaIngreso = FechaHora(i.fecha_ingreso),
+                        recibio = i.id_valet.HasValue ? Nombre(i.id_valet) : null,
+                        banco = Nombre(i.id_banco),
+                        horaParqueo = FechaHora(i.fecha_parqueo),
+                        parqueo = i.usuario_parqueo.HasValue ? Nombre(i.usuario_parqueo) : null,
+                        parqueadero = i.Parqueadero?.nombre_parqueadero,
+                        cliente = i.nombre_cliente,
+                        celular = i.telefono
+                    });
+
                     <tr>
-                        <td data-label="Placa"><span class="ingreso-placa">@i.placa</span></td>
-                        <td data-label="Ubicación">@(i.Ubicacion?.nombre_ubicacion ?? "—")</td>
-
-                        <td data-label="Ingreso">
-                            <span class="dc-principal">@Hora(i.fecha_ingreso)</span>
-                            <span class="dc-detalle">Recibió: @Nombre(i.id_valet, "sin valet")</span>
+                        <td data-label="Placa">
+                            <button type="button" class="ingreso-placa dc-placa-btn" data-info="@info" aria-label="Ver información de @i.placa">@i.placa</button>
                         </td>
 
-                        <td data-label="Parqueo">
-                            @if (i.fecha_parqueo.HasValue)
+                        <td data-label="Fecha">
+                            @if (i.fecha_ingreso.HasValue)
                             {
-                                <span class="dc-principal">@Hora(i.fecha_parqueo)</span>
-                                <span class="dc-detalle">@Nombre(i.usuario_parqueo)</span>
+                                <span class="dc-principal">@i.fecha_ingreso.Value.ToString("dd/MM")</span>
+                                <span class="dc-detalle">@i.fecha_ingreso.Value.ToString("HH:mm")</span>
                             }
                             else
                             {
                                 <span class="dc-vacio">—</span>
-                            }
-                        </td>
-
-                        <td data-label="Solicitud">
-                            @if (i.fecha_solicitud.HasValue)
-                            {
-                                <span class="dc-principal">@Hora(i.fecha_solicitud)</span>
-                                <span class="dc-detalle">@(i.usuario_solicitud.HasValue ? Nombre(i.usuario_solicitud) : "Cliente, desde su enlace")</span>
-                            }
-                            else
-                            {
-                                <span class="dc-vacio">—</span>
-                            }
-                        </td>
-
-                        <td data-label="Despacho">
-                            @if (i.valet_despacho.HasValue)
-                            {
-                                <span class="dc-principal">@Hora(i.fecha_salida)</span>
-                                <span class="dc-detalle">@Nombre(i.valet_despacho)</span>
-                            }
-                            else
-                            {
-                                <span class="dc-vacio">Sin despachar</span>
                             }
                         </td>
 
                         <td data-label="Cobro">
                             @if (pagado)
                             {
-                                <span class="dc-principal">@Hora(i.fecha_entrega) · @(i.metodo_pago ?? "Sin método")</span>
-                                <span class="dc-detalle">@Nombre(i.usuario_cobro)@(string.IsNullOrEmpty(i.rol_cobrador) ? "" : $" ({i.rol_cobrador})")</span>
+                                <span class="dc-principal">@total.ToString("C0", moneda) · @(i.metodo_pago ?? "Sin método")</span>
+                                <span class="dc-detalle">@Nombre(i.usuario_cobro)</span>
                             }
                             else
                             {
                                 <span class="dc-vacio">Pendiente</span>
-                            }
-                        </td>
-
-                        <td data-label="Valor">
-                            @if (pagado)
-                            {
-                                <span class="dc-principal">@((i.valor_servicio ?? 0).ToString("C0", moneda))</span>
-                                @if ((i.valor_propina ?? 0) > 0)
-                                {
-                                    <span class="dc-detalle">+ @((i.valor_propina ?? 0).ToString("C0", moneda)) de propina</span>
-                                }
-                            }
-                            else
-                            {
-                                <span class="dc-vacio">—</span>
                             }
                         </td>
 
@@ -256,4 +247,20 @@
             </tbody>
         </table>
     </div>
+
+    @* Para guardar los cambios de método y valor (EditarCobro) *@
+    @Html.AntiForgeryToken()
 </div>
+
+@* Ventana de información: mismo contenedor y estilo que Información del vehículo (tabla de ingresos) *@
+<div id="modal-acciones" class="Editar-Ingreso" style="display:none;">
+    <div class="modal-overlay" onclick="cerrarModalAcciones()"></div>
+    <div class="Card-Ingreso card-ingreso-vehiculos">
+        <span class="close-btn" onclick="cerrarModalAcciones()">&times;</span>
+        <div id="contenido-modal-acciones"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/despachos-cobros.js" asp-append-version="true"></script>
+}

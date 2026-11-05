@@ -3074,6 +3074,90 @@ i.btn-pago-ingreso {
     color: #555;
 }
 
+/* Tabla corta (placa, fecha, cobro, liquidación): cabe en el celular sin moverse de lado */
+.tabla-despachos th,
+.tabla-despachos td {
+    padding: 10px 6px;
+    vertical-align: middle;
+}
+
+.tabla-despachos tbody tr {
+    cursor: pointer;
+}
+
+/* La placa es el botón que abre la información */
+.tabla-despachos .dc-placa-btn {
+    font-size: 15px;
+    letter-spacing: 2px;
+    padding: 2px 8px;
+    border-width: 2px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.dc-ayuda {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+/* Ventana de información: debajo de la placa, ubicación y estado del pago */
+.dc-subtitulo {
+    margin: 10px 0 0;
+    text-align: center;
+    color: #4b5563;
+}
+
+/* Dato con lápiz (método y valor total) y su edición */
+.dc-editable {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.dc-lapiz {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #1d4ed8;
+    cursor: pointer;
+}
+
+.dc-edicion {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.dc-edicion select,
+.dc-edicion input {
+    padding: 8px 10px;
+    border: 2px solid #2196F3;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.dc-edicion-botones {
+    display: flex;
+    gap: 8px;
+}
+
+.dc-edicion-botones .btn {
+    flex: 1;
+}
+
+.dc-nota {
+    margin: 8px 2px 0;
+    font-size: 14px;
+    color: #4b5563;
+}
+
 /* ==================== Liquidaciones (admin) ==================== */
 
 .liq-cantidad {
