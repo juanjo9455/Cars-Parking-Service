@@ -43,6 +43,83 @@
                 </div>
             </div>
 
+            @* Después de solicitar: no cerrar la página, el valor, el método y el código de seguridad. Antes era la
+               última pantalla de la ventana de pago. Al cargar lo llena el servidor; al solicitar, estado-servicio.js *@
+            @{
+                var metodoPago = string.IsNullOrEmpty(Model?.metodo_pago) ? "Efectivo" : Model.metodo_pago;
+                var valorPagar = "$" + (Model?.total_servicio ?? 0).ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("es-CO"));
+            }
+            <div class="panel-espera" id="panel-espera" style="display:@(Model?.estado_pago == "solicitado" ? "flex" : "none")">
+                <div class="confirmacion-header">
+                    <h2 class="confirmacion-titulo">¡No cierres esta página!</h2>
+                    <p class="confirmacion-sub">Acércate al valet para realizar el pago.</p>
+                </div>
+
+                <div class="panel-espera-valor">
+                    <div>
+                        <p class="panel-espera-valor-label">Valor a pagar</p>
+                        <p class="panel-espera-valor-numero" id="confirmacion-total">@valorPagar</p>
+                    </div>
+                    <div style="font-size:36px;opacity:0.3;" aria-hidden="true">🧾</div>
+                </div>
+
+                <div class="tiempo-card" id="confirmacion-metodo-card">
+                    <div class="tiempo-icono-wrap">
+                        <span style="font-size:26px;" id="confirmacion-metodo-icono">
+                            @if (metodoPago == "QR")
+                            {
+                                <i class="fa-solid fa-qrcode"></i>
+                            }
+                            else if (metodoPago == "Nequi")
+                            {
+                                <img src="~/img/nequi.ico" alt="" style="width:22px;height:22px;object-fit:contain;" />
+                            }
+                            else
+                            {
+                                <text>💵</text>
+                            }
+                        </span>
+                    </div>
+                    <div class="tiempo-info">
+                        <p class="tiempo-label">Método de pago</p>
+                        <p class="tiempo-valor" style="font-size:18px;" id="confirmacion-metodo-texto">@metodoPago</p>
+                    </div>
+                    <span style="font-size:20px;color:#27ae60;">✓</span>
+                </div>
+
+                @* El código lo muestra y lo actualiza estado-servicio.js (mostrarCodigoSeguridad / iniciarVerificacionCodigo) *@
+                <div class="panel-codigo">
+                    <p class="tiempo-label">Código de seguridad</p>
+                    <p class="panel-codigo-ayuda">Aparece aquí cuando el valet vaya a cobrar. Muéstraselo para confirmar el pago.</p>
+
+                    <div id="codigo-generado"
+                         style="@(string.IsNullOrEmpty(Model?.codigo_seguridad) ? "display:none;" : "display:block;") background: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center;">
+
+                        <p style="margin: 0 0 10px 0; color: #444;">
+                            <strong>Código de Seguridad Generado:</strong>
+                        </p>
+
+                        <p style="margin: 0;
+                            font-size: 26px;
+                            font-weight: bold;
+                            color: #2e7d32;
+                            font-family: monospace;"
+                           id="codigo-valor">
+
+                            @(Model?.codigo_seguridad ?? "------")
+
+                        </p>
+
+                        <p id="contador-codigo"
+                           style="margin-top:10px;
+                            color:#d32f2f;
+                            font-weight:bold;">
+                        </p>
+
+                    </div>
+                </div>
+            </div>
+
             <p class="titulo-subtexto">Información del servicio activo</p>
 
             <ol class="descripcion-servicio">
@@ -70,13 +147,8 @@
             <input type="hidden" id="idIngreso" value="@Model?.id_ingreso" />
             <input type="hidden" id="fechaFinServicio" value="@Model?.fecha_fin_servicio?.ToString("o")" />
 
-            @if (Model?.estado_servicio == "solicitado")
-            {
-                <button class="btn-pagar" id="btn-pagar">
-                    <span>🔒</span> Solicitar Pago
-                </button>
-            }
-            else if (Model != null && CarsParkingService.Helpers.IngresoReglas.PuedeSolicitarse(Model))
+            @* Ya no hay botón "Solicitar Pago": el pago se elige al solicitar (lugar → pago → confirmar) *@
+            @if (Model != null && CarsParkingService.Helpers.IngresoReglas.PuedeSolicitarse(Model))
             {
                 @* Solo con valet asignado y sin despachar: un vehículo entregado no se vuelve a solicitar *@
                 <button type="button" class="servicio-btn" id="btn-solicitar" style="display:block">
@@ -99,9 +171,9 @@
 
 <div class="modal-pagar oculto" id="modal-pagar">
 
-    <!-- Pantalla 1: Resumen y pago -->
+    <!-- Resumen y pago: después de elegir el lugar de entrega. Su botón pide el carro (con confirmación) -->
     <div class="informacion" id="informacion_1"
-         style="position:relative; display:@(Model?.estado_servicio == "solicitado" ? "none" : "block")">
+         style="position:relative; display:block">
     <button type="button"
             aria-label="Cerrar"
             onclick="cerrarModalPagar()"
@@ -170,7 +242,7 @@
                     </button>
                 </div>
                 <button class="btn-pagar" id="btn-confirmar-pago" type="button">
-                    <span>🔒</span> Confirmar Soliciud
+                    <span>🚗</span> Solicitar vehículo
                 </button>
             </div>
 
@@ -178,87 +250,7 @@
 
     </div>
 
-    <!-- Pantalla 2: Confirmación de pago -->
-    <div class="informacion" id="informacion_2"
-         style="display:@(Model?.estado_pago == "solicitado" ? "block" : "none")">
-        <div class="resumen-section-2">
-
-            <div class="confirmacion-header">
-                <div class="check-circle">✓</div>
-                <h2 class="confirmacion-titulo">¡Acercate al valet para realizar el pago!</h2>
-            </div>
-            <br />
-            <div class="confirmacion-header">
-                <h2 class="confirmacion-titulo">¡No Cierre Esta Pagina!</h2>
-            </div>
-
-            <div class="tiempo-card" id="confirmacion-metodo-card">
-                <div class="tiempo-icono-wrap">
-                    <span style="font-size:26px;" id="confirmacion-metodo-icono">💵</span>
-                </div>
-                <div class="tiempo-info">
-                    <p class="tiempo-label">Método de pago</p>
-                    <p class="tiempo-valor" style="font-size:18px;" id="confirmacion-metodo-texto">Efectivo</p>
-                </div>
-                <span style="font-size:20px;color:#27ae60;">✓</span>
-            </div>
-
-            <div style="background:linear-gradient(135deg,#d32f2f 0%,#b71c1c 100%);border-radius:14px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;color:white;">
-                <div>
-                    <p style="font-size:13px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.75;margin:0 0 4px;">Total pagado</p>
-                    <p style="font-size:26px;font-weight:800;margin:0;" id="confirmacion-total">@Model?.total_servicio</p>
-                </div>
-                <div style="font-size:36px;opacity:0.3;">🧾</div>
-            </div>
-
-            <div class="tiempo-card">
-                <div class="tiempo-icono-wrap">
-                    <span style="font-size:26px;">✅</span>
-                </div>
-                <div class="tiempo-info" style="height: 2cm;">
-                    <p class="tiempo-label">Todo listo</p>
-                    <p class="tiempo-valor" style="font-size:16px; font-weight:500; color:#444;">
-                        Codigo de verificacion:
-                    </p>
-                </div>
-                <br />
-                <br />
-                <div style="width: 100%;height: 3cm;">
-                    <div id="codigo-generado"
-                         style="@(string.IsNullOrEmpty(Model?.codigo_seguridad) ? "display:none;" : "display:block;") background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-
-                        <p style="margin: 0 0 10px 0; color: #444;">
-                            <strong>Código de Seguridad Generado:</strong>
-                        </p>
-
-                        <p style="margin: 0;
-                            font-size: 26px;
-                            font-weight: bold;
-                            color: #2e7d32;
-                            font-family: monospace;"
-                               id="codigo-valor">
-
-                            @(Model?.codigo_seguridad ?? "------")
-
-                        </p>
-
-                        <p id="contador-codigo"
-                               style="margin-top:10px;
-                            color:#d32f2f;
-                            font-weight:bold;">
-                        </p>
-
-                    </div>
-                </div>
-            </div>
-
-            <p style="text-align:center;font-size:15px;color:#555;margin:0;line-height:1.6;">
-                Gracias por usar <strong style="color:#d32f2f;">Cars Parking</strong>.<br>
-                ¡Esperamos verte pronto! 🙌
-            </p>
-
-        </div>
-    </div>
+    @* La pantalla de espera (no cerrar, valor, método y código) ahora está en la página: #panel-espera *@
 
 </div>
 

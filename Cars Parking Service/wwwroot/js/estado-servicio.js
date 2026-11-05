@@ -15,9 +15,9 @@ let idIngresoActual = null;
 let claveTemporizador = null;
 
 let intervaloCodigo = null;
-// El modal de pago no se cierra solo mientras el pago está solicitado (pantalla del código). Es solo del
-// pago: antes compartía variable con la solicitud del vehículo y el modal quedaba bloqueado desde que se abría
-let pagoBloqueado = false;
+
+// Lugar de entrega elegido en el primer paso: se envía al confirmar la solicitud, junto con el pago
+let lugarEntregaSolicitud = '';
 
 // ============================================================
 // DOM READY
@@ -50,8 +50,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.log("Fecha fin:", data.fechaFinServicio);
 
                 console.log("📦 Estado BD:", data.estadoPago);
-
-                pagoBloqueado = data.estadoPago === 'solicitado';
 
                 if (data.lugarEntrega) {
 
@@ -92,24 +90,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 }
 
+                // Ya pidió con su pago: la espera (no cerrar, valor, método y código) se ve en la página
                 if (data.estadoPago === "solicitado") {
-
-                    console.log("Entro al if de solicitado");
-
-                    // 1. Abrir el modal (quitar clase oculto)
-                    if (modal) modal.classList.remove('oculto');
-
-                    // 2. Mostrar pantalla 2 dentro del modal
-                    mostrarInformacion2(data.codigo);
-
-                    // 4. Iniciar verificación de código de seguridad
+                    mostrarPanelEspera();
+                    mostrarCodigoSeguridad(data.codigo);
                     iniciarVerificacionCodigo();
-
-                    // 5. Bloquear botón cerrar del modal
-                    bloquearCierreModal();
-
-                } else if (data.estadoServicio !== "solicitado") {
-                    mostrarInformacion1();
                 }
             })
             .catch(err => console.error("❌ Error cargando estado:", err));
@@ -189,12 +174,9 @@ if (btnSolicitar) {
                         return;
                     }
 
-                    if (btnConfirmacionLugar.disabled) return;
-
-                    btnConfirmacionLugar.disabled = true;
-                    btnConfirmacionLugar.textContent = 'Procesando...';
-
-                    solicitarVehiculo();
+                    // Todavía no se pide: sigue el pago (propina y método) y ahí se confirma la solicitud
+                    lugarEntregaSolicitud = lugarEntrega;
+                    abrirPagoDeSolicitud();
                 });
             }
         }
@@ -243,25 +225,13 @@ if (btnSolicitar) {
 
 }
 
-    // ── Botón Pagar ──
-    const btnPagar = document.getElementById('btn-pagar');
-    if (btnPagar) {
-        btnPagar.addEventListener('click', function () {
-            obtenerYestablecerTarifa();
-            abrirModalPagar(modal,
-                document.getElementById('informacion_1'),
-                document.getElementById('informacion_2'));
-        });
-    }
-
-    // ── Confirmar pago ──
+    // ── "Solicitar vehículo" de la ventana de pago: primero pregunta si está seguro ──
     const btnConfirmarPago = document.getElementById('btn-confirmar-pago');
     if (btnConfirmarPago) {
         btnConfirmarPago.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            Pagar(document.getElementById('informacion_1'),
-                document.getElementById('informacion_2'));
+            mostrarAdvertenciaSolicitud();
         });
     }
 
@@ -272,7 +242,7 @@ if (btnSolicitar) {
         actualizarPropinayTotal();
     }
 
-    // ── Tocar afuera del modal lo cierra, salvo con el pago ya solicitado (cerrarModalPagar lo revisa) ──
+    // ── Tocar afuera de la ventana de pago la cierra (todavía no se ha pedido nada) ──
     if (modal) {
         modal.addEventListener('click', function (e) {
             if (e.target === modal) cerrarModalPagar();
@@ -283,57 +253,25 @@ if (btnSolicitar) {
 });
 
 // ============================================================
-// BLOQUEAR CIERRE DEL MODAL (pantalla de confirmación final)
+// PANEL DE ESPERA (en la página, después de solicitar)
 // ============================================================
 
-function bloquearCierreModal() {
-    // Ocultar el botón X del modal-pagar
-    const btnCerrar = document.querySelector('#modal-pagar .btn-cerrar-modal');
-    if (btnCerrar) btnCerrar.style.display = 'none';
-
-    // Deshabilitar la función cerrarModalPagar
-    pagoBloqueado = true;
-
-    console.log('🔒 Modal bloqueado — no se puede cerrar');
-}
-
-// ============================================================
-// MOSTRAR / OCULTAR PANTALLAS INTERNAS DEL MODAL
-// ============================================================
-
-function mostrarInformacion1() {
-    const i1 = document.getElementById('informacion_1');
-    const i2 = document.getElementById('informacion_2');
-    if (i1) i1.style.display = 'block';
-    if (i2) i2.style.display = 'none';
-}
-
-function mostrarInformacion2(codigo) {
-    const i1 = document.getElementById('informacion_1');
-    const i2 = document.getElementById('informacion_2');
-    if (i1) i1.style.display = 'none';
-    if (i2) i2.style.display = 'block';
-
-    mostrarCodigoSeguridad(codigo);
+function mostrarPanelEspera() {
+    const panel = document.getElementById('panel-espera');
+    if (panel) panel.style.display = 'flex';
 }
 
 // ============================================================
 // ABRIR / CERRAR MODAL PAGAR
 // ============================================================
 
-function abrirModalPagar(modal, informacion1, informacion2) {
-    if (!modal) return;
-    modal.classList.remove('oculto');
-    if (informacion1) informacion1.style.display = 'block';
-    if (informacion2) informacion2.style.display = 'none';
+function abrirModalPagar() {
+    const modal = document.getElementById('modal-pagar');
+    if (modal) modal.classList.remove('oculto');
 }
 
+// Cerrarla antes de confirmar cancela la solicitud: todavía no se ha pedido nada
 function cerrarModalPagar() {
-    // Con el pago solicitado NO se puede cerrar
-    if (pagoBloqueado) {
-        console.warn('🔒 Modal bloqueado — pago en proceso');
-        return;
-    }
     const modal = document.getElementById('modal-pagar');
     if (modal) modal.classList.add('oculto');
 }
@@ -389,183 +327,161 @@ function lugarEntregaElegido() {
         : select.value;
 }
 
-function solicitarVehiculo() {
+// Paso 2: la ventana de pago (tarifa, propina y método). Todavía no se pide nada: eso es al confirmar
+function abrirPagoDeSolicitud() {
+    const confirmacion = document.getElementById('modal-confirmacion');
+    if (confirmacion) confirmacion.style.display = 'none';
 
-    console.log("Evento agregado correctamente");
+    obtenerYestablecerTarifa();
+    abrirModalPagar();
+}
 
-    const contenidoConfirmacion = document.getElementById('confirmacion');
+// Método de pago elegido en la ventana: el texto del botón activo (Efectivo, QR o Nequi) y su ícono
+function metodoPagoElegido() {
+    const boton = document.querySelector('.metodo-btn.activo');
+    return {
+        texto: boton?.innerText?.trim().split('\n').pop().trim() || 'Efectivo',
+        icono: boton?.querySelector('.ico')?.innerHTML ?? '💵'
+    };
+}
 
-    // Obtenemos lugar de entrega del vehiculo (de la lista o escrito con "Otra ubicación…")
-    const lugarEntrega = lugarEntregaElegido();
+// Paso 3: "¿Estás seguro?" con el resumen. Las dos ventanas van en la misma capa: la de pago se esconde
+// mientras tanto y con "Cancelar" vuelve tal como estaba
+function mostrarAdvertenciaSolicitud() {
+    const confirmacion = document.getElementById('modal-confirmacion');
+    const contenido = document.getElementById('confirmacion');
+    if (!confirmacion || !contenido) return;
 
+    const propina = parseInt(document.getElementById('select-propina')?.value || '0');
+    const metodo = metodoPagoElegido();
 
-    contenidoConfirmacion.innerHTML = `
-
+    contenido.innerHTML = `
         <div class="confirmacion-header">
-            <div class="check-circle">✓</div>
-            <h2 class="confirmacion-titulo">¡Enviar Solicitud!</h2>
-            <p class="confirmacion-sub">
-                Se notificará a nuestro equipo que has solicitado tu vehículo.
-                En breve, será llevado hasta tu ubicación.
-                <br/>
-                Te avisaremos en cuanto esté listo para ti.
-            </p>
-
-            <p class="confirmacion-sub">
-                Recuerda que el vehiculo llegara en 20 min
-            </p>
+            <h2 class="confirmacion-titulo">¿Estás seguro que quieres solicitar el vehículo?</h2>
+            <p class="confirmacion-sub">Nuestro equipo lo llevará al lugar de entrega en unos 20 minutos.</p>
         </div>
-        <button type="button" class="btn-confirmacion btn-pagar" id="btn-confirmacion-final">
-            Aceptar
-        </button>
 
+        <div class="confirmacion-resumen">
+            <p><strong>Lugar de entrega:</strong> <span id="resumen-lugar"></span></p>
+            <p><strong>Valor a pagar:</strong> ${formatearMoneda(tarifaActual + propina)}</p>
+            <p><strong>Método de pago:</strong> <span id="resumen-metodo"></span></p>
+        </div>
+
+        <div class="confirmacion-botones">
+            <button type="button" class="btn-confirmacion btn-pagar" id="btn-confirmar-solicitud">Sí, solicitar vehículo</button>
+            <button type="button" class="btn-cancelar-solicitud" id="btn-cancelar-solicitud">Cancelar</button>
+        </div>
     `;
 
+    // El lugar puede venir escrito por el cliente: va como texto, no como HTML
+    document.getElementById('resumen-lugar').textContent = lugarEntregaSolicitud;
+    document.getElementById('resumen-metodo').textContent = metodo.texto;
 
-    const idIngreso = document.getElementById('idIngreso')?.value;
-    const btnSolicitarActual = document.getElementById('btn-solicitar');
-    const btnConfirmacionFinal = document.getElementById('btn-confirmacion-final');
-    const confirmacion = document.getElementById('modal-confirmacion');
+    cerrarModalPagar();
+    confirmacion.style.display = 'block';
 
-    btnConfirmacionFinal.addEventListener('click', function () {
+    document.getElementById('btn-cancelar-solicitud').addEventListener('click', function () {
+        confirmacion.style.display = 'none';
+        abrirModalPagar();
+    });
 
-        btnConfirmacionFinal.disabled = true;
-        btnConfirmacionFinal.textContent = '⏳ Solicitando...';
-
-        fetch('/Payment/SolicitarVehiculo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                idIngreso: parseInt(idIngreso),
-                lugarEntrega: lugarEntrega
-            })
-        })
-        .then(async response => {
-
-            // El servidor no deja solicitar un vehículo ya entregado o sin valet: se avisa con su
-            // mensaje y se recarga para mostrar el estado real (sin el botón)
-            if (response.status === 409) {
-                const data = await response.json().catch(() => ({}));
-                window.reproducirSonido?.('error');
-                alert(data.mensaje || 'Tu vehículo no se puede solicitar en este momento.');
-                location.reload();
-                return new Promise(() => {});
-            }
-
-            if (!response.ok)
-                throw new Error(`HTTP ${response.status}`);
-
-            return response.json();
-        })
-        .then(data => {
-
-            console.log('✅ Vehículo solicitado');
-            window.reproducirSonido?.('confirmacion');
-
-            // Mostrar ubicación seleccionada
-            const LugarLI = document.getElementById('lugar_entrega');
-            const LugarLabel = document.getElementById('lugar_entrega_label');
-
-            if (LugarLI && LugarLabel) {
-                LugarLI.style.display = "block";
-
-                // El lugar puede venir escrito por el cliente: se pone como texto, no como HTML
-                LugarLabel.innerHTML = '<strong>📍 Punto de entrega:</strong> ';
-                LugarLabel.append(lugarEntrega);
-            }
-
-            // Cerrar modal de confirmación
-            if (confirmacion)
-                confirmacion.style.display = 'none';
-
-            // Ocultar botón solicitar
-            if (btnSolicitarActual)
-                btnSolicitarActual.style.display = 'none';
-
-            // Mostrar botón pagar
-            renderizarBotonPagar();
-
-            // Iniciar contador
-            iniciarTemporizadorDesdeAhora();
-        })
-        .catch(error => {
-
-            console.error('❌ Error:', error);
-
-            btnConfirmacionFinal.disabled = false;
-            btnConfirmacionFinal.textContent = 'Aceptar';
-
-            window.reproducirSonido?.('error');
-            alert('Error al solicitar vehículo');
-        });
+    document.getElementById('btn-confirmar-solicitud').addEventListener('click', function () {
+        enviarSolicitudConPago(this, propina, metodo);
     });
 }
 
-// ============================================================
-// PAGAR
-// ============================================================
+// Paso 4: pide el carro y guarda el pago en una sola llamada (PaymentController.SolicitarConPago)
+function enviarSolicitudConPago(boton, propina, metodo) {
+    if (boton.disabled) return;
 
-function Pagar(informacion1, informacion2) {
     const idIngreso = document.getElementById('idIngreso')?.value;
-    const propina = parseInt(document.getElementById('select-propina')?.value || '0');
-    const total = tarifaActual + propina;
-    const metodoSeleccionado = document.querySelector('.metodo-btn.activo');
-    const metodoPago = metodoSeleccionado?.innerText?.trim().split('\n').pop().trim() || 'Efectivo';
-
     if (!idIngreso) { alert('Error: No se pudo obtener el ID del ingreso'); return; }
 
-    fetch('/Payment/GuardarPago', {
+    boton.disabled = true;
+    boton.textContent = '⏳ Solicitando...';
+
+    const reintentar = () => {
+        boton.disabled = false;
+        boton.textContent = 'Sí, solicitar vehículo';
+    };
+
+    fetch('/Payment/SolicitarConPago', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: new URLSearchParams({
-            idIngreso: idIngreso,
-            tarifa: tarifaActual,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            idIngreso: parseInt(idIngreso),
+            lugarEntrega: lugarEntregaSolicitud,
             propina: propina,
-            metodoPago: metodoPago
+            metodoPago: metodo.texto
         })
     })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                console.log('✅ Pago guardado');
-                window.reproducirSonido?.('confirmacion');
+        .then(async response => {
+            const data = await response.json().catch(() => ({}));
 
-                pagoBloqueado = true; // ← bloquear cierre desde este momento
-
-                // Sincronizar método y total en pantalla 2
-                const ico = metodoSeleccionado?.querySelector('.ico')?.innerHTML ?? '💵';
-                const iconoEl = document.getElementById('confirmacion-metodo-icono');
-                const textoEl = document.getElementById('confirmacion-metodo-texto');
-                const totalEl = document.getElementById('confirmacion-total');
-                if (iconoEl) iconoEl.innerHTML = ico;
-                if (textoEl) textoEl.innerText = metodoPago;
-                if (totalEl) totalEl.innerText = formatearMoneda(total);
-
-                // Cambiar a pantalla 2
-                const i1 = informacion1 || document.getElementById('informacion_1');
-                const i2 = informacion2 || document.getElementById('informacion_2');
-                if (i1) i1.style.display = 'none';
-                if (i2) i2.style.display = 'block';
-
-                // Ocultar el botón X del modal
-                bloquearCierreModal();
-
-                // Iniciar verificación de código
-                iniciarVerificacionCodigo();
-
-            } else {
+            // Ya entregado, sin valet o ya pedido: se avisa y se recarga para mostrar el estado real (como antes)
+            if (response.status === 409) {
                 window.reproducirSonido?.('error');
-                alert('Error al guardar pago: ' + data.message);
+                alert(data.mensaje || 'Tu vehículo no se puede solicitar en este momento.');
+                location.reload();
+                return;
             }
+
+            if (!response.ok) {
+                window.reproducirSonido?.('error');
+                alert(data.mensaje || 'No se pudo solicitar el vehículo. Intenta otra vez.');
+                reintentar();
+                return;
+            }
+
+            console.log('✅ Vehículo solicitado con su pago');
+            window.reproducirSonido?.('confirmacion');
+            mostrarSolicitudHecha(data, metodo);
         })
         .catch(error => {
-            console.error('❌ Error en fetch:', error);
+            console.error('❌ Error:', error);
             window.reproducirSonido?.('error');
-            alert('Error de conexión al guardar pago');
+            alert('Error de conexión al solicitar el vehículo. Revisa tu internet e intenta otra vez.');
+            reintentar();
         });
+}
+
+// Después de solicitar: sin ventanas, el lugar en la información, el temporizador y el panel de espera con el código
+function mostrarSolicitudHecha(data, metodo) {
+    const confirmacion = document.getElementById('modal-confirmacion');
+    if (confirmacion) confirmacion.style.display = 'none';
+    cerrarModalPagar();
+
+    const btnSolicitar = document.getElementById('btn-solicitar');
+    if (btnSolicitar) btnSolicitar.style.display = 'none';
+
+    // Lugar de entrega en la información (escrito por el cliente: como texto, no como HTML)
+    const LugarLI = document.getElementById('lugar_entrega');
+    const LugarLabel = document.getElementById('lugar_entrega_label');
+    if (LugarLI && LugarLabel) {
+        LugarLI.style.display = 'block';
+        LugarLabel.innerHTML = '<strong>📍 Punto de entrega:</strong> ';
+        LugarLabel.append(lugarEntregaSolicitud);
+    }
+
+    // Valor (el que guardó el servidor) y método en el panel
+    const iconoEl = document.getElementById('confirmacion-metodo-icono');
+    const textoEl = document.getElementById('confirmacion-metodo-texto');
+    const totalEl = document.getElementById('confirmacion-total');
+    if (iconoEl) iconoEl.innerHTML = metodo.icono;
+    if (textoEl) textoEl.innerText = data.metodo || metodo.texto;
+    if (totalEl) totalEl.innerText = formatearMoneda(Number(data.total) || 0);
+
+    mostrarPanelEspera();
+
+    // Temporizador con la hora del servidor (la misma que al recargar) y la espera del código de seguridad
+    if (data.fechaFinServicio) {
+        inicializarTemporizadorPersistente(data.fechaFinServicio);
+    } else {
+        iniciarTemporizadorDesdeAhora();
+    }
+    iniciarVerificacionCodigo();
+
+    document.getElementById('panel-espera')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ============================================================
@@ -730,30 +646,4 @@ function mostrarCodigoSeguridad(codigo) {
 
     if (contenedor) contenedor.style.display = codigo ? 'block' : 'none';
     if (valor) valor.textContent = codigo || '------';
-}
-
-// ============================================================
-// BOTÓN PAGAR DINÁMICO
-// ============================================================
-
-function renderizarBotonPagar() {
-    let btnPagar = document.getElementById('btn-pagar');
-    if (!btnPagar) {
-        const contenedor = document.querySelector('.vehiculo');
-        if (!contenedor) return;
-        btnPagar = document.createElement('button');
-        btnPagar.className = 'btn-pagar';
-        btnPagar.id = 'btn-pagar';
-        btnPagar.innerHTML = '<span>🔒</span> Solicitar Pago';
-        contenedor.appendChild(btnPagar);
-        btnPagar.addEventListener('click', function () {
-            obtenerYestablecerTarifa();
-            abrirModalPagar(
-                document.getElementById('modal-pagar'),
-                document.getElementById('informacion_1'),
-                document.getElementById('informacion_2')
-            );
-        });
-    }
-    btnPagar.style.display = 'block';
 }

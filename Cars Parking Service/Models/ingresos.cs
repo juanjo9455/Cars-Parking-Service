@@ -74,4 +74,13 @@ namespace CarsParkingService.Models
 
         public string? lugarEntrega { get; set; }
     }
+
+    // El cliente pide el carro y deja su pago en un solo paso (PaymentController.SolicitarConPago)
+    public class SolicitudPagoDto
+    {
+        public int idIngreso { get; set; }
+        public string? lugarEntrega { get; set; }
+        public decimal propina { get; set; }
+        public string? metodoPago { get; set; }
+    }
 }

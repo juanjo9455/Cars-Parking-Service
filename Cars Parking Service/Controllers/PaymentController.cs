@@ -134,6 +134,80 @@ namespace CarsParkingService.Controllers
             return Ok(new { mensaje = "Actualizado correctamente", fechaFinServicio = ingreso.fecha_fin_servicio });
         }
 
+        // Métodos que el cliente puede elegir en su página
+        private static readonly string[] MetodosPagoCliente = { "Efectivo", "QR", "Nequi" };
+
+        // El cliente pide el carro y deja su pago (propina y método) en un solo paso y en una sola escritura en la base:
+        // antes eran dos (SolicitarVehiculo y después GuardarPago) y muchos se iban sin hacer el segundo. Mismas reglas
+        // que esas dos acciones; la tarifa sale de la ubicación del servicio, no de lo que mande el navegador
+        [HttpPost]
+        public IActionResult SolicitarConPago([FromBody] SolicitudPagoDto data)
+        {
+            var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == data.idIngreso);
+
+            if (ingreso == null)
+                return NotFound(new { mensaje = "No encontramos tu vehículo." });
+
+            // Ya pedido y con pago (doble toque o un reintento): no se repite
+            if (ingreso.estado_servicio == "solicitado" && ingreso.estado_pago == "solicitado")
+                return Ok(new { mensaje = "Ya estaba solicitado", fechaFinServicio = ingreso.fecha_fin_servicio?.ToString("O"), total = ingreso.total_servicio, metodo = ingreso.metodo_pago });
+
+            // Solo activo o parqueado, con valet y sin pagar (misma regla que SolicitarVehiculo y el operador)
+            if (!IngresoReglas.PuedeSolicitarse(ingreso))
+            {
+                var estado = ingreso.estado_servicio?.Trim().ToLower();
+                var mensaje = estado == "despachado" || estado == "finalizado" ? "Tu vehículo ya fue entregado."
+                            : estado == "solicitado" ? "Tu vehículo ya fue solicitado."
+                            : "Tu vehículo todavía no se puede solicitar. Intenta en unos minutos.";
+
+                return Conflict(new { mensaje });
+            }
+
+            // Con "Otra ubicación" el cliente escribe el lugar: tbl_ingresos.lugar_entrega es VARCHAR(50)
+            var lugarEntrega = data.lugarEntrega?.Trim();
+
+            if (string.IsNullOrEmpty(lugarEntrega))
+                return BadRequest(new { mensaje = "Selecciona el lugar de entrega." });
+
+            if (lugarEntrega.Length > 50)
+                return BadRequest(new { mensaje = "El lugar de entrega no puede tener más de 50 caracteres." });
+
+            // Propina: sin centavos, no negativa y con un tope razonable (la página ofrece de $0 a $30.000)
+            if (data.propina < 0 || data.propina > 100000 || data.propina != decimal.Truncate(data.propina))
+                return BadRequest(new { mensaje = "La propina no es válida." });
+
+            var metodo = MetodosPagoCliente.FirstOrDefault(m => string.Equals(m, data.metodoPago?.Trim(), StringComparison.OrdinalIgnoreCase));
+
+            if (metodo == null)
+                return BadRequest(new { mensaje = "Elige el método de pago." });
+
+            var tarifa = _context.ubicacion_servicios
+                .Where(u => u.id_ubicacion == ingreso.id_ubicacion)
+                .Select(u => (decimal?)u.valor_servicio)
+                .FirstOrDefault() ?? 0;
+
+            // La solicitud, igual que SolicitarVehiculo: usuario_solicitud null = el cliente desde su enlace, y el
+            // estado anterior para poder reversarla (punto 21)
+            ingreso.estado_antes_solicitud = ingreso.estado_servicio;
+            ingreso.usuario_solicitud = null;
+            ingreso.fecha_solicitud = DateTime.Now;
+            ingreso.estado_servicio = "solicitado";
+            ingreso.fecha_fin_servicio = DateTime.Now.AddMinutes(20);
+            ingreso.lugar_entrega = lugarEntrega;
+
+            // El pago, igual que GuardarPago
+            ingreso.valor_servicio = tarifa;
+            ingreso.valor_propina = data.propina;
+            ingreso.total_servicio = tarifa + data.propina;
+            ingreso.metodo_pago = metodo;
+            ingreso.estado_pago = "solicitado";
+
+            // Una sola escritura: queda pedido con su pago, o no queda nada
+            _context.SaveChanges();
+
+            return Ok(new { mensaje = "Vehículo solicitado", fechaFinServicio = ingreso.fecha_fin_servicio?.ToString("O"), total = ingreso.total_servicio, metodo });
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
