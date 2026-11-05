@@ -2923,6 +2923,24 @@ i.btn-pago-ingreso {
     text-align: center;
 }
 
+/* "Cambiar valor total": enlace pequeño bajo el precio, como "¿Olvidaste tu contraseña?" */
+.cobro-valor-cambiar {
+    margin-top: 2px;
+    padding: 6px 8px;
+    border: 0;
+    background: none;
+    color: #1565c0;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Con el código ya generado el valor queda bloqueado: no se ofrece cambiarlo */
+.cobro-valor:has(.cobro-valor-input:read-only) .cobro-valor-cambiar {
+    display: none;
+}
+
 /* ==================== Código de seguridad en el modal de pago ==================== */
 
 /* El operador ve el código grande para compararlo con el del cliente */

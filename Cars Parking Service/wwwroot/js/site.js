@@ -1231,6 +1231,22 @@ function cerrarModalFoto() {
     if (cameraInput) cameraInput.value = '';
 }
 
+// "Cambiar valor total": el precio se vuelve el campo editable. Es el mismo input que validan
+// generarCodigoSeguridad y abrirModalFinalizacion; con el código ya generado queda bloqueado
+function editarValorCobro(idIngreso) {
+    const input = document.getElementById(`valor-cobrado-${idIngreso}`);
+    const caja = input?.closest('.cobro-valor');
+
+    if (!caja || input.readOnly) return;
+
+    caja.querySelector('.cobro-valor-precio').hidden = true;
+    caja.querySelector('.cobro-valor-cambiar').hidden = true;
+    caja.querySelector('.cobro-valor-ayuda').hidden = false;
+    input.hidden = false;
+    input.focus();
+    input.select();
+}
+
 function fileToDataUrl(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -1258,13 +1274,16 @@ function abrirModalPago(btn) {
     const pagoApp = btn.getAttribute('data-pago-app') === 'true';
 
     // Cuánto se cobra: si el cliente pagó por la app, su total con propina (no se cambia); si no, la tarifa
-    // de la ubicación, que el banco cambia por lo que pagó el cliente (lo de más queda como propina)
+    // de la ubicación, que el banco cambia por lo que pagó el cliente (lo de más queda como propina).
+    // La tarifa se ve como texto; "Cambiar valor total" muestra el campo (editarValorCobro)
     const cajaValor = !pagoApp && tarifa
         ? `<div class="cobro-valor">
                <label class="cobro-valor-label" for="valor-cobrado-${id}">Valor a cobrar</label>
+               <span class="cobro-valor-precio">${PESOS.format(tarifa)}</span>
                <input type="number" id="valor-cobrado-${id}" class="cobro-valor-input" data-tarifa="${tarifa}"
-                      value="${tarifa}" min="1" step="1" inputmode="numeric" />
-               <span class="cobro-valor-ayuda">Servicio ${PESOS.format(tarifa)}. Si el cliente paga más (propina), escribe lo que pagó.</span>
+                      value="${tarifa}" min="1" step="1" inputmode="numeric" hidden />
+               <span class="cobro-valor-ayuda" hidden>Servicio ${PESOS.format(tarifa)}. Si el cliente paga más (propina), escribe lo que pagó.</span>
+               <button type="button" class="cobro-valor-cambiar" onclick="editarValorCobro('${id}')">Cambiar valor total</button>
            </div>`
         : valor
             ? `<div class="cobro-valor">
