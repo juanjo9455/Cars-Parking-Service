@@ -3156,6 +3156,7 @@ namespace CarsParkingService.Controllers
             ingreso.lugar_entrega = ingreso.Ubicacion?.nombre_ubicacion;
             ingreso.fecha_fin_servicio = null;
             ingreso.usuario_solicitud = null;
+            ingreso.solicitud_cliente = null;
             ingreso.fecha_solicitud = null;
             ingreso.estado_antes_solicitud = null;
 
@@ -3223,6 +3224,7 @@ namespace CarsParkingService.Controllers
             // Quién y cuándo (puntos 26 y 27) y el estado anterior para poder reversar (punto 21)
             ingreso.estado_antes_solicitud = ingreso.estado_servicio;
             ingreso.usuario_solicitud = HttpContext.Session.GetInt32("id");
+            ingreso.solicitud_cliente = false;
             ingreso.fecha_solicitud = DateTime.Now;
 
             ingreso.estado_servicio = "solicitado";

@@ -114,6 +114,7 @@ namespace CarsParkingService.Controllers
             // se guarda para poder reversar una solicitud hecha por error (punto 21)
             ingreso.estado_antes_solicitud = ingreso.estado_servicio;
             ingreso.usuario_solicitud = null;
+            ingreso.solicitud_cliente = true;
             ingreso.fecha_solicitud = DateTime.Now;
 
             ingreso.estado_servicio = "solicitado";
@@ -190,6 +191,7 @@ namespace CarsParkingService.Controllers
             // estado anterior para poder reversarla (punto 21)
             ingreso.estado_antes_solicitud = ingreso.estado_servicio;
             ingreso.usuario_solicitud = null;
+            ingreso.solicitud_cliente = true;
             ingreso.fecha_solicitud = DateTime.Now;
             ingreso.estado_servicio = "solicitado";
             ingreso.fecha_fin_servicio = DateTime.Now.AddMinutes(20);

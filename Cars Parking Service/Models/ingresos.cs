@@ -60,6 +60,10 @@ namespace CarsParkingService.Models
         // Estado antes de solicitarse, para poder reversar la solicitud
         public string? estado_antes_solicitud { get; set; }
 
+        // Columna de Database/solicitud-cliente.sql: true = lo pidió el cliente desde su enlace, false = un
+        // operador desde la tabla, null = no se ha pedido (o se reversó la solicitud)
+        public bool? solicitud_cliente { get; set; }
+
         // Columnas de Database/rama4-usuario-parqueo.sql: quién tocó Parquear (Key u operador) y a qué hora
         public int? usuario_parqueo { get; set; }
         public DateTime? fecha_parqueo { get; set; }
