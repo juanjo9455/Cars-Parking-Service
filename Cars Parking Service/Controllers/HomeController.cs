@@ -1882,9 +1882,10 @@ namespace CarsParkingService.Controllers
             {
                 var total = valor_total.Value;
 
-                if (total <= 0 || total > 10_000_000 || total != decimal.Truncate(total))
+                // Menos de $1.000 casi siempre es "20.000" mal escrito (quedaba en 20)
+                if (total < 1000 || total > 10_000_000 || total != decimal.Truncate(total))
                 {
-                    return Json(new { success = false, mensaje = "El valor total debe ser un número entero mayor que 0." });
+                    return Json(new { success = false, mensaje = "El valor total debe ser el valor completo en pesos, de $1.000 en adelante (por ejemplo 20000)." });
                 }
 
                 var tarifa = ingreso.Ubicacion?.valor_servicio ?? ingreso.valor_servicio ?? 0;
@@ -2241,12 +2242,13 @@ namespace CarsParkingService.Controllers
                     ? decimal.Round(dto.ValorCobrado.Value, 0)
                     : (decimal?)null;
 
-                if (valorCobrado <= 0)
+                // Menos de $1.000 casi siempre es "20.000" mal escrito (quedaba en 20): se pide el valor completo
+                if (valorCobrado < 1000)
                 {
                     return Json(new
                     {
                         success = false,
-                        message = "El valor cobrado debe ser mayor que 0."
+                        message = "El valor cobrado parece incompleto: escribe el valor completo (por ejemplo 20000)."
                     });
                 }
 
@@ -2663,10 +2665,23 @@ namespace CarsParkingService.Controllers
 
         // =========================== Ubicacion =========================== \\
 
+        // Tarifas: 0 (gratis) o el valor completo. Entre 1 y 999 casi siempre es "20.000" mal escrito: con el campo
+        // numérico de antes el navegador tomaba el punto como decimal y la tarifa de OCIO quedó en 20
+        private static bool TarifaIncompleta(decimal valor) => valor != 0 && valor < 1000;
+
+        private const string MensajeTarifaIncompleta =
+            "La tarifa parece incompleta: escribe el valor completo (por ejemplo 20000) o 0 si es gratis.";
+
         // Acción para registrar una nueva ubicación
         [HttpPost]
         public IActionResult RegistrarUbicacion(string nombre_ubicacion, string direccion, string ciudad, decimal valor_servicio, int? id_zona)
         {
+            if (TarifaIncompleta(valor_servicio))
+            {
+                TempData["Error"] = MensajeTarifaIncompleta;
+                return RedirectToAction("Administrador");
+            }
+
             try
             {
                 // Validar si la ubicación ya existe por nombre
@@ -2714,6 +2729,12 @@ namespace CarsParkingService.Controllers
         [HttpPost]
         public IActionResult EditarUbicacion(int id_ubicacion, string nombre_ubicacion, string direccion, string ciudad, decimal valor_servicio, int? id_zona)
         {
+            if (TarifaIncompleta(valor_servicio))
+            {
+                TempData["Error"] = MensajeTarifaIncompleta;
+                return RedirectToAction("Administrador");
+            }
+
             // Validar nombre duplicado (excluyendo el actual)
             bool existeNombre = _context.ubicacion_servicios
                 .Any(u => u.nombre_ubicacion.Trim().ToLower() == nombre_ubicacion.Trim().ToLower() && u.id_ubicacion != id_ubicacion);
@@ -2757,6 +2778,12 @@ namespace CarsParkingService.Controllers
         [HttpPost]
         public IActionResult RegistrarParqueadero(string nombre_parqueadero, string direccion, string ciudad, decimal tarifa, int? id_zona)
         {
+            if (TarifaIncompleta(tarifa))
+            {
+                TempData["Error"] = MensajeTarifaIncompleta;
+                return RedirectToAction("Administrador");
+            }
+
             try
             {
                 // Validar si el parqueadero ya existe por nombre
@@ -2805,6 +2832,12 @@ namespace CarsParkingService.Controllers
         [HttpPost]
         public IActionResult EditarParqueadero(int id_parqueadero, string nombre_parqueadero, string direccion, string ciudad, decimal tarifa, int? id_zona)
         {
+            if (TarifaIncompleta(tarifa))
+            {
+                TempData["Error"] = MensajeTarifaIncompleta;
+                return RedirectToAction("Administrador");
+            }
+
             // Validar nombre duplicado (excluyendo el actual)
             bool existeNombre = _context.parqueaderos
                 .Any(p => p.nombre_parqueadero.Trim().ToLower() == nombre_parqueadero.Trim().ToLower() && p.id_parqueadero != id_parqueadero);

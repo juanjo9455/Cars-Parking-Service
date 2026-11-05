@@ -3158,6 +3158,19 @@ i.btn-pago-ingreso {
     color: #4b5563;
 }
 
+/* Campos de dinero (campo-pesos en site.js): el valor con formato debajo del campo ("$ 20.000") */
+.campo-pesos-ver {
+    display: block;
+    margin-top: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2e7d32;
+}
+
+.campo-pesos-ver[hidden] {
+    display: none;
+}
+
 /* ==================== Video del ingreso en Información: miniatura y visor ==================== */
 
 /* Miniatura (botón): un cuadro del video y "Ver en grande" */

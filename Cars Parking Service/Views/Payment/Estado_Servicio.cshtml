@@ -1,5 +1,8 @@
 ﻿@{
     ViewData["Title"] = "Estado del Servicio";
+
+    // Plata con punto de miles ("20.000") sin importar el idioma del servidor
+    var pesosCO = System.Globalization.CultureInfo.GetCultureInfo("es-CO");
 }
 
 @model ingresos
@@ -202,7 +205,7 @@
             <div style="padding: 0 28px;">
                 <div class="resumen-fila">
                     <span>Tarifa base</span>
-                    <span class="resumen-valor" id="tarifa-base" name="tarifa" value="@((decimal?)ViewBag.tarifa ?? 0)">$@(((decimal?)ViewBag.tarifa ?? 0).ToString("N0"))</span>
+                    <span class="resumen-valor" id="tarifa-base" name="tarifa" value="@((decimal?)ViewBag.tarifa ?? 0)">$@(((decimal?)ViewBag.tarifa ?? 0).ToString("N0", pesosCO))</span>
                 </div>
                 <div class="resumen-fila propina-fila">
                     <div class="propina-label-container">
@@ -222,7 +225,7 @@
                 </div>
                 <div class="resumen-total-fila">
                     <span class="total-label">Total a pagar</span>
-                    <span class="total-valor" id="total-value" name="total">$@(((decimal?)ViewBag.tarifa ?? 0).ToString("N0"))</span>
+                    <span class="total-valor" id="total-value" name="total">$@(((decimal?)ViewBag.tarifa ?? 0).ToString("N0", pesosCO))</span>
                 </div>
             </div>
 

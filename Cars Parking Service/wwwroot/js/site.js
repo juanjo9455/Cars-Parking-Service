@@ -510,6 +510,7 @@
             if (servicioGratis) {
 
                 inputValorServicio.value = "";
+                mostrarPesos(inputValorServicio);
                 inputValorServicio.disabled = true;
                 inputValorServicio.required = false;
 
@@ -996,6 +997,7 @@ function abrirModalEditarUbicacion(id, nombre_ubicacion, direccion, ciudad, valo
     document.getElementById('edit_direccion').value = direccion;
     document.getElementById('edit_ciudad').value = ciudad;
     document.getElementById('edit_valor_servicio').value = valor_servicio;
+    mostrarPesos(document.getElementById('edit_valor_servicio'));
     document.getElementById('edit_zona_ubicacion').value = id_zona || '';   // vacío = sin zona
 
     document.getElementById('ModalEditarUbicacion').style.display = 'flex';
@@ -1034,6 +1036,7 @@ function abrirModalEditarParqueadero(id, nombre_parqueadero, direccion, ciudad, 
     document.getElementById('edit_direccion_parqueadero').value = direccion;
     document.getElementById('edit_ciudad_parqueadero').value = ciudad;
     document.getElementById('edit_tarifa_parqueadero').value = tarifa;
+    mostrarPesos(document.getElementById('edit_tarifa_parqueadero'));
     document.getElementById('edit_zona_parqueadero').value = id_zona || '';   // vacío = sin zona
 
     document.getElementById('ModalEditarParqueadero').style.display = 'flex';
@@ -1247,6 +1250,7 @@ function editarValorCobro(idIngreso) {
     if (notaApp) notaApp.hidden = true;
 
     caja.querySelector('.cobro-valor-ayuda:not(.cobro-valor-app)').hidden = false;
+    caja.querySelector('.campo-pesos-ver').hidden = false;
     input.hidden = false;
     input.focus();
     input.select();
@@ -1293,8 +1297,9 @@ function abrirModalPago(btn) {
                <label class="cobro-valor-label" for="valor-cobrado-${id}">Valor a cobrar</label>
                <span class="cobro-valor-precio">${PESOS.format(valorInicial)}</span>
                ${notaApp}
-               <input type="number" id="valor-cobrado-${id}" class="cobro-valor-input" data-tarifa="${tarifa}"
-                      value="${valorInicial}" min="1" step="1" inputmode="numeric" hidden />
+               <input type="text" inputmode="numeric" autocomplete="off" id="valor-cobrado-${id}" class="cobro-valor-input campo-pesos"
+                      data-tarifa="${tarifa}" value="${valorInicial}" hidden />
+               <span class="campo-pesos-ver" data-pesos-de="valor-cobrado-${id}" hidden>${PESOS.format(valorInicial)}</span>
                <span class="cobro-valor-ayuda" hidden>Servicio ${PESOS.format(tarifa)}. Si el cliente paga más (propina), escribe lo que pagó.</span>
                <button type="button" class="cobro-valor-cambiar" onclick="editarValorCobro('${id}')">Cambiar valor total</button>
            </div>`
@@ -1394,6 +1399,23 @@ function abrirModalPago(btn) {
 
 // Pesos colombianos sin decimales, como el C0 de las vistas: $ 12.000
 const PESOS = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+
+// Campos de dinero (class="campo-pesos"): solo dígitos. Con type="number" el navegador toma el punto como decimal
+// y "20.000" se guardaba como 20; así "20.000", "$20.000" o "20 000" quedan en 20000. El valor con formato se
+// muestra en el elemento con data-pesos-de="<id del campo>"
+function mostrarPesos(campo) {
+    const ver = campo?.id && document.querySelector(`[data-pesos-de="${campo.id}"]`);
+    if (ver) ver.textContent = campo.value ? PESOS.format(Number(campo.value)) : '';
+}
+
+document.addEventListener('input', e => {
+    if (!e.target.matches?.('.campo-pesos')) return;
+
+    const soloDigitos = e.target.value.replace(/\D/g, '');
+    if (e.target.value !== soloDigitos) e.target.value = soloDigitos;
+
+    mostrarPesos(e.target);
+});
 
 // QR y cuenta para pagar: los muestran el cobro (según el método) y la ventana del valet (los dos)
 const HTML_QR_PAGO = `
@@ -1600,8 +1622,11 @@ function generarCodigoSeguridad(idIngreso) {
     // Si el banco puede cambiar el valor, tiene que ser un número mayor que 0
     const valorInput = document.getElementById(`valor-cobrado-${idIngreso}`);
 
-    if (valorInput && !(Number(valorInput.value) > 0)) {
-        mostrarAlertaWhatsApp('Escribe el valor que pagó el cliente.', 'error');
+    // Menos de $1.000 casi siempre es "20.000" mal escrito: se pide el valor completo
+    if (valorInput && !(Number(valorInput.value) >= 1000)) {
+        mostrarAlertaWhatsApp(Number(valorInput.value) > 0
+            ? 'El valor parece incompleto: escribe el valor completo (por ejemplo 20000).'
+            : 'Escribe el valor que pagó el cliente.', 'error');
         editarValorCobro(idIngreso);   // el campo puede estar escondido detrás de "Cambiar valor total"
         return;
     }

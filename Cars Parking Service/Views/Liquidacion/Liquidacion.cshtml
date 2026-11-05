@@ -6,6 +6,9 @@
     var idUsuario = Context.Session.GetInt32("id");
     var idRol = Context.Session.GetInt32("id_rol");
     var registros = ViewBag.ingresosLiquidados;
+
+    // Plata con punto de miles ("20.000") sin importar el idioma del servidor
+    var pesosCO = System.Globalization.CultureInfo.GetCultureInfo("es-CO");
 }
 
 <div class="page">
@@ -55,7 +58,7 @@
                 <i class="fa-solid fa-money-bill"></i>
             </div>
             <div class="slabel">Total efectivo</div>
-            <div class="sval">$@(((decimal)ViewBag.totalEfectivo).ToString("N0"))</div>
+            <div class="sval">$@(((decimal)ViewBag.totalEfectivo).ToString("N0", pesosCO))</div>
         </div>
 
         <div class="stat-card">
@@ -63,7 +66,7 @@
                 <i class="fa-solid fa-building-columns"></i>
             </div>
             <div class="slabel">Total transferencias</div>
-            <div class="sval">$@(((decimal)ViewBag.TotalTransferencia).ToString("N0"))</div>
+            <div class="sval">$@(((decimal)ViewBag.TotalTransferencia).ToString("N0", pesosCO))</div>
         </div>
 
         <div class="stat-card highlight">
@@ -71,7 +74,7 @@
                 <i class="fa-solid fa-file-invoice-dollar"></i>
             </div>
             <div class="slabel">Total general</div>
-            <div class="sval">$@(((decimal)ViewBag.totalGeneral).ToString("N0"))</div>
+            <div class="sval">$@(((decimal)ViewBag.totalGeneral).ToString("N0", pesosCO))</div>
         </div>
 
     </div>
@@ -91,7 +94,7 @@
                 <summary>
                     <span>@u.Ubicacion</span>
                     <span>@u.Vehiculos vehículos</span>
-                    <strong>$@(((decimal)u.Total).ToString("N0"))</strong>
+                    <strong>$@(((decimal)u.Total).ToString("N0", pesosCO))</strong>
                 </summary>
 
                 @* Las clases liq-* ubican cada dato en el celular, donde cada vehículo se ve como un bloque *@
@@ -113,7 +116,7 @@
                                 <td class="liq-hora">@(((DateTime?)d.Hora)?.ToString("dd/MM HH:mm"))</td>
                                 <td class="liq-cobro">@d.Cobro</td>
                                 <td class="liq-metodo">@d.Metodo</td>
-                                <td class="liq-valor">$@(((decimal)d.Valor).ToString("N0"))</td>
+                                <td class="liq-valor">$@(((decimal)d.Valor).ToString("N0", pesosCO))</td>
                             </tr>
                         }
                     </tbody>
@@ -194,17 +197,17 @@
 
             <div class="ci">
                 <div class="cl">Total efectivo</div>
-                <div class="cv">$@(((decimal)ViewBag.totalEfectivo).ToString("N0"))</div>
+                <div class="cv">$@(((decimal)ViewBag.totalEfectivo).ToString("N0", pesosCO))</div>
             </div>
 
             <div class="ci">
                 <div class="cl">Transferencias</div>
-                <div class="cv">$@(((decimal)ViewBag.TotalTransferencia).ToString("N0"))</div>
+                <div class="cv">$@(((decimal)ViewBag.TotalTransferencia).ToString("N0", pesosCO))</div>
             </div>
 
             <div class="ci total-card">
                 <div class="cl">Total general</div>
-                <div class="cv">$@(((decimal)ViewBag.totalGeneral).ToString("N0"))</div>
+                <div class="cv">$@(((decimal)ViewBag.totalGeneral).ToString("N0", pesosCO))</div>
             </div>
 
         </div>
@@ -263,7 +266,7 @@
 
             <div class="mrow">
                 <span>Total general</span>
-                <span>$@(((decimal)ViewBag.totalGeneral).ToString("N0"))</span>
+                <span>$@(((decimal)ViewBag.totalGeneral).ToString("N0", pesosCO))</span>
             </div>
 
         </div>

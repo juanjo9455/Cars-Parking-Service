@@ -1,6 +1,9 @@
 ﻿@model CarsParkingService.ViewModels.EstadoTurnosViewModel
 @{
     ViewData["Title"] = "Administrador";
+
+    // Plata con punto de miles ("20.000") sin importar el idioma del servidor
+    var pesosCO = System.Globalization.CultureInfo.GetCultureInfo("es-CO");
 }
 
 <div class="container mt-4 admin-container">
@@ -200,7 +203,7 @@
                                         else
                                         {
                                             <span class="adm-deuda-neg">
-                                                - $@v.Deuda.ToString("N0")
+                                                - $@v.Deuda.ToString("N0", pesosCO)
                                             </span>
                                         }
                                     </td>
@@ -397,15 +400,15 @@
         @* Resumen del día *@
         <div class="adm-liq-resumen">
             <div class="adm-liq-item adm-liq-total">
-                <span class="adm-liq-num">$@Model.Liquidaciones.Sum(l => l.TotalLiquidado).ToString("N0")</span>
+                <span class="adm-liq-num">$@Model.Liquidaciones.Sum(l => l.TotalLiquidado).ToString("N0", pesosCO)</span>
                 <span class="adm-liq-lbl">Total del día</span>
             </div>
             <div class="adm-liq-item">
-                <span class="adm-liq-num">$@Model.Liquidaciones.Sum(l => l.TotalEfectivo).ToString("N0")</span>
+                <span class="adm-liq-num">$@Model.Liquidaciones.Sum(l => l.TotalEfectivo).ToString("N0", pesosCO)</span>
                 <span class="adm-liq-lbl">Efectivo</span>
             </div>
             <div class="adm-liq-item">
-                <span class="adm-liq-num">$@Model.Liquidaciones.Sum(l => l.TotalTransferencias).ToString("N0")</span>
+                <span class="adm-liq-num">$@Model.Liquidaciones.Sum(l => l.TotalTransferencias).ToString("N0", pesosCO)</span>
                 <span class="adm-liq-lbl">Transferencias</span>
             </div>
             <div class="adm-liq-item">
@@ -454,9 +457,9 @@
                                             @l.TotalVehiculos
                                         </span>
                                     </td>
-                                    <td>$@l.TotalEfectivo.ToString("N0")</td>
-                                    <td>$@l.TotalTransferencias.ToString("N0")</td>
-                                    <td><strong>$@l.TotalLiquidado.ToString("N0")</strong></td>
+                                    <td>$@l.TotalEfectivo.ToString("N0", pesosCO)</td>
+                                    <td>$@l.TotalTransferencias.ToString("N0", pesosCO)</td>
+                                    <td><strong>$@l.TotalLiquidado.ToString("N0", pesosCO)</strong></td>
                                     <td>
                                         <button type="button" class="adm-btn-detalle" data-no-spinner="true"
                                                 data-id="@l.IdLiquidacion"

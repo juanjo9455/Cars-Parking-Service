@@ -526,8 +526,9 @@
                         </div>
                         <div class="form-group-modal">
                             <label>Valor Servicio</label>
-                            <!-- Importante: En C# estás esperando 'decimal valor_servicio', este input tipo 'number' y step='any' ayuda a su conversión correcta -->
-                            <input type="number" step="any" id="edit_valor_servicio" name="valor_servicio" class="modal-select" required />
+                            @* Solo dígitos (campo-pesos en site.js): con type="number", "20.000" se guardaba como 20 *@
+                            <input type="text" inputmode="numeric" autocomplete="off" id="edit_valor_servicio" name="valor_servicio" class="modal-select campo-pesos" required />
+                            <small class="campo-pesos-ver" data-pesos-de="edit_valor_servicio"></small>
                         </div>
                         <div class="form-group-modal">
                             <label>Zona</label>
@@ -664,7 +665,8 @@
                         </div>
                         <div class="form-group-modal">
                             <label>Tarifa</label>
-                            <input type="number" step="any" id="edit_tarifa_parqueadero" name="tarifa" class="modal-select" required />
+                            <input type="text" inputmode="numeric" autocomplete="off" id="edit_tarifa_parqueadero" name="tarifa" class="modal-select campo-pesos" required />
+                            <small class="campo-pesos-ver" data-pesos-de="edit_tarifa_parqueadero"></small>
                         </div>
                         <div class="form-group-modal">
                             <label>Zona</label>
@@ -772,11 +774,12 @@
 
                         <div class="input-free-container">
 
-                            <input type="number"
-                                   step="any"
+                            <input type="text"
+                                   inputmode="numeric"
+                                   autocomplete="off"
                                    id="valor_servicio"
                                    name="valor_servicio"
-                                   class="form-control"
+                                   class="form-control campo-pesos"
                                    required />
 
                             <button type="button"
@@ -786,6 +789,7 @@
                             </button>
 
                         </div>
+                        <small class="campo-pesos-ver" data-pesos-de="valor_servicio"></small>
                     </div>
                     <div class="form-group">
                         <label for="id_zona_ubicacion">Zona</label>
@@ -827,7 +831,8 @@
                     </div>
                     <div class="form-group">
                         <label for="Tarifa">Tarifa</label>
-                        <input type="number" step="any" id="tarifa" name="tarifa" class="form-control" required />
+                        <input type="text" inputmode="numeric" autocomplete="off" id="tarifa" name="tarifa" class="form-control campo-pesos" required />
+                        <small class="campo-pesos-ver" data-pesos-de="tarifa"></small>
                     </div>
                     <div class="form-group">
                         <label for="id_zona_parqueadero">Zona</label>

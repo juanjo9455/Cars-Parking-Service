@@ -123,8 +123,9 @@ function editarCampoCobro(campo) {
         ? `<select id="dc-nuevo-metodo" aria-label="Nuevo método de pago">
                ${METODOS_PAGO_COBRO.map(m => `<option value="${m}" ${m === infoDespacho.metodo ? 'selected' : ''}>${m}</option>`).join('')}
            </select>`
-        : `<input type="number" id="dc-nuevo-valor" aria-label="Nuevo valor total" value="${Number(infoDespacho.total)}"
-                  min="1" step="1" inputmode="numeric" />`;
+        : `<input type="text" inputmode="numeric" autocomplete="off" id="dc-nuevo-valor" class="campo-pesos"
+                  aria-label="Nuevo valor total" value="${Number(infoDespacho.total)}" />
+           <span class="campo-pesos-ver" data-pesos-de="dc-nuevo-valor">${PESOS.format(infoDespacho.total)}</span>`;
 
     caja.insertAdjacentHTML('beforeend', `
         <div class="dc-edicion">
@@ -161,8 +162,9 @@ async function guardarCampoCobro(campo, boton) {
         const campoValor = document.getElementById('dc-nuevo-valor');
         const valor = Number(campoValor.value);
 
-        if (!Number.isInteger(valor) || valor <= 0 || valor > 10000000) {
-            mostrarAlertaWhatsApp('Escribe un valor entero mayor que 0.', 'error');
+        // Menos de $1.000 casi siempre es "20.000" mal escrito
+        if (!Number.isInteger(valor) || valor < 1000 || valor > 10000000) {
+            mostrarAlertaWhatsApp('Escribe el valor completo en pesos, de $1.000 en adelante (por ejemplo 20000).', 'error');
             campoValor.focus();
             return;
         }
