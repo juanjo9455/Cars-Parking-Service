@@ -67,23 +67,8 @@
         <i class="fa-solid fa-bars" id="abrir-menu-lateral"></i>
     </div>
 
-    <script>
-        setInterval(() => {
-        fetch('/Home/KeepAlive', {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json'
-        },
-        credentials: 'same-origin' // <-- Esta opción adjunta las cookies de sesión
-        })
-        .then(response => {
-        if (!response.ok) {
-        console.warn('KeepAlive falló con estado:', response.status);
-        }
-        })
-        .catch(error => console.error('Error en KeepAlive:', error));
-        }, 60000); // Frecuencia programada
-    </script>
+    @* Latido solo con actividad y cierre de sesión a la hora sin actividad *@
+    <script src="~/js/inactividad.js" asp-append-version="true"></script>
 
     @RenderBody()
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

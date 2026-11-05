@@ -30,7 +30,9 @@ builder.Services.AddControllersWithViews();
 // Agregar soporte para sesiones con configuración
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    // La página cierra la sesión a la hora sin actividad (wwwroot/js/inactividad.js). Con el celular bloqueado no
+    // llegan peticiones: la sesión web no debe vencer antes de esa hora (2 minutos de margen)
+    options.IdleTimeout = TimeSpan.FromMinutes(62);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
