@@ -295,6 +295,14 @@ namespace CarsParkingService.Controllers
                 return Json(new { success = false, message = "No tienes permiso para ver liquidaciones." });
             }
 
+            // Los comprobantes (QR / transferencia) de esta liquidación, sin traer las imágenes: se juntan por placa
+            // y hora de entrega porque sp_vehiculosLiquidacion no trae el id del ingreso
+            var fotos = _context.ingresos
+                .AsNoTracking()
+                .Where(i => i.id_liquidacion == id && i.foto_transferencia != null)
+                .Select(i => new { i.id_ingreso, i.placa, i.fecha_entrega })
+                .ToList();
+
             var vehiculos = _context.Database
                 .SqlQueryRaw<vehiculo_liquidado>("EXEC sp_vehiculosLiquidacion @id_liquidacion",
                     new SqlParameter("@id_liquidacion", id))
@@ -310,7 +318,11 @@ namespace CarsParkingService.Controllers
                     // En efectivo nunca hay propina: lo que entra es el servicio
                     propina = v.metodo_pago == "Efectivo" ? 0 : v.valor_propina,
                     cobrado = v.metodo_pago == "Efectivo" ? v.valor_servicio : v.total_cobrado,
-                    ubicacion = v.nombre_ubicacion ?? "—"
+                    ubicacion = v.nombre_ubicacion ?? "—",
+                    foto = fotos
+                        .Where(f => f.placa == v.placa && f.fecha_entrega == v.fecha_entrega)
+                        .Select(f => Url.Action(nameof(FotoTransferenciaIngreso), new { idIngreso = f.id_ingreso }))
+                        .FirstOrDefault()
                 });
 
             return Json(new { success = true, vehiculos });
@@ -1158,6 +1170,28 @@ namespace CarsParkingService.Controllers
             return RedirectToAction("Tabla_Vehiculos");
         }
 
+        // La misma regla de ValetsDisponibles para otro rol: los de ese rol, quien tenga turno abierto con ese rol
+        // (switch de rol) y el admin. Ordenados por nombre
+        private List<usuarios> UsuariosDisponibles(int rol)
+        {
+            var enTurno = _context.sesiones
+                .Where(s => s.fecha_fin == null && s.id_rol == rol)
+                .Select(s => s.id_usuario);
+
+            return _context.usuarios
+                .Where(u => u.estado && (u.id_rol == rol || u.id_rol == 3 || enTurno.Contains(u.id_usuario)))
+                .OrderBy(u => u.nombres)
+                .ThenBy(u => u.apellidos)
+                .ToList();
+        }
+
+        // Quienes pueden haber parqueado un vehículo: los valets y los Key (VistaKey)
+        private List<usuarios> Parqueadores() => ValetsDisponibles()
+            .UnionBy(UsuariosDisponibles(4), u => u.id_usuario)
+            .OrderBy(u => u.nombres)
+            .ThenBy(u => u.apellidos)
+            .ToList();
+
         // Valets que se pueden asignar a un vehículo: los de rol Valet, quien tenga turno abierto como
         // valet (switch de rol) y el admin, que también trabaja como valet. Ordenados por nombre.
         private List<usuarios> ValetsDisponibles()
@@ -1199,7 +1233,7 @@ namespace CarsParkingService.Controllers
         // Este atributo indica que este método responde a peticiones HTTP POST
         // Es decir, cuando el formulario de registro se envía (method="post")
         [HttpPost]
-        public async Task<IActionResult> IngresoVehiculos(ingresos obj_ingreso, int? id_valet, int id_banco, string? firmaBase64, bool sin_objetos_valor = false, List<string>? fotos = null, string? videoBase64 = null, IFormFile? video = null)
+        public async Task<IActionResult> IngresoVehiculos(ingresos obj_ingreso, int? id_valet, int id_banco, string? firmaBase64, bool sin_objetos_valor = false, List<string>? fotos = null, string? videoBase64 = null, IFormFile? video = null, string? indicativo = null)
         {
             // DEBUG TEMPORAL
             System.Diagnostics.Debug.WriteLine("=== ENTRÓ AL POST ===");
@@ -1266,6 +1300,17 @@ namespace CarsParkingService.Controllers
                 ViewBag.Error = "La placa del vehiculo es obligatoria";
                 return View("Ingreso_Vehiculos");
             }
+
+            // WhatsApp de otro país (selector de indicativo): con + y el indicativo para que le llegue el mensaje
+            var telefonoPais = TelefonoConIndicativo(obj_ingreso.telefono, indicativo);
+
+            if (telefonoPais == null)
+            {
+                ViewBag.Error = "El WhatsApp no es válido: escribe solo el número, o con + y el indicativo si escogiste Otro país.";
+                return View("Ingreso_Vehiculos");
+            }
+
+            obj_ingreso.telefono = telefonoPais;
 
             try
             {
@@ -1558,6 +1603,32 @@ namespace CarsParkingService.Controllers
 
         // Metodo para enviar mensaje al whatsapp para solicitar vehiculo y pagar servicio
         // tipo: "ingreso" o "reenvio" (queda en el registro de WhatsApp enviados)
+        // Colombia (57, o sin indicativo: formularios de antes) queda como lo escribieron, igual que siempre. Otro
+        // país: + indicativo + número (máximo 15 dígitos en total). "otro": el número ya trae + y el indicativo.
+        // null = no es válido
+        private static string? TelefonoConIndicativo(string? telefono, string? indicativo)
+        {
+            if (string.IsNullOrWhiteSpace(indicativo) || indicativo == "57")
+            {
+                return telefono;
+            }
+
+            var numero = System.Text.RegularExpressions.Regex.Replace(telefono ?? "", @"[\s\-()]", "");
+
+            if (indicativo == "otro")
+            {
+                return System.Text.RegularExpressions.Regex.IsMatch(numero, @"^\+[0-9]{8,15}$") ? numero : null;
+            }
+
+            var completo = indicativo + numero;
+
+            return System.Text.RegularExpressions.Regex.IsMatch(indicativo, @"^[0-9]{1,3}$") &&
+                   System.Text.RegularExpressions.Regex.IsMatch(numero, @"^[0-9]{4,14}$") &&
+                   completo.Length <= 15
+                ? "+" + completo
+                : null;
+        }
+
         private async Task<(bool exito, string mensaje)> EnviarWhatsAppIngreso(string placa, string nombre, int idIngreso, string telefono, string tipo)
         {
             if (string.IsNullOrWhiteSpace(telefono))
@@ -3191,7 +3262,7 @@ namespace CarsParkingService.Controllers
 
             // Nombres del valet que lo ingresó, del que lo trae de vuelta, del banco, de quien lo solicitó y de
             // quien lo parqueó
-            var idsValets = new int?[] { ingreso.id_valet, ingreso.valet_despacho, ingreso.id_banco, ingreso.usuario_solicitud, ingreso.usuario_parqueo }
+            var idsValets = new int?[] { ingreso.id_valet, ingreso.valet_despacho, ingreso.id_banco, ingreso.id_banco_responsable, ingreso.usuario_solicitud, ingreso.usuario_parqueo }
                 .Where(id => id.HasValue)
                 .Select(id => id.Value)
                 .ToList();
@@ -3199,6 +3270,11 @@ namespace CarsParkingService.Controllers
             var nombres = _context.usuarios
                 .Where(u => idsValets.Contains(u.id_usuario))
                 .ToDictionary(u => u.id_usuario, u => u.nombres + " " + u.apellidos);
+
+            // Lápiz del admin para corregir los operadores (CambiarOperador, que vuelve a validar todo)
+            var esAdmin = HttpContext.Session.GetInt32("id_rol") == 3;
+            var liquidado = Liquidado(ingreso);
+            var nombreYApellido = (List<usuarios> lista) => lista.Select(u => new { id = u.id_usuario, nombre = u.nombres + " " + u.apellidos });
 
             return Json(new
             {
@@ -3240,7 +3316,24 @@ namespace CarsParkingService.Controllers
                 fechaParqueo = ingreso.fecha_parqueo?.ToString("dd/MM/yyyy HH:mm"),
                 parqueadoPor = ingreso.usuario_parqueo.HasValue ? nombres.GetValueOrDefault(ingreso.usuario_parqueo.Value) : null,
                 // Reversar una solicitud hecha por error (punto 21): los mismos que pueden solicitar
-                puedeReversar = (HttpContext.Session.GetInt32("id_rol") is 1 or 2 or 3) && IngresoReglas.PuedeReversarSolicitud(ingreso)
+                puedeReversar = (HttpContext.Session.GetInt32("id_rol") is 1 or 2 or 3) && IngresoReglas.PuedeReversarSolicitud(ingreso),
+                // Quien lo debe cobrar ahora (Database/turnos.sql): el banco que lo registró o el que lo recibió
+                bancoACargo = nombres.GetValueOrDefault(ingreso.id_banco_responsable ?? ingreso.id_banco),
+                // Para el admin: quién está en cada papel (null = ese paso no ha pasado o ya no se cambia) y a quién
+                // se puede poner. Nada si ya está liquidado
+                operadores = esAdmin && !liquidado
+                    ? new
+                    {
+                        valet = ingreso.id_valet,
+                        despacho = ingreso.valet_despacho,
+                        parqueo = ingreso.usuario_parqueo,
+                        banco = ingreso.estado_pago == "pagado" ? (int?)null : ingreso.id_banco_responsable ?? ingreso.id_banco,
+                        valets = nombreYApellido(ValetsDisponibles()),
+                        parqueadores = nombreYApellido(Parqueadores()),
+                        bancos = nombreYApellido(UsuariosDisponibles(2))
+                    }
+                    : null,
+                operadoresLiquidado = esAdmin && liquidado
             });
         }
 
@@ -3296,6 +3389,108 @@ namespace CarsParkingService.Controllers
 
             return Json(new { success = true, mensaje = $"Solicitud del vehículo {ingreso.placa} reversada. Volvió a {ingreso.estado_servicio}." });
         }
+
+        // Lápiz del admin en Información (tabla de vehículos): corrige quién atendió el vehículo. Solo lo que ya pasó,
+        // nunca en un vehículo liquidado y solo a un usuario activo que pueda tener ese papel. El banco a cargo, solo
+        // mientras no se ha cobrado: pasa con el turno de ese banco y queda el traspaso (sp_cambiarBancoACargo)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CambiarOperador(int id_ingreso, string? campo, int id_usuario)
+        {
+            if (HttpContext.Session.GetInt32("id_rol") != 3)
+            {
+                return Json(new { success = false, mensaje = "Solo el administrador puede cambiar los operadores." });
+            }
+
+            var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            if (ingreso == null)
+            {
+                return Json(new { success = false, mensaje = "No se encontró el vehículo." });
+            }
+
+            if (Liquidado(ingreso))
+            {
+                return Json(new { success = false, mensaje = $"El vehículo {ingreso.placa} ya está liquidado: sus operadores no se cambian." });
+            }
+
+            // Quién está hoy, a quién se puede poner y, si no se puede, por qué
+            int? actual;
+            List<usuarios> posibles;
+            string? noSePuede;
+            string papel;
+
+            switch (campo)
+            {
+                case "valet":
+                    (actual, posibles, papel) = (ingreso.id_valet, ValetsDisponibles(), "el valet");
+                    noSePuede = actual.HasValue ? null : "todavía no tiene valet (usa Asignar valet)";
+                    break;
+                case "despacho":
+                    (actual, posibles, papel) = (ingreso.valet_despacho, ValetsDisponibles(), "el valet de despacho");
+                    noSePuede = actual.HasValue ? null : "todavía no se ha despachado";
+                    break;
+                case "parqueo":
+                    (actual, posibles, papel) = (ingreso.usuario_parqueo, Parqueadores(), "quién lo parqueó");
+                    noSePuede = actual.HasValue ? null : "todavía no se ha parqueado";
+                    break;
+                case "banco":
+                    (actual, posibles, papel) = (ingreso.id_banco_responsable ?? ingreso.id_banco, UsuariosDisponibles(2), "el banco a cargo");
+                    noSePuede = ingreso.estado_pago == "pagado" ? "ya se cobró" : null;
+                    break;
+                default:
+                    return Json(new { success = false, mensaje = "Ese dato no se puede cambiar." });
+            }
+
+            if (noSePuede != null)
+            {
+                return Json(new { success = false, mensaje = $"No se puede cambiar {papel} de {ingreso.placa}: {noSePuede}." });
+            }
+
+            var nuevo = posibles.FirstOrDefault(u => u.id_usuario == id_usuario);
+
+            if (nuevo == null)
+            {
+                return Json(new { success = false, mensaje = "Escoge un usuario activo de la lista." });
+            }
+
+            if (actual == id_usuario)
+            {
+                return Json(new { success = false, mensaje = "Es la misma persona: no cambió nada." });
+            }
+
+            var anterior = _context.usuarios
+                .Where(u => u.id_usuario == actual)
+                .Select(u => u.nombres + " " + u.apellidos)
+                .FirstOrDefault() ?? "sin registro";
+
+            switch (campo)
+            {
+                case "valet": ingreso.id_valet = id_usuario; break;
+                case "despacho": ingreso.valet_despacho = id_usuario; break;
+                case "parqueo": ingreso.usuario_parqueo = id_usuario; break;
+            }
+
+            if (campo == "banco")
+            {
+                _context.Database.ExecuteSqlRaw("EXEC sp_cambiarBancoACargo @id_ingreso, @id_banco, @ahora",
+                    new SqlParameter("@id_ingreso", ingreso.id_ingreso),
+                    new SqlParameter("@id_banco", id_usuario),
+                    new SqlParameter("@ahora", System.Data.SqlDbType.DateTime2) { Value = DateTime.Now });
+            }
+            else
+            {
+                _context.SaveChanges();
+            }
+
+            return Json(new
+            {
+                success = true,
+                mensaje = $"Listo: {papel} de {ingreso.placa} ahora es {nuevo.nombres} {nuevo.apellidos} (antes {anterior})."
+            });
+        }
+
+        private static bool Liquidado(ingresos ingreso) => ingreso.id_liquidacion.HasValue || ingreso.estado_liquidacion == true;
 
         // Devuelve la foto del comprobante de pago (transferencia / QR)
         [HttpGet]

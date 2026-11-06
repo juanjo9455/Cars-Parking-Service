@@ -2189,6 +2189,25 @@ async function abrirModalInformacion(btn) {
             : `<span class="info-valor info-vacio">${vacio}</span>`;
 
         const sinValet = "El valet no ha sido asignado al vehículo";
+
+        // Lápiz del admin junto a cada operador que se puede corregir (operadores-ingreso.js, solo en la tabla de
+        // vehículos). El servidor dice cuáles: null = ese paso no ha pasado, ya se cobró o ya está liquidado
+        const hayLapiz = campo => info.operadores?.[campo] != null && typeof editarOperador === 'function';
+        const operador = (campo, etiqueta, texto, vacio, completo = false) => `
+            <div class="info-item ${completo ? "info-item-completo" : ""}" id="op-${campo}">
+                <span class="info-label">${etiqueta}</span>
+                ${hayLapiz(campo)
+                    ? `<div class="dc-editable">${valor(texto, vacio)}
+                           <button type="button" class="dc-lapiz" onclick="editarOperador('${campo}')" aria-label="Cambiar ${etiqueta.toLowerCase()}">
+                               <i class="fa-solid fa-pen"></i>
+                           </button>
+                       </div>`
+                    : valor(texto, vacio)}
+            </div>`;
+
+        if (typeof editarOperador === 'function') {
+            window.infoOperadores = { idIngreso, placa: info.placa, operadores: info.operadores, boton: btn };
+        }
         const cambioLugar = info.lugarEntrega && info.lugarIngreso && info.lugarEntrega !== info.lugarIngreso;
 
         // Celular: con un toque se llama desde el celular
@@ -2327,23 +2346,20 @@ async function abrirModalInformacion(btn) {
                 </div>
 
                 <h3 class="info-seccion"><i class="fa-solid fa-user-tie"></i> Operadores</h3>
+                ${info.operadoresLiquidado && typeof editarOperador === 'function'
+                    ? '<p class="info-nota"><i class="fa-solid fa-lock"></i> Ya está liquidado: los operadores no se cambian.</p>'
+                    : ""}
                 <div class="info-grid">
                     <div class="info-item info-item-completo">
                         <span class="info-label">Banco ingreso</span>
                         ${valor(info.banco, "Sin banco registrado")}
                     </div>
-                    <div class="info-item">
-                        <span class="info-label">Valet parqueo</span>
-                        ${valor(info.valetIngreso, sinValet)}
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Valet despacho</span>
-                        ${valor(info.valetDespacho, sinValet)}
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Parqueó</span>
-                        ${valor(info.parqueadoPor, "Sin registro")}
-                    </div>
+                    ${info.bancoACargo && (info.bancoACargo !== info.banco || hayLapiz('banco'))
+                        ? operador('banco', 'Banco a cargo', info.bancoACargo, "Sin banco", true)
+                        : ""}
+                    ${operador('valet', 'Valet parqueo', info.valetIngreso, sinValet)}
+                    ${operador('despacho', 'Valet despacho', info.valetDespacho, sinValet)}
+                    ${operador('parqueo', 'Parqueó', info.parqueadoPor, "Sin registro")}
                     <div class="info-item">
                         <span class="info-label">Solicitó</span>
                         ${valor(info.solicitadoPor, "Aún no se ha solicitado")}

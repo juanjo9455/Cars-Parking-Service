@@ -18,6 +18,7 @@ GO
 SET QUOTED_IDENTIFIER ON;
 GO
 
+DROP PROCEDURE IF EXISTS dbo.sp_cambiarBancoACargo;
 DROP PROCEDURE IF EXISTS dbo.sp_recibirVehiculos;
 DROP PROCEDURE IF EXISTS dbo.sp_vehiculosPorRecibir;
 DROP PROCEDURE IF EXISTS dbo.sp_pasarACorrido;

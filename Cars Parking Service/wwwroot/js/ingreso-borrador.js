@@ -38,7 +38,7 @@
 
     const CLAVE = 'ingresoBorrador';
     const VIGENCIA_MS = 2 * 60 * 60 * 1000; // 2 horas
-    const CAMPOS = ['placa', 'nombre_cliente', 'telefono', 'id_valet', 'id_parqueadero', 'notas'];
+    const CAMPOS = ['placa', 'nombre_cliente', 'indicativo', 'telefono', 'id_valet', 'id_parqueadero', 'notas'];
 
     function leer() {
         try { return JSON.parse(sessionStorage.getItem(CLAVE)); }
@@ -128,6 +128,7 @@
 
         asignar('placa', (borrador.placa || '').toUpperCase());
         asignar('nombre_cliente', borrador.nombre_cliente);
+        asignar('indicativo', borrador.indicativo);
         asignar('telefono', borrador.telefono);
         asignar('id_valet', borrador.id_valet);
         asignar('id_parqueadero', borrador.id_parqueadero);

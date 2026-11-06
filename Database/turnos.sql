@@ -16,7 +16,8 @@
      (NULL = el banco que registró el ingreso) y tbl_sesiones.id_turno.
      No modifica ni borra datos existentes.
    - Crea fn_sesionesAbiertas, fn_vehiculosPorRecibir, sp_pasarACorrido,
-     sp_vehiculosPorRecibir y sp_recibirVehiculos, y actualiza
+     sp_vehiculosPorRecibir, sp_recibirVehiculos y sp_cambiarBancoACargo
+     (el admin cambia el banco a cargo), y actualiza
      sp_consultarRegistros para que el banco vea también los vehículos que
      recibió.
    - Se puede correr más de una vez: cada paso revisa si ya está hecho.
@@ -289,7 +290,44 @@ BEGIN
 END;
 GO
 
-/* 10. sp_consultarRegistros: el banco ve los vehículos que tiene a cargo (los que registró y los que recibió;
+/* 10. El admin cambia el banco a cargo de un vehículo sin cobrar (lápiz en Información): pasa al turno de ese banco
+       si está de turno, y queda el traspaso. La app ya revisó que no esté cobrado ni liquidado */
+CREATE OR ALTER PROCEDURE dbo.sp_cambiarBancoACargo
+    @id_ingreso INT,
+    @id_banco INT,
+    @ahora DATETIME2
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    DECLARE @turno INT = (SELECT TOP 1 id_turno FROM dbo.tbl_sesiones
+                          WHERE id_usuario = @id_banco AND id_rol = 2 AND fecha_fin IS NULL AND id_turno IS NOT NULL
+                          ORDER BY fecha_inicio DESC);
+
+    DECLARE @cambio TABLE (de_banco INT, de_turno INT, a_turno INT);
+
+    BEGIN TRANSACTION;
+
+    UPDATE i
+    SET id_banco_responsable = @id_banco,
+        id_turno = COALESCE(@turno, i.id_turno)
+    OUTPUT COALESCE(deleted.id_banco_responsable, deleted.id_banco), deleted.id_turno, inserted.id_turno
+        INTO @cambio (de_banco, de_turno, a_turno)
+    FROM dbo.tbl_ingresos i WITH (UPDLOCK, HOLDLOCK)
+    WHERE i.id_ingreso = @id_ingreso
+      AND ISNULL(i.estado_pago, '') <> 'pagado'
+      AND COALESCE(i.id_banco_responsable, i.id_banco) <> @id_banco;
+
+    INSERT INTO dbo.tbl_traspasos (id_ingreso, de_banco, a_banco, de_turno, a_turno, fecha)
+    SELECT @id_ingreso, de_banco, @id_banco, de_turno, a_turno, @ahora
+    FROM @cambio;
+
+    COMMIT TRANSACTION;
+END;
+GO
+
+/* 11. sp_consultarRegistros: el banco ve los vehículos que tiene a cargo (los que registró y los que recibió;
       los que entregó a otro banco ya no). Lo demás queda igual que en zonas.sql */
 CREATE OR ALTER PROCEDURE [dbo].[sp_consultarRegistros]
     @placa VARCHAR(20) = NULL,
@@ -387,5 +425,5 @@ GO
 -- Verificación
 SELECT id_turno, nombre, dia_semana, hora_inicio, hora_fin, orden FROM dbo.tbl_turnos ORDER BY orden;
 SELECT name AS objeto, type_desc AS tipo FROM sys.objects
-WHERE name IN ('tbl_turnos', 'tbl_traspasos', 'fn_sesionesAbiertas', 'fn_vehiculosPorRecibir', 'sp_pasarACorrido', 'sp_vehiculosPorRecibir', 'sp_recibirVehiculos', 'sp_consultarRegistros');
+WHERE name IN ('tbl_turnos', 'tbl_traspasos', 'fn_sesionesAbiertas', 'fn_vehiculosPorRecibir', 'sp_pasarACorrido', 'sp_vehiculosPorRecibir', 'sp_recibirVehiculos', 'sp_cambiarBancoACargo', 'sp_consultarRegistros');
 GO

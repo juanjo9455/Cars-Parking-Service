@@ -106,7 +106,15 @@
     };
 
     const placaValida = valor => /^[A-Z]{3}[0-9]{3}$/.test(valor.toUpperCase());
-    const telefonoValido = valor => /^[0-9]{7,15}$/.test(valor.replace(/[\s\-()]/g, ''));
+    // "Otro país": el número completo con + y el indicativo; los demás, solo el número (IngresoVehiculos)
+    const otroPais = () => document.getElementById('indicativo')?.value === 'otro';
+    const telefonoValido = valor => (otroPais() ? /^\+[0-9]{8,15}$/ : /^[0-9]{7,15}$/).test(valor.replace(/[\s\-()]/g, ''));
+
+    document.getElementById('indicativo')?.addEventListener('change', () => {
+        const telefono = document.getElementById('telefono');
+        telefono.placeholder = otroPais() ? '+ código y número' : 'WhatsApp';
+        if (telefonoValido(telefono.value.trim())) marcarCampo(telefono, 'errorTelefono', false);
+    });
 
     // Al corregir un campo se le quita el aviso, sin esperar al siguiente intento
     [
@@ -144,7 +152,9 @@
         revisar('nombre_cliente', 'errorNombre', !valor('nombre_cliente'),
             'el nombre del cliente', 'Escribe el nombre del cliente.');
         revisar('telefono', 'errorTelefono', !telefonoValido(valor('telefono')),
-            'el WhatsApp', 'Escribe el WhatsApp del cliente (solo números).');
+            'el WhatsApp', otroPais()
+                ? 'Escribe el WhatsApp con + y el indicativo del país (por ejemplo +13055551234).'
+                : 'Escribe el WhatsApp del cliente (solo números).');
         revisar('id_parqueadero', 'errorParqueadero', !valor('id_parqueadero'),
             'el parqueadero', 'Selecciona el parqueadero donde quedará el vehículo.');
         revisar('id_ubicacion', 'errorUbicacion', !valor('id_ubicacion'),

@@ -730,6 +730,32 @@
     color: #c62828;
 }
 
+/* Cámara junto al método (QR / transferencia): abre la foto del comprobante debajo del vehículo */
+.adm-liq-foto-btn {
+    width: 32px;
+    height: 32px;
+    margin-left: 6px;
+    border: 0;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #1d4ed8;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+.adm-liq-foto-btn[aria-expanded="true"] {
+    background: #1d4ed8;
+    color: #fff;
+}
+
+.adm-liq-foto-fila img {
+    display: block;
+    max-width: min(100%, 420px);
+    max-height: 60vh;
+    margin: 0 auto;
+    border-radius: 8px;
+}
+
 .adm-liq-cuentas {
     display: flex;
     flex-direction: column;

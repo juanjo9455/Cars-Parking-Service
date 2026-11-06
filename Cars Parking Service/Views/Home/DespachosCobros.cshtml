@@ -175,6 +175,9 @@
 
                     // Lo que pagó el cliente con propina (cobros de antes sin total: servicio + propina)
                     var total = (i.total_servicio ?? 0) > 0 ? i.total_servicio!.Value : (i.valor_servicio ?? 0) + (i.valor_propina ?? 0);
+
+                    // En la fila va lo cobrado sin la propina; el lápiz muestra el total, el servicio y la propina
+                    var cobradoSinPropina = total - (i.valor_propina ?? 0);
                     var cobro = i.usuario_cobro.HasValue
                         ? Nombre(i.usuario_cobro) + (string.IsNullOrEmpty(i.rol_cobrador) ? "" : $" ({i.rol_cobrador})")
                         : null;
@@ -231,7 +234,7 @@
                         <td data-label="Cobro">
                             @if (pagado)
                             {
-                                <span class="dc-principal">@total.ToString("C0", moneda) · @(i.metodo_pago ?? "Sin método")</span>
+                                <span class="dc-principal">@cobradoSinPropina.ToString("C0", moneda) · @(i.metodo_pago ?? "Sin método")</span>
                                 <span class="dc-detalle">@Nombre(i.usuario_cobro)</span>
                             }
                             else

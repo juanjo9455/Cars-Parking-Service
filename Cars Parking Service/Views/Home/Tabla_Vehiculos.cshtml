@@ -365,6 +365,13 @@
 
 @section Scripts {
     <script src="~/js/solicitudes.js" asp-append-version="true"></script>
+
+    @* Lápiz del admin para cambiar los operadores en Información (HomeController.CambiarOperador) *@
+    @if (idRol == 3)
+    {
+        <div hidden>@Html.AntiForgeryToken()</div>
+        <script src="~/js/operadores-ingreso.js" asp-append-version="true"></script>
+    }
     <script src="~/js/ingreso-vehiculos-camera.js" asp-append-version="true" defer></script>
     <script src="~/js/pago.js" asp-append-version="true"></script>
 

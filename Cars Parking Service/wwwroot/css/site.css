@@ -3652,3 +3652,30 @@ i.btn-foto-ingreso {
 .recibir-aviso[hidden] {
     display: none;
 }
+
+
+/* WhatsApp del ingreso: el país (indicativo) a la izquierda y el número al lado */
+.telefono-pais {
+    display: flex;
+    gap: 8px;
+}
+
+.input-group .telefono-pais select {
+    flex: 0 0 142px;
+    width: 142px;
+    padding: 15px 28px 15px 10px;
+    font-size: 17px;
+    text-overflow: ellipsis;
+}
+
+.telefono-pais input {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Información: aviso de que un vehículo liquidado ya no deja cambiar sus operadores */
+.info-nota {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: #6b7280;
+}

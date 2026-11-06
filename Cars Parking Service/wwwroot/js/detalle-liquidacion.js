@@ -44,7 +44,11 @@ async function verDetalleLiquidacion(btn) {
                 <td><span class="ingreso-placa">${escaparTexto(v.placa)}</span></td>
                 <td>${escaparTexto(v.entrega)}</td>
                 <td>${escaparTexto(v.cobro)} <span class="adm-text-muted">(${escaparTexto(v.rol)})</span></td>
-                <td>${escaparTexto(v.metodo)}</td>
+                <td>${escaparTexto(v.metodo)}${v.foto ? `
+                    <button type="button" class="adm-liq-foto-btn" data-foto="${escaparTexto(v.foto)}" onclick="verFotoLiquidacion(this)"
+                            aria-expanded="false" aria-label="Ver foto del comprobante de ${escaparTexto(v.placa)}" title="Ver comprobante">
+                        <i class="fa-solid fa-camera"></i>
+                    </button>` : ''}</td>
                 <td>${escaparTexto(v.ubicacion)}</td>
                 <td><strong>${formatoPesos(v.cobrado)}</strong>${desglose(v)}</td>
             </tr>`).join('');
@@ -86,6 +90,25 @@ async function verDetalleLiquidacion(btn) {
         console.error('[LIQUIDACION] Error cargando el detalle:', error);
         contenido.innerHTML = '<p class="adm-text-muted">No se pudo cargar el detalle de la liquidación.</p>';
     }
+}
+
+// La foto del comprobante se abre debajo del vehículo; otro toque la cierra
+function verFotoLiquidacion(boton) {
+    const fila = boton.closest('tr');
+    const abierta = fila.nextElementSibling?.classList.contains('adm-liq-foto-fila');
+
+    if (abierta) {
+        fila.nextElementSibling.remove();
+    } else {
+        fila.insertAdjacentHTML('afterend', `
+            <tr class="adm-liq-foto-fila">
+                <td colspan="${fila.children.length}">
+                    <img src="${escaparTexto(boton.dataset.foto)}" alt="Comprobante de pago" loading="lazy" />
+                </td>
+            </tr>`);
+    }
+
+    boton.setAttribute('aria-expanded', String(!abierta));
 }
 
 function cerrarDetalleLiquidacion() {
