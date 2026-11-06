@@ -35,6 +35,9 @@ namespace CarsParkingService.Models
         // Database/zonas.sql: zona en la que entró el operador en este turno
         public int? id_zona { get; set; }
 
+        // Database/turnos.sql: el turno del banco: el de la hora a la que entró, o Corrido si se quedó (tbl_turnos); null para los demás roles
+        public int? id_turno { get; set; }
+
         // Fecha y hora de inicio
         public DateTime fecha_inicio { get; set; }
 

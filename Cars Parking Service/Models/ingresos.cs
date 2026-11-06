@@ -70,6 +70,12 @@ namespace CarsParkingService.Models
 
         // Database/zonas.sql: zona del ingreso, guardada al crearlo (la de su ubicación)
         public int? id_zona { get; set; }
+
+        // Database/turnos.sql: el turno en que entró; si otro banco lo recibe, pasa al turno de ese banco
+        public int? id_turno { get; set; }
+
+        // Database/turnos.sql: el banco que lo debe cobrar ahora; null = el que lo registró (id_banco)
+        public int? id_banco_responsable { get; set; }
     }
 
     public class SolicitudDto

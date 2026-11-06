@@ -147,6 +147,27 @@
 
     @await RenderSectionAsync("Scripts", required: false)
 
+    @* Banco: vehículos sin cobrar de un banco cuyo turno ya terminó, para recibirlos (Database/turnos.sql) *@
+    @if (idRol == 2)
+    {
+        <div id="recibir-vehiculos" class="recibir-modal" role="dialog" aria-modal="true" aria-labelledby="recibir-titulo" hidden>
+            <div class="recibir-tarjeta">
+                <h3 id="recibir-titulo"><i class="fa-solid fa-right-left"></i> Vehículos pendientes del turno anterior</h3>
+                <p id="recibir-texto"></p>
+                <div id="recibir-lista" class="recibir-lista"></div>
+                <div class="recibir-botones">
+                    <button type="button" class="btn btn-secondary" id="recibir-ahora-no">Ahora no</button>
+                    <button type="button" class="btn btn-primary" id="recibir-aceptar">Sí, recibirlos</button>
+                </div>
+                @Html.AntiForgeryToken()
+            </div>
+        </div>
+
+        <button type="button" id="recibir-aviso" class="recibir-aviso" hidden></button>
+
+        <script src="~/js/recibir-vehiculos.js" asp-append-version="true"></script>
+    }
+
 </body>
 </html>
 

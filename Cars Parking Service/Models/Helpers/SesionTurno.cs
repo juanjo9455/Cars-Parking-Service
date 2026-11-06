@@ -7,7 +7,7 @@ namespace CarsParkingService.Helpers
     {
         // Cierra el turno abierto del usuario y abre uno nuevo con el rol, la zona y el lugar indicados.
         // Lo usan el login (AuthController.cambiarRol, al escoger rol y zona) y el Key cuando cambia de
-        // parqueadero en su vista (CambiarParqueaderoVista).
+        // parqueadero en su vista (CambiarParqueaderoVista). El banco entra con el turno de la hora (Database/turnos.sql)
         public static void AbrirTurno(ApplicationDbContext db, HttpContext http, int idUsuario,
             int idRol, int? idUbicacion, int? idParqueadero, int? idZona)
         {
@@ -29,6 +29,7 @@ namespace CarsParkingService.Helpers
                 id_ubicacion = idRol == 2 ? idUbicacion : null,
                 id_parqueadero = idRol == 4 ? idParqueadero : null,
                 id_zona = idZona,
+                id_turno = idRol == 2 ? Turnos.DeLaHora(db, DateTime.Now)?.id_turno : null,
                 fecha_inicio = DateTime.Now,
                 ultima_actividad = DateTime.Now,
                 fecha_fin = null

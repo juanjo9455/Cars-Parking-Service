@@ -3548,3 +3548,107 @@ i.btn-foto-ingreso {
     outline: 3px solid #2196F3;
     outline-offset: 2px;
 }
+
+/* ==================== Turnos: vehículos del turno anterior (recibir-vehiculos.js) ==================== */
+
+.recibir-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 15000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, .55);
+}
+
+.recibir-modal[hidden] {
+    display: none;
+}
+
+.recibir-tarjeta {
+    width: 100%;
+    max-width: 460px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 20px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+}
+
+.recibir-tarjeta h3 {
+    margin: 0 0 10px;
+    font-size: 19px;
+    color: #1f2937;
+}
+
+.recibir-tarjeta h3 i {
+    color: #c62828;
+}
+
+.recibir-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 12px 0 16px;
+}
+
+.recibir-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.recibir-item input {
+    width: 20px;
+    height: 20px;
+    accent-color: #c62828;
+}
+
+.recibir-item .ingreso-placa {
+    font-size: 15px;
+    padding: 2px 8px;
+}
+
+.recibir-detalle {
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.recibir-botones {
+    display: flex;
+    gap: 10px;
+}
+
+.recibir-botones .btn {
+    flex: 1;
+}
+
+/* Aviso flotante mientras queden vehículos por recibir ("Ahora no") */
+.recibir-aviso {
+    position: fixed;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 14000;
+    max-width: calc(100% - 140px);
+    padding: 8px 16px;
+    border: 0;
+    border-radius: 999px;
+    background: #c62828;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(198, 40, 40, .35);
+    cursor: pointer;
+}
+
+.recibir-aviso[hidden] {
+    display: none;
+}

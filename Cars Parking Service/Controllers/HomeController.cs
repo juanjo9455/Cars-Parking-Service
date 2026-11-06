@@ -317,6 +317,84 @@ namespace CarsParkingService.Controllers
         }
 
 
+        // =================== Turnos: vehículos del turno anterior =================== //
+
+        // Vehículos sin cobrar de la zona cuyo banco ya no está de turno (sp_vehiculosPorRecibir): los ve el banco
+        // que entra para recibirlos (ventana "Vehículos pendientes del turno anterior", recibir-vehiculos.js)
+        [HttpGet]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult VehiculosPorRecibir()
+        {
+            var idUsuario = HttpContext.Session.GetInt32("id");
+            var idZona = ZonaSesion();
+
+            if (HttpContext.Session.GetInt32("id_rol") != 2 || !idUsuario.HasValue || !idZona.HasValue)
+            {
+                return Json(new { success = true, vehiculos = Array.Empty<object>() });
+            }
+
+            var vehiculos = _context.Database
+                .SqlQueryRaw<vehiculo_por_recibir>("EXEC sp_vehiculosPorRecibir @id_usuario, @id_zona, @ahora",
+                    new SqlParameter("@id_usuario", idUsuario.Value),
+                    new SqlParameter("@id_zona", idZona.Value),
+                    new SqlParameter("@ahora", System.Data.SqlDbType.DateTime2) { Value = DateTime.Now })
+                .ToList()
+                .Select(v => new
+                {
+                    id = v.id_ingreso,
+                    placa = v.placa,
+                    estado = v.estado_servicio,
+                    ubicacion = v.nombre_ubicacion,
+                    banco = v.banco_anterior,
+                    turno = v.turno_anterior
+                });
+
+            return Json(new { success = true, vehiculos });
+        }
+
+        // El banco recibe los vehículos que escogió (sp_recibirVehiculos): pasan a su cargo y a su turno, y queda
+        // el traspaso. Si otro banco los recibió primero, se le dice quién
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RecibirVehiculos(int[] ids)
+        {
+            var idUsuario = HttpContext.Session.GetInt32("id");
+            var idZona = ZonaSesion();
+
+            if (HttpContext.Session.GetInt32("id_rol") != 2 || !idUsuario.HasValue || !idZona.HasValue)
+            {
+                return Json(new { success = false, mensaje = "Solo el banco de turno puede recibir vehículos." });
+            }
+
+            if (ids == null || ids.Length == 0 || ids.Length > 200)
+            {
+                return Json(new { success = false, mensaje = "Escoge los vehículos que vas a recibir." });
+            }
+
+            var resultado = _context.Database
+                .SqlQueryRaw<vehiculo_recibido>("EXEC sp_recibirVehiculos @id_usuario, @id_zona, @ids, @ahora",
+                    new SqlParameter("@id_usuario", idUsuario.Value),
+                    new SqlParameter("@id_zona", idZona.Value),
+                    new SqlParameter("@ids", string.Join(",", ids.Distinct())),
+                    new SqlParameter("@ahora", System.Data.SqlDbType.DateTime2) { Value = DateTime.Now })
+                .ToList();
+
+            var recibidos = resultado.Count(r => r.recibido);
+            var deOtros = resultado.Where(r => !r.recibido).Select(r => $"{r.placa} ({r.banco_actual})").ToList();
+
+            var mensaje = recibidos > 0
+                ? $"Recibiste {recibidos} vehículo{(recibidos == 1 ? "" : "s")}. Ya quedan a tu cargo."
+                : "No recibiste ningún vehículo.";
+
+            if (deOtros.Count > 0)
+            {
+                mensaje += $" Ya los tiene otro banco: {string.Join(", ", deOtros)}.";
+            }
+
+            return Json(new { success = recibidos > 0, recibidos, mensaje });
+        }
+
+
         // =================== vista key =================== //
 
         // GET: /Home/VistaKey
@@ -1282,6 +1360,10 @@ namespace CarsParkingService.Controllers
 
                 }
                 obj_ingreso.id_banco = id_banco;
+
+                // Turno en que entró (Database/turnos.sql): el del banco que lo registra; si quien lo registra no
+                // tiene turno (el admin), el de la hora
+                obj_ingreso.id_turno = sesionUsuario?.id_turno ?? Turnos.DeLaHora(_context, DateTime.Now)?.id_turno;
 
                 // Si la ubicación tiene un valor fijo inicial, pudieras ponerlo aquí (opcional)
                 obj_ingreso.valor_servicio = 0;
@@ -3436,6 +3518,15 @@ namespace CarsParkingService.Controllers
             // 4. Renovar el timestamp de ultima_actividad
             sesionActiva.ultima_actividad = DateTime.Now;
             await _context.SaveChangesAsync();
+
+            // 4b. El banco que sigue trabajando después de la hora de margen de su turno pasa a Corrido, con sus
+            //     vehículos sin cobrar (Database/turnos.sql)
+            if (sesionActiva.id_rol == 2)
+            {
+                await _context.Database.ExecuteSqlRawAsync("EXEC sp_pasarACorrido @id_usuario, @ahora",
+                    new SqlParameter("@id_usuario", idUsuario.Value),
+                    new SqlParameter("@ahora", System.Data.SqlDbType.DateTime2) { Value = sesionActiva.ultima_actividad });
+            }
 
             // 5. Refrescar variable de sesión local
             HttpContext.Session.SetString("UltimaActividad", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
