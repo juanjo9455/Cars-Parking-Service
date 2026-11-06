@@ -11,6 +11,7 @@
     string? FechaHora(DateTime? fecha) => fecha?.ToString("dd/MM HH:mm");
 
     var moneda = System.Globalization.CultureInfo.GetCultureInfo("es-CO");
+    var cuentas = (CarsParkingService.Helpers.LiquidacionReglas.Cuentas)ViewBag.Cuentas;
 }
 
 @* Despachos y cobros (punto 28, solo administrador): un vehículo por fila con su ingreso, solicitud,
@@ -108,23 +109,33 @@
             <span class="wa-resumen-num">@ViewBag.SinLiquidar</span>
             <span class="wa-resumen-lbl">Cobrados sin liquidar</span>
         </div>
+        @* Mismas cuentas que la liquidación: 1. transferencias, 2. propinas de QR, 3. efectivo a entregar; el total, aparte *@
         <div class="wa-resumen-item">
-            <span class="wa-resumen-num">@(((decimal)ViewBag.TotalEfectivo).ToString("C0", moneda))</span>
-            <span class="wa-resumen-lbl">Efectivo</span>
+            <span class="wa-resumen-num">@cuentas.Transferencias.ToString("C0", moneda)</span>
+            <span class="wa-resumen-lbl">Transferencias (QR)</span>
         </div>
         <div class="wa-resumen-item">
-            <span class="wa-resumen-num">@(((decimal)ViewBag.TotalTransferencias).ToString("C0", moneda))</span>
-            <span class="wa-resumen-lbl">Transferencias</span>
+            <span class="wa-resumen-num">@((-cuentas.Propinas).ToString("C0", moneda))</span>
+            <span class="wa-resumen-lbl">Propinas de QR</span>
+        </div>
+        <div class="wa-resumen-item @(cuentas.EfectivoAEntregar < 0 ? "wa-error" : "")">
+            <span class="wa-resumen-num">@cuentas.EfectivoAEntregar.ToString("C0", moneda)</span>
+            <span class="wa-resumen-lbl">Efectivo a entregar</span>
         </div>
         <div class="wa-resumen-item">
-            <span class="wa-resumen-num">@(((decimal)ViewBag.TotalPropinas).ToString("C0", moneda))</span>
-            <span class="wa-resumen-lbl">Propinas</span>
-        </div>
-        <div class="wa-resumen-item">
-            <span class="wa-resumen-num">@(((decimal)ViewBag.TotalEfectivo + (decimal)ViewBag.TotalTransferencias).ToString("C0", moneda))</span>
-            <span class="wa-resumen-lbl">Total cobrado</span>
+            <span class="wa-resumen-num">@cuentas.Total.ToString("C0", moneda)</span>
+            <span class="wa-resumen-lbl">Total (vehículos × servicio)</span>
         </div>
     </div>
+
+    @if (cuentas.Diferencia != 0)
+    {
+        <p class="wa-aviso">
+            <i class="fa-solid fa-scale-unbalanced"></i>
+            Diferencia de @cuentas.Diferencia.ToString("C0", moneda): transferencias + efectivo a entregar no da el total.
+            Revisa los cobros por un valor distinto al servicio.
+        </p>
+    }
 
     @if (Model.Count >= 500)
     {

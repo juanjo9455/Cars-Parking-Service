@@ -1249,11 +1249,41 @@ function editarValorCobro(idIngreso) {
     const notaApp = caja.querySelector('.cobro-valor-app');
     if (notaApp) notaApp.hidden = true;
 
-    caja.querySelector('.cobro-valor-ayuda:not(.cobro-valor-app)').hidden = false;
+    caja.querySelector('.cobro-valor-ayuda-editar').hidden = false;
     caja.querySelector('.campo-pesos-ver').hidden = false;
     input.hidden = false;
     input.focus();
     input.select();
+}
+
+// Según el método (al abrir el cobro y al cambiarlo): en efectivo se cobra la tarifa, sin propina, y el valor no
+// se cambia; con QR o transferencia arranca con lo de la app (o la tarifa) y "Cambiar valor total" deja escribir
+// lo que pagó. El servidor aplica la misma regla (FinalizarServicio)
+function ajustarValorPorMetodo(idIngreso) {
+    const input = document.getElementById(`valor-cobrado-${idIngreso}`);
+    const caja = input?.closest('.cobro-valor');
+
+    if (!caja || input.readOnly) return;
+
+    const efectivo = document.getElementById(`metodo-pago-${idIngreso}`)?.value === 'Efectivo';
+    const valor = efectivo ? Number(input.dataset.tarifa) : Number(input.dataset.inicial);
+
+    // Vuelve a como se abrió: el valor como texto y el campo cerrado
+    input.value = valor;
+    input.hidden = true;
+    mostrarPesos(input);
+    caja.querySelector('.campo-pesos-ver').hidden = true;
+    caja.querySelector('.cobro-valor-ayuda-editar').hidden = true;
+
+    const precio = caja.querySelector('.cobro-valor-precio');
+    precio.textContent = PESOS.format(valor);
+    precio.hidden = false;
+
+    caja.querySelector('.cobro-valor-cambiar').hidden = efectivo;
+    caja.querySelector('.cobro-valor-efectivo').hidden = !efectivo;
+
+    const notaApp = caja.querySelector('.cobro-valor-app');
+    if (notaApp) notaApp.hidden = efectivo;
 }
 
 function fileToDataUrl(file) {
@@ -1298,9 +1328,10 @@ function abrirModalPago(btn) {
                <span class="cobro-valor-precio">${PESOS.format(valorInicial)}</span>
                ${notaApp}
                <input type="text" inputmode="numeric" autocomplete="off" id="valor-cobrado-${id}" class="cobro-valor-input campo-pesos"
-                      data-tarifa="${tarifa}" value="${valorInicial}" hidden />
+                      data-tarifa="${tarifa}" data-inicial="${valorInicial}" value="${valorInicial}" hidden />
                <span class="campo-pesos-ver" data-pesos-de="valor-cobrado-${id}" hidden>${PESOS.format(valorInicial)}</span>
-               <span class="cobro-valor-ayuda" hidden>Servicio ${PESOS.format(tarifa)}. Si el cliente paga más (propina), escribe lo que pagó.</span>
+               <span class="cobro-valor-ayuda cobro-valor-ayuda-editar" hidden>Servicio ${PESOS.format(tarifa)}. Si el cliente paga más (propina), escribe lo que pagó.</span>
+               <span class="cobro-valor-ayuda cobro-valor-efectivo" hidden>En efectivo se cobra la tarifa, sin propina</span>
                <button type="button" class="cobro-valor-cambiar" onclick="editarValorCobro('${id}')">Cambiar valor total</button>
            </div>`
         : valor
@@ -1430,6 +1461,8 @@ const HTML_CUENTA_PAGO = `
 function mostrarDatosPago(id) {
     const metodo = document.getElementById(`metodo-pago-${id}`)?.value;
     const contenedor = document.getElementById(`datos-pago-${id}`);
+
+    ajustarValorPorMetodo(id);
 
     if (!contenedor) return;
 
@@ -1622,8 +1655,9 @@ function generarCodigoSeguridad(idIngreso) {
     // Si el banco puede cambiar el valor, tiene que ser un número mayor que 0
     const valorInput = document.getElementById(`valor-cobrado-${idIngreso}`);
 
-    // Menos de $1.000 casi siempre es "20.000" mal escrito: se pide el valor completo
-    if (valorInput && !(Number(valorInput.value) >= 1000)) {
+    // Menos de $1.000 casi siempre es "20.000" mal escrito: se pide el valor completo. En efectivo no se
+    // revisa: el valor es la tarifa y no se cambia (en una ubicación gratis es $0)
+    if (valorInput && metodoPago !== 'Efectivo' && !(Number(valorInput.value) >= 1000)) {
         mostrarAlertaWhatsApp(Number(valorInput.value) > 0
             ? 'El valor parece incompleto: escribe el valor completo (por ejemplo 20000).'
             : 'Escribe el valor que pagó el cliente.', 'error');

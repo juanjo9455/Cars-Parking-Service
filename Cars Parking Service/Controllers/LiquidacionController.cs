@@ -53,24 +53,8 @@ namespace CarsParkingService.Controllers
             var ingresos = LiquidacionReglas.PorLiquidar(_context, idUsuario.Value)
                 .Include(i => i.Ubicacion).ToList();
 
-            var totalVehiculos = ingresos.Count;
-
-            var totalEfectivo = ingresos
-                .Where(i =>
-                       i.metodo_pago == "Efectivo")
-                .Sum(i => i.valor_servicio ?? 0);
-
-            var totalTransferencia = ingresos
-                .Where(i =>
-                       i.metodo_pago != "Efectivo")
-                .Sum(i => i.valor_servicio ?? 0);
-
-            var totalPropinas = ingresos
-                .Sum(i => i.valor_propina ?? 0);
-
-            var totalGeneral =
-                totalEfectivo +
-                totalTransferencia;
+            // Transferencias, propinas, efectivo a entregar y total: las mismas cuentas que guarda GuardarLiquidacion
+            var cuentas = LiquidacionReglas.Calcular(ingresos);
 
             var idsCobro = ingresos.Select(i => i.usuario_cobro).Distinct().ToList();
 
@@ -78,10 +62,9 @@ namespace CarsParkingService.Controllers
                 .Where(u => idsCobro.Contains(u.id_usuario))
                 .ToDictionary(u => u.id_usuario, u => u.nombres + " " + u.apellidos);  
 
-            ViewBag.totalVehiculos = totalVehiculos;
-            ViewBag.totalEfectivo = totalEfectivo;
-            ViewBag.TotalTransferencia = totalTransferencia;
-            ViewBag.totalGeneral = totalGeneral;
+            ViewBag.cuentas = cuentas;
+            ViewBag.totalVehiculos = cuentas.Vehiculos;
+            ViewBag.totalGeneral = cuentas.Total;
 
             // Desglose por ubicacion: subtotal y vehiculos de cada una
             
@@ -101,7 +84,10 @@ namespace CarsParkingService.Controllers
                             Cobro = nombres.GetValueOrDefault(i.usuario_cobro ?? 0, "Desconocido")
                                     + " (" + i.rol_cobrador +")",
                             Metodo = i.metodo_pago,
-                            Valor = i.valor_servicio ?? 0
+                            Valor = i.valor_servicio ?? 0,
+                            // En efectivo nunca hay propina: lo que entra es el servicio
+                            Propina = LiquidacionReglas.EsEfectivo(i) ? 0 : i.valor_propina ?? 0,
+                            Cobrado = LiquidacionReglas.EsEfectivo(i) ? i.valor_servicio ?? 0 : LiquidacionReglas.Cobrado(i)
                         })
                         .ToList()
                 })
@@ -147,14 +133,9 @@ namespace CarsParkingService.Controllers
                 return Json(new { success = false, mensaje = "No hay servicios pendientes por liquidar." });
             }
 
-            // Totales calculados en el servidor
-            var totalEfectivo = ingresos
-                .Where(i => i.metodo_pago == "Efectivo")
-                .Sum(i => i.valor_servicio ?? 0);
-
-            var totalTransferencia = ingresos
-                .Where(i => i.metodo_pago != "Efectivo")
-                .Sum(i => i.valor_servicio ?? 0);
+            // Las mismas cuentas que muestra la pantalla (LiquidacionReglas.Calcular): efectivo = el que se entrega,
+            // ya sin las propinas de QR; transferencias = con propinas; total = vehículos × servicio
+            var cuentas = LiquidacionReglas.Calcular(ingresos);
 
             // O se guarda todo, o no se guarda nada
             using var transaccion = await _context.Database.BeginTransactionAsync();
@@ -164,10 +145,10 @@ namespace CarsParkingService.Controllers
                 var nuevaLiquidacion = new liquidacion
                 {
                     id_usuario = idUsuario.Value,
-                    total_vehiculos = ingresos.Count,
-                    total_efectivo = totalEfectivo,
-                    total_transferencias = totalTransferencia,
-                    total_liquidado = totalEfectivo + totalTransferencia,
+                    total_vehiculos = cuentas.Vehiculos,
+                    total_efectivo = cuentas.EfectivoAEntregar,
+                    total_transferencias = cuentas.Transferencias,
+                    total_liquidado = cuentas.Total,
                     fecha = DateTime.Now
                 };
 

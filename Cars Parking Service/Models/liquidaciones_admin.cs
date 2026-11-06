@@ -31,6 +31,11 @@
         public string? rol_cobrador { get; set; }
         public string? metodo_pago { get; set; }
         public decimal valor_servicio { get; set; }
+
+        // La propina y lo que entró de verdad por el carro (Database/liquidaciones-admin.sql)
+        public decimal valor_propina { get; set; }
+        public decimal total_cobrado { get; set; }
+
         public string? nombre_ubicacion { get; set; }
     }
 }

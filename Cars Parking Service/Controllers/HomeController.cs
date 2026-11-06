@@ -307,6 +307,9 @@ namespace CarsParkingService.Controllers
                     rol = v.rol_cobrador,
                     metodo = v.metodo_pago,
                     valor = v.valor_servicio,
+                    // En efectivo nunca hay propina: lo que entra es el servicio
+                    propina = v.metodo_pago == "Efectivo" ? 0 : v.valor_propina,
+                    cobrado = v.metodo_pago == "Efectivo" ? v.valor_servicio : v.total_cobrado,
                     ubicacion = v.nombre_ubicacion ?? "—"
                 });
 
@@ -1810,16 +1813,15 @@ namespace CarsParkingService.Controllers
                 .Where(u => idsUsuarios.Contains(u.id_usuario))
                 .ToDictionary(u => u.id_usuario, u => u.nombres + " " + u.apellidos);
 
-            // Resumen del período: mismos criterios que la liquidación (valor del servicio; las propinas aparte)
+            // Resumen del período con las mismas cuentas de la liquidación (LiquidacionReglas.Calcular): transferencias
+            // con propinas, propinas de QR, efectivo a entregar y total (vehículos × servicio)
             bool EnPeriodo(DateTime? fecha) => fecha >= fechaDesde && fecha < fechaHasta;
             var cobrados = ingresos.Where(i => i.estado_pago == "pagado" && EnPeriodo(i.fecha_entrega)).ToList();
 
             ViewBag.Vehiculos = ingresos.Count;
             ViewBag.Despachados = ingresos.Count(i => i.valet_despacho.HasValue && EnPeriodo(i.fecha_salida));
             ViewBag.Cobrados = cobrados.Count;
-            ViewBag.TotalEfectivo = cobrados.Where(i => i.metodo_pago == "Efectivo").Sum(i => i.valor_servicio ?? 0);
-            ViewBag.TotalTransferencias = cobrados.Where(i => i.metodo_pago != "Efectivo").Sum(i => i.valor_servicio ?? 0);
-            ViewBag.TotalPropinas = cobrados.Sum(i => i.valor_propina ?? 0);
+            ViewBag.Cuentas = LiquidacionReglas.Calcular(cobrados);
             ViewBag.SinLiquidar = cobrados.Count(i => i.estado_liquidacion != true);
 
             // Usuarios del filtro, en orden alfabético (punto 15)
@@ -1840,8 +1842,8 @@ namespace CarsParkingService.Controllers
 
         // Despachos y cobros > Información: el administrador corrige el método de pago o el valor total de un
         // vehículo ya cobrado (uno de los dos por vez). Si ya está en una liquidación no se cambia: sus totales
-        // quedarían descuadrados. El valor se reparte como en el cobro del banco (FinalizarServicio): lo que pase
-        // de la tarifa de la ubicación es propina y lo que falte, descuento
+        // quedarían descuadrados. Mismas reglas que el cobro del banco (FinalizarServicio): en efectivo no hay
+        // propina y el valor no se cambia; con QR o transferencia el servicio queda en la tarifa y lo de más es propina
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult EditarCobro(int id_ingreso, string? metodo_pago, decimal? valor_total)
@@ -1877,9 +1879,21 @@ namespace CarsParkingService.Controllers
                 }
 
                 ingreso.metodo_pago = metodo_pago;
+
+                // Pasado a efectivo: queda el servicio, sin propina
+                if (metodo_pago == "Efectivo")
+                {
+                    ingreso.valor_propina = 0;
+                    ingreso.total_servicio = ingreso.valor_servicio;
+                }
             }
             else if (valor_total.HasValue)
             {
+                if (ingreso.metodo_pago == "Efectivo")
+                {
+                    return Json(new { success = false, mensaje = "En efectivo el valor es la tarifa y no se cambia. Si pagó por QR o transferencia, cambia primero el método." });
+                }
+
                 var total = valor_total.Value;
 
                 // Menos de $1.000 casi siempre es "20.000" mal escrito (quedaba en 20)
@@ -1888,10 +1902,13 @@ namespace CarsParkingService.Controllers
                     return Json(new { success = false, mensaje = "El valor total debe ser el valor completo en pesos, de $1.000 en adelante (por ejemplo 20000)." });
                 }
 
-                var tarifa = ingreso.Ubicacion?.valor_servicio ?? ingreso.valor_servicio ?? 0;
+                // El servicio no cambia (la tarifa con la que se cobró); si no tenía, el de la ubicación
+                var servicio = (ingreso.valor_servicio ?? 0) > 0
+                    ? ingreso.valor_servicio!.Value
+                    : ingreso.Ubicacion?.valor_servicio ?? 0;
 
-                ingreso.valor_servicio = Math.Min(total, tarifa);
-                ingreso.valor_propina = total - ingreso.valor_servicio;
+                ingreso.valor_servicio = servicio;
+                ingreso.valor_propina = Math.Max(0, total - servicio);
                 ingreso.total_servicio = total;
             }
             else
@@ -2236,9 +2253,13 @@ namespace CarsParkingService.Controllers
                     }
                 }
 
-                // Lo que el cliente pagó de verdad, con propina. Llega con lo que puso en la app (con la solicitud y
-                // el pago juntos, casi todos) o con la tarifa, y el banco lo puede cambiar en los dos casos
-                var valorCobrado = dto.ValorCobrado.HasValue
+                // Efectivo: siempre la tarifa, sin propina (la propina en efectivo no se registra: va directo al valet),
+                // aunque llegue otro valor. El método es el que quedó al generar el código (GenerarCodigoSeguridad)
+                var esEfectivo = ingreso.metodo_pago == "Efectivo";
+
+                // QR o transferencia: lo que el cliente pagó de verdad, con propina. Llega con lo que puso en la app
+                // (con la solicitud y el pago juntos, casi todos) o con la tarifa, y el banco lo puede cambiar
+                var valorCobrado = !esEfectivo && dto.ValorCobrado.HasValue
                     ? decimal.Round(dto.ValorCobrado.Value, 0)
                     : (decimal?)null;
 
@@ -2265,23 +2286,19 @@ namespace CarsParkingService.Controllers
                         .FirstOrDefault() ?? 0;
                 }
 
-                // Lo que pase del servicio es propina, como cuando el cliente paga por la app (la liquidación suma
-                // solo el servicio); si pagó menos que el servicio, ese es el valor del servicio (descuento)
-                if (valorCobrado.HasValue)
+                // El servicio queda siempre en la tarifa (la liquidación es vehículos × servicio). Lo que pase del
+                // servicio es propina; si pagó menos, queda en total_servicio y la liquidación lo muestra como diferencia
+                if (esEfectivo)
+                {
+                    ingreso.valor_propina = 0;
+                    ingreso.total_servicio = ingreso.valor_servicio;
+                }
+                else if (valorCobrado.HasValue)
                 {
                     var cobrado = valorCobrado.Value;
                     var servicio = ingreso.valor_servicio ?? 0;
 
-                    if (cobrado >= servicio)
-                    {
-                        ingreso.valor_propina = cobrado - servicio;
-                    }
-                    else
-                    {
-                        ingreso.valor_servicio = cobrado;
-                        ingreso.valor_propina = 0;
-                    }
-
+                    ingreso.valor_propina = Math.Max(0, cobrado - servicio);
                     ingreso.total_servicio = cobrado;
                 }
 

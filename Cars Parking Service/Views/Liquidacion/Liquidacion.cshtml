@@ -9,6 +9,10 @@
 
     // Plata con punto de miles ("20.000") sin importar el idioma del servidor
     var pesosCO = System.Globalization.CultureInfo.GetCultureInfo("es-CO");
+    string Pesos(decimal valor) => (valor < 0 ? "-$" : "$") + Math.Abs(valor).ToString("N0", pesosCO);
+
+    // Transferencias, propinas, efectivo a entregar y total (LiquidacionReglas.Calcular): lo mismo que se guarda
+    var cuentas = (CarsParkingService.Helpers.LiquidacionReglas.Cuentas)ViewBag.cuentas;
 }
 
 <div class="page">
@@ -50,34 +54,67 @@
         <strong>@ViewBag.totalVehiculos</strong>
     </div>
 
-    <!-- Cards -->
-    <div class="cards-row">
+    <!-- Cuentas, en orden: 1. transferencias (con propinas), 2. propinas, 3. efectivo a entregar; el total, aparte -->
+    <div class="cards-row cards-cuentas">
+
+        <div class="stat-card">
+            <div class="icon-wrap">
+                <i class="fa-solid fa-qrcode"></i>
+            </div>
+            <div class="slabel">1. Transferencias (QR)</div>
+            <div class="sval">@Pesos(cuentas.Transferencias)</div>
+            <div class="ssub">Lo que entró a la cuenta, con propinas</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="icon-wrap">
+                <i class="fa-solid fa-hand-holding-dollar"></i>
+            </div>
+            <div class="slabel">2. Propinas de QR</div>
+            <div class="sval">@Pesos(-cuentas.Propinas)</div>
+            <div class="ssub">Se le pagan a los valets con el efectivo</div>
+        </div>
 
         <div class="stat-card">
             <div class="icon-wrap">
                 <i class="fa-solid fa-money-bill"></i>
             </div>
-            <div class="slabel">Total efectivo</div>
-            <div class="sval">$@(((decimal)ViewBag.totalEfectivo).ToString("N0", pesosCO))</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="icon-wrap">
-                <i class="fa-solid fa-building-columns"></i>
-            </div>
-            <div class="slabel">Total transferencias</div>
-            <div class="sval">$@(((decimal)ViewBag.TotalTransferencia).ToString("N0", pesosCO))</div>
+            <div class="slabel">3. Efectivo a entregar</div>
+            <div class="sval">@Pesos(cuentas.EfectivoAEntregar)</div>
+            <div class="ssub">Recibido @Pesos(cuentas.EfectivoRecibido) − propinas @Pesos(cuentas.Propinas)</div>
         </div>
 
         <div class="stat-card highlight">
             <div class="icon-wrap">
                 <i class="fa-solid fa-file-invoice-dollar"></i>
             </div>
-            <div class="slabel">Total general</div>
-            <div class="sval">$@(((decimal)ViewBag.totalGeneral).ToString("N0", pesosCO))</div>
+            <div class="slabel">Total a liquidar</div>
+            <div class="sval">@Pesos(cuentas.Total)</div>
+            <div class="ssub">@cuentas.Vehiculos vehículos × servicio</div>
         </div>
 
     </div>
+
+    @if (cuentas.EfectivoAEntregar < 0)
+    {
+        <div class="alert-y alert-cuenta">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Faltan <strong>@Pesos(-cuentas.EfectivoAEntregar)</strong> de efectivo para pagar las propinas de QR.</span>
+        </div>
+    }
+
+    @if (cuentas.Diferencia != 0)
+    {
+        @* Transferencias + efectivo a entregar no da el total: casi siempre un QR cobrado por menos de la tarifa *@
+        <div class="alert-y alert-cuenta">
+            <i class="fa-solid fa-scale-unbalanced"></i>
+            <span>
+                Diferencia: <strong>@Pesos(cuentas.Diferencia)</strong>.
+                Transferencias + efectivo a entregar = @Pesos(cuentas.Transferencias + cuentas.EfectivoAEntregar), y el total es @Pesos(cuentas.Total).
+                Revisa en el detalle los cobros por un valor distinto al servicio.
+            </span>
+        </div>
+    }
 
         <!-- Desglose por ubicación -->
     <div class="section">
@@ -105,18 +142,31 @@
                             <th>Hora</th>
                             <th>Cobró</th>
                             <th>Método</th>
-                            <th>Valor</th>
+                            <th>Cobrado</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var d in u.Detalle)
                         {
+                            decimal servicio = d.Valor, propina = d.Propina, cobrado = d.Cobrado;
+
                             <tr>
                                 <td class="liq-placa">@d.Placa</td>
                                 <td class="liq-hora">@(((DateTime?)d.Hora)?.ToString("dd/MM HH:mm"))</td>
                                 <td class="liq-cobro">@d.Cobro</td>
                                 <td class="liq-metodo">@d.Metodo</td>
-                                <td class="liq-valor">$@(((decimal)d.Valor).ToString("N0", pesosCO))</td>
+                                <td class="liq-valor">
+                                    @Pesos(cobrado)
+                                    @* Lo que entró por ese carro y de qué se compone *@
+                                    @if (propina > 0)
+                                    {
+                                        <span class="liq-desglose">servicio @Pesos(servicio) + propina @Pesos(propina)</span>
+                                    }
+                                    else if (cobrado != servicio)
+                                    {
+                                        <span class="liq-desglose liq-desglose-menos">servicio @Pesos(servicio): @Pesos(cobrado - servicio)</span>
+                                    }
+                                </td>
                             </tr>
                         }
                     </tbody>
@@ -160,7 +210,7 @@
                         <tr>
                             <td>@v.NombreCompleto</td>
                             <td>@v.Vehiculos</td>
-                            <td>$@string.Format("{0:N0}", v.TotalEfectivo)</td>
+                            <td>@Pesos((decimal)v.TotalEfectivo)</td>
                         </tr>
                     }
                 }
@@ -174,7 +224,7 @@
         </table>
         <div class="valet-total">
             <span>Total efectivo pendiente por validar:</span>
-            <strong>$@String.Format("{0:N0}", ViewBag.totalValetsEfectivo)</strong>
+            <strong>@Pesos((decimal)ViewBag.totalValetsEfectivo)</strong>
         </div>
 
     </div>
@@ -196,18 +246,23 @@
             </div>
 
             <div class="ci">
-                <div class="cl">Total efectivo</div>
-                <div class="cv">$@(((decimal)ViewBag.totalEfectivo).ToString("N0", pesosCO))</div>
+                <div class="cl">Transferencias</div>
+                <div class="cv">@Pesos(cuentas.Transferencias)</div>
             </div>
 
             <div class="ci">
-                <div class="cl">Transferencias</div>
-                <div class="cv">$@(((decimal)ViewBag.TotalTransferencia).ToString("N0", pesosCO))</div>
+                <div class="cl">Propinas de QR</div>
+                <div class="cv">@Pesos(-cuentas.Propinas)</div>
+            </div>
+
+            <div class="ci">
+                <div class="cl">Efectivo a entregar</div>
+                <div class="cv">@Pesos(cuentas.EfectivoAEntregar)</div>
             </div>
 
             <div class="ci total-card">
-                <div class="cl">Total general</div>
-                <div class="cv">$@(((decimal)ViewBag.totalGeneral).ToString("N0", pesosCO))</div>
+                <div class="cl">Total a liquidar</div>
+                <div class="cv">@Pesos(cuentas.Total)</div>
             </div>
 
         </div>
@@ -265,8 +320,13 @@
             </div>
 
             <div class="mrow">
-                <span>Total general</span>
-                <span>$@(((decimal)ViewBag.totalGeneral).ToString("N0", pesosCO))</span>
+                <span>Efectivo a entregar</span>
+                <span>@Pesos(cuentas.EfectivoAEntregar)</span>
+            </div>
+
+            <div class="mrow">
+                <span>Total a liquidar</span>
+                <span>@Pesos(cuentas.Total)</span>
             </div>
 
         </div>
@@ -281,8 +341,8 @@
                     id="doConfirm"
                     data-id-usuario="@idUsuario"
                     data-total-vehiculos="@ViewBag.totalVehiculos"
-                    data-total-efectivo="@ViewBag.totalEfectivo"
-                    data-total-transferencia="@ViewBag.TotalTransferencia"
+                    data-total-efectivo="@cuentas.EfectivoAEntregar"
+                    data-total-transferencia="@cuentas.Transferencias"
                     data-total-dinero="@ViewBag.totalGeneral">
                 Confirmar
             </button>

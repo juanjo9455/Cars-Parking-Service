@@ -29,12 +29,13 @@ function abrirInfoDespacho(info) {
             <span class="info-valor">${escaparHtml(valor || vacio)}</span>
         </div>`;
 
-    const conLapiz = (campo, etiqueta, valor) => `
+    // En efectivo el valor es la tarifa y no se cambia (FinalizarServicio y EditarCobro); el método sí
+    const conLapiz = (campo, etiqueta, valor, conPermiso = true) => `
         <div class="info-item" id="dc-${campo}">
             <span class="info-label">${etiqueta}</span>
             <div class="dc-editable">
                 <span class="info-valor">${escaparHtml(valor)}</span>
-                ${editable ? `
+                ${editable && conPermiso ? `
                     <button type="button" class="dc-lapiz" onclick="editarCampoCobro('${campo}')" aria-label="Cambiar ${etiqueta.toLowerCase()}">
                         <i class="fa-solid fa-pen"></i>
                     </button>` : ''}
@@ -50,7 +51,7 @@ function abrirInfoDespacho(info) {
     const cobro = info.pagado
         ? `<div class="info-grid">
                ${conLapiz('metodo', 'Método de pago', info.metodo || 'Sin método')}
-               ${conLapiz('valor', 'Valor total', PESOS.format(info.total))}
+               ${conLapiz('valor', 'Valor total', PESOS.format(info.total), info.metodo !== 'Efectivo')}
                ${dato('Servicio', PESOS.format(info.servicio))}
                ${dato('Propina', PESOS.format(info.propina))}
                ${dato('Cobró', info.cobro, 'Sin registro')}
@@ -63,7 +64,10 @@ function abrirInfoDespacho(info) {
            ${info.liquidado
                 ? `<p class="dc-nota"><i class="fa-solid fa-circle-info"></i>
                        Ya está ${info.liquidacion ? `en la liquidación #${escaparHtml(info.liquidacion)}` : 'liquidado'}: no se puede cambiar.</p>`
-                : ''}`
+                : editable && info.metodo === 'Efectivo'
+                    ? `<p class="dc-nota"><i class="fa-solid fa-circle-info"></i>
+                           En efectivo el valor es la tarifa, sin propina. Si pagó por QR o transferencia, cambia primero el método.</p>`
+                    : ''}`
         : `<div class="info-grid">${dato('Estado', 'Pendiente de cobro', '—', true)}</div>`;
 
     contenido.innerHTML = `
@@ -157,6 +161,12 @@ async function guardarCampoCobro(campo, boton) {
         }
 
         pregunta = `¿Estás seguro de cambiar el método de pago de ${placa} de ${infoDespacho.metodo || 'sin método'} a ${metodo}?`;
+
+        // En efectivo no hay propina: el cobro queda en el servicio (EditarCobro)
+        if (metodo === 'Efectivo' && Number(infoDespacho.total) !== Number(infoDespacho.servicio)) {
+            pregunta += `\n\nEn efectivo no hay propina: el cobro queda en ${PESOS.format(infoDespacho.servicio)}.`;
+        }
+
         datos.append('metodo_pago', metodo);
     } else {
         const campoValor = document.getElementById('dc-nuevo-valor');
@@ -174,12 +184,15 @@ async function guardarCampoCobro(campo, boton) {
             return;
         }
 
-        // Mismo reparto que hará el servidor: hasta la tarifa es servicio; lo de más, propina
-        const servicio = Math.min(valor, Number(infoDespacho.tarifa));
-        const propina = valor - servicio;
+        // Mismo reparto que hará el servidor: el servicio no cambia (la tarifa); lo de más es propina y si es
+        // menos, la liquidación lo muestra como diferencia
+        const servicio = Number(infoDespacho.servicio) > 0 ? Number(infoDespacho.servicio) : Number(infoDespacho.tarifa);
+        const propina = Math.max(0, valor - servicio);
 
         pregunta = `¿Estás seguro de cambiar el valor total de ${placa} de ${PESOS.format(infoDespacho.total)} a ${PESOS.format(valor)}?\n\n` +
-                   `Queda: servicio ${PESOS.format(servicio)}${propina > 0 ? ` + propina ${PESOS.format(propina)}` : ''}`;
+                   (valor >= servicio
+                       ? `Queda: servicio ${PESOS.format(servicio)}${propina > 0 ? ` + propina ${PESOS.format(propina)}` : ''}`
+                       : `Queda: servicio ${PESOS.format(servicio)}, cobrado ${PESOS.format(servicio - valor)} menos (sale como diferencia en la liquidación)`);
         datos.append('valor_total', String(valor));
     }
 

@@ -147,6 +147,39 @@
     margin-bottom: 1.5rem;
 }
 
+/* Cuentas de la liquidación: transferencias, propinas, efectivo a entregar y total (en pantallas
+   pequeñas las reglas de .cards-row, más abajo, las pasan a 2 y a 1 columna) */
+.cards-cuentas {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* De qué sale cada valor */
+.ssub {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.stat-card.highlight .ssub {
+    color: rgba(255, 255, 255, .8);
+}
+
+.alert-cuenta {
+    align-items: center;
+}
+
+/* Detalle por carro: debajo de lo cobrado, servicio + propina (o lo que faltó para el servicio) */
+.liq-desglose {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: #6b7280;
+}
+
+.liq-desglose-menos {
+    color: #c62828;
+}
+
 .stat-card {
     margin-top: 15px;
     border-radius: 10px;

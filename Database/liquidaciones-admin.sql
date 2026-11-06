@@ -4,6 +4,8 @@
    - Correr ANTES de publicar el código: la página Liquidaciones y el
      "Ver detalle" de Estado de turnos (DetalleLiquidacion) llaman a
      estos procedimientos.
+   - Volver a correrlo al publicar la rama liquidacion-propinas: el detalle de
+     cada vehículo ahora trae la propina y lo cobrado (sp_vehiculosLiquidacion).
    - No modifica ni borra datos. Solo crea (o actualiza) 2 procedimientos y
      borra sp_funcionariosLiquidaciones, que ya no se usa (el filtro lista
      todos los usuarios con sp_consultarUsuarios).
@@ -55,7 +57,8 @@ END;
 GO
 
 /* 2. Vehículos de una liquidación, en el orden en que se entregaron.
-      Solo las columnas que se muestran (no trae las fotos del ingreso) */
+      Solo las columnas que se muestran (no trae las fotos del ingreso). Con la propina y lo que entró de
+      verdad por cada carro (total_cobrado; cobros de antes sin total: servicio + propina) */
 CREATE OR ALTER PROCEDURE dbo.sp_vehiculosLiquidacion
     @id_liquidacion INT
 AS
@@ -69,6 +72,11 @@ BEGIN
         i.rol_cobrador,
         i.metodo_pago,
         ISNULL(i.valor_servicio, 0) AS valor_servicio,
+        ISNULL(i.valor_propina, 0) AS valor_propina,
+        CASE WHEN ISNULL(i.total_servicio, 0) > 0
+             THEN i.total_servicio
+             ELSE ISNULL(i.valor_servicio, 0) + ISNULL(i.valor_propina, 0)
+        END AS total_cobrado,
         us.nombre_ubicacion
     FROM dbo.tbl_ingresos i
     LEFT JOIN dbo.tbl_usuarios u

@@ -30,6 +30,15 @@ async function verDetalleLiquidacion(btn) {
             return;
         }
 
+        const conSigno = v => (v < 0 ? '-' : '') + formatoPesos(Math.abs(v));
+
+        // Lo que entró por cada carro y de qué se compone (en efectivo nunca hay propina)
+        const desglose = v => Number(v.propina) > 0
+            ? `<span class="adm-liq-desglose">servicio ${formatoPesos(v.valor)} + propina ${formatoPesos(v.propina)}</span>`
+            : Number(v.cobrado) !== Number(v.valor)
+                ? `<span class="adm-liq-desglose adm-liq-menos">servicio ${formatoPesos(v.valor)}: ${conSigno(Number(v.cobrado) - Number(v.valor))}</span>`
+                : '';
+
         const filas = data.vehiculos.map(v => `
             <tr>
                 <td><span class="ingreso-placa">${escaparTexto(v.placa)}</span></td>
@@ -37,10 +46,17 @@ async function verDetalleLiquidacion(btn) {
                 <td>${escaparTexto(v.cobro)} <span class="adm-text-muted">(${escaparTexto(v.rol)})</span></td>
                 <td>${escaparTexto(v.metodo)}</td>
                 <td>${escaparTexto(v.ubicacion)}</td>
-                <td>${formatoPesos(v.valor)}</td>
+                <td><strong>${formatoPesos(v.cobrado)}</strong>${desglose(v)}</td>
             </tr>`).join('');
 
-        const total = data.vehiculos.reduce((suma, v) => suma + Number(v.valor || 0), 0);
+        // Las cuentas con esos carros, en el orden de la liquidación (LiquidacionReglas.Calcular)
+        const esEfectivo = v => v.metodo === 'Efectivo';
+        const suma = (lista, campo) => lista.reduce((s, v) => s + Number(v[campo] || 0), 0);
+        const transferencias = suma(data.vehiculos.filter(v => !esEfectivo(v)), 'cobrado');
+        const propinas = suma(data.vehiculos.filter(v => !esEfectivo(v)), 'propina');
+        const efectivoAEntregar = suma(data.vehiculos.filter(esEfectivo), 'valor') - propinas;
+        const total = suma(data.vehiculos, 'valor');
+        const diferencia = transferencias + efectivoAEntregar - total;
 
         contenido.innerHTML = `
             <div class="adm-table-scroll">
@@ -52,15 +68,19 @@ async function verDetalleLiquidacion(btn) {
                             <th>Cobró</th>
                             <th>Método</th>
                             <th>Ubicación</th>
-                            <th>Valor</th>
+                            <th>Cobrado</th>
                         </tr>
                     </thead>
                     <tbody>${filas}</tbody>
                 </table>
             </div>
-            <p class="adm-liq-modal-total">
-                ${data.vehiculos.length} vehículos · Total <strong>${formatoPesos(total)}</strong>
-            </p>`;
+            <div class="adm-liq-cuentas">
+                <span>1. Transferencias (QR) <strong>${formatoPesos(transferencias)}</strong></span>
+                <span>2. Propinas de QR <strong>${conSigno(-propinas)}</strong></span>
+                <span>3. Efectivo a entregar <strong>${conSigno(efectivoAEntregar)}</strong></span>
+                <span class="adm-liq-cuentas-total">Total a liquidar (${data.vehiculos.length} vehículos) <strong>${formatoPesos(total)}</strong></span>
+                ${diferencia !== 0 ? `<span class="adm-liq-menos">Diferencia <strong>${conSigno(diferencia)}</strong></span>` : ''}
+            </div>`;
     }
     catch (error) {
         console.error('[LIQUIDACION] Error cargando el detalle:', error);

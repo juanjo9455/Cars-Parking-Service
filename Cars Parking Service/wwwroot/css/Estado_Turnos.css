@@ -719,6 +719,33 @@
     color: #374151;
 }
 
+/* Detalle de la liquidación: debajo de lo cobrado, servicio + propina; abajo, las cuentas en orden */
+.adm-liq-desglose {
+    display: block;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.adm-liq-menos {
+    color: #c62828;
+}
+
+.adm-liq-cuentas {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    margin: 12px 0 0;
+    font-size: 15px;
+    color: #374151;
+}
+
+.adm-liq-cuentas-total {
+    font-size: 16px;
+    padding-top: 4px;
+    border-top: 1px solid #e5e7eb;
+}
+
 /* Placa amarilla como en la tabla de ingresos, más compacta para que quepan las 6 columnas */
 .adm-liq-modal .ingreso-placa {
     margin: 0;
