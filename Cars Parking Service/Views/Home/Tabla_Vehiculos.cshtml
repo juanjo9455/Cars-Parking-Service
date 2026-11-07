@@ -273,6 +273,31 @@
                             }
                         </select>
                     </div>
+
+                    @* Zona: al entrar, la de la sesión. Al cambiarla se recarga la página (script de abajo) para que Lugar y
+                       Parqueadero sean los de esa zona *@
+                    <div class="form-group col-md-3 mb-3">
+                        <label>Zona</label>
+                        <select name="zona" style="width:100%;">
+                            <option value="todas" selected="@((ViewData["FiltroZona"] as string) == "todas")">Todas</option>
+                            @foreach (var z in (List<zonas>)ViewBag.ZonasFiltro)
+                            {
+                                <option value="@z.id_zona" selected="@((ViewData["FiltroZona"] as string) == z.id_zona.ToString())">@z.nombre_zona</option>
+                            }
+                        </select>
+                    </div>
+
+                    @* Turno en que entró el vehículo *@
+                    <div class="form-group col-md-3 mb-3">
+                        <label>Turno</label>
+                        <select name="turno" style="width:100%;">
+                            <option value="">Todos</option>
+                            @foreach (var (idTurno, textoTurno) in (List<(int, string)>)ViewBag.TurnosFiltro)
+                            {
+                                <option value="@idTurno" selected="@((int?)ViewData["FiltroTurno"] == idTurno)">@textoTurno</option>
+                            }
+                        </select>
+                    </div>
                 }
 
                 <div class="form-group col-md-2 mb-3">
@@ -633,7 +658,19 @@
             window.refrescarTablaIngresos = refrescarFilas;
 
             // Los filtros se aplican solos, sin botón Buscar (site.js)
-            activarFiltrosAutomaticos(document.querySelector('#filtersPanel form'), refrescarFilas);
+            const formFiltros = document.querySelector('#filtersPanel form');
+            activarFiltrosAutomaticos(formFiltros, refrescarFilas);
+
+            // Zona (admin): se recarga la página para que Lugar y Parqueadero sean los de la zona nueva, y esos dos se
+            // limpian. Va después de activarFiltrosAutomaticos, que ya dejó los filtros en la URL
+            formFiltros?.addEventListener('change', function (e) {
+                if (e.target.name !== 'zona') return;
+
+                const filtros = new URLSearchParams(location.search);
+                filtros.delete('lugar');
+                filtros.delete('parqueadero');
+                location.search = filtros.toString();
+            });
         })();
     </script>
 

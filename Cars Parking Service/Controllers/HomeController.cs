@@ -935,7 +935,7 @@ namespace CarsParkingService.Controllers
             return View();
         }
 
-        public IActionResult Tabla_Vehiculos(string placa, string? lugar, string[]? estado_servicio, string estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin, int? usuario)
+        public IActionResult Tabla_Vehiculos(string placa, string? lugar, string[]? estado_servicio, string estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin, int? usuario, string? zona, int? turno)
         {
             var idUsuarioSesion = HttpContext.Session.GetInt32("id");
 
@@ -947,30 +947,38 @@ namespace CarsParkingService.Controllers
             }
 
             int idUsuario = idUsuarioSesion.Value;
-            var zona = ZonaSesion();
 
-            // En el título: la zona en la que entró
-            ViewBag.ubicacion = NombreZona(zona);
+            // La zona de la sesión; el admin puede escoger otra o todas (filtro Zona)
+            var zonaTabla = ZonaTabla(zona);
+            var todasLasZonas = EsAdmin() && zona == "todas";
+
+            // En el título: la zona que se está viendo
+            ViewBag.ubicacion = todasLasZonas ? "Todas las zonas" : NombreZona(zonaTabla);
 
             var estadosFiltro = EstadosFiltro();
             var estados = EstadosMarcados(estado_servicio, estadosFiltro);
 
-            var ingresos = IngresosTabla(idUsuario, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, fechaFin, usuario);
+            var ingresos = IngresosTabla(idUsuario, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, fechaFin, usuario, zonaTabla, turno);
             ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
             ViewBag.ValoresUbicacion = ValoresUbicacion();
             int totalRegistros = ingresos.Count();
 
-            // Filtro Usuario, solo para el admin (punto 10): usuarios activos en orden alfabético
+            // Filtros Usuario, Zona y Turno, solo para el admin: usuarios activos en orden alfabético, las zonas del
+            // login y los turnos
             ViewBag.UsuariosFiltro = EsAdmin()
                 ? _context.usuarios.AsNoTracking().Where(u => u.estado).OrderBy(u => u.nombres).ThenBy(u => u.apellidos).ToList()
                 : new List<usuarios>();
+            ViewBag.ZonasFiltro = EsAdmin() ? _context.zonas.FromSqlRaw("EXEC sp_zonas").AsNoTracking().ToList() : new List<zonas>();
+            ViewBag.TurnosFiltro = EsAdmin() ? TurnosFiltro() : new List<(int, string)>();
             ViewData["FiltroUsuario"] = usuario;
+            ViewData["FiltroZona"] = todasLasZonas ? "todas" : zonaTabla?.ToString();
+            ViewData["FiltroTurno"] = turno;
 
             ViewBag.TotalRegistros = totalRegistros;
 
-            // Listas de los filtros: solo las de su zona, en orden alfabético (punto 15)
-            ViewBag.Ubicaciones = UbicacionesZona(zona);
-            ViewBag.Parqueaderos = ParqueaderosZona(zona);
+            // Listas de los filtros: solo las de la zona que se ve, en orden alfabético (punto 15)
+            ViewBag.Ubicaciones = UbicacionesZona(zonaTabla);
+            ViewBag.Parqueaderos = ParqueaderosZona(zonaTabla);
             ViewBag.Valets = ValetsDisponibles();
             ViewBag.EstadosFiltro = estadosFiltro;
 
@@ -989,7 +997,7 @@ namespace CarsParkingService.Controllers
         // Ingresos de la tabla según los filtros y el rol (procedimiento sp_consultarRegistros). Los usan
         // la página y su refresco automático (FilasIngresos, punto 16) para mostrar exactamente lo mismo
         private List<ingresos> IngresosTabla(int idUsuario, string? placa, string? lugar, string[] estados,
-            string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin, int? usuarioFiltro = null)
+            string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin, int? usuarioFiltro, int? idZona, int? turno)
         {
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
 
@@ -1036,8 +1044,9 @@ namespace CarsParkingService.Controllers
             parametros.Add(new SqlParameter("@id_usuario", idUsuarioParam));
             parametros.Add(new SqlParameter("@id_ubicacion", idUbicacionFiltro ?? (object)DBNull.Value));
 
-            // Solo los ingresos de la zona en la que entró (el banco, además, solo los suyos)
-            parametros.Add(new SqlParameter("@id_zona", (object?)ZonaSesion() ?? DBNull.Value));
+            // Solo los ingresos de la zona que se ve (ZonaTabla: la de la sesión o la que escogió el admin; el banco,
+            // además, solo los suyos)
+            parametros.Add(new SqlParameter("@id_zona", (object?)idZona ?? DBNull.Value));
 
             // ✔ conversión a array (ESTO ES LO CLAVE)
             return _context.ingresos.FromSqlRaw(
@@ -1045,6 +1054,9 @@ namespace CarsParkingService.Controllers
                 parametros.ToArray()
             )
             .AsEnumerable()
+            // Turno en que entró (filtro del admin): el SP ya trae id_turno, así no se cambia sp_consultarRegistros.
+            // Los ingresos de antes de turnos.sql no tienen turno
+            .Where(i => rolUsuario != 3 || !turno.HasValue || i.id_turno == turno)
             // Arriba los solicitados, luego los despachados; en cada grupo, los más recientes primero
             .OrderByDescending(u => u.estado_servicio?.Trim().ToLower() == "solicitado")
             .ThenByDescending(u => u.estado_servicio?.Trim().ToLower() == "despachado")
@@ -1056,7 +1068,7 @@ namespace CarsParkingService.Controllers
         // con sus filtros, armadas por la misma vista parcial (_FilasIngresos)
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult FilasIngresos(string? placa, string? lugar, string[]? estado_servicio, string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin, int? usuario)
+        public IActionResult FilasIngresos(string? placa, string? lugar, string[]? estado_servicio, string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin, int? usuario, string? zona, int? turno)
         {
             // Sin sesión, OnActionExecuting ya redirige al login
             var idUsuario = HttpContext.Session.GetInt32("id");
@@ -1066,7 +1078,7 @@ namespace CarsParkingService.Controllers
             }
 
             var estados = EstadosMarcados(estado_servicio, EstadosFiltro());
-            var ingresos = IngresosTabla(idUsuario.Value, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, fechaFin, usuario);
+            var ingresos = IngresosTabla(idUsuario.Value, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, fechaFin, usuario, ZonaTabla(zona), turno);
             ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
             ViewBag.ValoresUbicacion = ValoresUbicacion();
 
@@ -1096,6 +1108,33 @@ namespace CarsParkingService.Controllers
         // Zona del turno (Database/zonas.sql): cada operador la escoge al entrar y solo ve lo de ella.
         // Null en turnos abiertos antes de las zonas: entonces no se filtra
         private int? ZonaSesion() => HttpContext.Session.GetInt32("id_zona");
+
+        // Zona de la tabla de ingresos: la de la sesión. El admin puede escoger otra (si existe) o "todas" (null =
+        // sin filtrar); los demás roles siempre ven la suya, aunque manden otra en la URL
+        private int? ZonaTabla(string? zona)
+        {
+            if (EsAdmin() && zona == "todas")
+            {
+                return null;
+            }
+
+            if (EsAdmin() && int.TryParse(zona, out var idZona) && _context.zonas.Any(z => z.id_zona == idZona))
+            {
+                return idZona;
+            }
+
+            return ZonaSesion();
+        }
+
+        // Turnos de los filtros (tabla de ingresos y Despachos y cobros), con el día en los que solo son un día
+        // (Madrugada)
+        private List<(int, string)> TurnosFiltro() => _context.turnos.AsNoTracking()
+            .OrderBy(t => t.orden)
+            .ToList()
+            .Select(t => (t.id_turno, t.dia_semana is >= 1 and <= 7
+                ? $"{t.nombre} ({DiasJornada[t.dia_semana.Value - 1]})"
+                : t.nombre))
+            .ToList();
 
         private string? NombreZona(int? idZona) => idZona.HasValue
             ? _context.zonas.Where(z => z.id_zona == idZona).Select(z => z.nombre_zona).FirstOrDefault()
@@ -2016,15 +2055,9 @@ namespace CarsParkingService.Controllers
                 .OrderBy(x => x.nombres).ThenBy(x => x.apellidos)
                 .ToList();
 
-            // Zonas (las mismas del login) y turnos, con el día en los que solo son un día (Madrugada)
+            // Zonas (las mismas del login) y turnos
             ViewBag.ZonasFiltro = _context.zonas.FromSqlRaw("EXEC sp_zonas").AsNoTracking().ToList();
-            ViewBag.TurnosFiltro = _context.turnos.AsNoTracking()
-                .OrderBy(t => t.orden)
-                .ToList()
-                .Select(t => (t.id_turno, texto: t.dia_semana is >= 1 and <= 7
-                    ? $"{t.nombre} ({DiasJornada[t.dia_semana.Value - 1]})"
-                    : t.nombre))
-                .ToList();
+            ViewBag.TurnosFiltro = TurnosFiltro();
 
             ViewData["FiltroDesde"] = fechaDesde;
             ViewData["FiltroHasta"] = fechaHasta.AddDays(-1);
