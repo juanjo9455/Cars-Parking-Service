@@ -16,8 +16,9 @@
     // Historial de cambios de cada vehículo, el más reciente primero (punto 6)
     var cambios = ViewBag.Cambios as Dictionary<int, List<cambio_ingreso>> ?? new Dictionary<int, List<cambio_ingreso>>();
 
-    // Suma de la columna Cobro: lo cobrado sin las propinas
-    decimal totalCobrado = 0;
+    // Suma de la columna Cobro: lo que pagaron los clientes, con propinas, y cuánto de eso fue propina
+    decimal totalPagado = 0;
+    decimal totalPropinas = 0;
 }
 
 @* Despachos y cobros (punto 28, solo administrador): un vehículo por fila con su ingreso, solicitud,
@@ -207,15 +208,17 @@
                     // Lo que pagó el cliente con propina (cobros de antes sin total: servicio + propina)
                     var total = (i.total_servicio ?? 0) > 0 ? i.total_servicio!.Value : (i.valor_servicio ?? 0) + (i.valor_propina ?? 0);
 
-                    // En la fila va lo cobrado sin la propina; el lápiz muestra el total, el servicio y la propina
-                    var cobradoSinPropina = total - (i.valor_propina ?? 0);
+                    // En la fila va lo que pagó el cliente, con la propina, y debajo cuánto fue de propina. En efectivo
+                    // nunca hay propina, como en la liquidación
+                    var propina = i.metodo_pago == "Efectivo" ? 0 : (i.valor_propina ?? 0);
                     var cobro = i.usuario_cobro.HasValue
                         ? Nombre(i.usuario_cobro) + (string.IsNullOrEmpty(i.rol_cobrador) ? "" : $" ({i.rol_cobrador})")
                         : null;
 
                     if (pagado)
                     {
-                        totalCobrado += cobradoSinPropina;
+                        totalPagado += total;
+                        totalPropinas += propina;
                     }
 
                     var cambiosIngreso = cambios.GetValueOrDefault(i.id_ingreso) ?? new List<cambio_ingreso>();
@@ -287,8 +290,13 @@
                         <td data-label="Cobro">
                             @if (pagado)
                             {
-                                <span class="dc-principal">@cobradoSinPropina.ToString("C0", moneda) · @(i.metodo_pago ?? "Sin método")</span>
+                                <span class="dc-principal">@total.ToString("C0", moneda) · @(i.metodo_pago ?? "Sin método")</span>
                                 <span class="dc-detalle">@Nombre(i.usuario_cobro)</span>
+                                @* En su propia línea: junto al nombre, la tabla no cabe en el celular *@
+                                @if (propina > 0)
+                                {
+                                    <span class="dc-detalle">Propina @propina.ToString("C0", moneda)</span>
+                                }
                             }
                             else
                             {
@@ -333,15 +341,15 @@
                 }
             </tbody>
 
-            @* Total de la columna Cobro: lo cobrado de los vehículos de la lista, sin las propinas *@
+            @* Total de la columna Cobro: lo que pagaron los clientes de la lista, con propinas, y cuánto fue de propinas *@
             @if (Model.Any(i => i.estado_pago == "pagado"))
             {
                 <tfoot>
                     <tr class="dc-total">
-                        <td colspan="2">Total cobrado</td>
+                        <td colspan="2">Total pagado</td>
                         <td>
-                            <span class="dc-principal">@totalCobrado.ToString("C0", moneda)</span>
-                            <span class="dc-detalle">sin propinas</span>
+                            <span class="dc-principal">@totalPagado.ToString("C0", moneda)</span>
+                            <span class="dc-detalle">@(totalPropinas > 0 ? "incluye " + totalPropinas.ToString("C0", moneda) + " de propinas" : "sin propinas")</span>
                         </td>
                         <td colspan="3"></td>
                     </tr>
