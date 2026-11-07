@@ -58,5 +58,24 @@ namespace CarsParkingService.Helpers
             return ingreso.id_valet == null &&
                    (estado == "esperando valet" || estado == "solicitado" || estado == "activo");
         }
+
+        // Cancelado por el admin (Database/ajustes-admin.sql): ya no se trabaja ni se corrige
+        public static bool EstaCancelado(ingresos ingreso)
+        {
+            return ingreso.estado_servicio?.Trim().ToLower() == "cancelado";
+        }
+
+        // El admin cancela un servicio que no se ha cobrado ni liquidado y que no terminó (finalizado o cancelado).
+        // sp_cancelarServicio vuelve a revisar lo mismo al guardar
+        public static bool PuedeCancelarse(ingresos ingreso)
+        {
+            var estado = ingreso.estado_servicio?.Trim().ToLower();
+
+            return ingreso.estado_pago?.Trim().ToLower() != "pagado" &&
+                   ingreso.id_liquidacion == null &&
+                   ingreso.estado_liquidacion != true &&
+                   estado != "finalizado" &&
+                   estado != "cancelado";
+        }
     }
 }

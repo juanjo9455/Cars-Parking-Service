@@ -2107,6 +2107,24 @@ function escaparHtml(texto) {
         .replace(/"/g, "&quot;");
 }
 
+// Historial de cambios de un vehículo (punto 6, Database/ajustes-admin.sql), el más reciente primero: quién, cuándo,
+// qué dato, antes → después y el motivo (cancelación). Lo usan Información y Despachos y cobros. Se escapa todo
+function listaCambios(cambios) {
+    if (!cambios || cambios.length === 0) {
+        return '<p class="info-nota"><i class="fa-solid fa-circle-info"></i> Nadie lo ha modificado.</p>';
+    }
+
+    return `<ul class="lista-cambios">
+        ${cambios.map(c => `
+            <li>
+                <span class="lista-cambios-quien">${escaparHtml(c.quien)} · ${escaparHtml(c.fecha)}</span>
+                <span class="lista-cambios-que">${escaparHtml(c.que)}:
+                    ${c.antes ? escaparHtml(c.antes) : '—'} <i class="fa-solid fa-arrow-right" aria-label="pasó a"></i> ${c.despues ? escaparHtml(c.despues) : '—'}</span>
+                ${c.motivo ? `<span class="lista-cambios-motivo">Motivo: ${escaparHtml(c.motivo)}</span>` : ''}
+            </li>`).join('')}
+    </ul>`;
+}
+
 async function abrirModalInformacion(btn) {
 
     console.log("========================================");
@@ -2206,9 +2224,42 @@ async function abrirModalInformacion(btn) {
             </div>`;
 
         if (typeof editarOperador === 'function') {
-            window.infoOperadores = { idIngreso, placa: info.placa, operadores: info.operadores, boton: btn };
+            window.infoOperadores = { idIngreso, placa: info.placa, operadores: info.operadores, lugares: info.lugares, boton: btn };
         }
         const cambioLugar = info.lugarEntrega && info.lugarIngreso && info.lugarEntrega !== info.lugarIngreso;
+
+        // Lápiz del admin en los lugares (punto 3, editarLugar en operadores-ingreso.js). El servidor manda
+        // info.lugares solo si se pueden cambiar; el de entrega, solo si ya se solicitó
+        const hayLapizLugar = campo => !!info.lugares && (campo === 'ingreso' || info.lugares.entrega) && typeof editarLugar === 'function';
+        const lugar = (campo, etiqueta, texto, clase = "") => `
+            <div class="info-item ${clase}" id="op-lugar-${campo}">
+                <span class="info-label">${etiqueta}</span>
+                ${hayLapizLugar(campo)
+                    ? `<div class="dc-editable">${valor(texto, "—")}
+                           <button type="button" class="dc-lapiz" onclick="editarLugar('${campo}')" aria-label="Cambiar ${etiqueta.toLowerCase()}">
+                               <i class="fa-solid fa-pen"></i>
+                           </button>
+                       </div>`
+                    : valor(texto, "—")}
+            </div>`;
+
+        // Servicio cancelado por el admin (punto 8): quién, cuándo y por qué, para todos
+        const avisoCancelado = info.cancelacion
+            ? `<div class="info-cancelado" role="status">
+                   <i class="fa-solid fa-ban"></i>
+                   <div>
+                       <strong>Servicio cancelado</strong>
+                       <span>${escaparHtml(info.cancelacion.quien)} · ${escaparHtml(info.cancelacion.fecha)}</span>
+                       ${info.cancelacion.motivo ? `<span>Motivo: ${escaparHtml(info.cancelacion.motivo)}</span>` : ""}
+                   </div>
+               </div>`
+            : "";
+
+        // Historial de cambios (punto 6): solo el admin lo recibe
+        const seccionCambios = info.cambios
+            ? `<h3 class="info-seccion"><i class="fa-solid fa-clock-rotate-left"></i> Cambios</h3>
+               ${listaCambios(info.cambios)}`
+            : "";
 
         // Celular: con un toque se llama desde el celular
         const celular = info.telefono
@@ -2308,6 +2359,7 @@ async function abrirModalInformacion(btn) {
                     <span class="info-placa">${escaparHtml(info.placa ?? "—")}</span>
                 </div>
 
+                ${avisoCancelado}
                 ${botonSolicitar}
                 ${botonAsignarValet}
                 ${botonParquear}
@@ -2368,19 +2420,15 @@ async function abrirModalInformacion(btn) {
 
                 <h3 class="info-seccion"><i class="fa-solid fa-location-dot"></i> Lugares</h3>
                 <div class="info-grid">
-                    <div class="info-item">
-                        <span class="info-label">Lugar de ingreso</span>
-                        ${valor(info.lugarIngreso, "—")}
-                    </div>
-                    <div class="info-item ${cambioLugar ? "info-destacado" : ""}">
-                        <span class="info-label">Lugar de entrega${cambioLugar ? " (cambió)" : ""}</span>
-                        ${valor(info.lugarEntrega, "—")}
-                    </div>
+                    ${lugar('ingreso', 'Lugar de ingreso', info.lugarIngreso)}
+                    ${lugar('entrega', `Lugar de entrega${cambioLugar ? " (cambió)" : ""}`, info.lugarEntrega, cambioLugar ? "info-destacado" : "")}
                     <div class="info-item info-item-completo">
                         <span class="info-label">Parqueadero</span>
                         ${valor(info.parqueadero, "Sin parqueadero asignado")}
                     </div>
                 </div>
+
+                ${seccionCambios}
 
                 <h3 class="info-seccion"><i class="fa-solid fa-signature"></i> Firma del cliente</h3>
                 ${firma}
@@ -2525,6 +2573,16 @@ async function abrirModalInformacion(btn) {
 
             contenido.appendChild(contenedorVideos);
 
+        }
+
+        //========================
+        // CANCELAR SERVICIO (solo admin, punto 8)
+        //========================
+
+        // Al final y plegado (seccionCancelarServicio en operadores-ingreso.js, que solo carga el admin). Con
+        // insertAdjacentHTML y no innerHTML +=, para no perder los clics de las miniaturas de video
+        if (info.puedeCancelar && typeof seccionCancelarServicio === 'function') {
+            contenido.insertAdjacentHTML('beforeend', seccionCancelarServicio(idIngreso, info.placa));
         }
 
     }

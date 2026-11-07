@@ -430,6 +430,11 @@ function mostrarDespachados() {
             <div class="req-item">
                 <div class="req-item-info">
                     ${filaVehiculoBurbuja(vehiculos, 'Valet despacho')}
+
+                    <div class="req-item-lugar">
+                        <i class="fa-solid fa-location-dot"></i>
+                        Entrega en: <strong>${escaparHtml(vehiculos.lugar_entrega || 'Sin lugar registrado')}</strong>
+                    </div>
                 </div>
             </div>
 

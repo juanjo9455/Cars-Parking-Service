@@ -3679,3 +3679,155 @@ i.btn-foto-ingreso {
     font-size: 14px;
     color: #6b7280;
 }
+
+/* ==================== Ajustes del admin (Database/ajustes-admin.sql) ==================== */
+
+/* Despachos y cobros: columna Modificó (punto 6); en el celular no cabe y se ve en la ventana */
+@media (max-width: 768px) {
+    .tabla-despachos .dc-col-modifico {
+        display: none;
+    }
+}
+
+/* Total de la columna Cobro */
+.tabla-despachos tfoot .dc-total td {
+    padding-top: 12px;
+    border-top: 2px solid #1f2937;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+/* Foto del comprobante en la ventana de Despachos y cobros (punto 7) */
+.dc-comprobante-img {
+    display: block;
+    width: 100%;
+    max-width: 240px;
+    margin-top: 6px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* Historial de cambios (punto 6): quién y cuándo, qué pasó y el motivo */
+.lista-cambios {
+    list-style: none;
+    margin: 0 0 8px;
+    padding: 0;
+}
+
+.lista-cambios li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #1d4ed8;
+    border-radius: 8px;
+    background: #f9fafb;
+}
+
+.lista-cambios-quien {
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.lista-cambios-que {
+    font-weight: 600;
+    color: #1f2937;
+    overflow-wrap: anywhere;
+}
+
+.lista-cambios-motivo {
+    font-size: 14px;
+    color: #374151;
+    overflow-wrap: anywhere;
+}
+
+/* Información de un servicio cancelado (punto 8): quién, cuándo y por qué */
+.info-cancelado {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid #c62828;
+    border-radius: 10px;
+    background: #fdecea;
+    color: #7f1d1d;
+}
+
+.info-cancelado div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-wrap: anywhere;
+}
+
+/* Opciones del administrador, plegadas al final de Información (cancelar el servicio) */
+.info-admin-opciones {
+    margin-top: 24px;
+    padding: 10px 12px;
+    border: 1px dashed #9ca3af;
+    border-radius: 10px;
+}
+
+.info-admin-opciones summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #4b5563;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.info-cancelar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.info-cancelar textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 16px;
+    resize: vertical;
+}
+
+/* touch-action: dos toques seguidos no hacen zoom en el celular */
+.btn-cancelar-servicio {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: #b91c1c;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+}
+
+.btn-cancelar-servicio:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.info-cancelar-ayuda {
+    font-size: 14px;
+    color: #6b7280;
+    text-align: center;
+}
+
+.info-cancelar-ayuda.resaltada {
+    color: #b91c1c;
+    font-weight: 700;
+}

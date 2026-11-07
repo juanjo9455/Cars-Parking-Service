@@ -260,6 +260,21 @@
                     </select>
                 </div>
 
+                @* Solo el admin (punto 10): los vehículos que un usuario recibió como valet o tiene a cargo como banco *@
+                @if (idRol == 3)
+                {
+                    <div class="form-group col-md-3 mb-3">
+                        <label>Usuario (valet o banco)</label>
+                        <select name="usuario" style="width:100%;">
+                            <option value="">Todos</option>
+                            @foreach (var u in (List<usuarios>)ViewBag.UsuariosFiltro)
+                            {
+                                <option value="@u.id_usuario" selected="@((int?)ViewData["FiltroUsuario"] == u.id_usuario)">@u.nombres @u.apellidos</option>
+                            }
+                        </select>
+                    </div>
+                }
+
                 <div class="form-group col-md-2 mb-3">
                     <label>Fecha Ingreso</label>
                     <input type="date" id="fechaInicio" name="fechaInicio" value="@(((DateTime?)ViewData["FiltroFechaInicio"])?.ToString("yyyy-MM-dd"))" class="form-control">
@@ -294,7 +309,7 @@
 
     <div class="total-registros-filtro">
         <i class="fa-solid fa-car-side"></i>
-        Total de ingresos realizados:
+        Ingresos activos:
         <strong>@ViewBag.TotalRegistros</strong>
     </div>
 

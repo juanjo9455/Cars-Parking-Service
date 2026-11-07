@@ -12,6 +12,12 @@
 
     var moneda = System.Globalization.CultureInfo.GetCultureInfo("es-CO");
     var cuentas = (CarsParkingService.Helpers.LiquidacionReglas.Cuentas)ViewBag.Cuentas;
+
+    // Historial de cambios de cada vehículo, el más reciente primero (punto 6)
+    var cambios = ViewBag.Cambios as Dictionary<int, List<cambio_ingreso>> ?? new Dictionary<int, List<cambio_ingreso>>();
+
+    // Suma de la columna Cobro: lo cobrado sin las propinas
+    decimal totalCobrado = 0;
 }
 
 @* Despachos y cobros (punto 28, solo administrador): un vehículo por fila con su ingreso, solicitud,
@@ -79,6 +85,29 @@
                                                                  ("cobro", "Cobró"), ("liquido", "Liquidó") })
                         {
                             <option value="@valor" selected="@((ViewData["FiltroComo"] as string ?? "") == valor)">@texto</option>
+                        }
+                    </select>
+                </div>
+
+                @* Zona y turno en que entró el vehículo (punto 10) *@
+                <div class="form-group col-md-4 mb-3">
+                    <label>Zona</label>
+                    <select name="zona" style="width:100%;">
+                        <option value="">Todas</option>
+                        @foreach (var z in (List<zonas>)ViewBag.ZonasFiltro)
+                        {
+                            <option value="@z.id_zona" selected="@((int?)ViewData["FiltroZona"] == z.id_zona)">@z.nombre_zona</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group col-md-4 mb-3">
+                    <label>Turno</label>
+                    <select name="turno" style="width:100%;">
+                        <option value="">Todos</option>
+                        @foreach (var (idTurno, textoTurno) in (List<(int, string)>)ViewBag.TurnosFiltro)
+                        {
+                            <option value="@idTurno" selected="@((int?)ViewData["FiltroTurno"] == idTurno)">@textoTurno</option>
                         }
                     </select>
                 </div>
@@ -156,6 +185,8 @@
                     <th>Fecha</th>
                     <th>Cobro</th>
                     <th>Liquidación</th>
+                    @* Quién hizo el último cambio (punto 6); en el celular no cabe y se ve en la ventana *@
+                    <th class="dc-col-modifico">Modificó</th>
                     <th aria-label="Ver información"></th>
                 </tr>
             </thead>
@@ -163,7 +194,7 @@
                 @if (Model.Count == 0)
                 {
                     <tr>
-                        <td colspan="5" style="text-align:center; color:#555;">
+                        <td colspan="6" style="text-align:center; color:#555;">
                             No hay vehículos que ingresaran en este período
                         </td>
                     </tr>
@@ -181,6 +212,17 @@
                     var cobro = i.usuario_cobro.HasValue
                         ? Nombre(i.usuario_cobro) + (string.IsNullOrEmpty(i.rol_cobrador) ? "" : $" ({i.rol_cobrador})")
                         : null;
+
+                    if (pagado)
+                    {
+                        totalCobrado += cobradoSinPropina;
+                    }
+
+                    var cambiosIngreso = cambios.GetValueOrDefault(i.id_ingreso) ?? new List<cambio_ingreso>();
+                    var ultimoCambio = cambiosIngreso.FirstOrDefault();
+
+                    // Foto del comprobante (punto 7): se ve y el admin la cambia con QR, transferencia o Nequi, sin liquidar
+                    var conComprobante = i.metodo_pago is "QR" or "Transferencia" or "Nequi";
 
                     // Todo lo del vehículo para la ventana de información (se escribe como texto, no como HTML)
                     var info = System.Text.Json.JsonSerializer.Serialize(new
@@ -211,7 +253,18 @@
                         parqueo = i.usuario_parqueo.HasValue ? Nombre(i.usuario_parqueo) : null,
                         parqueadero = i.Parqueadero?.nombre_parqueadero,
                         cliente = i.nombre_cliente,
-                        celular = i.telefono
+                        celular = i.telefono,
+                        foto = i.foto_transferencia != null ? Url.Action("FotoTransferenciaIngreso", new { idIngreso = i.id_ingreso }) : null,
+                        conComprobante,
+                        cambios = cambiosIngreso.Select(c => new
+                        {
+                            fecha = c.fecha.ToString("dd/MM HH:mm"),
+                            quien = string.IsNullOrWhiteSpace(c.usuario) ? "—" : c.usuario,
+                            que = c.Que,
+                            c.antes,
+                            c.despues,
+                            c.motivo
+                        })
                     });
 
                     <tr>
@@ -258,6 +311,18 @@
                             }
                         </td>
 
+                        <td class="dc-col-modifico" data-label="Modificó">
+                            @if (ultimoCambio != null)
+                            {
+                                <span class="dc-principal">@(string.IsNullOrWhiteSpace(ultimoCambio.usuario) ? "—" : ultimoCambio.usuario)</span>
+                                <span class="dc-detalle">@ultimoCambio.Que · @ultimoCambio.fecha.ToString("dd/MM HH:mm")</span>
+                            }
+                            else
+                            {
+                                <span class="dc-vacio">—</span>
+                            }
+                        </td>
+
                         @* El lápiz también abre la información (la gente lo reconoce más fácil que la placa) *@
                         <td>
                             <button type="button" class="dc-lapiz-fila" aria-label="Ver información de @i.placa" title="Ver información">
@@ -267,6 +332,21 @@
                     </tr>
                 }
             </tbody>
+
+            @* Total de la columna Cobro: lo cobrado de los vehículos de la lista, sin las propinas *@
+            @if (Model.Any(i => i.estado_pago == "pagado"))
+            {
+                <tfoot>
+                    <tr class="dc-total">
+                        <td colspan="2">Total cobrado</td>
+                        <td>
+                            <span class="dc-principal">@totalCobrado.ToString("C0", moneda)</span>
+                            <span class="dc-detalle">sin propinas</span>
+                        </td>
+                        <td colspan="3"></td>
+                    </tr>
+                </tfoot>
+            }
         </table>
     </div>
 
@@ -280,6 +360,15 @@
     <div class="Card-Ingreso card-ingreso-vehiculos">
         <span class="close-btn" onclick="cerrarModalAcciones()">&times;</span>
         <div id="contenido-modal-acciones"></div>
+    </div>
+</div>
+
+@* Foto del comprobante en grande (abrirVisorImagen en site.js), el mismo visor de la tabla de ingresos *@
+<div id="visor-imagen" class="visor-imagen" style="display:none;">
+    <div class="visor-overlay" onclick="cerrarVisorImagen()"></div>
+    <div class="visor-contenido">
+        <button class="visor-cerrar" type="button" onclick="cerrarVisorImagen()">&times;</button>
+        <img id="imagen-grande" src="" alt="Imagen ampliada">
     </div>
 </div>
 

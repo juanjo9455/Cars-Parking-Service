@@ -1,7 +1,7 @@
 ﻿// Despachos y cobros (solo administrador): la placa (o su fila) abre la ventana con toda la información del
 // vehículo, que viene en data-info (DespachosCobros.cshtml). En un vehículo cobrado y sin liquidar, los lápices
 // cambian el método de pago o el valor total (HomeController.EditarCobro, que valida todo otra vez).
-// Usa de site.js: escaparHtml, PESOS, mostrarAlertaWhatsApp y cerrarModalAcciones
+// Usa de site.js: escaparHtml, PESOS, mostrarAlertaWhatsApp, cerrarModalAcciones y listaCambios
 
 const METODOS_PAGO_COBRO = ['Efectivo', 'QR', 'Transferencia', 'Nequi'];
 
@@ -48,6 +48,25 @@ function abrirInfoDespacho(info) {
             ? '<span class="status-badge wa-badge-error">Sin liquidar</span>'
             : '<span class="info-valor">—</span>';
 
+    // Foto del comprobante (punto 7): con QR, transferencia o Nequi. El admin la toma o la cambia mientras no esté
+    // liquidado (HomeController.CambiarComprobante)
+    const comprobante = info.pagado && info.conComprobante
+        ? `<div class="info-item info-item-completo" id="dc-comprobante">
+               <span class="info-label">Foto del comprobante</span>
+               ${info.foto
+                   ? `<img src="${escaparHtml(info.foto)}" alt="Comprobante de pago de ${escaparHtml(info.placa)}" loading="lazy"
+                           class="imagen-galeria dc-comprobante-img" />`
+                   : '<span class="info-valor info-vacio">Sin foto</span>'}
+               ${editable
+                   ? `<button type="button" class="info-btn-solicitar dc-btn-comprobante" onclick="tomarFotoComprobante()">
+                          <i class="fa-solid fa-camera"></i> ${info.foto ? 'Cambiar foto del comprobante' : 'Tomar foto del comprobante'}
+                      </button>
+                      <input type="file" id="dc-foto-comprobante" accept="image/*" capture="environment" hidden
+                             onchange="previsualizarComprobante(this)" />`
+                   : ''}
+           </div>`
+        : '';
+
     const cobro = info.pagado
         ? `<div class="info-grid">
                ${conLapiz('metodo', 'Método de pago', info.metodo || 'Sin método')}
@@ -60,6 +79,7 @@ function abrirInfoDespacho(info) {
                    <span class="info-label">Liquidación</span>
                    <span>${liquidacion}</span>
                </div>
+               ${comprobante}
            </div>
            ${info.liquidado
                 ? `<p class="dc-nota"><i class="fa-solid fa-circle-info"></i>
@@ -110,9 +130,109 @@ function abrirInfoDespacho(info) {
                 ${dato('Nombre', info.cliente, 'Sin nombre registrado')}
                 ${dato('Celular', info.celular, 'Sin celular')}
             </div>
+
+            <h3 class="info-seccion"><i class="fa-solid fa-clock-rotate-left"></i> Cambios</h3>
+            ${listaCambios(info.cambios)}
         </div>`;
 
     document.getElementById('modal-acciones').style.display = 'flex';
+}
+
+// Foto del comprobante (punto 7): abre la cámara; la foto se ve antes de guardarla
+function tomarFotoComprobante() {
+    const campo = document.getElementById('dc-foto-comprobante');
+    campo.value = '';
+    campo.click();
+}
+
+// Achica la foto como las demás del sistema (máx. 1600 px, JPEG): la de la cámara puede pasar los 4 MB que acepta el
+// servidor por campo. Así el texto del comprobante se sigue leyendo
+function achicarComprobante(archivo) {
+    return new Promise((resolve, reject) => {
+        const imagen = new Image();
+
+        imagen.onload = () => {
+            const escala = Math.min(1, 1600 / Math.max(imagen.width, imagen.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(imagen.width * escala);
+            canvas.height = Math.round(imagen.height * escala);
+            canvas.getContext('2d').drawImage(imagen, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(imagen.src);
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+        };
+
+        imagen.onerror = () => {
+            URL.revokeObjectURL(imagen.src);
+            reject(new Error('No se pudo leer la imagen'));
+        };
+
+        imagen.src = URL.createObjectURL(archivo);
+    });
+}
+
+async function previsualizarComprobante(campo) {
+    const archivo = campo.files?.[0];
+    if (!archivo || !archivo.type.startsWith('image/')) return;
+
+    let foto;
+    try {
+        foto = await achicarComprobante(archivo);
+    } catch {
+        mostrarAlertaWhatsApp('No se pudo leer esa foto. Toma otra.', 'error');
+        return;
+    }
+
+    const caja = document.getElementById('dc-comprobante');
+    caja.querySelector('.dc-edicion')?.remove();
+    caja.querySelector('.dc-btn-comprobante').hidden = true;
+
+    caja.insertAdjacentHTML('beforeend', `
+        <div class="dc-edicion">
+            <img src="${foto}" alt="Foto nueva del comprobante" class="dc-comprobante-img" />
+            <div class="dc-edicion-botones">
+                <button type="button" class="btn btn-secondary" onclick="abrirInfoDespacho(infoDespacho)">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarComprobante(this)">Guardar foto</button>
+            </div>
+        </div>`);
+
+    caja.querySelector('.dc-edicion').dataset.foto = foto;
+}
+
+async function guardarComprobante(boton) {
+    const foto = boton.closest('.dc-edicion').dataset.foto;
+    const placa = infoDespacho.placa;
+
+    const pregunta = infoDespacho.foto
+        ? `¿Estás seguro de cambiar la foto del comprobante de ${placa}?\n\nLa foto anterior se reemplaza por esta.`
+        : `¿Guardar esta foto como comprobante de ${placa}?`;
+
+    if (!confirm(pregunta)) return;
+
+    const datos = new FormData();
+    datos.append('id_ingreso', infoDespacho.id);
+    datos.append('fotoBase64', foto);
+    datos.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '');
+
+    boton.disabled = true;
+    boton.textContent = 'Guardando...';
+
+    try {
+        const respuesta = await fetch('/Home/CambiarComprobante', { method: 'POST', body: datos });
+        const data = await respuesta.json();
+
+        mostrarAlertaWhatsApp(data.mensaje, data.success ? 'success' : 'error');
+
+        if (data.success) {
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            boton.disabled = false;
+            boton.textContent = 'Guardar foto';
+        }
+    } catch {
+        mostrarAlertaWhatsApp('No se pudo guardar la foto. Revisa la conexión e intenta de nuevo.', 'error');
+        boton.disabled = false;
+        boton.textContent = 'Guardar foto';
+    }
 }
 
 // Lápiz: el dato se vuelve una lista (método) o un número (valor), con Cancelar y Guardar

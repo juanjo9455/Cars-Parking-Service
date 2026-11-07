@@ -91,9 +91,9 @@ namespace CarsParkingService.Controllers
             if (!IngresoReglas.PuedeSolicitarse(ingreso))
             {
                 var estado = ingreso.estado_servicio?.Trim().ToLower();
-                var mensaje = estado == "despachado" || estado == "finalizado"
-                    ? "Tu vehículo ya fue entregado."
-                    : "Tu vehículo todavía no se puede solicitar. Intenta en unos minutos.";
+                var mensaje = estado == "despachado" || estado == "finalizado" ? "Tu vehículo ya fue entregado."
+                            : estado == "cancelado" ? "Este servicio fue cancelado."
+                            : "Tu vehículo todavía no se puede solicitar. Intenta en unos minutos.";
 
                 return Conflict(new { mensaje });
             }
@@ -159,6 +159,7 @@ namespace CarsParkingService.Controllers
                 var estado = ingreso.estado_servicio?.Trim().ToLower();
                 var mensaje = estado == "despachado" || estado == "finalizado" ? "Tu vehículo ya fue entregado."
                             : estado == "solicitado" ? "Tu vehículo ya fue solicitado."
+                            : estado == "cancelado" ? "Este servicio fue cancelado."
                             : "Tu vehículo todavía no se puede solicitar. Intenta en unos minutos.";
 
                 return Conflict(new { mensaje });

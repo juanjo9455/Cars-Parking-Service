@@ -222,6 +222,7 @@ namespace CarsParkingService.Controllers
                             : i.id_ubicacion == grupo.First().s.id_ubicacion) &&
                         i.estado_servicio != "despachado" &&
                         i.estado_servicio != "finalizado" &&
+                        i.estado_servicio != "cancelado" &&
                         i.fecha_ingreso.HasValue &&
                         i.fecha_ingreso.Value.Date == FechaConsulta),
 
@@ -253,7 +254,8 @@ namespace CarsParkingService.Controllers
                     CarrosEstacionados = _context.ingresos.Count(i =>
                         i.id_parqueadero == grupo.First().s.id_parqueadero &&
                         i.estado_servicio != "despachado" &&
-                        i.estado_servicio != "finalizado")
+                        i.estado_servicio != "finalizado" &&
+                        i.estado_servicio != "cancelado")
                 }
 
             ).ToList();
@@ -499,6 +501,7 @@ namespace CarsParkingService.Controllers
                     i.id_parqueadero == idParqueadero &&
                     i.estado_servicio != "finalizado" &&
                     i.estado_servicio != "despachado" &&
+                    i.estado_servicio != "cancelado" &&
                     i.estado_pago != "pagado");
 
             if (!string.IsNullOrWhiteSpace(placa))
@@ -785,7 +788,10 @@ namespace CarsParkingService.Controllers
 
                     nombre_banco = i.Banco != null
                         ? i.Banco.nombres
-                        : "Sin banco"
+                        : "Sin banco",
+
+                    // Dónde se entrega, como en solicitados (si no se pidió otro lugar, el de ingreso)
+                    lugar_entrega = i.lugar_entrega ?? (i.Ubicacion != null ? i.Ubicacion.nombre_ubicacion : null)
                 })
                 .ToList();
 
@@ -929,7 +935,7 @@ namespace CarsParkingService.Controllers
             return View();
         }
 
-        public IActionResult Tabla_Vehiculos(string placa, string? lugar, string[]? estado_servicio, string estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
+        public IActionResult Tabla_Vehiculos(string placa, string? lugar, string[]? estado_servicio, string estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin, int? usuario)
         {
             var idUsuarioSesion = HttpContext.Session.GetInt32("id");
 
@@ -949,10 +955,16 @@ namespace CarsParkingService.Controllers
             var estadosFiltro = EstadosFiltro();
             var estados = EstadosMarcados(estado_servicio, estadosFiltro);
 
-            var ingresos = IngresosTabla(idUsuario, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, fechaFin);
+            var ingresos = IngresosTabla(idUsuario, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, fechaFin, usuario);
             ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
             ViewBag.ValoresUbicacion = ValoresUbicacion();
             int totalRegistros = ingresos.Count();
+
+            // Filtro Usuario, solo para el admin (punto 10): usuarios activos en orden alfabético
+            ViewBag.UsuariosFiltro = EsAdmin()
+                ? _context.usuarios.AsNoTracking().Where(u => u.estado).OrderBy(u => u.nombres).ThenBy(u => u.apellidos).ToList()
+                : new List<usuarios>();
+            ViewData["FiltroUsuario"] = usuario;
 
             ViewBag.TotalRegistros = totalRegistros;
 
@@ -977,7 +989,7 @@ namespace CarsParkingService.Controllers
         // Ingresos de la tabla según los filtros y el rol (procedimiento sp_consultarRegistros). Los usan
         // la página y su refresco automático (FilasIngresos, punto 16) para mostrar exactamente lo mismo
         private List<ingresos> IngresosTabla(int idUsuario, string? placa, string? lugar, string[] estados,
-            string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
+            string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin, int? usuarioFiltro = null)
         {
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
 
@@ -1014,6 +1026,13 @@ namespace CarsParkingService.Controllers
 
             }
 
+            // El admin puede ver los de un usuario (punto 10): con el mismo filtro del banco en sp_consultarRegistros,
+            // los que recibió como valet o tiene a cargo como banco
+            if (rolUsuario == 3 && usuarioFiltro.HasValue)
+            {
+                idUsuarioParam = usuarioFiltro.Value;
+            }
+
             parametros.Add(new SqlParameter("@id_usuario", idUsuarioParam));
             parametros.Add(new SqlParameter("@id_ubicacion", idUbicacionFiltro ?? (object)DBNull.Value));
 
@@ -1037,7 +1056,7 @@ namespace CarsParkingService.Controllers
         // con sus filtros, armadas por la misma vista parcial (_FilasIngresos)
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult FilasIngresos(string? placa, string? lugar, string[]? estado_servicio, string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin)
+        public IActionResult FilasIngresos(string? placa, string? lugar, string[]? estado_servicio, string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin, int? usuario)
         {
             // Sin sesión, OnActionExecuting ya redirige al login
             var idUsuario = HttpContext.Session.GetInt32("id");
@@ -1047,7 +1066,7 @@ namespace CarsParkingService.Controllers
             }
 
             var estados = EstadosMarcados(estado_servicio, EstadosFiltro());
-            var ingresos = IngresosTabla(idUsuario.Value, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, fechaFin);
+            var ingresos = IngresosTabla(idUsuario.Value, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, fechaFin, usuario);
             ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
             ViewBag.ValoresUbicacion = ValoresUbicacion();
 
@@ -1902,7 +1921,7 @@ namespace CarsParkingService.Controllers
         // Despachos y cobros (punto 28, solo administrador): cada vehículo que ingresó en el período (solo la fecha
         // de ingreso, la que se ve en la fila), con quién lo recibió, quién lo solicitó, quién lo despachó, quién lo cobró y su liquidación
         [HttpGet]
-        public IActionResult DespachosCobros(DateTime? desde, DateTime? hasta, string? placa, int? usuario, string? como)
+        public IActionResult DespachosCobros(DateTime? desde, DateTime? hasta, string? placa, int? usuario, string? como, int? zona, int? turno)
         {
             if (HttpContext.Session.GetInt32("id_rol") != 3)
             {
@@ -1945,11 +1964,28 @@ namespace CarsParkingService.Controllers
                 };
             }
 
+            // Zona del ingreso (los que no la tienen guardada, la de su ubicación) y turno en que entró (punto 10).
+            // Los ingresos de antes de turnos.sql no tienen turno: con ese filtro no salen
+            if (zona.HasValue)
+            {
+                consulta = DeLaZona(consulta, zona);
+            }
+
+            if (turno.HasValue)
+            {
+                consulta = consulta.Where(i => i.id_turno == turno);
+            }
+
             // Máximo 500 filas para que la página no se vuelva pesada
             var ingresos = consulta
                 .OrderByDescending(i => i.fecha_ingreso)
                 .Take(500)
                 .ToList();
+
+            // Historial de cambios de cada vehículo (punto 6): la columna Modificó y la ventana de información
+            ViewBag.Cambios = CambiosIngresos(ingresos.Select(i => i.id_ingreso))
+                .GroupBy(c => c.id_ingreso)
+                .ToDictionary(g => g.Key, g => g.ToList());
 
             // Nombres de todos los que aparecen: valet que recibió, quien parqueó, quien solicitó, valet de despacho
             // y quien cobró; y el banco que registró el ingreso (ventana de información)
@@ -1980,14 +2016,80 @@ namespace CarsParkingService.Controllers
                 .OrderBy(x => x.nombres).ThenBy(x => x.apellidos)
                 .ToList();
 
+            // Zonas (las mismas del login) y turnos, con el día en los que solo son un día (Madrugada)
+            ViewBag.ZonasFiltro = _context.zonas.FromSqlRaw("EXEC sp_zonas").AsNoTracking().ToList();
+            ViewBag.TurnosFiltro = _context.turnos.AsNoTracking()
+                .OrderBy(t => t.orden)
+                .ToList()
+                .Select(t => (t.id_turno, texto: t.dia_semana is >= 1 and <= 7
+                    ? $"{t.nombre} ({DiasJornada[t.dia_semana.Value - 1]})"
+                    : t.nombre))
+                .ToList();
+
             ViewData["FiltroDesde"] = fechaDesde;
             ViewData["FiltroHasta"] = fechaHasta.AddDays(-1);
             ViewData["FiltroPlaca"] = placa;
             ViewData["FiltroUsuario"] = usuario;
             ViewData["FiltroComo"] = como;
+            ViewData["FiltroZona"] = zona;
+            ViewData["FiltroTurno"] = turno;
 
             return View(ingresos);
         }
+
+        // Día de la jornada de un turno (tbl_turnos.dia_semana: 1 = lunes ... 7 = domingo)
+        private static readonly string[] DiasJornada = { "lun", "mar", "mié", "jue", "vie", "sáb", "dom" };
+
+        // =========================== Historial de cambios (Database/ajustes-admin.sql) =========================== \\
+
+        // Registra un cambio en el historial con quien tiene la sesión. Se llama dentro de la transacción del cambio
+        private void RegistrarCambio(int idIngreso, string campo, string? antes, string? despues, string? motivo = null)
+        {
+            _context.Database.ExecuteSqlRaw(
+                "EXEC sp_registrarCambioIngreso @id_ingreso, @id_usuario, @campo, @antes, @despues, @motivo, @ahora",
+                new SqlParameter("@id_ingreso", idIngreso),
+                new SqlParameter("@id_usuario", HttpContext.Session.GetInt32("id")!.Value),
+                new SqlParameter("@campo", campo),
+                new SqlParameter("@antes", System.Data.SqlDbType.NVarChar, 150) { Value = (object?)Recortar(antes, 150) ?? DBNull.Value },
+                new SqlParameter("@despues", System.Data.SqlDbType.NVarChar, 150) { Value = (object?)Recortar(despues, 150) ?? DBNull.Value },
+                new SqlParameter("@motivo", System.Data.SqlDbType.NVarChar, 250) { Value = (object?)Recortar(motivo, 250) ?? DBNull.Value },
+                new SqlParameter("@ahora", System.Data.SqlDbType.DateTime2) { Value = DateTime.Now });
+        }
+
+        private static string? Recortar(string? texto, int largo) =>
+            texto == null || texto.Length <= largo ? texto : texto[..largo];
+
+        // Historial de varios vehículos, el más reciente primero
+        private List<cambio_ingreso> CambiosIngresos(IEnumerable<int> idsIngresos)
+        {
+            var ids = string.Join(",", idsIngresos);
+
+            return ids.Length == 0
+                ? new List<cambio_ingreso>()
+                : _context.Database
+                    .SqlQueryRaw<cambio_ingreso>("EXEC sp_cambiosIngresos @ids",
+                        new SqlParameter("@ids", System.Data.SqlDbType.VarChar, -1) { Value = ids })
+                    .ToList();
+        }
+
+        // Un cambio como lo muestran las ventanas de información
+        private static object CambioParaVista(cambio_ingreso c) => new
+        {
+            fecha = c.fecha.ToString("dd/MM HH:mm"),
+            quien = string.IsNullOrWhiteSpace(c.usuario) ? "—" : c.usuario,
+            que = c.Que,
+            c.antes,
+            c.despues,
+            c.motivo
+        };
+
+        // Ejecuta un SP de cambio del admin (sp_cancelarServicio, sp_cambiarLugar..., sp_cambiarComprobante), que
+        // valida, guarda y deja el historial en una sola transacción. Devuelve si cambió algo
+        private bool EjecutarCambio(string sql, params SqlParameter[] parametros) =>
+            _context.Database.SqlQueryRaw<bool>(sql, parametros).AsEnumerable().FirstOrDefault();
+
+        private static string Pesos(decimal? valor) =>
+            (valor ?? 0).ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("es-CO"));
 
         private static readonly string[] MetodosPagoAdmin = { "Efectivo", "QR", "Transferencia", "Nequi" };
 
@@ -2021,6 +2123,10 @@ namespace CarsParkingService.Controllers
                 var liquidacion = ingreso.id_liquidacion.HasValue ? $"en la liquidación #{ingreso.id_liquidacion}" : "liquidado";
                 return Json(new { success = false, mensaje = $"El vehículo {ingreso.placa} ya está {liquidacion}: no se puede cambiar." });
             }
+
+            // Cómo estaba, para el historial de cambios (punto 6)
+            var metodoAntes = ingreso.metodo_pago ?? "Sin método";
+            var totalAntes = TotalCobrado(ingreso);
 
             if (metodo_pago != null)
             {
@@ -2067,10 +2173,87 @@ namespace CarsParkingService.Controllers
                 return Json(new { success = false, mensaje = "No hay nada que cambiar." });
             }
 
-            _context.SaveChanges();
+            // El cambio y su registro en el historial se guardan juntos: o queda todo o nada
+            var (campo, antes, despues) = metodo_pago != null
+                ? ("metodo_pago", $"{metodoAntes} · {Pesos(totalAntes)}", $"{metodo_pago} · {Pesos(TotalCobrado(ingreso))}")
+                : ("valor_total", Pesos(totalAntes), Pesos(TotalCobrado(ingreso)));
+
+            using (var transaccion = _context.Database.BeginTransaction())
+            {
+                _context.SaveChanges();
+
+                if (antes != despues)
+                {
+                    RegistrarCambio(ingreso.id_ingreso, campo, antes, despues);
+                }
+
+                transaccion.Commit();
+            }
 
             return Json(new { success = true, mensaje = $"Cobro del vehículo {ingreso.placa} actualizado." });
         }
+
+        // Lo que pagó el cliente con propina (cobros de antes sin total: servicio + propina), como en Despachos y cobros
+        private static decimal TotalCobrado(ingresos i) =>
+            (i.total_servicio ?? 0) > 0 ? i.total_servicio!.Value : (i.valor_servicio ?? 0) + (i.valor_propina ?? 0);
+
+        // Foto del comprobante real de un cobro (punto 7, Despachos y cobros): solo el admin, con QR, transferencia o
+        // Nequi y sin liquidar (la misma regla del lápiz de método y valor). sp_cambiarComprobante vuelve a validar,
+        // reemplaza la foto y deja el registro en el historial
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CambiarComprobante(int id_ingreso, string? fotoBase64)
+        {
+            if (!EsAdmin())
+            {
+                return Json(new { success = false, mensaje = "Solo el administrador puede cambiar el comprobante." });
+            }
+
+            var ingreso = _context.ingresos.AsNoTracking().FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            if (ingreso == null)
+            {
+                return Json(new { success = false, mensaje = "No se encontró el vehículo." });
+            }
+
+            if (ingreso.estado_pago != "pagado" || !MetodosConComprobante.Contains(ingreso.metodo_pago ?? ""))
+            {
+                return Json(new { success = false, mensaje = "La foto del comprobante es solo para cobros por QR, transferencia o Nequi." });
+            }
+
+            if (Liquidado(ingreso))
+            {
+                return Json(new { success = false, mensaje = $"El vehículo {ingreso.placa} ya está liquidado: el comprobante no se cambia." });
+            }
+
+            byte[] foto;
+            try
+            {
+                foto = Convert.FromBase64String(fotoBase64?.Contains(',') == true ? fotoBase64.Split(',')[1] : fotoBase64 ?? "");
+            }
+            catch (FormatException)
+            {
+                return Json(new { success = false, mensaje = "La imagen recibida no tiene un formato válido." });
+            }
+
+            // JPEG (FF D8 FF): la foto ya llega achicada desde el navegador (despachos-cobros.js)
+            if (foto.Length < 4 || foto[0] != 0xFF || foto[1] != 0xD8 || foto[2] != 0xFF)
+            {
+                return Json(new { success = false, mensaje = "Toma la foto del comprobante antes de guardar." });
+            }
+
+            var guardada = EjecutarCambio("EXEC sp_cambiarComprobante @id_ingreso, @id_usuario, @foto, @ahora",
+                new SqlParameter("@id_ingreso", id_ingreso),
+                new SqlParameter("@id_usuario", HttpContext.Session.GetInt32("id")!.Value),
+                new SqlParameter("@foto", System.Data.SqlDbType.VarBinary, -1) { Value = foto },
+                new SqlParameter("@ahora", System.Data.SqlDbType.DateTime2) { Value = DateTime.Now });
+
+            return Json(guardada
+                ? new { success = true, mensaje = $"Comprobante de {ingreso.placa} guardado." }
+                : new { success = false, mensaje = $"No se pudo guardar: el cobro de {ingreso.placa} cambió. Recarga la página." });
+        }
+
+        private static readonly string[] MetodosConComprobante = { "QR", "Transferencia", "Nequi" };
 
         [HttpPost]
         public async Task<IActionResult> ReenviarWhatsApp(string placa, string? telefono)
@@ -2895,7 +3078,7 @@ namespace CarsParkingService.Controllers
 
         // Acción para editar una ubicación desde el panel de admin
         [HttpPost]
-        public IActionResult EditarUbicacion(int id_ubicacion, string nombre_ubicacion, string direccion, string ciudad, decimal valor_servicio, int? id_zona)
+        public IActionResult EditarUbicacion(int id_ubicacion, string? nombre_ubicacion, string? direccion, string? ciudad, decimal valor_servicio, int? id_zona)
         {
             if (TarifaIncompleta(valor_servicio))
             {
@@ -2903,13 +3086,27 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("Administrador");
             }
 
+            // Dirección y ciudad pueden quedar vacías: PUENTE y BELISARIO se crearon sin ellas (zonas.sql) y al
+            // cambiarles solo el valor se caía en direccion.Trim() con la página de error. El nombre sí es obligatorio
+            if (string.IsNullOrWhiteSpace(nombre_ubicacion))
+            {
+                TempData["Error"] = "Escribe el nombre de la ubicación.";
+                return RedirectToAction("Administrador");
+            }
+
+            direccion = string.IsNullOrWhiteSpace(direccion) ? null : direccion;
+            ciudad = string.IsNullOrWhiteSpace(ciudad) ? null : ciudad;
+
+            var nombreBuscado = nombre_ubicacion.Trim().ToLower();
+            var direccionBuscada = direccion?.Trim().ToLower();
+
             // Validar nombre duplicado (excluyendo el actual)
             bool existeNombre = _context.ubicacion_servicios
-                .Any(u => u.nombre_ubicacion.Trim().ToLower() == nombre_ubicacion.Trim().ToLower() && u.id_ubicacion != id_ubicacion);
+                .Any(u => u.nombre_ubicacion!.Trim().ToLower() == nombreBuscado && u.id_ubicacion != id_ubicacion);
 
-            // Validar dirección duplicada (excluyendo el actual)
-            bool existeDireccion = _context.ubicacion_servicios
-                .Any(u => u.direccion.Trim().ToLower() == direccion.Trim().ToLower() && u.id_ubicacion != id_ubicacion);
+            // Validar dirección duplicada (excluyendo el actual), solo si escribieron una
+            bool existeDireccion = direccionBuscada != null && _context.ubicacion_servicios
+                .Any(u => u.direccion!.Trim().ToLower() == direccionBuscada && u.id_ubicacion != id_ubicacion);
 
             if (existeNombre)
             {
@@ -3164,9 +3361,23 @@ namespace CarsParkingService.Controllers
 
                 ingreso.foto_estacionamiento = true;
 
+                // La foto del parqueo también lo parquea, con la misma regla y los mismos datos que Parquear en
+                // Información (ActualizarEstadoKey). Si ya estaba parqueado (lo hizo el Key), solo queda la foto
+                var parquear = IngresoReglas.PuedeParquear(ingreso);
+                if (parquear)
+                {
+                    ingreso.estado_servicio = "parqueado";
+                    ingreso.valet_despacho = null;
+                    ingreso.usuario_parqueo = idUsuarioSesion.Value;
+                    ingreso.fecha_parqueo = DateTime.Now;
+                }
+
                 _context.imagenes.Add(imagen);
                 _context.SaveChanges();
 
+                TempData["Exito"] = parquear
+                    ? $"Foto guardada y vehículo {ingreso.placa} parqueado."
+                    : "Foto del parqueo guardada.";
                 return RedirectToAction("Tabla_Vehiculos");
             }
             catch (Exception ex)
@@ -3274,6 +3485,12 @@ namespace CarsParkingService.Controllers
             var liquidado = Liquidado(ingreso);
             var nombreYApellido = (List<usuarios> lista) => lista.Select(u => new { id = u.id_usuario, nombre = u.nombres + " " + u.apellidos });
 
+            // Cancelado: ya no se corrige nada. Historial de cambios (punto 6): el admin lo ve completo; de un
+            // cancelado todos ven quién lo canceló y por qué
+            var cancelado = IngresoReglas.EstaCancelado(ingreso);
+            var cambios = esAdmin || cancelado ? CambiosIngresos(new[] { ingreso.id_ingreso }) : new List<cambio_ingreso>();
+            var cancelacion = cancelado ? cambios.FirstOrDefault(c => c.campo == "cancelacion") : null;
+
             return Json(new
             {
                 placa = ingreso.placa,
@@ -3318,8 +3535,8 @@ namespace CarsParkingService.Controllers
                 // Quien lo debe cobrar ahora (Database/turnos.sql): el banco que lo registró o el que lo recibió
                 bancoACargo = nombres.GetValueOrDefault(ingreso.id_banco_responsable ?? ingreso.id_banco),
                 // Para el admin: quién está en cada papel (null = ese paso no ha pasado o ya no se cambia) y a quién
-                // se puede poner. Nada si ya está liquidado
-                operadores = esAdmin && !liquidado
+                // se puede poner. Nada si ya está liquidado o cancelado
+                operadores = esAdmin && !liquidado && !cancelado
                     ? new
                     {
                         valet = ingreso.id_valet,
@@ -3331,9 +3548,27 @@ namespace CarsParkingService.Controllers
                         bancos = nombreYApellido(UsuariosDisponibles(2))
                     }
                     : null,
-                operadoresLiquidado = esAdmin && liquidado
+                operadoresLiquidado = esAdmin && liquidado,
+                // Lápiz del admin en los lugares (punto 3, CambiarLugar): el de ingreso entre las ubicaciones de la
+                // zona del vehículo; el de entrega, solo si ya se solicitó. Nada si está liquidado o cancelado
+                lugares = esAdmin && !liquidado && !cancelado
+                    ? new
+                    {
+                        ingreso = ingreso.id_ubicacion,
+                        entrega = ingreso.fecha_solicitud.HasValue,
+                        ubicaciones = UbicacionesZona(ZonaIngreso(ingreso))
+                            .Select(u => new { id = u.id_ubicacion, nombre = u.nombre_ubicacion })
+                    }
+                    : null,
+                // Cancelar el servicio (punto 8): solo el admin, sin cobrar ni liquidar (CancelarServicio)
+                puedeCancelar = esAdmin && IngresoReglas.PuedeCancelarse(ingreso),
+                cancelacion = cancelacion != null ? CambioParaVista(cancelacion) : null,
+                cambios = esAdmin ? cambios.Select(CambioParaVista) : null
             });
         }
+
+        // Zona del vehículo: la que se guardó al registrarlo o, en los de antes de las zonas, la de su ubicación
+        private static int? ZonaIngreso(ingresos ingreso) => ingreso.id_zona ?? ingreso.Ubicacion?.id_zona;
 
         // Reversar una solicitud hecha por error (punto 21): valet, banco y admin, solo mientras está
         // "solicitado". El vehículo vuelve al estado que tenía y se borran los datos de la solicitud.
@@ -3412,6 +3647,11 @@ namespace CarsParkingService.Controllers
                 return Json(new { success = false, mensaje = $"El vehículo {ingreso.placa} ya está liquidado: sus operadores no se cambian." });
             }
 
+            if (IngresoReglas.EstaCancelado(ingreso))
+            {
+                return Json(new { success = false, mensaje = $"El servicio de {ingreso.placa} está cancelado: sus operadores no se cambian." });
+            }
+
             // Quién está hoy, a quién se puede poner y, si no se puede, por qué
             int? actual;
             List<usuarios> posibles;
@@ -3469,16 +3709,23 @@ namespace CarsParkingService.Controllers
                 case "parqueo": ingreso.usuario_parqueo = id_usuario; break;
             }
 
-            if (campo == "banco")
+            // El cambio y su registro en el historial (punto 6) se guardan juntos: o queda todo o nada
+            using (var transaccion = _context.Database.BeginTransaction())
             {
-                _context.Database.ExecuteSqlRaw("EXEC sp_cambiarBancoACargo @id_ingreso, @id_banco, @ahora",
-                    new SqlParameter("@id_ingreso", ingreso.id_ingreso),
-                    new SqlParameter("@id_banco", id_usuario),
-                    new SqlParameter("@ahora", System.Data.SqlDbType.DateTime2) { Value = DateTime.Now });
-            }
-            else
-            {
-                _context.SaveChanges();
+                if (campo == "banco")
+                {
+                    _context.Database.ExecuteSqlRaw("EXEC sp_cambiarBancoACargo @id_ingreso, @id_banco, @ahora",
+                        new SqlParameter("@id_ingreso", ingreso.id_ingreso),
+                        new SqlParameter("@id_banco", id_usuario),
+                        new SqlParameter("@ahora", System.Data.SqlDbType.DateTime2) { Value = DateTime.Now });
+                }
+                else
+                {
+                    _context.SaveChanges();
+                }
+
+                RegistrarCambio(ingreso.id_ingreso, campo, anterior, $"{nuevo.nombres} {nuevo.apellidos}");
+                transaccion.Commit();
             }
 
             return Json(new
@@ -3489,6 +3736,160 @@ namespace CarsParkingService.Controllers
         }
 
         private static bool Liquidado(ingresos ingreso) => ingreso.id_liquidacion.HasValue || ingreso.estado_liquidacion == true;
+
+        // Lápiz del admin en Información > Lugares (punto 3). Lugar de ingreso: una ubicación activa de la zona del
+        // vehículo. Lugar de entrega: solo si ya se solicitó (de la lista o escrito, máx. 50). Nunca en un vehículo
+        // liquidado o cancelado. Los SPs vuelven a validar, guardan y dejan el registro en el historial
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CambiarLugar(int id_ingreso, string? campo, int? id_ubicacion, string? lugar_entrega)
+        {
+            if (!EsAdmin())
+            {
+                return Json(new { success = false, mensaje = "Solo el administrador puede cambiar los lugares." });
+            }
+
+            var ingreso = _context.ingresos
+                .AsNoTracking()
+                .Include(i => i.Ubicacion)
+                .FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            if (ingreso == null)
+            {
+                return Json(new { success = false, mensaje = "No se encontró el vehículo." });
+            }
+
+            if (Liquidado(ingreso))
+            {
+                return Json(new { success = false, mensaje = $"El vehículo {ingreso.placa} ya está liquidado: sus lugares no se cambian." });
+            }
+
+            if (IngresoReglas.EstaCancelado(ingreso))
+            {
+                return Json(new { success = false, mensaje = $"El servicio de {ingreso.placa} está cancelado: sus lugares no se cambian." });
+            }
+
+            var idUsuario = HttpContext.Session.GetInt32("id")!.Value;
+            var ahora = new SqlParameter("@ahora", System.Data.SqlDbType.DateTime2) { Value = DateTime.Now };
+            bool cambio;
+            string mensaje;
+
+            if (campo == "ingreso")
+            {
+                var nueva = UbicacionesZona(ZonaIngreso(ingreso)).FirstOrDefault(u => u.id_ubicacion == id_ubicacion);
+
+                if (nueva == null)
+                {
+                    return Json(new { success = false, mensaje = "Escoge una ubicación de la lista." });
+                }
+
+                if (nueva.id_ubicacion == ingreso.id_ubicacion)
+                {
+                    return Json(new { success = false, mensaje = "Es el mismo lugar: no cambió nada." });
+                }
+
+                cambio = EjecutarCambio("EXEC sp_cambiarLugarIngreso @id_ingreso, @id_usuario, @id_ubicacion, @ahora",
+                    new SqlParameter("@id_ingreso", ingreso.id_ingreso),
+                    new SqlParameter("@id_usuario", idUsuario),
+                    new SqlParameter("@id_ubicacion", nueva.id_ubicacion),
+                    ahora);
+
+                mensaje = $"Listo: el lugar de ingreso de {ingreso.placa} ahora es {nueva.nombre_ubicacion} (antes {ingreso.Ubicacion?.nombre_ubicacion ?? "sin lugar"}).";
+            }
+            else if (campo == "entrega")
+            {
+                if (!ingreso.fecha_solicitud.HasValue)
+                {
+                    return Json(new { success = false, mensaje = $"{ingreso.placa} todavía no se ha solicitado: el lugar de entrega se escoge al solicitarlo." });
+                }
+
+                var lugar = lugar_entrega?.Trim();
+
+                if (string.IsNullOrEmpty(lugar))
+                {
+                    return Json(new { success = false, mensaje = "Escoge o escribe el lugar de entrega." });
+                }
+
+                // tbl_ingresos.lugar_entrega es VARCHAR(50), como en la solicitud del operador
+                if (lugar.Length > 50)
+                {
+                    return Json(new { success = false, mensaje = "El lugar de entrega no puede tener más de 50 caracteres." });
+                }
+
+                if (lugar == ingreso.lugar_entrega)
+                {
+                    return Json(new { success = false, mensaje = "Es el mismo lugar: no cambió nada." });
+                }
+
+                cambio = EjecutarCambio("EXEC sp_cambiarLugarEntrega @id_ingreso, @id_usuario, @lugar_entrega, @ahora",
+                    new SqlParameter("@id_ingreso", ingreso.id_ingreso),
+                    new SqlParameter("@id_usuario", idUsuario),
+                    new SqlParameter("@lugar_entrega", System.Data.SqlDbType.VarChar, 50) { Value = lugar },
+                    ahora);
+
+                mensaje = $"Listo: el lugar de entrega de {ingreso.placa} ahora es {lugar} (antes {ingreso.lugar_entrega ?? "sin lugar"}).";
+            }
+            else
+            {
+                return Json(new { success = false, mensaje = "Ese dato no se puede cambiar." });
+            }
+
+            return Json(cambio
+                ? new { success = true, mensaje }
+                : new { success = false, mensaje = $"No se pudo cambiar: {ingreso.placa} cambió mientras tanto. Vuelve a abrir Información." });
+        }
+
+        // Cancelar el servicio (punto 8): solo el admin, con motivo, y solo si no se ha cobrado ni liquidado ni terminó.
+        // sp_cancelarServicio vuelve a validar, lo deja "cancelado" y guarda el motivo en el historial. No se deshace
+        // desde la app
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CancelarServicio(int id_ingreso, string? motivo)
+        {
+            if (!EsAdmin())
+            {
+                return Json(new { success = false, mensaje = "Solo el administrador puede cancelar un servicio." });
+            }
+
+            var ingreso = _context.ingresos.AsNoTracking().FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            if (ingreso == null)
+            {
+                return Json(new { success = false, mensaje = "No se encontró el vehículo." });
+            }
+
+            motivo = motivo?.Trim();
+
+            if (string.IsNullOrEmpty(motivo) || motivo.Length < 5)
+            {
+                return Json(new { success = false, mensaje = "Escribe el motivo de la cancelación (mínimo 5 letras)." });
+            }
+
+            if (motivo.Length > 250)
+            {
+                return Json(new { success = false, mensaje = "El motivo no puede tener más de 250 caracteres." });
+            }
+
+            if (!IngresoReglas.PuedeCancelarse(ingreso))
+            {
+                var porque = IngresoReglas.EstaCancelado(ingreso) ? "ya está cancelado"
+                           : ingreso.estado_pago?.Trim().ToLower() == "pagado" ? "ya se cobró"
+                           : Liquidado(ingreso) ? "ya está liquidado"
+                           : "el servicio ya terminó";
+
+                return Json(new { success = false, mensaje = $"No se puede cancelar {ingreso.placa}: {porque}." });
+            }
+
+            var cancelado = EjecutarCambio("EXEC sp_cancelarServicio @id_ingreso, @id_usuario, @motivo, @ahora",
+                new SqlParameter("@id_ingreso", ingreso.id_ingreso),
+                new SqlParameter("@id_usuario", HttpContext.Session.GetInt32("id")!.Value),
+                new SqlParameter("@motivo", System.Data.SqlDbType.NVarChar, 250) { Value = motivo },
+                new SqlParameter("@ahora", System.Data.SqlDbType.DateTime2) { Value = DateTime.Now });
+
+            return Json(cancelado
+                ? new { success = true, mensaje = $"Servicio de {ingreso.placa} cancelado." }
+                : new { success = false, mensaje = $"No se pudo cancelar: {ingreso.placa} cambió mientras tanto (¿lo acaban de cobrar?). Vuelve a abrir Información." });
+        }
 
         // Devuelve la foto del comprobante de pago (transferencia / QR)
         [HttpGet]
