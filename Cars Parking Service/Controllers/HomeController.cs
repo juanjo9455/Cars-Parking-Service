@@ -935,7 +935,7 @@ namespace CarsParkingService.Controllers
             return View();
         }
 
-        public IActionResult Tabla_Vehiculos(string placa, string? lugar, string[]? estado_servicio, string estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin, int? usuario, string? zona, int? turno)
+        public IActionResult Tabla_Vehiculos(string placa, string? lugar, string[]? estado_servicio, string estado_pago, string? parqueadero, DateTime? fechaInicio, int? usuario, string? zona, int? turno)
         {
             var idUsuarioSesion = HttpContext.Session.GetInt32("id");
 
@@ -958,7 +958,7 @@ namespace CarsParkingService.Controllers
             var estadosFiltro = EstadosFiltro();
             var estados = EstadosMarcados(estado_servicio, estadosFiltro);
 
-            var ingresos = IngresosTabla(idUsuario, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, fechaFin, usuario, zonaTabla, turno);
+            var ingresos = IngresosTabla(idUsuario, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, usuario, zonaTabla, turno);
             ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
             ViewBag.ValoresUbicacion = ValoresUbicacion();
             int totalRegistros = ingresos.Count();
@@ -989,7 +989,6 @@ namespace CarsParkingService.Controllers
             ViewData["FiltroEstadoPago"] = estado_pago;
             ViewData["FiltroParqueadero"] = parqueadero;
             ViewData["FiltroFechaInicio"] = fechaInicio;
-            ViewData["FiltroFechaFin"] = fechaFin;
 
             return View(ingresos);
         }
@@ -997,7 +996,7 @@ namespace CarsParkingService.Controllers
         // Ingresos de la tabla según los filtros y el rol (procedimiento sp_consultarRegistros). Los usan
         // la página y su refresco automático (FilasIngresos, punto 16) para mostrar exactamente lo mismo
         private List<ingresos> IngresosTabla(int idUsuario, string? placa, string? lugar, string[] estados,
-            string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin, int? usuarioFiltro, int? idZona, int? turno)
+            string? estado_pago, string? parqueadero, DateTime? fechaIngreso, int? usuarioFiltro, int? idZona, int? turno)
         {
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
 
@@ -1017,8 +1016,9 @@ namespace CarsParkingService.Controllers
                 new SqlParameter("@estado_servicio", estadoServicio ?? (object)DBNull.Value),
                 new SqlParameter("@estado_pago", estadoPago ?? (object)DBNull.Value),
                 new SqlParameter("@parqueadero", nombreParqueadero ?? (object)DBNull.Value),
-                new SqlParameter("@fecha_inicio", fechaInicio.HasValue ? (object)fechaInicio.Value.Date : DBNull.Value),
-                new SqlParameter("@fecha_fin", fechaFin.HasValue ? (object)fechaFin.Value.Date : DBNull.Value)
+                // Un solo día (filtro Fecha de ingreso): la misma fecha de inicio y de fin. Vacía = todas las fechas
+                new SqlParameter("@fecha_inicio", fechaIngreso.HasValue ? (object)fechaIngreso.Value.Date : DBNull.Value),
+                new SqlParameter("@fecha_fin", fechaIngreso.HasValue ? (object)fechaIngreso.Value.Date : DBNull.Value)
             };
 
             // 🔥 lógica de rol
@@ -1068,7 +1068,7 @@ namespace CarsParkingService.Controllers
         // con sus filtros, armadas por la misma vista parcial (_FilasIngresos)
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult FilasIngresos(string? placa, string? lugar, string[]? estado_servicio, string? estado_pago, string? parqueadero, DateTime? fechaInicio, DateTime? fechaFin, int? usuario, string? zona, int? turno)
+        public IActionResult FilasIngresos(string? placa, string? lugar, string[]? estado_servicio, string? estado_pago, string? parqueadero, DateTime? fechaInicio, int? usuario, string? zona, int? turno)
         {
             // Sin sesión, OnActionExecuting ya redirige al login
             var idUsuario = HttpContext.Session.GetInt32("id");
@@ -1078,7 +1078,7 @@ namespace CarsParkingService.Controllers
             }
 
             var estados = EstadosMarcados(estado_servicio, EstadosFiltro());
-            var ingresos = IngresosTabla(idUsuario.Value, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, fechaFin, usuario, ZonaTabla(zona), turno);
+            var ingresos = IngresosTabla(idUsuario.Value, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, usuario, ZonaTabla(zona), turno);
             ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
             ViewBag.ValoresUbicacion = ValoresUbicacion();
 

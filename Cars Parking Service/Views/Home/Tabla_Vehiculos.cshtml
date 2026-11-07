@@ -300,14 +300,11 @@
                     </div>
                 }
 
-                <div class="form-group col-md-2 mb-3">
-                    <label>Fecha Ingreso</label>
-                    <input type="date" id="fechaInicio" name="fechaInicio" value="@(((DateTime?)ViewData["FiltroFechaInicio"])?.ToString("yyyy-MM-dd"))" class="form-control">
-                </div>
-
+                @* Un solo día: los que ingresaron en esa fecha (antes eran dos campos que funcionaban como "desde" y "hasta"
+                   de la fecha de ingreso, y con uno solo salían también los días siguientes). Vacío = todas las fechas *@
                 <div class="form-group col-md-3 mb-3">
-                    <label>Fecha Salida</label>
-                    <input type="date" id="fechaFin" name="fechaFin" value="@(((DateTime?)ViewData["FiltroFechaFin"])?.ToString("yyyy-MM-dd"))" class="form-control">
+                    <label for="fechaInicio">Fecha de ingreso</label>
+                    <input type="date" id="fechaInicio" name="fechaInicio" value="@(((DateTime?)ViewData["FiltroFechaInicio"])?.ToString("yyyy-MM-dd"))" class="form-control">
                 </div>
 
                 @* Sin botón Buscar: los filtros se aplican solos al cambiarlos (activarFiltrosAutomaticos, site.js) *@
