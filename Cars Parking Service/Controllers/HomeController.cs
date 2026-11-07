@@ -1899,8 +1899,8 @@ namespace CarsParkingService.Controllers
                     new SqlParameter("@fecha_fin", System.Data.SqlDbType.Date) { Value = (object?)hasta?.Date ?? DBNull.Value })
                 .ToList();
 
-        // Despachos y cobros (punto 28, solo administrador): cada vehículo con ingreso, despacho o cobro en el
-        // período, con quién lo recibió, quién lo solicitó, quién lo despachó, quién lo cobró y su liquidación
+        // Despachos y cobros (punto 28, solo administrador): cada vehículo que ingresó en el período (solo la fecha
+        // de ingreso, la que se ve en la fila), con quién lo recibió, quién lo solicitó, quién lo despachó, quién lo cobró y su liquidación
         [HttpGet]
         public IActionResult DespachosCobros(DateTime? desde, DateTime? hasta, string? placa, int? usuario, string? como)
         {
@@ -1917,9 +1917,7 @@ namespace CarsParkingService.Controllers
                 .AsNoTracking()
                 .Include(i => i.Ubicacion)
                 .Include(i => i.Parqueadero)
-                .Where(i => (i.fecha_ingreso >= fechaDesde && i.fecha_ingreso < fechaHasta) ||
-                            (i.fecha_salida >= fechaDesde && i.fecha_salida < fechaHasta) ||
-                            (i.fecha_entrega >= fechaDesde && i.fecha_entrega < fechaHasta));
+                .Where(i => i.fecha_ingreso >= fechaDesde && i.fecha_ingreso < fechaHasta);
 
             if (!string.IsNullOrWhiteSpace(placa))
             {
@@ -1967,12 +1965,12 @@ namespace CarsParkingService.Controllers
                 .ToDictionary(u => u.id_usuario, u => u.nombres + " " + u.apellidos);
 
             // Resumen del período con las mismas cuentas de la liquidación (LiquidacionReglas.Calcular): transferencias
-            // con propinas, propinas de QR, efectivo a entregar y total (vehículos × servicio)
-            bool EnPeriodo(DateTime? fecha) => fecha >= fechaDesde && fecha < fechaHasta;
-            var cobrados = ingresos.Where(i => i.estado_pago == "pagado" && EnPeriodo(i.fecha_entrega)).ToList();
+            // con propinas, propinas de QR, efectivo a entregar y total (vehículos × servicio). Son los mismos vehículos
+            // de la lista: uno que ingresó hoy y se cobra mañana cuenta en el resumen de hoy
+            var cobrados = ingresos.Where(i => i.estado_pago == "pagado").ToList();
 
             ViewBag.Vehiculos = ingresos.Count;
-            ViewBag.Despachados = ingresos.Count(i => i.valet_despacho.HasValue && EnPeriodo(i.fecha_salida));
+            ViewBag.Despachados = ingresos.Count(i => i.valet_despacho.HasValue);
             ViewBag.Cobrados = cobrados.Count;
             ViewBag.Cuentas = LiquidacionReglas.Calcular(cobrados);
             ViewBag.SinLiquidar = cobrados.Count(i => i.estado_liquidacion != true);
