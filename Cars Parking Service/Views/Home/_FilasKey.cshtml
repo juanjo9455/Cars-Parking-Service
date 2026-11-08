@@ -38,8 +38,8 @@
                     </button>
                 }
 
-                @* Se despacha lo que está parqueado y lo que el cliente ya pidió *@
-                @if (estado == "parqueado" || estado == "solicitado")
+                @* Despachar solo sale cuando el cliente ya lo pidió, para no despachar por accidente uno parqueado *@
+                @if (estado == "solicitado")
                 {
                     <button type="button"
                             class="btn-icon btn-icon-warning"
