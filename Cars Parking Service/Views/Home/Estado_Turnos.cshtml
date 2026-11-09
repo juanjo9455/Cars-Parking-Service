@@ -233,6 +233,13 @@
        PANEL BANCOS
     ══════════════════════════════════════ *@
     <div class="adm-panel" id="adm-bancos">
+        @* El mismo total del día de la pestaña Valets; en la tabla, los que registró cada banco *@
+        <div class="adm-total-dia">
+            <span class="adm-num-pill adm-pill-total">
+                <i class="fa-solid fa-car"></i>
+                Vehículos totales del día: <strong>@Model.TotalVehiculos</strong>
+            </span>
+        </div>
         <div class="adm-table-wrap">
             <div class="adm-table-scroll">
                 <table class="adm-table">
@@ -244,7 +251,7 @@
                             <th>Zona</th>
                             <th>
                                 <i class="fa-solid fa-car-side"></i>
-                                Vehículos en la zona
+                                Vehículos recibidos
                             </th>
                             <th>Liquidación del día</th>
                         </tr>
@@ -291,7 +298,7 @@
                                     <td>
                                         <span class="adm-num-pill adm-pill-ubicacion">
                                             <i class="fa-solid fa-car-side"></i>
-                                            @b.VehiculosUbicacion
+                                            @b.VehiculosRecibidos
                                         </span>
                                     </td>
                                     <td>

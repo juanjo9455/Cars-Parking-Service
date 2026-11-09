@@ -216,13 +216,9 @@ namespace CarsParkingService.Controllers
                     LugarActual = _context.zonas.Where(z => z.id_zona == grupo.First().s.id_zona).Select(z => z.nombre_zona).FirstOrDefault()
                                   ?? grupo.First().s.Ubicacion.nombre_ubicacion ?? "Sin zona",
 
-                    VehiculosUbicacion = _context.ingresos.Count(i =>
-                        (grupo.First().s.id_zona != null
-                            ? i.id_zona == grupo.First().s.id_zona
-                            : i.id_ubicacion == grupo.First().s.id_ubicacion) &&
-                        i.estado_servicio != "despachado" &&
-                        i.estado_servicio != "finalizado" &&
-                        i.estado_servicio != "cancelado" &&
+                    // Los que registró ese banco ese día (antes: los abiertos de toda la zona, igual para todos los bancos)
+                    VehiculosRecibidos = _context.ingresos.Count(i =>
+                        i.id_banco == grupo.Key &&
                         i.fecha_ingreso.HasValue &&
                         i.fecha_ingreso.Value.Date == FechaConsulta),
 

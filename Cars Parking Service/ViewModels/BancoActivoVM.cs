@@ -14,7 +14,8 @@ namespace CarsParkingService.ViewModels
 
         public string LugarActual { get; set; }
 
-        public int VehiculosUbicacion { get; set; }
+        // Los que registró ese banco en la fecha consultada (id_banco; los heredados siguen contando para quien los registró)
+        public int VehiculosRecibidos { get; set; }
 
         public bool Liquidado { get; set; }
 
