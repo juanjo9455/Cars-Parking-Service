@@ -945,7 +945,7 @@ namespace CarsParkingService.Controllers
             return View();
         }
 
-        public IActionResult Tabla_Vehiculos(string placa, string? lugar, string[]? estado_servicio, string estado_pago, string? parqueadero, DateTime? fechaInicio, int? usuario, string? zona, int? turno)
+        public IActionResult Tabla_Vehiculos(string placa, string? lugar, string[]? estado_servicio, string estado_pago, string? parqueadero, DateTime? fechaInicio, int? usuario, string? zona, int? turno, string? como)
         {
             var idUsuarioSesion = HttpContext.Session.GetInt32("id");
 
@@ -968,7 +968,7 @@ namespace CarsParkingService.Controllers
             var estadosFiltro = EstadosFiltro();
             var estados = EstadosMarcados(estado_servicio, estadosFiltro);
 
-            var ingresos = IngresosTabla(idUsuario, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, usuario, zonaTabla, turno);
+            var ingresos = IngresosTabla(idUsuario, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, usuario, zonaTabla, turno, como);
             ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
             ViewBag.ValoresUbicacion = ValoresUbicacion();
             int totalRegistros = ingresos.Count();
@@ -981,6 +981,7 @@ namespace CarsParkingService.Controllers
             ViewBag.ZonasFiltro = EsAdmin() ? _context.zonas.FromSqlRaw("EXEC sp_zonas").AsNoTracking().ToList() : new List<zonas>();
             ViewBag.TurnosFiltro = EsAdmin() ? TurnosFiltro() : new List<(int, string)>();
             ViewData["FiltroUsuario"] = usuario;
+            ViewData["FiltroComo"] = como;
             ViewData["FiltroZona"] = todasLasZonas ? "todas" : zonaTabla?.ToString();
             ViewData["FiltroTurno"] = turno;
 
@@ -1006,7 +1007,7 @@ namespace CarsParkingService.Controllers
         // Ingresos de la tabla según los filtros y el rol (procedimiento sp_consultarRegistros). Los usan
         // la página y su refresco automático (FilasIngresos, punto 16) para mostrar exactamente lo mismo
         private List<ingresos> IngresosTabla(int idUsuario, string? placa, string? lugar, string[] estados,
-            string? estado_pago, string? parqueadero, DateTime? fechaIngreso, int? usuarioFiltro, int? idZona, int? turno)
+            string? estado_pago, string? parqueadero, DateTime? fechaIngreso, int? usuarioFiltro, int? idZona, int? turno, string? como)
         {
             var rolUsuario = HttpContext.Session.GetInt32("id_rol");
 
@@ -1044,12 +1045,11 @@ namespace CarsParkingService.Controllers
 
             }
 
-            // El admin puede ver los de un usuario (punto 10): con el mismo filtro del banco en sp_consultarRegistros,
-            // los que recibió como valet o tiene a cargo como banco
-            if (rolUsuario == 3 && usuarioFiltro.HasValue)
-            {
-                idUsuarioParam = usuarioFiltro.Value;
-            }
+            // El admin puede ver los de un usuario (punto 10) y en qué paso participó: el mismo filtro de Despachos y
+            // cobros (DondeParticipo). Va aparte del SP para no cambiar sp_consultarRegistros, como el filtro de turno
+            HashSet<int>? participo = rolUsuario == 3 && usuarioFiltro.HasValue
+                ? DondeParticipo(_context.ingresos.AsNoTracking(), usuarioFiltro.Value, como).Select(i => i.id_ingreso).ToHashSet()
+                : null;
 
             parametros.Add(new SqlParameter("@id_usuario", idUsuarioParam));
             parametros.Add(new SqlParameter("@id_ubicacion", idUbicacionFiltro ?? (object)DBNull.Value));
@@ -1067,6 +1067,7 @@ namespace CarsParkingService.Controllers
             // Turno en que entró (filtro del admin): el SP ya trae id_turno, así no se cambia sp_consultarRegistros.
             // Los ingresos de antes de turnos.sql no tienen turno
             .Where(i => rolUsuario != 3 || !turno.HasValue || i.id_turno == turno)
+            .Where(i => participo == null || participo.Contains(i.id_ingreso))
             // Arriba los solicitados, luego los despachados; en cada grupo, los más recientes primero
             .OrderByDescending(u => u.estado_servicio?.Trim().ToLower() == "solicitado")
             .ThenByDescending(u => u.estado_servicio?.Trim().ToLower() == "despachado")
@@ -1078,7 +1079,7 @@ namespace CarsParkingService.Controllers
         // con sus filtros, armadas por la misma vista parcial (_FilasIngresos)
         [HttpGet]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult FilasIngresos(string? placa, string? lugar, string[]? estado_servicio, string? estado_pago, string? parqueadero, DateTime? fechaInicio, int? usuario, string? zona, int? turno)
+        public IActionResult FilasIngresos(string? placa, string? lugar, string[]? estado_servicio, string? estado_pago, string? parqueadero, DateTime? fechaInicio, int? usuario, string? zona, int? turno, string? como)
         {
             // Sin sesión, OnActionExecuting ya redirige al login
             var idUsuario = HttpContext.Session.GetInt32("id");
@@ -1088,7 +1089,7 @@ namespace CarsParkingService.Controllers
             }
 
             var estados = EstadosMarcados(estado_servicio, EstadosFiltro());
-            var ingresos = IngresosTabla(idUsuario.Value, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, usuario, ZonaTabla(zona), turno);
+            var ingresos = IngresosTabla(idUsuario.Value, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, usuario, ZonaTabla(zona), turno, como);
             ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
             ViewBag.ValoresUbicacion = ValoresUbicacion();
 
@@ -1974,6 +1975,30 @@ namespace CarsParkingService.Controllers
                     new SqlParameter("@fecha_fin", System.Data.SqlDbType.Date) { Value = (object?)hasta?.Date ?? DBNull.Value })
                 .ToList();
 
+        // Filtro "Cómo participó" (Despachos y cobros y tabla de ingresos): los vehículos en los que el usuario hizo
+        // ese paso, o cualquiera si no se escoge
+        private static IQueryable<ingresos> DondeParticipo(IQueryable<ingresos> consulta, int u, string? como) => como switch
+        {
+            "ingreso" => consulta.Where(i => i.id_banco == u),
+            "recibio" => consulta.Where(i => i.id_valet == u),
+            "parqueo" => consulta.Where(i => i.usuario_parqueo == u),
+            "solicito" => consulta.Where(i => i.usuario_solicitud == u),
+            "despacho" => consulta.Where(i => i.valet_despacho == u),
+            "cobro" => consulta.Where(i => i.usuario_cobro == u),
+            "liquido" => consulta.Where(i => i.Liquidacion != null && i.Liquidacion.id_usuario == u),
+            _ => consulta.Where(i => i.id_banco == u || i.id_valet == u || i.usuario_parqueo == u ||
+                                     i.usuario_solicitud == u || i.valet_despacho == u || i.usuario_cobro == u ||
+                                     (i.Liquidacion != null && i.Liquidacion.id_usuario == u))
+        };
+
+        // Opciones del filtro "Cómo participó" (las mismas en las dos vistas)
+        public static readonly (string valor, string texto)[] OpcionesComoParticipo =
+        [
+            ("", "En cualquier paso"), ("ingreso", "Registró el ingreso"), ("recibio", "Recibió (valet)"),
+            ("parqueo", "Parqueó"), ("solicito", "Solicitó"), ("despacho", "Despachó"),
+            ("cobro", "Cobró"), ("liquido", "Liquidó")
+        ];
+
         // Despachos y cobros (punto 28, solo administrador): cada vehículo que ingresó en el período (solo la fecha
         // de ingreso, la que se ve en la fila), con quién lo recibió, quién lo solicitó, quién lo despachó, quién lo cobró y su liquidación
         [HttpGet]
@@ -2004,20 +2029,7 @@ namespace CarsParkingService.Controllers
             // arriba se calcula con estos (con "cobró", lo que cobró esa persona; con "liquidó", lo que liquidó)
             if (usuario.HasValue)
             {
-                var u = usuario.Value;
-                consulta = como switch
-                {
-                    "ingreso" => consulta.Where(i => i.id_banco == u),
-                    "recibio" => consulta.Where(i => i.id_valet == u),
-                    "parqueo" => consulta.Where(i => i.usuario_parqueo == u),
-                    "solicito" => consulta.Where(i => i.usuario_solicitud == u),
-                    "despacho" => consulta.Where(i => i.valet_despacho == u),
-                    "cobro" => consulta.Where(i => i.usuario_cobro == u),
-                    "liquido" => consulta.Where(i => i.Liquidacion != null && i.Liquidacion.id_usuario == u),
-                    _ => consulta.Where(i => i.id_banco == u || i.id_valet == u || i.usuario_parqueo == u ||
-                                             i.usuario_solicitud == u || i.valet_despacho == u || i.usuario_cobro == u ||
-                                             (i.Liquidacion != null && i.Liquidacion.id_usuario == u))
-                };
+                consulta = DondeParticipo(consulta, usuario.Value, como);
             }
 
             // Zona del ingreso (los que no la tienen guardada, la de su ubicación) y turno en que entró (punto 10).

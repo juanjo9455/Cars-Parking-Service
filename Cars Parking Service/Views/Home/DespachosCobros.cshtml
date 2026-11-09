@@ -81,9 +81,7 @@
                 <div class="form-group col-md-4 mb-3">
                     <label>Cómo participó</label>
                     <select name="como" style="width:100%;">
-                        @foreach (var (valor, texto) in new[] { ("", "En cualquier paso"), ("ingreso", "Registró el ingreso"), ("recibio", "Recibió (valet)"),
-                                                                 ("parqueo", "Parqueó"), ("solicito", "Solicitó"), ("despacho", "Despachó"),
-                                                                 ("cobro", "Cobró"), ("liquido", "Liquidó") })
+                        @foreach (var (valor, texto) in CarsParkingService.Controllers.HomeController.OpcionesComoParticipo)
                         {
                             <option value="@valor" selected="@((ViewData["FiltroComo"] as string ?? "") == valor)">@texto</option>
                         }

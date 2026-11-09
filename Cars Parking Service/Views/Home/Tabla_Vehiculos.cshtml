@@ -260,16 +260,26 @@
                     </select>
                 </div>
 
-                @* Solo el admin (punto 10): los vehículos que un usuario recibió como valet o tiene a cargo como banco *@
+                @* Solo el admin (punto 10): los vehículos de un usuario y en qué paso participó (como en Despachos y cobros) *@
                 @if (idRol == 3)
                 {
                     <div class="form-group col-md-3 mb-3">
-                        <label>Usuario (valet o banco)</label>
+                        <label>Usuario</label>
                         <select name="usuario" style="width:100%;">
                             <option value="">Todos</option>
                             @foreach (var u in (List<usuarios>)ViewBag.UsuariosFiltro)
                             {
                                 <option value="@u.id_usuario" selected="@((int?)ViewData["FiltroUsuario"] == u.id_usuario)">@u.nombres @u.apellidos</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group col-md-3 mb-3">
+                        <label>Cómo participó</label>
+                        <select name="como" style="width:100%;">
+                            @foreach (var (valor, texto) in CarsParkingService.Controllers.HomeController.OpcionesComoParticipo)
+                            {
+                                <option value="@valor" selected="@((ViewData["FiltroComo"] as string ?? "") == valor)">@texto</option>
                             }
                         </select>
                     </div>
