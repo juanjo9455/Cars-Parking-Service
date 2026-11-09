@@ -256,9 +256,10 @@ namespace CarsParkingService.Controllers
 
             ).ToList();
 
-            // Liquidaciones del día, desde tbl_liquidacion (aunque el banco ya haya cerrado sesión)
-            var inicioDia = FechaConsulta;
-            var finDia = FechaConsulta.AddDays(1);
+            // Liquidaciones del día, desde tbl_liquidacion (aunque el banco ya haya cerrado sesión). El día va de 6 am a
+            // 6 am, como la jornada y el Dashboard: la liquidación de la madrugada es del día en que empezó el turno
+            var inicioDia = FechaConsulta.AddHours(6);
+            var finDia = inicioDia.AddDays(1);
 
             model.Liquidaciones = _context.liquidaciones
                 .AsNoTracking()
