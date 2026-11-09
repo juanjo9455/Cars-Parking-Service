@@ -236,9 +236,11 @@
                     <option value="">Selecciona un Parqueadero</option>
                     @if (ViewBag.Parqueaderos != null)
                     {
+                        @* Sale escogido el principal de la zona (ParqueaderoPrincipal): casi siempre es el único *@
+                        var parqueaderoPrincipal = (int?)ViewBag.ParqueaderoPrincipal;
                         foreach (var parqueadero in ViewBag.Parqueaderos)
                         {
-                            <option value="@parqueadero.id_parqueadero">@parqueadero.nombre_parqueadero</option>
+                            <option value="@parqueadero.id_parqueadero" selected="@((int)parqueadero.id_parqueadero == parqueaderoPrincipal)">@parqueadero.nombre_parqueadero</option>
                         }
                     }
                 </select>

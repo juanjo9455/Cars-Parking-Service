@@ -451,8 +451,22 @@ namespace CarsParkingService.Controllers
 
             List<ingresos> ingresos;
 
+            // Parqueaderos de la zona en la que entró: el principal, el modal y el selector
+            var parqueaderosZona = ParqueaderosZona(ZonaSesion());
+
             if (rolUsuario == 1 || rolUsuario == 3 || rolUsuario == 2)
             {
+                // Sin parqueadero escogido entra al principal de su zona; el modal queda solo si la zona no tiene ninguno
+                if (!idParqueaderoSesion.HasValue)
+                {
+                    idParqueaderoSesion = ParqueaderoPrincipal(parqueaderosZona)?.id_parqueadero;
+
+                    if (idParqueaderoSesion.HasValue)
+                    {
+                        HttpContext.Session.SetInt32("id_parqueadero_sesion", idParqueaderoSesion.Value);
+                    }
+                }
+
                 if (!idParqueaderoSesion.HasValue)
                 {
                     ViewBag.MostrarModal = true;
@@ -485,7 +499,7 @@ namespace CarsParkingService.Controllers
             ViewBag.idRol = rolUsuario;
             ViewBag.EstaEnParqueadero = idParqueaderoSesion.HasValue;
             // Modal y selector de parqueadero: solo los de la zona en la que entró
-            ViewBag.Parqueaderos = ParqueaderosZona(ZonaSesion());
+            ViewBag.Parqueaderos = parqueaderosZona;
 
             return View(ingresos);
         }
@@ -1153,6 +1167,13 @@ namespace CarsParkingService.Controllers
                 .FromSqlRaw("EXEC sp_parqueaderos @id_zona", new SqlParameter("@id_zona", (object?)idZona ?? DBNull.Value))
                 .AsNoTracking()
                 .ToList();
+
+        // Parqueadero principal de la zona: cada zona tiene uno, así que se escoge solo (Vista Key e ingreso de
+        // vehículos). Si hay varios, el primero de la lista de sp_parqueaderos (activos, en orden alfabético), y los
+        // que tienen la zona puesta antes que los que aún no tienen zona. null = la zona no tiene ninguno activo.
+        // El login del Key hace lo mismo en auth.js (filtrarParqueaderosZona)
+        private static parqueaderos? ParqueaderoPrincipal(IEnumerable<parqueaderos> parqueaderosZona) =>
+            parqueaderosZona.OrderBy(p => p.id_zona == null).FirstOrDefault();
 
         // Ingresos de una zona. Los que todavía no la tienen guardada toman la de su ubicación
         private static IQueryable<ingresos> DeLaZona(IQueryable<ingresos> query, int? idZona) =>
@@ -2354,8 +2375,10 @@ namespace CarsParkingService.Controllers
             // Listas del formulario de ingreso en orden alfabético (punto 15)
             ViewBag.Bancos = _context.usuarios.Where(u => u.id_rol == 2 && u.estado == true)
                 .OrderBy(u => u.nombres).ThenBy(u => u.apellidos).ToList();
-            // Parqueaderos y ubicaciones: solo los de la zona en la que entró
-            ViewBag.Parqueaderos = ParqueaderosZona(ZonaSesion());
+            // Parqueaderos y ubicaciones: solo los de la zona en la que entró. El parqueadero sale escogido: el principal
+            var parqueaderosZona = ParqueaderosZona(ZonaSesion());
+            ViewBag.Parqueaderos = parqueaderosZona;
+            ViewBag.ParqueaderoPrincipal = ParqueaderoPrincipal(parqueaderosZona)?.id_parqueadero;
             ViewBag.UbicacionesS = UbicacionesZona(ZonaSesion());
 
             // Obtener el usuario de la sesion

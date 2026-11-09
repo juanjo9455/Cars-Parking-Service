@@ -545,6 +545,16 @@ function filtrarParqueaderosZona() {
 
         // Si el que estaba escogido quedó fuera de la zona, se vuelve a escoger
         if (select.selectedOptions[0]?.disabled) select.value = '';
+
+        // Cada zona tiene su parqueadero: al escoger zona (o cambiarla) queda el principal, igual que en el servidor
+        // (ParqueaderoPrincipal): el primero de la lista, y los de la zona antes que los que aún no tienen zona.
+        // En la misma zona se respeta el que el Key escoja a mano
+        if (zona !== '' && (select.dataset.zonaEscogida !== zona || !select.value)) {
+            const visibles = [...select.querySelectorAll('option[data-zona]')].filter(opcion => !opcion.disabled);
+            const principal = visibles.find(opcion => opcion.dataset.zona === zona) || visibles[0];
+            if (principal) select.value = principal.value;
+            select.dataset.zonaEscogida = zona;
+        }
     }
 
     actualizarBotonIniciar();
