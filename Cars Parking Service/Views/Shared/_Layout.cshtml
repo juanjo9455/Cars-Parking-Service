@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="~/css/ingreso.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/solicitudes.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/Estado_Turnos.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
@@ -83,6 +84,10 @@
                                     <i class="fa-solid fa-sack-dollar"></i>Liquidación
                                 </a>
                             </li>
+                        }
+                        @if (idRol == 3)
+                        {
+                            <li><a asp-controller="Dashboard" asp-action="Index"><i class="fa-solid fa-chart-line"></i>Dashboard</a></li>
                         }
                         @* Sus datos y su contraseña: para todos los que tienen menú *@
                         <li><a asp-controller="Home" asp-action="MiPerfil"><i class="fa-solid fa-user-gear"></i>Mi perfil</a></li>

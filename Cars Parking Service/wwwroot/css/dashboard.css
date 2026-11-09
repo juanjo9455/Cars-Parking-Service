@@ -1,0 +1,696 @@
+﻿/* Dashboard del administrador (Views/Dashboard/Index.cshtml, dashboard.js) */
+
+.dsh {
+    --dsh-marca: #c62828;
+    --dsh-marca-suave: rgba(198, 40, 40, 0.08);
+    --dsh-texto: #263238;
+    --dsh-suave: #607d8b;
+    --dsh-borde: #e6e9ec;
+    --dsh-fondo: #f5f6f8;
+    --dsh-tarjeta: #ffffff;
+    --dsh-bien: #2e7d32;
+    --dsh-mal: #c62828;
+    --dsh-radio: 14px;
+    --dsh-sombra: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 14px rgba(16, 24, 40, 0.06);
+
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+    color: var(--dsh-texto);
+    background: var(--dsh-fondo);
+    font-variant-numeric: tabular-nums;
+}
+
+.dsh-oculto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* ---------- Encabezado ---------- */
+/* padding-left: espacio para el botón fijo del menú (.div-abrir-menu, 42 px arriba a la izquierda) */
+.dsh-encabezado {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 48px;
+    margin-bottom: 16px;
+    padding-left: 52px;
+}
+
+.dsh-encabezado h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.dsh-encabezado h1 i {
+    color: var(--dsh-marca);
+}
+
+.dsh-subtitulo {
+    margin: 2px 0 0;
+    color: var(--dsh-suave);
+    font-size: 0.92rem;
+}
+
+/* ---------- Botones ---------- */
+.dsh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.dsh-btn-secundario {
+    background: var(--dsh-tarjeta);
+    border-color: var(--dsh-borde);
+    color: var(--dsh-texto);
+}
+
+.dsh-btn-secundario:hover:not(:disabled) {
+    border-color: var(--dsh-marca);
+    color: var(--dsh-marca);
+}
+
+.dsh-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.dsh button:focus-visible,
+.dsh select:focus-visible,
+.dsh input:focus-visible,
+.dsh summary:focus-visible {
+    outline: 2px solid var(--dsh-marca);
+    outline-offset: 2px;
+}
+
+/* ---------- Filtros ---------- */
+.dsh-filtros {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    margin-bottom: 18px;
+    background: var(--dsh-tarjeta);
+    border: 1px solid var(--dsh-borde);
+    border-radius: var(--dsh-radio);
+    box-shadow: var(--dsh-sombra);
+}
+
+.dsh-filtros-fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.dsh-segmentos {
+    display: inline-flex;
+    flex-wrap: wrap;
+    padding: 3px;
+    background: var(--dsh-fondo);
+    border-radius: 10px;
+    gap: 2px;
+}
+
+.dsh-segmentos button,
+.dsh-segmentos label {
+    margin: 0;
+    padding: 7px 11px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--dsh-suave);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.dsh-segmentos input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.dsh-segmentos button[aria-pressed="true"],
+.dsh-segmentos label:has(input:checked) {
+    background: var(--dsh-tarjeta);
+    color: var(--dsh-marca);
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.12);
+}
+
+.dsh-segmentos label:has(input:focus-visible) {
+    outline: 2px solid var(--dsh-marca);
+}
+
+.dsh-campo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--dsh-suave);
+    font-weight: 600;
+}
+
+.dsh-campo input,
+.dsh-campo select,
+.dsh-multi summary {
+    min-height: 40px;
+    padding: 0 10px;
+    border: 1px solid var(--dsh-borde);
+    border-radius: 10px;
+    background: var(--dsh-tarjeta);
+    color: var(--dsh-texto);
+    font-size: 0.88rem;
+}
+
+.dsh-campo select {
+    max-width: 230px;
+}
+
+/* Zona y Lugar: lista desplegable con casillas */
+.dsh-multi {
+    position: relative;
+}
+
+.dsh-multi summary {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 260px;
+    list-style: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--dsh-suave);
+    white-space: nowrap;
+}
+
+.dsh-multi summary::-webkit-details-marker {
+    display: none;
+}
+
+.dsh-multi summary::after {
+    content: "\25BE";
+    margin-left: 4px;
+}
+
+.dsh-multi summary span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--dsh-texto);
+    font-weight: 500;
+}
+
+.dsh-multi.dsh-activo summary {
+    border-color: var(--dsh-marca);
+    background: var(--dsh-marca-suave);
+}
+
+.dsh-multi-lista {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 220px;
+    max-height: 300px;
+    overflow: auto;
+    padding: 6px;
+    background: var(--dsh-tarjeta);
+    border: 1px solid var(--dsh-borde);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(16, 24, 40, 0.16);
+}
+
+.dsh-multi-lista label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.dsh-multi-lista label:hover {
+    background: var(--dsh-fondo);
+}
+
+.dsh-multi-lista label[hidden] {
+    display: none;
+}
+
+.dsh-multi-lista input {
+    accent-color: var(--dsh-marca);
+    width: 16px;
+    height: 16px;
+}
+
+/* ---------- KPIs ---------- */
+.dsh-kpis {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    min-height: 120px;
+    margin-bottom: 18px;
+}
+
+.dsh-kpi {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 14px 12px;
+    background: var(--dsh-tarjeta);
+    border: 1px solid var(--dsh-borde);
+    border-radius: var(--dsh-radio);
+    box-shadow: var(--dsh-sombra);
+}
+
+.dsh-kpi-icono {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--dsh-marca-suave);
+    color: var(--dsh-marca);
+    font-size: 0.9rem;
+}
+
+.dsh-kpi h3 {
+    margin: 0;
+    padding-right: 38px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--dsh-suave);
+    line-height: 1.3;
+}
+
+.dsh-kpi h3 small {
+    display: block;
+    font-weight: 500;
+    font-size: 0.72rem;
+}
+
+.dsh-kpi strong {
+    font-size: 1.45rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.dsh-kpi strong small {
+    color: var(--dsh-suave);
+    font-weight: 500;
+}
+
+.dsh-var {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--dsh-suave);
+}
+
+.dsh-var span {
+    font-weight: 500;
+}
+
+.dsh-var.dsh-bien {
+    color: var(--dsh-bien);
+}
+
+.dsh-var.dsh-mal {
+    color: var(--dsh-mal);
+}
+
+/* ---------- Tableros ---------- */
+.dsh-tableros {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.dsh-tarjeta {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 16px;
+    background: var(--dsh-tarjeta);
+    border: 1px solid var(--dsh-borde);
+    border-radius: var(--dsh-radio);
+    box-shadow: var(--dsh-sombra);
+}
+
+.dsh-ancho {
+    grid-column: 1 / -1;
+}
+
+.dsh-tarjeta > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.dsh-tarjeta h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.dsh-tarjeta h2 small {
+    display: block;
+    margin-top: 2px;
+    color: var(--dsh-suave);
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.dsh-cuerpo {
+    position: relative;
+    height: 300px;
+    min-height: 0;
+}
+
+.dsh-alternar {
+    display: inline-flex;
+    padding: 3px;
+    background: var(--dsh-fondo);
+    border-radius: 9px;
+}
+
+.dsh-alternar button {
+    min-width: 38px;
+    min-height: 32px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--dsh-suave);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.dsh-alternar button[aria-pressed="true"] {
+    background: var(--dsh-tarjeta);
+    color: var(--dsh-marca);
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.12);
+}
+
+/* Cargando: velo y círculo girando sobre el tablero */
+.dsh-carga::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    border-radius: var(--dsh-radio);
+    background: rgba(255, 255, 255, 0.65);
+}
+
+.dsh-carga::before {
+    content: "";
+    position: absolute;
+    z-index: 6;
+    top: 50%;
+    left: 50%;
+    width: 28px;
+    height: 28px;
+    margin: -14px 0 0 -14px;
+    border: 3px solid var(--dsh-borde);
+    border-top-color: var(--dsh-marca);
+    border-radius: 50%;
+    animation: dsh-girar 0.8s linear infinite;
+}
+
+@keyframes dsh-girar {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dsh-carga::before { animation-duration: 2.4s; }
+}
+
+.dsh-vacio {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    margin: 0;
+    padding: 16px;
+    background: var(--dsh-tarjeta);
+    color: var(--dsh-suave);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* ---------- Tablas ---------- */
+.dsh-tabla-envoltura {
+    height: auto;
+    min-height: 140px;
+    max-height: 420px;
+    overflow: auto;
+}
+
+.dsh-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.dsh-tabla th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 9px 10px;
+    background: var(--dsh-fondo);
+    color: var(--dsh-suave);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.dsh-tabla td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--dsh-borde);
+    white-space: nowrap;
+}
+
+.dsh-tabla th:not(:first-child),
+.dsh-tabla td:not(:first-child) {
+    text-align: right;
+}
+
+#tabDetalle .dsh-tabla th:nth-child(2),
+#tabDetalle .dsh-tabla td:nth-child(2) {
+    text-align: left;
+}
+
+.dsh-tabla tbody tr:hover {
+    background: var(--dsh-fondo);
+}
+
+.dsh-paginas {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: var(--dsh-suave);
+}
+
+/* ---------- Donas ---------- */
+.dsh-donas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    height: auto;
+    min-height: 300px;
+}
+
+.dsh-donas figure {
+    position: relative;
+    height: 280px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.dsh-donas canvas {
+    flex: 1;
+    min-height: 0;
+}
+
+.dsh-donas figcaption {
+    margin-top: 6px;
+    text-align: center;
+    color: var(--dsh-suave);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* ---------- Mapa de calor ---------- */
+#tabHoras .dsh-cuerpo {
+    height: auto;
+    min-height: 220px;
+    overflow-x: auto;
+}
+
+.dsh-calor {
+    display: grid;
+    grid-template-columns: 38px repeat(24, minmax(26px, 1fr));
+    gap: 3px;
+    min-width: 720px;
+    font-size: 0.72rem;
+}
+
+.dsh-calor-hora,
+.dsh-calor-dia {
+    display: grid;
+    place-items: center;
+    color: var(--dsh-suave);
+    font-weight: 600;
+}
+
+.dsh-calor-dia {
+    justify-content: start;
+}
+
+.dsh-calor-celda {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1.3;
+    border-radius: 5px;
+    background: rgba(198, 40, 40, var(--alfa, 0));
+    box-shadow: inset 0 0 0 1px var(--dsh-borde);
+    color: var(--dsh-texto);
+    font-weight: 600;
+}
+
+.dsh-calor-celda.dsh-fuerte {
+    color: #fff;
+}
+
+/* ---------- Celular y tableta ---------- */
+@media (max-width: 1100px) {
+    .dsh-kpis {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .dsh {
+        padding: 14px 16px 32px;
+    }
+
+    .dsh-encabezado h1 {
+        font-size: 1.3rem;
+    }
+
+    .dsh-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .dsh-kpi strong {
+        font-size: 1.15rem;
+    }
+
+    .dsh-tableros {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .dsh-campo,
+    .dsh-campo select,
+    .dsh-multi,
+    .dsh-multi summary {
+        flex: 1 1 100%;
+        max-width: none;
+        width: 100%;
+    }
+
+    .dsh-campo-fecha {
+        flex: 1 1 calc(50% - 5px);
+    }
+
+    .dsh-campo-fecha input {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .dsh-multi-lista {
+        right: 0;
+    }
+
+    .dsh-donas {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* ---------- PDF (imprimir) ---------- */
+@media print {
+    .menu-lateral-container,
+    #btn-menu-lateral,
+    .dsh-filtros,
+    #dshPdf,
+    #dshExcel,
+    .dsh-alternar,
+    .dsh-paginas {
+        display: none !important;
+    }
+
+    .dsh {
+        max-width: none;
+        padding: 0;
+        background: #fff;
+    }
+
+    .dsh-kpi,
+    .dsh-tarjeta {
+        box-shadow: none;
+        break-inside: avoid;
+    }
+
+    .dsh-kpis {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .dsh-tableros {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dsh-tabla-envoltura,
+    #tabHoras .dsh-cuerpo {
+        max-height: none;
+        overflow: visible;
+    }
+
+    .dsh-calor {
+        min-width: 0;
+    }
+}

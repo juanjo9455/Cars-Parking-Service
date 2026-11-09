@@ -1,0 +1,199 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+
+    var roles = new Dictionary<int, string> { [1] = "Valet", [2] = "Banco", [3] = "Admin", [4] = "Key" };
+}
+
+@* Dashboard del administrador. Los filtros quedan en la URL (se puede compartir la vista) y cada tablero se llena
+   con su endpoint de DashboardController (SPs de Database/dashboard.sql) *@
+<div class="dsh" id="dashboard">
+    <header class="dsh-encabezado">
+        <div>
+            <h1><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Dashboard</h1>
+            <p class="dsh-subtitulo" id="dshRangoTexto">Hoy</p>
+        </div>
+        <button type="button" class="dsh-btn dsh-btn-secundario" id="dshPdf" data-no-spinner="true">
+            <i class="fa-solid fa-file-pdf" aria-hidden="true"></i> Exportar PDF
+        </button>
+    </header>
+
+    <form class="dsh-filtros" id="dshFiltros" onsubmit="return false">
+        <div class="dsh-filtros-fila">
+            <div class="dsh-segmentos" role="group" aria-label="Rango rápido">
+                <button type="button" data-rango="hoy" data-no-spinner="true">Hoy</button>
+                <button type="button" data-rango="ayer" data-no-spinner="true">Ayer</button>
+                <button type="button" data-rango="7d" data-no-spinner="true">Últimos 7 días</button>
+                <button type="button" data-rango="mes" data-no-spinner="true">Este mes</button>
+                <button type="button" data-rango="mesant" data-no-spinner="true">Mes anterior</button>
+                <button type="button" data-rango="anio" data-no-spinner="true">Este año</button>
+            </div>
+
+            <label class="dsh-campo dsh-campo-fecha">Desde <input type="date" name="desde" required></label>
+            <label class="dsh-campo dsh-campo-fecha">Hasta <input type="date" name="hasta" required></label>
+
+            <div class="dsh-segmentos" role="radiogroup" aria-label="Agrupación">
+                <label><input type="radio" name="agrupacion" value="dia" checked> Día</label>
+                <label><input type="radio" name="agrupacion" value="mes"> Mes</label>
+                <label><input type="radio" name="agrupacion" value="anio"> Año</label>
+            </div>
+        </div>
+
+        <div class="dsh-filtros-fila">
+            <details class="dsh-multi" data-todos="Todas">
+                <summary>Zona: <span>Todas</span></summary>
+                <div class="dsh-multi-lista">
+                    @foreach (var z in (List<zonas>)ViewBag.Zonas)
+                    {
+                        <label><input type="checkbox" name="zona" value="@z.id_zona"> @z.nombre_zona</label>
+                    }
+                </div>
+            </details>
+
+            <details class="dsh-multi" data-todos="Todos">
+                <summary>Lugar: <span>Todos</span></summary>
+                <div class="dsh-multi-lista" id="dshLugares">
+                    @* data-zona: dashboard.js esconde los lugares de las zonas que no están escogidas *@
+                    @foreach (var l in ViewBag.Lugares)
+                    {
+                        <label data-zona="@l.id_zona"><input type="checkbox" name="lugar" value="@l.id_ubicacion"> @l.nombre_ubicacion</label>
+                    }
+                </div>
+            </details>
+
+            <label class="dsh-campo">
+                <span class="dsh-oculto">Turno</span>
+                <select name="turno" aria-label="Turno">
+                    <option value="">Todos los turnos</option>
+                    @foreach (var t in (List<dashboard_turno>)ViewBag.Turnos)
+                    {
+                        <option value="@t.id_turno">@t.nombre@(t.dia != "Todos los días" ? $" ({t.dia.ToLower()})" : "")@(t.activo ? "" : " · inactivo")</option>
+                    }
+                </select>
+            </label>
+
+            <label class="dsh-campo">
+                <span class="dsh-oculto">Parqueadero</span>
+                <select name="parqueadero" aria-label="Parqueadero">
+                    <option value="">Todos los parqueaderos</option>
+                    @foreach (var p in ViewBag.Parqueaderos)
+                    {
+                        <option value="@p.id_parqueadero">@p.nombre_parqueadero</option>
+                    }
+                </select>
+            </label>
+
+            <label class="dsh-campo">
+                <span class="dsh-oculto">Usuario</span>
+                <select name="usuario" aria-label="Usuario">
+                    <option value="">Todos los usuarios</option>
+                    @foreach (var u in ViewBag.Usuarios)
+                    {
+                        <option value="@u.id_usuario">@u.nombre (@(roles.TryGetValue((int)u.id_rol, out string? rol) ? rol : "—"))</option>
+                    }
+                </select>
+            </label>
+
+            <label class="dsh-campo">
+                <span class="dsh-oculto">Estado de pago</span>
+                <select name="estado_pago" aria-label="Estado de pago">
+                    <option value="">Pagado y pendiente</option>
+                    <option value="pagado">Pagado</option>
+                    <option value="pendiente">Pendiente</option>
+                </select>
+            </label>
+
+            <label class="dsh-campo">
+                <span class="dsh-oculto">Método de pago</span>
+                <select name="metodo_pago" aria-label="Método de pago">
+                    <option value="">Todos los métodos</option>
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Transferencia">Transferencia (QR, Nequi)</option>
+                </select>
+            </label>
+
+            <button type="button" class="dsh-btn dsh-btn-secundario" id="dshLimpiar" data-no-spinner="true">
+                <i class="fa-solid fa-filter-circle-xmark" aria-hidden="true"></i> Limpiar filtros
+            </button>
+        </div>
+    </form>
+
+    @* Las tarjetas las arma dashboard.js (con su variación contra el período anterior con los mismos días) *@
+    <section class="dsh-kpis dsh-carga" id="dshKpis" aria-live="polite"></section>
+
+    <section class="dsh-tableros">
+        <article class="dsh-tarjeta" id="tabZona">
+            <header>
+                <h2>Ingresos por zona</h2>
+                <div class="dsh-alternar" role="group" aria-label="Ver por">
+                    <button type="button" data-ver="recaudado" aria-pressed="true" data-no-spinner="true">$</button>
+                    <button type="button" data-ver="vehiculos" aria-pressed="false" data-no-spinner="true">#</button>
+                </div>
+            </header>
+            <div class="dsh-cuerpo"><canvas aria-label="Ingresos por zona"></canvas></div>
+        </article>
+
+        <article class="dsh-tarjeta" id="tabLugar">
+            <header>
+                <h2>Ingresos por restaurante <small>top 15 · clic para filtrar</small></h2>
+                <div class="dsh-alternar" role="group" aria-label="Ver por">
+                    <button type="button" data-ver="recaudado" aria-pressed="true" data-no-spinner="true">$</button>
+                    <button type="button" data-ver="vehiculos" aria-pressed="false" data-no-spinner="true">#</button>
+                </div>
+            </header>
+            <div class="dsh-cuerpo"><canvas aria-label="Ingresos por restaurante"></canvas></div>
+        </article>
+
+        <article class="dsh-tarjeta dsh-ancho" id="tabFechas">
+            <header><h2>Liquidaciones por fecha <small>efectivo y transferencias</small></h2></header>
+            <div class="dsh-cuerpo"><canvas aria-label="Liquidaciones por fecha"></canvas></div>
+        </article>
+
+        <article class="dsh-tarjeta dsh-ancho" id="tabHoras">
+            <header><h2>Horas pico <small>vehículos por día y hora de ingreso</small></h2></header>
+            <div class="dsh-cuerpo"><div class="dsh-calor"></div></div>
+        </article>
+
+        <article class="dsh-tarjeta" id="tabValets">
+            <header><h2>Rendimiento por valet</h2></header>
+            <div class="dsh-cuerpo dsh-tabla-envoltura">
+                <table class="dsh-tabla">
+                    <thead><tr><th>Valet</th><th>Recibidos</th><th>Despachados</th><th>Recaudo</th><th>Despacho prom.</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="dsh-tarjeta" id="tabDonas">
+            <header><h2>Distribución por turno y método de pago</h2></header>
+            <div class="dsh-cuerpo dsh-donas">
+                <figure><canvas id="donaTurno" aria-label="Vehículos por turno"></canvas><figcaption>Por turno</figcaption></figure>
+                <figure><canvas id="donaMetodo" aria-label="Vehículos por método de pago"></canvas><figcaption>Por método de pago</figcaption></figure>
+            </div>
+        </article>
+
+        <article class="dsh-tarjeta dsh-ancho" id="tabDetalle">
+            <header>
+                <h2>Detalle de liquidaciones</h2>
+                <button type="button" class="dsh-btn dsh-btn-secundario" id="dshExcel" data-no-spinner="true">
+                    <i class="fa-solid fa-file-excel" aria-hidden="true"></i> Exportar Excel
+                </button>
+            </header>
+            <div class="dsh-cuerpo dsh-tabla-envoltura">
+                <table class="dsh-tabla">
+                    <thead><tr><th>Hora</th><th>Liquidó</th><th>Vehículos</th><th>Efectivo</th><th>Transferencias</th><th>Total</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <nav class="dsh-paginas" aria-label="Páginas">
+                <button type="button" class="dsh-btn dsh-btn-secundario" data-pagina="-1" data-no-spinner="true">Anterior</button>
+                <span></span>
+                <button type="button" class="dsh-btn dsh-btn-secundario" data-pagina="1" data-no-spinner="true">Siguiente</button>
+            </nav>
+        </article>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
+}
