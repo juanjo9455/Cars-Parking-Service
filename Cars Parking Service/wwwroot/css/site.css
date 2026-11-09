@@ -2944,8 +2944,9 @@ i.btn-foto-ingreso {
     text-align: center;
 }
 
-/* "Cambiar valor total": enlace pequeño bajo el precio, como "¿Olvidaste tu contraseña?" */
-.cobro-valor-cambiar {
+/* "Cambiar valor total" y "Leer comprobante": enlaces pequeños bajo el precio, como "¿Olvidaste tu contraseña?" */
+.cobro-valor-cambiar,
+.cobro-valor-leer {
     margin-top: 2px;
     padding: 6px 8px;
     border: 0;
@@ -2958,7 +2959,12 @@ i.btn-foto-ingreso {
 }
 
 /* Con el código ya generado el valor queda bloqueado: no se ofrece cambiarlo */
-.cobro-valor:has(.cobro-valor-input:read-only) .cobro-valor-cambiar {
+.cobro-valor:has(.cobro-valor-input:read-only) .cobro-valor-cambiar,
+.cobro-valor:has(.cobro-valor-input:read-only) .cobro-valor-leer {
+    display: none;
+}
+
+.cobro-valor-leer[hidden] {
     display: none;
 }
 
@@ -3671,6 +3677,36 @@ i.btn-foto-ingreso {
 .telefono-pais input {
     flex: 1;
     min-width: 0;
+}
+
+/* Ingreso: la placa con el botón de cámara al lado (lector-fotos.js) */
+.placa-con-foto {
+    display: flex;
+    gap: 8px;
+}
+
+.placa-con-foto input {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Mismo rojo de los botones de foto del ingreso (.photo-btn-2) */
+.placa-foto-btn {
+    flex: 0 0 auto;
+    min-width: 56px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 10px;
+    background: #d32f2f;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.placa-foto-btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+    font-size: 13px;
 }
 
 /* Información: aviso de que un vehículo liquidado ya no deja cambiar sus operadores */

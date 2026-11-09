@@ -1282,6 +1282,10 @@ function ajustarValorPorMetodo(idIngreso) {
     caja.querySelector('.cobro-valor-cambiar').hidden = efectivo;
     caja.querySelector('.cobro-valor-efectivo').hidden = !efectivo;
 
+    // "Leer comprobante" (lector-fotos.js), solo en las páginas que cargan el lector y si no es efectivo
+    const leer = caja.querySelector('.cobro-valor-leer');
+    if (leer) leer.hidden = efectivo || typeof leerValorComprobante !== 'function';
+
     const notaApp = caja.querySelector('.cobro-valor-app');
     if (notaApp) notaApp.hidden = efectivo;
 }
@@ -1333,6 +1337,7 @@ function abrirModalPago(btn) {
                <span class="cobro-valor-ayuda cobro-valor-ayuda-editar" hidden>Servicio ${PESOS.format(tarifa)}. Si el cliente paga más (propina), escribe lo que pagó.</span>
                <span class="cobro-valor-ayuda cobro-valor-efectivo" hidden>En efectivo se cobra la tarifa, sin propina</span>
                <button type="button" class="cobro-valor-cambiar" onclick="editarValorCobro('${id}')">Cambiar valor total</button>
+               <button type="button" class="cobro-valor-leer" data-no-spinner="true" onclick="leerValorComprobante('${id}', this)"><i class="fa-solid fa-camera"></i> Leer comprobante</button>
            </div>`
         : valor
             ? `<div class="cobro-valor">
@@ -1994,8 +1999,9 @@ function abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, m
 
         modalAcciones.style.display = 'flex';
 
+        // Si en el Pago se leyó el comprobante (lector-fotos.js), esa foto sale cargada: no se toma otra vez
         if (metodo_pago === "Transferencia" || metodo_pago == "QR" || metodo_pago == "Nequi") {
-            inicializarCamaraTransferencia();
+            inicializarCamaraTransferencia(window.comprobantesTomados?.[idIngreso]);
         }
 }
 

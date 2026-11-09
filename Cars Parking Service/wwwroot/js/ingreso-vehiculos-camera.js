@@ -697,7 +697,8 @@ async function compressImageToBase64(file) {
 
 // evento global para la foto de la transferencia
 
-window.inicializarCamaraTransferencia = function () {
+// fotoInicial: la del comprobante que ya se leyó en el Pago (lector-fotos.js); sale cargada y se puede quitar con ✕
+window.inicializarCamaraTransferencia = function (fotoInicial) {
 
     const tomarFotoTransferenciaBtn =
         document.getElementById('tomarFotoTransferenciaBtn');
@@ -808,6 +809,13 @@ window.inicializarCamaraTransferencia = function () {
         photoCounterTransferencia.textContent =
             '1 foto seleccionada (max. 1)';
     });
+
+    if (fotoInicial) {
+        archivosTransferenciaCapturados = [{ base64: fotoInicial, type: 'image/jpeg' }];
+        renderPreviewTransferencia();
+        sincronizarInputsTransferenciaOcultos();
+        photoCounterTransferencia.textContent = '1 foto seleccionada (max. 1)';
+    }
 
     tomarFotoTransferenciaBtn.addEventListener('click', function () {
 
