@@ -111,6 +111,16 @@
                     </select>
                 </div>
 
+                <div class="form-group col-md-4 mb-3">
+                    <label>Estado</label>
+                    <select name="estado" style="width:100%;">
+                        @foreach (var (valor, texto) in new[] { ("", "Todos"), ("cobrados", "Cobrados"), ("sin-liquidar", "Sin liquidar"), ("liquidados", "Liquidados") })
+                        {
+                            <option value="@valor" selected="@((ViewData["FiltroEstado"] as string ?? "") == valor)">@texto</option>
+                        }
+                    </select>
+                </div>
+
                 <div class="col-12 mt-2 d-flex justify-content-end gap-2">
                     <button type="submit" class="btn btn-primary px-4">Buscar</button>
                     <a asp-action="DespachosCobros" class="btn btn-secondary px-4">Limpiar</a>

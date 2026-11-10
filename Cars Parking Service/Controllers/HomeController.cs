@@ -2015,7 +2015,7 @@ namespace CarsParkingService.Controllers
         // Despachos y cobros (punto 28, solo administrador): cada vehículo que ingresó en el período (solo la fecha
         // de ingreso, la que se ve en la fila), con quién lo recibió, quién lo solicitó, quién lo despachó, quién lo cobró y su liquidación
         [HttpGet]
-        public IActionResult DespachosCobros(DateTime? desde, DateTime? hasta, string? placa, int? usuario, string? como, int? zona, int? turno)
+        public IActionResult DespachosCobros(DateTime? desde, DateTime? hasta, string? placa, int? usuario, string? como, int? zona, int? turno, string? estado)
         {
             if (HttpContext.Session.GetInt32("id_rol") != 3)
             {
@@ -2056,6 +2056,16 @@ namespace CarsParkingService.Controllers
             {
                 consulta = consulta.Where(i => i.id_turno == turno);
             }
+
+            // Estado del cobro: liquidado es lo mismo que Liquidado() (con id de liquidación o marcado), escrito aquí
+            // para que EF lo pase a SQL
+            consulta = estado switch
+            {
+                "cobrados" => consulta.Where(i => i.estado_pago == "pagado"),
+                "sin-liquidar" => consulta.Where(i => i.estado_pago == "pagado" && i.id_liquidacion == null && i.estado_liquidacion != true),
+                "liquidados" => consulta.Where(i => i.id_liquidacion != null || i.estado_liquidacion == true),
+                _ => consulta
+            };
 
             // Máximo 500 filas para que la página no se vuelva pesada
             var ingresos = consulta
@@ -2108,6 +2118,7 @@ namespace CarsParkingService.Controllers
             ViewData["FiltroComo"] = como;
             ViewData["FiltroZona"] = zona;
             ViewData["FiltroTurno"] = turno;
+            ViewData["FiltroEstado"] = estado;
 
             return View(ingresos);
         }

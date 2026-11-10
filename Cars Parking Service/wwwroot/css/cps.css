@@ -1209,8 +1209,9 @@ tbody tr.alerta-sin-valet {
     text-transform: none;
 }
 
-/* El campo Placa del filtro lo maneja la búsqueda de arriba */
-#filtersPanel .form-group:has(> input[name="placa"]) {
+/* El campo Placa del filtro lo maneja la búsqueda de arriba (solo donde la hay: Ingresos; Despachos y cobros y
+   WhatsApp enviados no tienen y lo necesitan) */
+body:has(input[data-espejo]) #filtersPanel .form-group:has(> input[name="placa"]) {
     display: none;
 }
 
