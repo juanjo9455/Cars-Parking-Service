@@ -645,7 +645,8 @@ body.cps-app {
     --pasada: var(--tinta);
     position: relative;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    /* Cinco columnas iguales siempre: un nombre largo ("Despachados") no ensancha la suya ni empuja la línea */
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     padding: 0;
     margin: 0;
     list-style: none;
@@ -728,6 +729,50 @@ a.cps-estacion:active .cps-estacion-punto {
 .cps-estacion.hecho .cps-estacion-punto {
     border-color: var(--ok);
     color: var(--ok);
+}
+
+/* Celular angosto (menos de 420 px): los nombres de las estaciones se alternan arriba y abajo de la línea, como en
+   los mapas del metro, para que no se pisen ("Despachados" no cabe en una quinta parte de 360 px) */
+@media (max-width: 419.98px) {
+    .cps-linea::before {
+        top: 46px;
+    }
+
+    .cps-estacion {
+        display: grid;
+        grid-template-rows: 32px 29px 32px;
+        justify-items: center;
+        gap: 0;
+    }
+
+    .cps-estacion-punto {
+        grid-row: 2;
+    }
+
+    .cps-estacion-nombre {
+        grid-row: 3;
+        align-self: start;
+        padding-top: 5px;
+        white-space: nowrap;
+    }
+
+    .cps-linea li:nth-child(even) .cps-estacion-nombre {
+        grid-row: 1;
+        align-self: end;
+        padding: 0 0 5px;
+    }
+
+    /* Las de las puntas se alinean hacia adentro y la última ("Pagados hoy") baja a dos líneas: no se salen de la tarjeta */
+    .cps-linea li:first-child .cps-estacion-nombre {
+        justify-self: start;
+        text-align: left;
+    }
+
+    .cps-linea li:last-child .cps-estacion-nombre {
+        justify-self: end;
+        text-align: right;
+        white-space: normal;
+    }
 }
 
 /* Línea mini de cada carro (tabla de ingresos): cinco puntos en fila; data-estado dice dónde va */
@@ -1220,8 +1265,9 @@ tbody tr.alerta-sin-valet {
         display: none;
     }
 
-    /* Cada carro, una ficha: placa y acciones arriba, estación y pago abajo */
-    .table-container {
+    /* Cada carro, una ficha: placa y acciones arriba, estación y pago abajo. Solo la tabla de ingresos: las demás
+       tablas (Configuración, etc.) siguen desplazándose dentro de su caja */
+    .table-container:has(> .tabla-ingresos) {
         background: none;
         border: 0;
         box-shadow: none;
@@ -1977,10 +2023,18 @@ body.cps-key .search-section.cps-filtro-key {
     background: var(--linea) !important;
 }
 
-.admin-cards-container {
-    display: flex !important;
-    flex-direction: column;
+/* display sin !important: site.js oculta y muestra la lista, sus opciones y las sub-opciones con style.display.
+   Si el JS pone grid o flex, la lista sigue siendo una columna */
+.admin-cards-container,
+.subcards-row {
+    display: grid;
+    grid-template-columns: 1fr !important;
+    flex-direction: column !important;
+    justify-content: stretch !important;
     gap: 0 !important;
+    width: 100%;
+    margin-bottom: 24px;
+    animation: none;
     overflow: hidden;
     border: 1px solid var(--linea);
     border-radius: var(--r-lg);
@@ -1988,11 +2042,16 @@ body.cps-key .search-section.cps-filtro-key {
     box-shadow: var(--sombra-1);
 }
 
-.admin-cards-container .admin-card {
-    display: grid !important;
-    grid-template-columns: 44px 1fr auto;
-    align-items: center;
+.admin-cards-container .admin-card,
+.subcards-row .admin-card {
+    display: flex;
+    flex-direction: row !important;
+    align-items: center !important;
     gap: 14px;
+    flex: 0 0 auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    animation: none !important;
     padding: 14px 16px !important;
     border: 0 !important;
     border-bottom: 1px solid var(--linea) !important;
@@ -2003,19 +2062,39 @@ body.cps-key .search-section.cps-filtro-key {
     transition: background-color var(--t-rapido) ease !important;
 }
 
-.admin-cards-container .admin-card:last-child {
+.admin-cards-container .admin-card:last-child,
+.subcards-row .admin-card:last-child {
     border-bottom: 0 !important;
 }
 
-.admin-cards-container .admin-card:hover {
+.admin-cards-container .admin-card:hover,
+.subcards-row .admin-card:hover {
     background: var(--suelo) !important;
 }
 
-.admin-cards-container .admin-card:active {
+.admin-cards-container .admin-card:active,
+.subcards-row .admin-card:active {
     background: var(--linea) !important;
 }
 
+/* Visible (aunque el JS ponga "block" al volver), siempre en fila; oculta (style="display: none"), oculta */
+.admin-cards-container .admin-card:not([style*="none"]),
+.subcards-row .admin-card:not([style*="none"]) {
+    display: flex !important;
+}
+
+.admin-card-content {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.admin-card-btn {
+    flex: 0 0 auto;
+    margin: 0 0 0 auto !important;
+}
+
 .admin-card-icon {
+    flex: 0 0 44px;
     width: 44px !important;
     height: 44px !important;
     margin: 0 !important;
@@ -2049,6 +2128,200 @@ body.cps-key .search-section.cps-filtro-key {
 .admin-card-btn > i,
 .admin-card-btn > .lc {
     font-size: 20px !important;
+}
+
+/* Tablas de Configuración (usuarios, ubicaciones, parqueaderos): en tableta y portátil caben enteras, con todas sus
+   columnas (antes tenían ancho mínimo de 900-1050 px y las últimas quedaban fuera). En el celular se esconden las
+   secundarias, como antes (se ven en Editar). Si aun así no cabe, se desplaza dentro de su caja */
+@media (max-width: 1199.98px) {
+    #TablaUsuariosContainer .admin-wide-table table,
+    #TablaUbicacionesContainer .admin-wide-table table,
+    #TablaParqueaderosContainer .admin-wide-table table {
+        min-width: 0 !important;
+    }
+
+    .admin-wide-table thead th,
+    .admin-wide-table tbody td {
+        padding: 10px 8px !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        font-size: var(--fs-sm);
+    }
+
+    .admin-wide-table .status-badge,
+    .admin-wide-table .info-chip {
+        white-space: nowrap;
+        overflow-wrap: normal;
+    }
+}
+
+.admin-wide-table {
+    overflow-x: auto !important;
+}
+
+/* Celular: las tablas de reportes y de Configuración como fichas, una por fila, con el nombre de cada dato a la
+   izquierda (data-label, cps.js) y su valor a la derecha. Nada se desplaza de lado y no se esconde ninguna columna
+   (las de Configuración que antes se escondían en el celular también se ven) */
+@media (max-width: 767.98px) {
+    .table-container:has(> .cps-fichas),
+    .adm-table-wrap:has(.cps-fichas),
+    .adm-table-scroll:has(.cps-fichas),
+    .admin-wide-table:has(> .cps-fichas) {
+        overflow: visible !important;
+        border: 0 !important;
+        background: none !important;
+        box-shadow: none !important;
+    }
+
+    table.cps-fichas,
+    table.cps-fichas > tbody {
+        display: block;
+        width: 100%;
+        min-width: 0 !important;
+        background: none;
+    }
+
+    table.cps-fichas > thead {
+        display: none;
+    }
+
+    table.cps-fichas > tbody > tr {
+        display: block;
+        margin-bottom: 10px;
+        padding: 4px 14px;
+        border: 1px solid var(--linea);
+        border-radius: var(--r-lg);
+        background: var(--panel);
+        box-shadow: var(--sombra-1);
+    }
+
+    table.cps-fichas > tbody > tr > td {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        min-height: 44px;
+        padding: 8px 0 !important;
+        border: 0;
+        border-bottom: 1px solid var(--linea);
+        background: none !important;
+        text-align: right !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+    }
+
+    table.cps-fichas > tbody > tr > td:last-child {
+        border-bottom: 0;
+    }
+
+    table.cps-fichas > tbody > tr > td::before {
+        content: attr(data-label);
+        flex: 0 0 auto;
+        max-width: 45%;
+        color: var(--gris);
+        font-size: var(--fs-xs);
+        font-weight: 800;
+        letter-spacing: .06em;
+        text-align: left;
+        text-transform: uppercase;
+        overflow-wrap: normal;
+    }
+
+    table.cps-fichas > tbody > tr > td[data-label=""]::before,
+    table.cps-fichas > tbody > tr > td:not([data-label])::before {
+        content: none;
+    }
+
+    /* Filas de una sola celda (sin datos, detalle desplegado): a todo el ancho */
+    table.cps-fichas > tbody > tr > td[colspan] {
+        display: block !important;
+        overflow-x: auto;
+        text-align: left !important;
+    }
+
+    table.cps-fichas > tbody > tr > td[colspan]:only-child {
+        text-align: center !important;
+    }
+
+    /* En fichas cabe todo: las columnas secundarias de Configuración también se ven */
+    table.cps-fichas .col-movil-oculta {
+        display: flex !important;
+    }
+
+    table.cps-fichas > tbody > tr > td .adm-name-cell {
+        justify-content: flex-end;
+    }
+}
+
+/* Tableta y portátil: las mismas tablas, con todas sus columnas; los textos bajan de línea en vez de ensanchar la
+   tabla (si aun así no cabe, se desplaza dentro de su caja) */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    table.cps-fichas {
+        min-width: 0 !important;
+    }
+
+    table.cps-fichas > thead > tr > th,
+    table.cps-fichas > tbody > tr > td {
+        padding: 10px 8px !important;
+        white-space: normal !important;
+        font-size: var(--fs-sm);
+    }
+
+    table.cps-fichas .adm-num-pill,
+    table.cps-fichas .adm-badge,
+    table.cps-fichas .info-chip,
+    table.cps-fichas .status-badge {
+        white-space: nowrap;
+    }
+
+    /* Encabezados más compactos (las mayúsculas espaciadas ensanchaban columnas como "Total transferencia") */
+    table.cps-fichas > thead > tr > th {
+        font-size: 12px !important;
+        letter-spacing: 0 !important;
+        text-transform: none !important;
+    }
+
+    /* Dashboard: un tablero por fila, para que sus tablas tengan el ancho completo */
+    .dsh-tableros {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+}
+
+/* Títulos de las tablas de Configuración a la izquierda, como los de las demás páginas */
+#TablaUsuariosContainer .header,
+#TablaUbicacionesContainer .header,
+#TablaParqueaderosContainer .header {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+}
+
+/* Editar / acciones de las tablas del admin: botón de 40 px en tinta (antes, ícono azul suelto) */
+.admin-wide-table .btn-action {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--linea-2) !important;
+    border-radius: 11px;
+    background: var(--panel) !important;
+    color: var(--tinta) !important;
+    font-size: 18px;
+    transform: none !important;
+    transition: background-color var(--t-rapido) ease;
+}
+
+.admin-wide-table .btn-action i,
+.admin-wide-table .btn-action .lc {
+    color: var(--tinta) !important;
+}
+
+.admin-wide-table .btn-action:hover {
+    background: var(--suelo) !important;
+}
+
+.admin-wide-table .btn-action:active {
+    transform: scale(.94) !important;
 }
 
 /* Tablas del admin (Estado Turnos): encabezado neutro, como la tabla de ingresos */
@@ -2097,6 +2370,13 @@ body.cps-key .search-section.cps-filtro-key {
     border-radius: 50% !important;
     background: var(--suelo) !important;
     color: var(--tinta) !important;
+}
+
+/* Títulos de las ventanas: no quedan debajo de la X (44 px arriba a la derecha) */
+.Card-Ingreso > h3,
+.Card-Ingreso > h2 {
+    padding-right: 52px;
+    overflow-wrap: anywhere;
 }
 
 /* Información del carro: títulos de sección en tinta (el rojo es para actuar, no para rotular) */

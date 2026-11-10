@@ -94,6 +94,44 @@
         if (new URLSearchParams(location.search).has('buscar')) buscar.focus();
     });
 
+    // ---------- Tablas de reportes y de Configuración: en el celular se leen como fichas ----------
+    // Cada celda recibe el nombre de su columna (data-label) para mostrarlo al lado del dato (cps.css). También las
+    // filas que el JS agrega después (refresco de Liquidaciones, tablas del Dashboard). La tabla de ingresos y la de
+    // Vista Key tienen sus propias fichas
+    const TABLAS_FICHAS = '.table-container > table:not([class]), table.tabla-liquidaciones, table.adm-table, ' +
+                          'table.tabla-despachos, table.dsh-tabla';
+
+    function rotular(tabla) {
+        const columnas = [...tabla.querySelectorAll(':scope > thead th')].map(th => th.textContent.replace(/\s+/g, ' ').trim());
+        tabla.querySelectorAll(':scope > tbody > tr').forEach(fila => {
+            let i = 0;
+            for (const celda of fila.children) {
+                if (celda.colSpan === 1 && !celda.hasAttribute('data-label')) celda.setAttribute('data-label', columnas[i] || '');
+                i += celda.colSpan || 1;
+            }
+        });
+    }
+
+    function prepararTabla(tabla) {
+        if (tabla.classList.contains('cps-fichas')) return;
+        tabla.classList.add('cps-fichas');
+        rotular(tabla);
+        if (tabla.tBodies[0]) new MutationObserver(() => rotular(tabla)).observe(tabla.tBodies[0], { childList: true });
+    }
+
+    document.querySelectorAll(TABLAS_FICHAS).forEach(prepararTabla);
+
+    // Las que el JS arma después (el detalle de una liquidación, por ejemplo)
+    new MutationObserver(cambios => {
+        for (const c of cambios) {
+            c.addedNodes.forEach(n => {
+                if (n.nodeType !== 1) return;
+                if (n.matches(TABLAS_FICHAS)) prepararTabla(n);
+                n.querySelectorAll?.(TABLAS_FICHAS).forEach(prepararTabla);
+            });
+        }
+    }).observe(document.body, { childList: true, subtree: true });
+
     // ---------- Hoja "Más" ----------
     const hoja = document.getElementById('cpsHojaMas');
     const boton = document.getElementById('cpsBotonMas');
