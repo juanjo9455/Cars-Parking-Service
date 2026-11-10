@@ -143,7 +143,7 @@
        novalidate: los avisos de campos faltantes son los de ingreso-vehiculos.js, no la burbuja del navegador *@
     <form method="post" asp-action="IngresoVehiculos" asp-controller="Home" id="ingresoForm" enctype="multipart/form-data" novalidate
           data-error-servidor="@((TempData.Peek("Error") != null || ViewBag.Error != null) ? "true" : "false")">
-        @* Cámara junto a la placa: la lee de la foto y se puede corregir a mano (lector-fotos.js) *@
+        @* Cámara junto a la placa: abre el escáner en vivo, que la lee solo y deja corregirla (lector-fotos.js) *@
         <div class="input-group">
             <div class="placa-con-foto">
                 <input type="text"
@@ -154,8 +154,8 @@
                        maxlength="6"
                        style="text-transform: uppercase;"
                        required>
-                <button type="button" class="placa-foto-btn" data-no-spinner="true" onclick="leerPlacaDeFoto(this)"
-                        aria-label="Leer la placa con la cámara" title="Leer la placa con la cámara">
+                <button type="button" class="placa-foto-btn" data-no-spinner="true" onclick="abrirEscanerPlaca()"
+                        aria-label="Escanear la placa con la cámara" title="Escanear la placa con la cámara">
                     <i class="fa-solid fa-camera"></i>
                 </button>
             </div>
