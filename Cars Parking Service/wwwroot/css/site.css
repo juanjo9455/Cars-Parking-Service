@@ -3729,8 +3729,6 @@ body.escaner-abierto {
 .escaner[data-estado="casi"] { --marco: #ffb300; }
 .escaner[data-estado="listo"] { --marco: #43a047; }
 .escaner[data-estado="pausa"],
-.escaner[data-estado="foto"],
-.escaner[data-estado="sin-placa"],
 .escaner[data-estado="preparando"] { --marco: rgba(255, 255, 255, 0.55); }
 
 .escaner-barra {
@@ -3959,7 +3957,7 @@ body.escaner-abierto {
 
 .escaner-acciones {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 10px;
     width: 100%;
 }

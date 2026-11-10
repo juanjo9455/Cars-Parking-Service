@@ -39,10 +39,9 @@ async function leerFoto(intentos, buscar, worker = null) {
     }
 }
 
-// En la placa solo hay letras y números. 6 = un bloque de texto (el recorte); 11 = texto suelto (la foto entera)
+// En la placa solo hay letras y números. 6 = un bloque de texto (el recorte del marco)
 const PLACA_LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -';
 const PLACA_RECORTE = { tessedit_char_whitelist: PLACA_LETRAS, tessedit_pageseg_mode: '6' };
-const PLACA_FOTO = { tessedit_char_whitelist: PLACA_LETRAS, tessedit_pageseg_mode: '11' };
 
 const esAmarillo = (d, i) => d[i] > 120 && d[i + 1] > 90 && d[i + 2] < d[i + 1] * 0.6;
 
@@ -78,23 +77,6 @@ function recortarAmarillo(lienzo) {
     }
     g.putImageData(datos, 0, 0);
     return recorte;
-}
-
-// Lo mismo para una foto (data URL), reducida a 800 px de ancho
-function recortarPlacaAmarilla(imagen) {
-    return new Promise(resolve => {
-        const img = new Image();
-        img.onerror = () => resolve(null);
-        img.onload = () => {
-            const escala = Math.min(1, 800 / img.width);
-            const lienzo = document.createElement('canvas');
-            lienzo.width = Math.round(img.width * escala);
-            lienzo.height = Math.round(img.height * escala);
-            lienzo.getContext('2d', { willReadFrequently: true }).drawImage(img, 0, 0, lienzo.width, lienzo.height);
-            resolve(recortarAmarillo(lienzo));
-        };
-        img.src = imagen;
-    });
 }
 
 // Confusiones típicas al leer: un número donde va letra y al revés
@@ -179,7 +161,7 @@ async function leyendo(boton, trabajo) {
 // El botón de cámara junto a la placa abre la cámara en vivo con un marco del tamaño de una placa. Se lee lo que
 // queda dentro del marco, cuadro tras cuadro, sin tomar foto. La placa se da por leída cuando sale igual dos veces
 // seguidas (así no se queda con una lectura suelta equivocada). Debajo está el campo para corregirla o escribirla.
-// La cámara en vivo necesita HTTPS (o localhost); sin cámara quedan el campo y "Desde una foto"
+// La cámara en vivo necesita HTTPS (o localhost); sin cámara queda el campo para escribirla
 
 const TEXTOS_ESCANER = {
     preparando: 'Preparando el lector…',
@@ -187,9 +169,7 @@ const TEXTOS_ESCANER = {
     casi: 'Leyendo… mantén el celular quieto',
     listo: '¡Placa encontrada! Revísala y úsala',
     pausa: 'Lectura en pausa mientras escribes',
-    foto: 'Leyendo la foto…',
-    'sin-placa': 'No se encontró la placa en la foto: escríbela',
-    'sin-camara': 'No se pudo abrir la cámara. Escribe la placa o léela desde una foto'
+    'sin-camara': 'No se pudo abrir la cámara. Escribe la placa'
 };
 
 let escaner = null;
@@ -220,7 +200,6 @@ function abrirEscanerPlaca() {
             <button type="button" class="escaner-usar" data-no-spinner="true"><i class="fa-solid fa-check" aria-hidden="true"></i> Usar esta placa</button>
             <div class="escaner-acciones">
                 <button type="button" class="escaner-otra" data-no-spinner="true"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Leer de nuevo</button>
-                <button type="button" class="escaner-foto" data-no-spinner="true"><i class="fa-regular fa-image" aria-hidden="true"></i> Desde una foto</button>
             </div>
         </div>`;
     document.body.appendChild(capa);
@@ -244,7 +223,6 @@ function abrirEscanerPlaca() {
         if (e.worker && e.flujo) reanudarEscaner(e);
         else { estadoEscaner(e, 'preparando'); iniciarCamaraEscaner(e); }
     };
-    capa.querySelector('.escaner-foto').onclick = () => leerPlacaDesdeFoto(e);
     e.campo.addEventListener('input', () => {
         e.campo.value = e.campo.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
         e.campo.classList.remove('escaner-error');
@@ -340,32 +318,6 @@ function cuadroDelMarco(e) {
     lienzo.height = Math.round(640 * sh / sw);
     lienzo.getContext('2d', { willReadFrequently: true }).drawImage(v, sx, sy, sw, sh, 0, 0, lienzo.width, lienzo.height);
     return lienzo;
-}
-
-// "Desde una foto": de la galería o la cámara del celular, con el lector de fotos de siempre
-async function leerPlacaDesdeFoto(e) {
-    e.activo = false;
-    clearTimeout(e.temporizador);
-    // Si cancela la galería queda en pausa: "Leer de nuevo" vuelve a la cámara
-    estadoEscaner(e, e.worker ? 'pausa' : 'sin-camara');
-    const foto = await tomarFotoLector(false);
-    if (escaner !== e || !foto) return;
-
-    estadoEscaner(e, 'foto');
-    try {
-        const placa = await leerFoto([[await recortarPlacaAmarilla(foto), PLACA_RECORTE], [foto, PLACA_FOTO]], buscarPlaca, e.worker);
-        if (escaner !== e) return;
-        if (placa) {
-            e.campo.value = placa;
-            estadoEscaner(e, 'listo');
-        } else {
-            estadoEscaner(e, 'sin-placa');
-            e.campo.focus();
-        }
-    } catch (error) {
-        console.warn('Escáner de placa:', error);
-        if (escaner === e) estadoEscaner(e, 'sin-placa');
-    }
 }
 
 function estadoEscaner(e, estado) {
