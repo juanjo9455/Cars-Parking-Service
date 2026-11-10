@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-10T00:00:00Z",
+  "title": "Design System: Cars Parking Service",
+  "extensions": {
+    "colorMeta": {
+      "rojo": { "role": "primary", "displayName": "Línea Red", "canonical": "#d32f2f", "tonalRamp": ["#4a0f0f", "#7a1616", "#b71c1c", "#d32f2f", "#e35d5d", "#ee9595", "#f9d6d6", "#fdeeee"] },
+      "rojo-700": { "role": "primary", "displayName": "Deep Línea Red", "canonical": "#b71c1c", "tonalRamp": ["#4a0f0f", "#7a1616", "#b71c1c", "#d32f2f", "#e35d5d", "#ee9595", "#f9d6d6", "#fdeeee"] },
+      "rojo-100": { "role": "primary", "displayName": "Station Halo", "canonical": "#f9d6d6", "tonalRamp": ["#4a0f0f", "#7a1616", "#b71c1c", "#d32f2f", "#e35d5d", "#ee9595", "#f9d6d6", "#fdeeee"] },
+      "rojo-50": { "role": "primary", "displayName": "Faint Halo", "canonical": "#fdeeee", "tonalRamp": ["#4a0f0f", "#7a1616", "#b71c1c", "#d32f2f", "#e35d5d", "#ee9595", "#f9d6d6", "#fdeeee"] },
+      "placa": { "role": "secondary", "displayName": "Plate Yellow", "canonical": "#ffd54f", "tonalRamp": ["#3d2f00", "#6b5300", "#a07c00", "#d6a800", "#ffd54f", "#ffe082", "#ffecb3", "#fff8e1"] },
+      "placa-borde": { "role": "secondary", "displayName": "Plate Rim", "canonical": "#1f2329", "tonalRamp": ["#0d0f12", "#1f2329", "#353a42", "#5a6069", "#858b94", "#b4b9c0", "#d2d7dd", "#eef0f3"] },
+      "ok": { "role": "tertiary", "displayName": "Done Green", "canonical": "#157f3b", "tonalRamp": ["#08321a", "#0e5528", "#157f3b", "#2a9a52", "#5bb97d", "#9bd6b0", "#cdebd7", "#e8f5ec"] },
+      "ok-50": { "role": "tertiary", "displayName": "Done Green Tint", "canonical": "#e8f5ec", "tonalRamp": ["#08321a", "#0e5528", "#157f3b", "#2a9a52", "#5bb97d", "#9bd6b0", "#cdebd7", "#e8f5ec"] },
+      "aviso": { "role": "tertiary", "displayName": "Notice Amber", "canonical": "#a8530b", "tonalRamp": ["#4a2504", "#6b3507", "#a8530b", "#cc6e1c", "#e5964f", "#f2c08f", "#f9dfc2", "#fdf3e6"] },
+      "aviso-50": { "role": "tertiary", "displayName": "Notice Amber Tint", "canonical": "#fdf3e6", "tonalRamp": ["#4a2504", "#6b3507", "#a8530b", "#cc6e1c", "#e5964f", "#f2c08f", "#f9dfc2", "#fdf3e6"] },
+      "info": { "role": "tertiary", "displayName": "Info Blue", "canonical": "#1e4fd8", "tonalRamp": ["#0b1d52", "#132f87", "#1e4fd8", "#4570e3", "#7b9aec", "#adc0f3", "#d4e0f9", "#eaf0fd"] },
+      "info-50": { "role": "tertiary", "displayName": "Info Blue Tint", "canonical": "#eaf0fd", "tonalRamp": ["#0b1d52", "#132f87", "#1e4fd8", "#4570e3", "#7b9aec", "#adc0f3", "#d4e0f9", "#eaf0fd"] },
+      "tinta": { "role": "neutral", "displayName": "Signage Ink", "canonical": "#14161a", "tonalRamp": ["#14161a", "#353a42", "#5a6069", "#858b94", "#d2d7dd", "#e4e7eb", "#f3f4f6", "#ffffff"] },
+      "tinta-2": { "role": "neutral", "displayName": "Ink 2", "canonical": "#353a42", "tonalRamp": ["#14161a", "#353a42", "#5a6069", "#858b94", "#d2d7dd", "#e4e7eb", "#f3f4f6", "#ffffff"] },
+      "gris": { "role": "neutral", "displayName": "Wayfinding Grey", "canonical": "#5a6069", "tonalRamp": ["#14161a", "#353a42", "#5a6069", "#858b94", "#d2d7dd", "#e4e7eb", "#f3f4f6", "#ffffff"] },
+      "gris-2": { "role": "neutral", "displayName": "Light Grey", "canonical": "#858b94", "tonalRamp": ["#14161a", "#353a42", "#5a6069", "#858b94", "#d2d7dd", "#e4e7eb", "#f3f4f6", "#ffffff"] },
+      "linea": { "role": "neutral", "displayName": "Hairline", "canonical": "#e4e7eb", "tonalRamp": ["#14161a", "#353a42", "#5a6069", "#858b94", "#d2d7dd", "#e4e7eb", "#f3f4f6", "#ffffff"] },
+      "linea-2": { "role": "neutral", "displayName": "Field Rim", "canonical": "#d2d7dd", "tonalRamp": ["#14161a", "#353a42", "#5a6069", "#858b94", "#d2d7dd", "#e4e7eb", "#f3f4f6", "#ffffff"] },
+      "suelo": { "role": "neutral", "displayName": "Ground", "canonical": "#f3f4f6", "tonalRamp": ["#14161a", "#353a42", "#5a6069", "#858b94", "#d2d7dd", "#e4e7eb", "#f3f4f6", "#ffffff"] },
+      "panel": { "role": "neutral", "displayName": "Panel", "canonical": "#ffffff", "tonalRamp": ["#14161a", "#353a42", "#5a6069", "#858b94", "#d2d7dd", "#e4e7eb", "#f3f4f6", "#ffffff"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page and greeting titles; 26px on phones for work pages." },
+      "title": { "displayName": "Title", "purpose": "Card titles (La línea de hoy) and the user name in the Más sheet." },
+      "body": { "displayName": "Body", "purpose": "Buttons, list links, fields; never below 16px in fields." },
+      "body-sm": { "displayName": "Body small", "purpose": "Metadata, field labels, table cells on phones." },
+      "label": { "displayName": "Label", "purpose": "Uppercase state chips, table headers, short field labels attached to data." },
+      "plate": { "displayName": "Plate", "purpose": "The Colombian plate token: 13px, 17px or 30px only." }
+    },
+    "shadows": [
+      { "name": "sombra-1 (rest)", "value": "0 1px 2px rgba(20,22,26,.06), 0 1px 1px rgba(20,22,26,.03)", "purpose": "Cards, car cards, outline and icon buttons." },
+      { "name": "sombra-2 (float)", "value": "0 6px 20px -6px rgba(20,22,26,.14), 0 2px 4px rgba(20,22,26,.04)", "purpose": "Sticky plate search, modals, toasts." },
+      { "name": "sombra-3 (sheet)", "value": "0 -10px 40px -10px rgba(20,22,26,.22)", "purpose": "The Más bottom sheet." },
+      { "name": "anillo (focus ring)", "value": "0 0 0 3px rgba(211,47,47,.22)", "purpose": "Focused fields and search, with a red border." },
+      { "name": "red action glow", "value": "0 6px 14px -8px rgba(211,47,47,.7)", "purpose": "Soft glow under red primary actions only." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.23, 1, 0.32, 1)", "purpose": "Press, state changes, station dot scale-in." },
+      { "name": "ease-drawer", "value": "cubic-bezier(0.32, 0.72, 0, 1)", "purpose": "Sheets and modals rising from below." },
+      { "name": "t-press", "value": "140ms", "purpose": "Press scale (0.97; 0.98 full-width; 0.94 icon buttons)." },
+      { "name": "t-rapido", "value": "180ms", "purpose": "Colour and border changes; active station dot scale-in from 0.9." },
+      { "name": "t-hoja", "value": "320ms", "purpose": "Sheet entry; exit runs 200ms ease-out. Reduced motion: opacity only." }
+    ],
+    "breakpoints": [
+      { "name": "phone", "value": "<768px", "purpose": "Bottom bar, car cards instead of table rows." },
+      { "name": "tablet", "value": "768px", "purpose": "Bottom bar becomes a 92px left rail; tables return." },
+      { "name": "narrow", "value": "<420px", "purpose": "Brand wordmark hides when both top-bar bubbles show." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Red action: Nuevo ingreso, Ingresar, Tomar vehículo. The one red on a form.",
+      "html": "<button class=\"ds-btn-rojo\">Ingresar</button>",
+      "css": ".ds-btn-rojo { display:inline-flex; align-items:center; justify-content:center; min-height:50px; padding:0 18px; border:1px solid #d32f2f; border-radius:12px; background:#d32f2f; color:#fff; font-family:Overpass,system-ui,sans-serif; font-size:16px; font-weight:800; box-shadow:0 6px 14px -8px rgba(211,47,47,.7); cursor:pointer; transition:transform 140ms cubic-bezier(0.23,1,0.32,1), background-color 180ms ease; } .ds-btn-rojo:hover { background:#b71c1c; border-color:#b71c1c; } .ds-btn-rojo:focus-visible { outline:2px solid #d32f2f; outline-offset:2px; } .ds-btn-rojo:active { transform:scale(.97); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary actions on white with a field-rim border.",
+      "html": "<button class=\"ds-btn-borde\">Volver</button>",
+      "css": ".ds-btn-borde { display:inline-flex; align-items:center; justify-content:center; min-height:50px; padding:0 18px; border:1px solid #d2d7dd; border-radius:12px; background:#fff; color:#14161a; font-family:Overpass,system-ui,sans-serif; font-size:16px; font-weight:700; box-shadow:0 1px 2px rgba(20,22,26,.06), 0 1px 1px rgba(20,22,26,.03); cursor:pointer; transition:transform 140ms cubic-bezier(0.23,1,0.32,1), background-color 180ms ease; } .ds-btn-borde:hover { background:#f3f4f6; } .ds-btn-borde:focus-visible { outline:2px solid #d32f2f; outline-offset:2px; } .ds-btn-borde:active { transform:scale(.97); }"
+    },
+    {
+      "name": "Ink Icon Button",
+      "kind": "button",
+      "refersTo": "button-ink",
+      "description": "44px action that moves a car to its next station (Cobrar, parquear, despachar).",
+      "html": "<button class=\"ds-btn-tinta\" aria-label=\"Cobrar\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.85\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M6 12h.01M18 12h.01\"/></svg></button>",
+      "css": ".ds-btn-tinta { display:inline-grid; place-items:center; width:44px; height:44px; border:1px solid #14161a; border-radius:12px; background:#14161a; color:#fff; cursor:pointer; transition:transform 140ms cubic-bezier(0.23,1,0.32,1), background-color 180ms ease; } .ds-btn-tinta:hover { background:#000; } .ds-btn-tinta:focus-visible { outline:2px solid #d32f2f; outline-offset:2px; } .ds-btn-tinta:active { transform:scale(.94); }"
+    },
+    {
+      "name": "Plate Search",
+      "kind": "input",
+      "refersTo": "plate-search",
+      "description": "Sticky plate search under the top bar on Ingresos and Vista Key.",
+      "html": "<label class=\"ds-buscar\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.85\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input placeholder=\"Buscar placa\" /></label>",
+      "css": ".ds-buscar { display:flex; align-items:center; gap:10px; min-height:54px; padding:0 16px; border:1px solid #d2d7dd; border-radius:16px; background:#fff; color:#5a6069; box-shadow:0 6px 20px -6px rgba(20,22,26,.14), 0 2px 4px rgba(20,22,26,.04); cursor:text; } .ds-buscar:focus-within { border-color:#d32f2f; box-shadow:0 0 0 3px rgba(211,47,47,.22), 0 6px 20px -6px rgba(20,22,26,.14); } .ds-buscar input { flex:1; min-width:0; height:52px; border:0; outline:0; background:none; color:#14161a; font-family:Overpass,system-ui,sans-serif; font-size:18px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; } .ds-buscar input::placeholder { color:#8a9099; font-weight:600; letter-spacing:0; text-transform:none; }"
+    },
+    {
+      "name": "Plate Token",
+      "kind": "custom",
+      "refersTo": "plate-token",
+      "description": "The Colombian plate, every car's token, in three sizes (13 / 17 / 30px).",
+      "html": "<span class=\"ds-placa ds-placa-sm\">ABC123</span> <span class=\"ds-placa\">ABC123</span> <span class=\"ds-placa ds-placa-lg\">ABC123</span>",
+      "css": ".ds-placa { display:inline-flex; align-items:center; justify-content:center; min-width:6.4em; padding:.28em .55em .16em; border:2px solid #1f2329; border-radius:6px; background:#ffd54f; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55), 0 1px 0 rgba(20,22,26,.12); color:#14161a; font-family:Overpass,system-ui,sans-serif; font-weight:800; font-size:17px; letter-spacing:.12em; line-height:1.1; font-variant-numeric:tabular-nums; white-space:nowrap; } .ds-placa-lg { font-size:30px; border-width:3px; border-radius:9px; } .ds-placa-sm { font-size:13px; border-width:1.5px; border-radius:5px; min-width:0; }"
+    },
+    {
+      "name": "State Chips",
+      "kind": "chip",
+      "refersTo": "chip-state",
+      "description": "A word in a pill; strength rises with the need to act. Parqueado is quietest.",
+      "html": "<span class=\"ds-chip ds-chip-solicitado\">Solicitado</span> <span class=\"ds-chip ds-chip-despachado\">Despachado</span> <span class=\"ds-chip ds-chip-parqueado\">Parqueado</span> <span class=\"ds-chip ds-chip-finalizado\">Finalizado</span>",
+      "css": ".ds-chip { display:inline-flex; align-items:center; padding:4px 10px 3px; border:1px solid #e4e7eb; border-radius:999px; background:#f3f4f6; color:#353a42; font-family:Overpass,system-ui,sans-serif; font-size:12px; font-weight:800; letter-spacing:.03em; text-transform:uppercase; line-height:1.4; } .ds-chip-solicitado { background:#d32f2f; border-color:#d32f2f; color:#fff; } .ds-chip-despachado { background:#fff; border-color:#14161a; color:#14161a; } .ds-chip-parqueado { background:#fff; border-color:#d2d7dd; color:#5a6069; } .ds-chip-finalizado { background:#e8f5ec; border-color:transparent; color:#157f3b; }"
+    },
+    {
+      "name": "La línea de hoy",
+      "kind": "custom",
+      "refersTo": "car-card",
+      "description": "Signature: five stations on a track with counts; solicitado wears the red ring.",
+      "html": "<ol class=\"ds-linea\"><li class=\"ds-est con\"><span class=\"ds-punto\">1</span><span class=\"ds-nombre\">Recibidos</span></li><li class=\"ds-est con\"><span class=\"ds-punto\">84</span><span class=\"ds-nombre\">Parqueados</span></li><li class=\"ds-est atencion\"><span class=\"ds-punto\">1</span><span class=\"ds-nombre\">Solicitados</span></li><li class=\"ds-est con\"><span class=\"ds-punto\">1</span><span class=\"ds-nombre\">Despachados</span></li><li class=\"ds-est\"><span class=\"ds-punto\">0</span><span class=\"ds-nombre\">Pagados</span></li></ol>",
+      "css": ".ds-linea { position:relative; display:grid; grid-template-columns:repeat(5,1fr); margin:0; padding:16px 14px; list-style:none; background:#fff; border:1px solid #e4e7eb; border-radius:16px; font-family:Overpass,system-ui,sans-serif; } .ds-linea::before { content:\"\"; position:absolute; top:29px; left:10%; right:10%; height:3px; border-radius:3px; background:#d2d7dd; } .ds-est { position:relative; display:flex; flex-direction:column; align-items:center; gap:6px; color:#5a6069; text-align:center; } .ds-punto { position:relative; z-index:1; display:grid; place-items:center; min-width:29px; height:29px; padding:2px 6px 0; box-sizing:border-box; border:3px solid #d2d7dd; border-radius:999px; background:#fff; color:#14161a; font-size:14px; font-weight:800; font-variant-numeric:tabular-nums; line-height:1; transition:transform 140ms cubic-bezier(0.23,1,0.32,1); } .ds-est:active .ds-punto { transform:scale(.92); } .ds-nombre { font-size:11.5px; font-weight:700; } .ds-est.con .ds-punto { border-color:#14161a; } .ds-est.atencion .ds-punto { border-color:#d32f2f; background:#d32f2f; color:#fff; box-shadow:0 0 0 4px #f9d6d6; } .ds-est.atencion .ds-nombre { color:#b71c1c; }"
+    },
+    {
+      "name": "Bottom Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Fixed bottom bar; active item gets the red station dot; Nuevo is the raised red key.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item\" aria-current=\"page\"><svg width=\"23\" height=\"23\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.85\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\"/><path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/></svg><span>Inicio</span></a><a class=\"ds-nav-item ds-nav-nuevo\"><span class=\"ds-nav-boton\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\"><path d=\"M5 12h14M12 5v14\"/></svg></span><span>Nuevo</span></a><a class=\"ds-nav-item\"><svg width=\"23\" height=\"23\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.85\" stroke-linecap=\"round\"><circle cx=\"12\" cy=\"12\" r=\"1\"/><circle cx=\"19\" cy=\"12\" r=\"1\"/><circle cx=\"5\" cy=\"12\" r=\"1\"/></svg><span>Más</span></a></nav>",
+      "css": ".ds-nav { display:flex; justify-content:space-around; height:64px; padding:0 6px; background:rgba(255,255,255,.97); border-top:1px solid #e4e7eb; font-family:Overpass,system-ui,sans-serif; } .ds-nav-item { position:relative; flex:1 1 0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; color:#5a6069; font-size:11px; font-weight:700; text-decoration:none; cursor:pointer; transition:color 180ms ease; } .ds-nav-item:hover { color:#14161a; } .ds-nav-item:focus-visible { outline:2px solid #d32f2f; outline-offset:2px; } .ds-nav-item[aria-current=\"page\"] { color:#b71c1c; } .ds-nav-item[aria-current=\"page\"]::before { content:\"\"; position:absolute; top:5px; width:6px; height:6px; border-radius:50%; background:#d32f2f; box-shadow:0 0 0 3px #fdeeee; } .ds-nav-boton { display:grid; place-items:center; width:46px; height:46px; margin-top:-18px; border-radius:15px; background:#d32f2f; color:#fff; box-shadow:0 8px 18px -6px rgba(211,47,47,.55), 0 0 0 4px #fff; transition:transform 140ms cubic-bezier(0.23,1,0.32,1); } .ds-nav-nuevo:active .ds-nav-boton { transform:scale(.94); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Metro Line",
+    "overview": "Every car lives on a line. The app reads like Medellín Metro wayfinding: each vehicle sits at one station of a five-stop line (Recibido → Parqueado → Solicitado → Despachado → Pagado), and every screen answers one question first: where is this car on its line? The shell is signage. White panels sit on a cool pale-grey ground, the ink is near-black, hairlines separate things, and there is exactly one line colour, the institutional red.\n\nThe system is built for a valet on the street, one-handed, by day and at night, with several cars arriving at once. Density is moderate and thumb-first: 44px minimum targets, a fixed bottom bar, a sticky primary action, and every car card with the same anatomy so states compare at a glance. Rank comes from weight, not size. The type scale is short and nearly everything important is set at 800.\n\nIt rejects the category default: a side drawer, grids of coloured pill badges, and a hero-number dashboard. State is shown as a position on the line and a mark in a fixed cell, never as a field of colour.",
+    "keyCharacteristics": [
+      "One line colour (red) reserved for action, the current station, attention and selection.",
+      "The yellow Colombian plate is every car's token, in exactly three sizes.",
+      "Station dots: filled ink for passed, a red ring for current, hollow for ahead.",
+      "Overpass throughout, with tabular numerals for plates, times and money.",
+      "Flat white panels with a whisper of shadow; depth is reserved for things that float over the list.",
+      "Quick ease-out motion, a press scale of 0.97, and reduced motion respected everywhere."
+    ],
+    "rules": [
+      { "name": "The One Line Rule", "body": "Red marks action, the current station, attention (solicitado) and selection. It never paints a field, a section title or a decorative surface. If a red element does not move a car or mark where it is, it is the wrong colour.", "section": "colors" },
+      { "name": "The Quiet Majority Rule", "body": "Parqueado is the most common state, so it is the quietest: a white chip with a grey rim and grey text. Strength rises with the need to act; solicitado is solid red.", "section": "colors" },
+      { "name": "The Token Colours Only Rule", "body": "New views take colours from the tokens on `:root` in `cps.css`. They never declare their own hex values.", "section": "colors" },
+      { "name": "The Weight Not Size Rule", "body": "The live scale has five steps (12, 14, 16, 18, 28); a 22px token exists but is unused. Hierarchy comes from weight (600 against 800), not from new sizes.", "section": "typography" },
+      { "name": "The Tabular Rule", "body": "Plates, times, counts and money always use tabular numerals, so columns of figures line up.", "section": "typography" },
+      { "name": "The Float Only When Floating Rule", "body": "Only an element that actually sits above the scrolling list gets Float or Sheet depth. Everything in the flow stays at Rest.", "section": "elevation" }
+    ],
+    "dos": [
+      "**Do** answer \"where is this car on its line?\" first, with the station dot, the mini-line or the state chip in a fixed cell.",
+      "**Do** keep red for actions, the current station, solicitado and selection. Put car-moving secondary actions in signage ink.",
+      "**Do** give every car card identical anatomy (plate and actions on top, line and payment below) at the same scale.",
+      "**Do** use the plate token in one of its three sizes (13px, 17px or 30px) wherever a plate appears.",
+      "**Do** set plates, times, counts and money in tabular numerals.",
+      "**Do** keep touch targets at 44px or more, and fields at 16px text or more.",
+      "**Do** animate with the ease-out curve (cubic-bezier(0.23, 1, 0.32, 1)), 140ms for press and 180ms for state. Sheets use the drawer curve (cubic-bezier(0.32, 0.72, 0, 1)) at 320ms. Pressed elements scale to 0.97, and every transform is dropped under reduced motion.",
+      "**Do** use Lucide icons from the sprite, coloured with currentColor."
+    ],
+    "donts": [
+      "**Don't** put coloured side stripes on cards or rows. Attention is a full border or the line's red station.",
+      "**Don't** paint a field, panel or section header red, or use red to label things.",
+      "**Don't** add hex colours in new views. Use the `cps.css` tokens.",
+      "**Don't** add new type sizes to build hierarchy. Change the weight.",
+      "**Don't** fall back to coloured pill-badge grids, a side drawer or a hero-number dashboard for operating screens.",
+      "**Don't** give in-flow cards Float depth. Only what floats over the list lifts."
+    ]
+  }
+}

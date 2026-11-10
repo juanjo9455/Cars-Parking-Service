@@ -1,10 +1,9 @@
 @using Microsoft.AspNetCore.Http
 @{
     var idRol = Context.Session.GetInt32("id_rol");
-    var imagenUsuario = Context.Session.GetString("imagen_usuario_url");
 }
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -24,122 +23,25 @@
     <link rel="stylesheet" href="~/css/Estado_Turnos.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    @* Rediseño: la letra (Overpass) y el sistema visual van de últimos para que manden sobre los estilos de antes *@
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700;800;900&display=swap" />
+    <link rel="stylesheet" href="~/css/cps.css" asp-append-version="true" />
 </head>
-<body>
+<body class="@(idRol.HasValue ? "cps-app" : "")">
+    @* Con sesión: barra superior, barra inferior y hoja "Más" (antes, menú lateral). Las opciones por rol son las mismas *@
+    @if (idRol.HasValue)
+    {
+        <partial name="_NavInferior" />
+    }
+
     <div class="page-wrapper">
-        @if (idRol == 1 || idRol == 3 || idRol == 4 || (idRol == 2 && (ViewBag.mostrarMenu ?? false)))
-        {
-                
-            <aside class="menu-lateral-container" id="menu-lateral">
-                <div class="div-cerrar-menu">
-                    <i class="fa-solid fa-x" id="cerrar-menu-lateral"></i>
-                </div>
-                @* La foto también abre Mi perfil *@
-                <a class="usuario" asp-controller="Home" asp-action="MiPerfil" title="Mi perfil" aria-label="Mi perfil" style="display: block; width: 2.8cm; height: 2.8cm;">
-                    @if (!string.IsNullOrEmpty(imagenUsuario))
-                    {
-                        <img src="@imagenUsuario" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />
-                    }
-                    else
-                    {
-                        <i class="fa-solid fa-user"></i>
-                    }
-                </a>
-
-                <div class="menu-lateral">
-                    <ol>
-                        @if (idRol == 2)
-                        {
-
-                            <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house"></i>Inicio</a></li>
-                            <li><a asp-controller="Home" asp-action="Tabla_Vehiculos"><i class="fa-solid fa-table-list"></i>Tabla Ingresos</a></li>
-                            <li><a asp-controller="Home" asp-action="Ingreso_Vehiculos"><i class="fa-solid fa-car-side"></i>Nuevo Ingreso</a></li>
-                            <li><a asp-controller="Home" asp-action="VistaKey"><i class="fa-solid fa-square-parking"></i>Parqueaderos</a></li>
-
-                        }
-                        @if (idRol == 3)
-                        {
-                            <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house"></i>Inicio</a></li>
-                            <li><a asp-controller="Home" asp-action="Tabla_Vehiculos"><i class="fa-solid fa-table-list"></i>Tabla Ingresos</a></li>
-                            <li><a asp-controller="Home" asp-action="Estado_Turnos"><i class="fa-solid fa-user"></i>Estado Turnos</a></li>
-                            <li><a asp-controller="Home" asp-action="Ingreso_Vehiculos"><i class="fa-solid fa-car-side"></i>Nuevo Ingreso</a></li>
-                            <li><a asp-controller="Home" asp-action="VistaKey"><i class="fa-solid fa-square-parking"></i>Parqueaderos</a></li>
-                            <li><a asp-controller="Home" asp-action="Administrador"><i class="fa-solid fa-gear"></i>Configuraciones Admin</a></li>
-                            <!--<li><a asp-controller="Home" asp-action="WhatsAppEnviados"><i class="fa-brands fa-whatsapp"></i>WhatsApp Enviados</a></li>
-                            <li><a asp-controller="Home" asp-action="DespachosCobros"><i class="fa-solid fa-receipt"></i>Despachos y cobros</a></li>-->
-
-                        }
-                        @if (idRol == 1)
-                        {
-
-                            <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house"></i>Inicio</a></li>
-                            <li><a asp-controller="Home" asp-action="Tabla_Vehiculos"><i class="fa-solid fa-table-list"></i>Tabla Ingresos</a></li>
-                            <li><a asp-controller="Home" asp-action="VistaKey"><i class="fa-solid fa-square-parking"></i>Parqueaderos</a></li>
-
-                        }
-                        @if ((idRol == 2 || idRol == 3) && (ViewBag.estadoLiquidacion ?? false) == false)
-                        {
-                            <li>
-                                <a asp-controller="Liquidacion" asp-action="Liquidacion">
-                                    <i class="fa-solid fa-sack-dollar"></i>Liquidación
-                                </a>
-                            </li>
-                        }
-                        @if (idRol == 3)
-                        {
-                            <li><a asp-controller="Dashboard" asp-action="Index"><i class="fa-solid fa-chart-line"></i>Dashboard</a></li>
-                        }
-                        @* Sus datos y su contraseña: para todos los que tienen menú *@
-                        <li><a asp-controller="Home" asp-action="MiPerfil"><i class="fa-solid fa-user-gear"></i>Mi perfil</a></li>
-                        @if (idRol == 2)
-                        {
-
-                            @if ((ViewBag.estadoLiquidacion ?? false) == false)
-                            {
-
-                                <li><a id="cerrar-sesion" onclick="abrirModalAlerta()"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
-
-                            }
-                            else
-                            {
-
-                                <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
-
-                            }
-                        }
-                        else
-                        {
-
-                            <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
-
-                        }
-
-                    </ol>
-                </div>
-            </aside>
-            <div class="div-abrir-menu" id="div-abrir-menu">
-                <i class="fa-solid fa-bars" id="abrir-menu-lateral"></i>
-            </div>
-
-        } 
-        else
-        {
-         
-            <div class="div-abrir-menu" id="volver-index">
-                <a asp-controller="Home"
-                   asp-action="Index"
-                   class="btn-volver-index">
-
-                    <i class="fa-solid fa-house icon-home"></i>
-                    <i class="fa-solid fa-arrow-left icon-back"></i>
-
-                </a>
-            </div>
-            
-        }
-
         @RenderBody()
     </div>
+
+    @* Íconos Lucide y hoja "Más": antes que los demás scripts, para cambiar los íconos antes de pintar *@
+    <script src="~/js/cps.js" asp-append-version="true"></script>
 
     @* Latido solo con actividad y cierre de sesión a la hora sin actividad *@
     <script src="~/js/inactividad.js" asp-append-version="true"></script>

@@ -94,12 +94,14 @@
                 }
 
                 <div class="input-group">
-                    <input type="text" id="dniLogin" placeholder="Usuario" name="dni">
+                    <input type="text" id="dniLogin" placeholder="Usuario" name="dni" aria-label="Usuario (documento)"
+                           autocomplete="username" inputmode="numeric" autocapitalize="off" spellcheck="false">
                     <div class="error-message" id="errorDNI">⚠️ Ingresa un DNI válido</div>
                 </div>
 
                 <div class="input-group">
-                    <input type="password" id="passwordLogin" placeholder="Contraseña" name="contraseña">
+                    <input type="password" id="passwordLogin" placeholder="Contraseña" name="contraseña" aria-label="Contraseña"
+                           autocomplete="current-password">
                     <div class="error-message" id="errorPassword">⚠️ La contraseña es obligatoria</div>
                 </div>
 

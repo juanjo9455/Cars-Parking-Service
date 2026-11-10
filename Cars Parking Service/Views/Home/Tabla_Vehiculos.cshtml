@@ -146,7 +146,7 @@
                 @if (!string.IsNullOrEmpty(ViewBag.ubicacion))
                 {
                     <span style="color: #b00020; font-weight: 600;">
-                        - @ViewBag.ubicacion
+                        @ViewBag.ubicacion
                     </span>
                 }
                 @if (idRol == 3)
@@ -172,8 +172,16 @@
         }
     </div>
 
+    @* Búsqueda de placa siempre a la vista (rediseño): escribe en el campo Placa de los filtros, que se aplican solos (cps.js) *@
+    <label class="cps-buscar" for="cpsBuscarPlaca">
+        <svg class="ico" aria-hidden="true" focusable="false"><use href="/img/iconos.svg?v=1#i-search"></use></svg>
+        <span class="visually-hidden">Buscar placa</span>
+        <input type="search" id="cpsBuscarPlaca" placeholder="Buscar placa" autocomplete="off" autocapitalize="characters"
+               spellcheck="false" maxlength="6" enterkeyhint="search" value="@ViewData["FiltroPlaca"]"
+               data-espejo="#filtersPanel form [name='placa']" />
+    </label>
+
     <!-- Filtro -->
-    <p style="color: #857D7B;">Consultar Ingresos</p>
     <div class="filters-wrapper" id="filtersWrapper">
         <button type="button" class="filters-toggle" id="filtersToggle" aria-expanded="false" aria-controls="filtersPanel" data-no-spinner="true">
             <span><i class="fa-solid fa-filter"></i> Filtros</span>

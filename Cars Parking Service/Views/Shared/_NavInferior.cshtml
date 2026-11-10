@@ -1,0 +1,147 @@
+﻿@using Microsoft.AspNetCore.Http
+@inject CarsParkingService.Data.ApplicationDbContext Db
+@{
+    // Barra superior, barra de navegación inferior (riel a la izquierda en tableta) y hoja "Más", según el rol.
+    // La usan _Layout y _LayoutKey. Las opciones son las mismas del menú lateral de antes; solo cambia dónde van
+    var idRol = Context.Session.GetInt32("id_rol");
+    var nombre = Context.Session.GetString("nombre") ?? "Usuario";
+    var imagen = Context.Session.GetString("imagen_usuario_url");
+    var inicial = string.IsNullOrWhiteSpace(nombre) ? "U" : nombre.Trim()[0].ToString().ToUpper();
+    var rol = idRol switch { 1 => "Valet", 2 => "Banco", 3 => "Administrador", 4 => "Key", _ => "" };
+
+    // La zona en la que entró. El nombre se guarda en la sesión (con el id, por si vuelve a entrar en otra zona)
+    // la primera vez, para no consultarlo en cada página
+    var idZona = Context.Session.GetInt32("id_zona");
+    var claveZona = $"nombre_zona_nav_{idZona}";
+    var zona = Context.Session.GetString(claveZona);
+    if (zona == null && idZona.HasValue)
+    {
+        zona = Db.zonas.Where(z => z.id_zona == idZona).Select(z => z.nombre_zona).FirstOrDefault() ?? "";
+        Context.Session.SetString(claveZona, zona);
+    }
+
+    var controlador = ViewContext.RouteData.Values["controller"]?.ToString();
+    var accion = ViewContext.RouteData.Values["action"]?.ToString();
+    string? Actual(string c, string a) => controlador == c && accion == a ? "page" : null;
+
+    // Liquidación y cierre de sesión del banco: las mismas reglas del menú de antes (solo Inicio sabe si tiene
+    // pendientes; desde otra página, "Cerrar sesión" pasa por Inicio, que lo revisa)
+    var estadoLiquidacion = ViewBag.estadoLiquidacion as bool?;
+    var verLiquidacion = (idRol == 2 || idRol == 3) && (estadoLiquidacion ?? false) == false;
+}
+@functions {
+    static Microsoft.AspNetCore.Html.IHtmlContent Ico(string nombre) =>
+        new Microsoft.AspNetCore.Html.HtmlString($"<svg class=\"ico\" aria-hidden=\"true\" focusable=\"false\"><use href=\"/img/iconos.svg?v=1#i-{nombre}\"></use></svg>");
+}
+
+<header class="cps-top">
+    <a class="cps-marca" asp-controller="Home" asp-action="@(idRol == 4 ? "VistaKey" : "Index")" aria-label="Cars Parking Service, inicio">
+        <span class="cps-marca-p" aria-hidden="true">P</span>
+        <span>Cars Parking</span>
+    </a>
+    @if (!string.IsNullOrEmpty(zona))
+    {
+        <span class="cps-zona" title="Zona en la que entraste">@Ico("map-pin") @zona</span>
+    }
+    <a class="cps-avatar @(string.IsNullOrEmpty(zona) ? "ms-auto" : "")" asp-controller="Home" asp-action="MiPerfil" aria-label="Mi perfil">
+        @if (!string.IsNullOrEmpty(imagen))
+        {
+            <img src="@imagen" alt="" />
+        }
+        else
+        {
+            @inicial
+        }
+    </a>
+</header>
+
+<nav class="cps-nav" aria-label="Navegación principal">
+    @if (idRol == 4)
+    {
+        <a class="cps-nav-item" asp-controller="Home" asp-action="VistaKey" aria-current="@Actual("Home", "VistaKey")">@Ico("square-parking")<span>Parqueadero</span></a>
+        <a class="cps-nav-item" asp-controller="Home" asp-action="MiPerfil" aria-current="@Actual("Home", "MiPerfil")">@Ico("user-cog")<span>Mi perfil</span></a>
+    }
+    else
+    {
+        <a class="cps-nav-item" asp-controller="Home" asp-action="Index" aria-current="@Actual("Home", "Index")">@Ico("house")<span>Inicio</span></a>
+        <a class="cps-nav-item" asp-controller="Home" asp-action="Tabla_Vehiculos" aria-current="@Actual("Home", "Tabla_Vehiculos")">@Ico("list")<span>Ingresos</span></a>
+
+        @if (idRol == 2 || idRol == 3)
+        {
+            <a class="cps-nav-item cps-nav-nuevo" asp-controller="Home" asp-action="Ingreso_Vehiculos" aria-current="@Actual("Home", "Ingreso_Vehiculos")">
+                <span class="cps-nav-boton">@Ico("plus")</span><span>Nuevo</span>
+            </a>
+        }
+
+        @if (idRol == 3)
+        {
+            <a class="cps-nav-item" asp-controller="Home" asp-action="Estado_Turnos" aria-current="@Actual("Home", "Estado_Turnos")">@Ico("clock")<span>Turnos</span></a>
+        }
+        else
+        {
+            <a class="cps-nav-item" asp-controller="Home" asp-action="VistaKey" aria-current="@Actual("Home", "VistaKey")">@Ico("square-parking")<span>Parqueadero</span></a>
+        }
+    }
+
+    <button type="button" class="cps-nav-item cps-nav-mas" id="cpsBotonMas" aria-haspopup="dialog" aria-expanded="false" aria-controls="cpsHojaMas" data-no-spinner="true">
+        @Ico("ellipsis")<span>Más</span>
+    </button>
+</nav>
+
+<dialog class="cps-hoja" id="cpsHojaMas" aria-label="Más opciones">
+    <div class="cps-hoja-asa" aria-hidden="true"></div>
+    <div class="cps-hoja-usuario">
+        <span class="cps-avatar">
+            @if (!string.IsNullOrEmpty(imagen))
+            {
+                <img src="@imagen" alt="" />
+            }
+            else
+            {
+                @inicial
+            }
+        </span>
+        <div>
+            <strong>@nombre</strong>
+            <small>
+                @rol
+                @if (!string.IsNullOrEmpty(zona))
+                {
+                    <span class="cps-sep" aria-hidden="true">·</span>@($"Zona {zona}")
+                }
+            </small>
+        </div>
+    </div>
+
+    <ul>
+        @if (idRol == 3)
+        {
+            <li><a class="cps-hoja-link" asp-controller="Dashboard" asp-action="Index">@Ico("chart-column") Dashboard @Ico("chevron-right")</a></li>
+            <li><a class="cps-hoja-link" asp-controller="Home" asp-action="VistaKey">@Ico("square-parking") Parqueaderos @Ico("chevron-right")</a></li>
+            <li><a class="cps-hoja-link" asp-controller="Home" asp-action="Administrador">@Ico("settings") Configuración @Ico("chevron-right")</a></li>
+        }
+        @if (verLiquidacion)
+        {
+            <li><a class="cps-hoja-link" asp-controller="Liquidacion" asp-action="Liquidacion">@Ico("wallet") Liquidación @Ico("chevron-right")</a></li>
+        }
+        @if (idRol != 4)
+        {
+            <li><a class="cps-hoja-link" asp-controller="Home" asp-action="MiPerfil">@Ico("user-cog") Mi perfil @Ico("chevron-right")</a></li>
+        }
+        <li class="cps-hoja-separador" role="separator"></li>
+        <li>
+            @if (idRol == 2 && estadoLiquidacion == false)
+            {
+                <button type="button" class="cps-hoja-link salir" data-cerrar onclick="abrirModalAlerta()">@Ico("log-out") Cerrar sesión</button>
+            }
+            else if (idRol == 2 && estadoLiquidacion == null)
+            {
+                <a class="cps-hoja-link salir" href="@Url.Action("Index", "Home", new { salir = 1 })">@Ico("log-out") Cerrar sesión</a>
+            }
+            else
+            {
+                <a class="cps-hoja-link salir" asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion">@Ico("log-out") Cerrar sesión</a>
+            }
+        </li>
+    </ul>
+</dialog>

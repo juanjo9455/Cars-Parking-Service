@@ -18,9 +18,17 @@
         : estado == "parqueado" ? "status-pagado"
         : "status-en-uso";
 
+    // Dónde va el carro en su línea (rediseño, igual que en la tabla de ingresos)
+    var posicion = Array.IndexOf(new[] { "activo", "parqueado", "solicitado", "despachado", "finalizado" }, estado);
     <tr class="@claseAlerta">
         <td data-label="Placa"><span class="ingreso-placa">@item.placa</span></td>
         <td data-label="Estado">
+            <span class="cps-mini" data-estado="@estado" aria-hidden="true">
+                @for (var k = 0; k < 5; k++)
+                {
+                    <i class="@(k < posicion ? "pasada" : k == posicion ? "actual" : "")"></i>
+                }
+            </span>
             <span class="status-badge @claseEstado">
                 @item.estado_servicio?.ToUpper()
             </span>

@@ -1,0 +1,2765 @@
+﻿/* =====================================================================
+   Cars Parking Service: sistema visual (rediseño mobile first)
+
+   La idea: cada carro vive en una línea, como en el mapa del Metro.
+   Recibido → Parqueado → Solicitado → Despachado → Pagado. Fondo blanco de
+   señalética, tinta casi negra, el rojo institucional solo para la estación
+   actual, las acciones y lo escogido, y la placa amarilla como ficha de cada carro.
+
+   Se carga DESPUÉS de los demás estilos (Bootstrap, ui.css, site.css...): los
+   componentes de antes toman este sistema sin cambiar su HTML ni su JS.
+   ===================================================================== */
+
+/* ---------- 1. Tokens ---------- */
+:root {
+    --font: 'Overpass', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+    /* Tinta y suelo */
+    --tinta: #14161a;
+    --tinta-2: #353a42;
+    --gris: #5a6069;          /* texto secundario: 6.2:1 sobre blanco */
+    --gris-2: #858b94;        /* solo íconos y texto grande */
+    --linea: #e4e7eb;         /* filetes */
+    --linea-2: #d2d7dd;       /* bordes de campos */
+    --suelo: #f3f4f6;
+    --panel: #ffffff;
+
+    /* La línea: rojo institucional */
+    --rojo: #d32f2f;
+    --rojo-700: #b71c1c;
+    --rojo-50: #fdeeee;
+    --rojo-100: #f9d6d6;
+
+    /* Estados (solo donde significan algo) */
+    --ok: #157f3b;
+    --ok-50: #e8f5ec;
+    --aviso: #a8530b;
+    --aviso-50: #fdf3e6;
+    --info: #1e4fd8;
+    --info-50: #eaf0fd;
+
+    /* La placa */
+    --placa: #ffd54f;
+    --placa-borde: #1f2329;
+
+    /* Escala corta: el rango lo da el peso, no el tamaño */
+    --fs-xs: 12px;
+    --fs-sm: 14px;
+    --fs-md: 16px;
+    --fs-lg: 18px;
+    --fs-xl: 22px;
+    --fs-2xl: 28px;
+
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --r-xl: 22px;
+
+    --sombra-1: 0 1px 2px rgba(20, 22, 26, .06), 0 1px 1px rgba(20, 22, 26, .03);
+    --sombra-2: 0 6px 20px -6px rgba(20, 22, 26, .14), 0 2px 4px rgba(20, 22, 26, .04);
+    --sombra-3: 0 -10px 40px -10px rgba(20, 22, 26, .22);
+    --anillo: 0 0 0 3px rgba(211, 47, 47, .22);
+
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+    --t-press: 140ms;
+    --t-rapido: 180ms;
+    --t-hoja: 320ms;
+
+    --nav-h: 64px;
+    --top-h: 56px;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-t: env(safe-area-inset-top, 0px);
+
+    /* Bootstrap toma la misma letra y los mismos colores */
+    --bs-body-font-family: var(--font);
+    --bs-body-color: var(--tinta);
+    --bs-body-bg: var(--suelo);
+    --bs-border-color: var(--linea);
+    --bs-primary: var(--rojo);
+    --bs-link-color: var(--rojo-700);
+    --bs-link-hover-color: var(--rojo);
+
+    /* ui.css (campos de antes) */
+    --ui-input-border: var(--linea-2);
+    --ui-input-border-focus: var(--rojo);
+    --ui-input-focus-shadow: var(--anillo);
+    --ui-input-text: var(--tinta);
+    --ui-input-placeholder: #737983;
+    --ui-radius-sm: var(--r-md);
+    --ui-radius-md: var(--r-md);
+    --ui-primary: var(--rojo);
+    --ui-primary-hover: var(--rojo-700);
+    --ui-error: var(--rojo-700);
+    --ui-success: var(--ok);
+    --text-primary: var(--tinta);
+    --text-muted: var(--gris);
+}
+
+/* ---------- 2. Base ---------- */
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: var(--font);
+    color: var(--tinta);
+    background: var(--suelo);
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font);
+    color: var(--tinta);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+}
+
+::selection {
+    background: var(--rojo-100);
+    color: var(--tinta);
+}
+
+input, select, textarea, button {
+    font-family: inherit;
+}
+
+input, textarea {
+    caret-color: var(--rojo);
+}
+
+/* Separador "·" entre datos cortos */
+.cps-sep {
+    margin: 0 .4em;
+    color: var(--gris-2);
+}
+
+/* Números de operación: placas, horas y plata alineados */
+.num, time, td, .ingreso-placa, .cps-placa {
+    font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+    outline: 2px solid var(--rojo);
+    outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--linea-2) transparent;
+    }
+}
+
+/* ---------- 3. Íconos (Lucide, sprite /img/iconos.svg; iconos.js cambia los de Font Awesome) ---------- */
+.ico {
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.85;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vertical-align: -0.14em;
+}
+
+i.lc {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.15em;
+    height: 1.15em;
+    font-style: normal;
+    line-height: 1;
+}
+
+i.lc::before {
+    content: none !important;
+}
+
+i.lc > .ico {
+    width: 100%;
+    height: 100%;
+    vertical-align: 0;
+}
+
+i.lc.fa-spin > .ico,
+.ico-girar {
+    animation: cps-girar .8s linear infinite;
+}
+
+@keyframes cps-girar {
+    to { transform: rotate(360deg); }
+}
+
+/* ---------- 4. Marco de la app: barra superior y barra de navegación inferior ---------- */
+body.cps-app {
+    padding-bottom: calc(var(--nav-h) + var(--safe-b) + 20px);
+    min-height: 100dvh;
+}
+
+.cps-top {
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: calc(var(--top-h) + var(--safe-t));
+    padding: var(--safe-t) 16px 0;
+    background: rgba(255, 255, 255, .94);
+    border-bottom: 1px solid var(--linea);
+    backdrop-filter: saturate(160%) blur(12px);
+    -webkit-backdrop-filter: saturate(160%) blur(12px);
+}
+
+.cps-marca {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--tinta);
+    text-decoration: none;
+    font-weight: 800;
+    font-size: var(--fs-md);
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+}
+
+/* El letrero "P" del logo como pictograma de señalética */
+.cps-marca-p {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: var(--rojo);
+    box-shadow: inset 0 0 0 2px var(--rojo), inset 0 0 0 3.5px var(--tinta);
+    color: var(--tinta);
+    font-weight: 900;
+    font-size: 19px;
+    line-height: 1;
+    padding-top: 3px;
+}
+
+.cps-marca:hover {
+    color: var(--tinta);
+}
+
+.cps-zona {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    margin-left: auto;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--suelo);
+    color: var(--tinta-2);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cps-zona .ico {
+    color: var(--rojo);
+    font-size: 14px;
+}
+
+.cps-avatar {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--tinta);
+    color: #fff;
+    font-weight: 800;
+    font-size: var(--fs-sm);
+    text-decoration: none;
+}
+
+.cps-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cps-avatar:hover {
+    color: #fff;
+}
+
+/* Barra inferior */
+.cps-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 950;
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+    height: calc(var(--nav-h) + var(--safe-b));
+    padding: 0 6px var(--safe-b);
+    background: rgba(255, 255, 255, .97);
+    border-top: 1px solid var(--linea);
+    box-shadow: 0 -4px 20px -12px rgba(20, 22, 26, .18);
+    backdrop-filter: saturate(160%) blur(14px);
+    -webkit-backdrop-filter: saturate(160%) blur(14px);
+}
+
+.cps-nav-item {
+    position: relative;
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-width: 0;
+    padding: 6px 2px 4px;
+    border: 0;
+    background: none;
+    color: var(--gris);
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    cursor: pointer;
+    transition: color var(--t-rapido) ease;
+}
+
+.cps-nav-item .ico {
+    font-size: 23px;
+    transition: transform var(--t-press) var(--ease-out);
+}
+
+.cps-nav-item:active .ico {
+    transform: scale(.9);
+}
+
+.cps-nav-item span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cps-nav-item:hover {
+    color: var(--tinta);
+}
+
+/* Estación activa: el punto rojo de la línea sobre el ícono */
+.cps-nav-item[aria-current="page"] {
+    color: var(--rojo-700);
+}
+
+.cps-nav-item[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--rojo);
+    box-shadow: 0 0 0 3px var(--rojo-50);
+    animation: cps-estacion var(--t-rapido) var(--ease-out);
+}
+
+@keyframes cps-estacion {
+    from { transform: scale(.9); opacity: 0; }
+}
+
+/* Nuevo ingreso: la acción principal, al alcance del pulgar */
+.cps-nav-nuevo .cps-nav-boton {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    margin-top: -18px;
+    border-radius: 15px;
+    background: var(--rojo);
+    color: #fff;
+    box-shadow: 0 8px 18px -6px rgba(211, 47, 47, .55), 0 0 0 4px var(--panel);
+    transition: transform var(--t-press) var(--ease-out), background var(--t-rapido) ease;
+}
+
+.cps-nav-nuevo .cps-nav-boton .ico {
+    font-size: 24px;
+    stroke-width: 2.2;
+}
+
+.cps-nav-nuevo:active .cps-nav-boton {
+    transform: scale(.94);
+}
+
+.cps-nav-nuevo:active .cps-nav-boton .ico {
+    transform: none;
+}
+
+.cps-nav-nuevo[aria-current="page"]::before {
+    display: none;
+}
+
+.cps-nav-nuevo[aria-current="page"] .cps-nav-boton {
+    background: var(--rojo-700);
+}
+
+/* Tableta y computador: la barra pasa a un riel a la izquierda */
+@media (min-width: 768px) {
+    body.cps-app {
+        padding-bottom: 24px;
+        padding-left: 92px;
+    }
+
+    .cps-top {
+        margin-left: -92px;
+        padding-left: calc(92px + 20px);
+    }
+
+    .cps-nav {
+        top: 0;
+        right: auto;
+        bottom: 0;
+        width: 92px;
+        height: auto;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 6px;
+        padding: calc(var(--top-h) + var(--safe-t) + 14px) 8px 16px;
+        border-top: 0;
+        border-right: 1px solid var(--linea);
+        box-shadow: none;
+        z-index: 950;
+    }
+
+    .cps-nav-item {
+        flex: 0 0 auto;
+        min-height: 64px;
+        border-radius: var(--r-md);
+        font-size: 11.5px;
+    }
+
+    /* En el riel, el mismo punto de estación que en el celular, arriba del ícono */
+    .cps-nav-item[aria-current="page"]::before {
+        top: 4px;
+    }
+
+    .cps-nav-nuevo .cps-nav-boton {
+        margin-top: 0;
+        box-shadow: 0 8px 18px -8px rgba(211, 47, 47, .55);
+    }
+
+    .cps-nav-mas {
+        margin-top: auto;
+    }
+}
+
+/* ---------- 5. Hoja "Más" (dialog nativo: foco, Escape y fondo) ---------- */
+.cps-hoja {
+    width: 100%;
+    max-width: 560px;
+    max-height: 88dvh;
+    margin: auto auto 0;
+    padding: 0 0 calc(var(--safe-b) + 12px);
+    border: 0;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    background: var(--panel);
+    color: var(--tinta);
+    box-shadow: var(--sombra-3);
+    transform: translateY(0);
+    transition: transform var(--t-hoja) var(--ease-drawer), opacity var(--t-hoja) ease, overlay var(--t-hoja) allow-discrete, display var(--t-hoja) allow-discrete;
+}
+
+.cps-hoja::backdrop {
+    background: rgba(12, 14, 18, .45);
+    transition: opacity var(--t-hoja) ease, overlay var(--t-hoja) allow-discrete, display var(--t-hoja) allow-discrete;
+}
+
+@starting-style {
+    .cps-hoja[open] { transform: translateY(100%); }
+    .cps-hoja[open]::backdrop { opacity: 0; }
+}
+
+.cps-hoja.cerrando {
+    transform: translateY(100%);
+    transition-duration: 200ms;
+    transition-timing-function: var(--ease-out);
+}
+
+.cps-hoja.cerrando::backdrop {
+    opacity: 0;
+    transition-duration: 200ms;
+}
+
+.cps-hoja-asa {
+    width: 40px;
+    height: 5px;
+    margin: 10px auto 4px;
+    border-radius: 3px;
+    background: var(--linea-2);
+}
+
+.cps-hoja-usuario {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px 16px;
+    border-bottom: 1px solid var(--linea);
+}
+
+.cps-hoja-usuario .cps-avatar {
+    width: 48px;
+    height: 48px;
+    font-size: var(--fs-lg);
+}
+
+.cps-hoja-usuario strong {
+    display: block;
+    font-size: var(--fs-lg);
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.cps-hoja-usuario small {
+    color: var(--gris);
+    font-size: var(--fs-sm);
+}
+
+.cps-hoja ul {
+    list-style: none;
+    margin: 0;
+    padding: 8px 10px;
+}
+
+.cps-hoja-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 54px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--r-md);
+    background: none;
+    color: var(--tinta);
+    text-decoration: none;
+    font-size: var(--fs-md);
+    font-weight: 600;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--t-rapido) ease;
+}
+
+.cps-hoja-link > .ico:first-child {
+    font-size: 21px;
+    color: var(--tinta-2);
+}
+
+.cps-hoja-link > .ico:last-child {
+    margin-left: auto;
+    color: var(--gris-2);
+}
+
+.cps-hoja-link:hover,
+.cps-hoja-link:focus-visible {
+    background: var(--suelo);
+    color: var(--tinta);
+}
+
+.cps-hoja-link:active {
+    background: var(--linea);
+}
+
+.cps-hoja-link.salir,
+.cps-hoja-link.salir > .ico:first-child {
+    color: var(--rojo-700);
+}
+
+.cps-hoja-separador {
+    height: 1px;
+    margin: 6px 12px;
+    background: var(--linea);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cps-hoja,
+    .cps-hoja.cerrando {
+        transform: none;
+        transition-property: opacity, overlay, display;
+    }
+
+    @starting-style {
+        .cps-hoja[open] { transform: none; opacity: 0; }
+    }
+
+    .cps-hoja.cerrando { opacity: 0; }
+
+    .cps-nav-item[aria-current="page"]::before { animation: none; }
+}
+
+/* ---------- 6. La placa (tres tamaños, siempre la misma ficha) ---------- */
+.ingreso-placa,
+.cps-placa {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 6.4em;
+    padding: .28em .55em .16em;
+    border: 2px solid var(--placa-borde);
+    border-radius: 6px;
+    background: var(--placa);
+    box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .55), 0 1px 0 rgba(20, 22, 26, .12);
+    color: var(--tinta);
+    font-family: var(--font);
+    font-weight: 800;
+    font-size: 17px;
+    letter-spacing: .12em;
+    line-height: 1.1;
+    white-space: nowrap;
+}
+
+.cps-placa-lg {
+    font-size: 30px;
+    border-width: 3px;
+    border-radius: 9px;
+}
+
+.cps-placa-sm {
+    font-size: 13px;
+    border-width: 1.5px;
+    border-radius: 5px;
+    min-width: 0;
+}
+
+/* ---------- 7. La línea (signature): estaciones del carro ---------- */
+.cps-linea {
+    --pasada: var(--tinta);
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.cps-linea::before {
+    content: "";
+    position: absolute;
+    top: 13px;
+    left: 10%;
+    right: 10%;
+    height: 3px;
+    border-radius: 3px;
+    background: var(--linea-2);
+}
+
+.cps-estacion {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 0 2px;
+    color: var(--gris);
+    text-align: center;
+    text-decoration: none;
+}
+
+a.cps-estacion:hover {
+    color: var(--tinta);
+}
+
+.cps-estacion-punto {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    min-width: 29px;
+    height: 29px;
+    padding: 0 6px;
+    border: 3px solid var(--linea-2);
+    border-radius: 999px;
+    background: var(--panel);
+    color: var(--tinta);
+    font-size: var(--fs-sm);
+    font-weight: 800;
+    line-height: 1;
+    padding-top: 2px;
+    transition: transform var(--t-press) var(--ease-out);
+}
+
+a.cps-estacion:active .cps-estacion-punto {
+    transform: scale(.92);
+}
+
+.cps-estacion-nombre {
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    line-height: 1.15;
+}
+
+/* Con carros: la estación se llena de tinta */
+.cps-estacion.con .cps-estacion-punto {
+    border-color: var(--tinta);
+}
+
+/* Necesita a alguien (solicitados): el anillo rojo de la estación actual */
+.cps-estacion.atencion .cps-estacion-punto {
+    border-color: var(--rojo);
+    background: var(--rojo);
+    color: #fff;
+    box-shadow: 0 0 0 4px var(--rojo-100);
+}
+
+.cps-estacion.atencion .cps-estacion-nombre {
+    color: var(--rojo-700);
+}
+
+.cps-estacion.hecho .cps-estacion-punto {
+    border-color: var(--ok);
+    color: var(--ok);
+}
+
+/* Línea mini de cada carro (tabla de ingresos): cinco puntos en fila; data-estado dice dónde va */
+.cps-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    vertical-align: middle;
+}
+
+.cps-mini i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid var(--linea-2);
+    background: var(--panel);
+}
+
+.cps-mini i + i {
+    margin-left: 10px;
+    position: relative;
+}
+
+.cps-mini i + i::before {
+    content: "";
+    position: absolute;
+    right: 100%;
+    top: 1px;
+    width: 10px;
+    height: 2px;
+    background: var(--linea-2);
+}
+
+.cps-mini i.pasada {
+    border-color: var(--tinta);
+    background: var(--tinta);
+}
+
+.cps-mini i.pasada::before,
+.cps-mini i.actual::before {
+    background: var(--tinta) !important;
+}
+
+.cps-mini i.actual {
+    width: 12px;
+    height: 12px;
+    border: 3px solid var(--rojo);
+    background: var(--panel);
+    box-shadow: 0 0 0 3px var(--rojo-50);
+}
+
+.cps-mini i.actual + i::before { right: calc(100% + 0px); }
+
+.cps-mini[data-estado="finalizado"] i.actual {
+    border-color: var(--ok);
+    box-shadow: 0 0 0 3px var(--ok-50);
+}
+
+.cps-mini[data-estado="cancelado"] i {
+    border-color: var(--linea-2) !important;
+    background: var(--panel) !important;
+    box-shadow: none !important;
+}
+
+/* ---------- 8. Botones ---------- */
+.btn,
+.cps-btn,
+.btn-nuevo,
+.home-action-btn {
+    font-family: var(--font);
+    font-weight: 700;
+    letter-spacing: .005em;
+    border-radius: var(--r-md);
+    transition: transform var(--t-press) var(--ease-out), background-color var(--t-rapido) ease, border-color var(--t-rapido) ease, color var(--t-rapido) ease, box-shadow var(--t-rapido) ease;
+}
+
+.btn:active,
+.cps-btn:active,
+.btn-nuevo:active,
+.home-action-btn:active {
+    transform: scale(.97);
+}
+
+.btn:hover,
+.btn-nuevo:hover {
+    transform: none;
+}
+
+.cps-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 50px;
+    padding: 0 18px;
+    border: 1px solid transparent;
+    font-size: var(--fs-md);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.cps-btn .ico {
+    font-size: 20px;
+}
+
+.btn-primary,
+.btn-danger,
+.btn-nuevo,
+.cps-btn-rojo,
+.home-action-btn.primary {
+    background: var(--rojo);
+    border-color: var(--rojo);
+    color: #fff;
+    box-shadow: 0 6px 14px -8px rgba(211, 47, 47, .7);
+}
+
+.btn-primary:hover,
+.btn-danger:hover,
+.btn-nuevo:hover,
+.cps-btn-rojo:hover,
+.home-action-btn.primary:hover {
+    background: var(--rojo-700);
+    border-color: var(--rojo-700);
+    color: #fff;
+}
+
+.btn-success {
+    background: var(--tinta);
+    border-color: var(--tinta);
+    color: #fff;
+}
+
+.btn-success:hover {
+    background: #000;
+    border-color: #000;
+    color: #fff;
+}
+
+.btn-secondary,
+.cps-btn-borde,
+.home-action-btn.secondary {
+    background: var(--panel);
+    border: 1px solid var(--linea-2);
+    color: var(--tinta);
+    box-shadow: var(--sombra-1);
+}
+
+.btn-secondary:hover,
+.cps-btn-borde:hover,
+.home-action-btn.secondary:hover {
+    background: var(--suelo);
+    border-color: var(--linea-2);
+    color: var(--tinta);
+}
+
+.btn:disabled,
+.btn.disabled,
+.cps-btn:disabled {
+    opacity: .5;
+}
+
+/* ---------- 9. Campos ---------- */
+.form-control,
+.form-select,
+.form-group input,
+.form-group select,
+.form-group textarea,
+.input-group input,
+.input-group select,
+.input-group textarea,
+select {
+    min-height: 48px;
+    border: 1px solid var(--linea-2);
+    border-radius: var(--r-md) !important;
+    background-color: var(--panel);
+    color: var(--tinta);
+    font-size: var(--fs-md);   /* 16px: el iPhone no hace zoom al escribir */
+    transition: border-color var(--t-rapido) ease, box-shadow var(--t-rapido) ease;
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus,
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus,
+select:focus {
+    border-color: var(--rojo);
+    box-shadow: var(--anillo);
+    outline: none;
+}
+
+.form-group label,
+label.form-label {
+    color: var(--tinta-2);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: var(--rojo);
+}
+
+/* ---------- 10. Páginas de trabajo (las vistas de antes) ---------- */
+.page-wrapper {
+    padding: 16px 16px 0;
+    /* Una tabla ancha se desplaza dentro de su caja; la página nunca de lado (clip no rompe "sticky") */
+    overflow-x: clip;
+}
+
+.container,
+.admin-container {
+    max-width: 1200px;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* Encabezado de página: título a la izquierda, acción a la derecha */
+.container > .header,
+.admin-container > .header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0 16px;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+    text-align: left;
+    flex-direction: row;
+}
+
+.header-info h2 {
+    font-size: var(--fs-2xl);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+}
+
+.header-info p {
+    font-family: var(--font);
+    color: var(--gris);
+    font-size: var(--fs-sm);
+    margin: 4px 0 0;
+}
+
+.btn-nuevo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 0 18px;
+    font-size: var(--fs-md);
+}
+
+/* Tarjetas y paneles de antes */
+.search-section,
+.filters-wrapper,
+.adm-table-wrap,
+.admin-card,
+.card {
+    background: var(--panel);
+    border: 1px solid var(--linea);
+    border-radius: var(--r-lg);
+    box-shadow: var(--sombra-1);
+}
+
+/* Total de la tabla */
+.total-registros-filtro {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 2px 10px;
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    color: var(--gris);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+}
+
+.total-registros-filtro strong {
+    color: var(--tinta);
+}
+
+/* Tablas de antes */
+.table-container {
+    background: var(--panel);
+    border: 1px solid var(--linea);
+    border-radius: var(--r-lg);
+    box-shadow: var(--sombra-1);
+}
+
+thead {
+    background: var(--panel);
+    color: var(--gris);
+}
+
+thead th {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--linea);
+    color: var(--gris);
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: .06em;
+}
+
+thead th:first-child,
+thead th:last-child {
+    border-radius: 0;
+}
+
+tbody tr {
+    border-bottom: 1px solid var(--linea);
+}
+
+tbody td {
+    padding: 12px 14px;
+    vertical-align: middle;
+}
+
+/* Chips de estado: un punto y la palabra (no solo color) */
+.info-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 3px;
+    border: 1px solid var(--linea);
+    border-radius: 999px;
+    background: var(--suelo);
+    color: var(--tinta-2);
+    font-size: var(--fs-xs);
+    font-weight: 800;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    line-height: 1.4;
+}
+
+.info-chip.chip-ok {
+    background: var(--ok-50);
+    border-color: transparent;
+    color: var(--ok);
+}
+
+/* Vehículo solicitado: un tinte suave en la fila; la estación roja de su línea y la etiqueta dicen el resto */
+tbody tr.alerta-solicitado {
+    border-left: 0 !important;
+    background: #fffafa !important;
+    animation: none;
+}
+
+.alerta-solicitado td {
+    color: inherit;
+}
+
+/* Sin valet: el botón ámbar "Tomar vehículo" / "Asignar valet" lo señala */
+tbody tr.alerta-sin-valet {
+    border-left: 0;
+    background: var(--panel) !important;
+    animation: none;
+}
+
+.alerta-sin-valet td {
+    color: inherit;
+}
+
+/* ---------- 10b. Ingresos (Tabla_Vehiculos): búsqueda fija, filtros plegables y cada carro como una ficha ---------- */
+.header-info h2 span {
+    display: block;
+    margin-top: 2px;
+    color: var(--gris) !important;
+    font-size: var(--fs-md);
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.header-info h2 span .lc,
+.header-info h2 span i {
+    color: #b8860b;
+}
+
+/* La búsqueda: pegada bajo la barra superior mientras se baja por la lista */
+.cps-buscar {
+    position: sticky;
+    top: calc(var(--top-h) + var(--safe-t) + 8px);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 54px;
+    margin: 0 0 10px;
+    padding: 0 16px;
+    border: 1px solid var(--linea-2);
+    border-radius: var(--r-lg);
+    background: var(--panel);
+    box-shadow: var(--sombra-2);
+    cursor: text;
+}
+
+.cps-buscar:focus-within {
+    border-color: var(--rojo);
+    box-shadow: var(--anillo), var(--sombra-2);
+}
+
+.cps-buscar .ico {
+    font-size: 20px;
+    color: var(--gris);
+}
+
+.cps-buscar input {
+    flex: 1;
+    min-width: 0;
+    height: 52px;
+    border: 0;
+    outline: 0;
+    background: none;
+    color: var(--tinta);
+    font-size: var(--fs-lg);
+    font-weight: 800;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+}
+
+.cps-buscar input::placeholder {
+    color: #8a9099;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+/* El campo Placa del filtro lo maneja la búsqueda de arriba */
+#filtersPanel .form-group:has(> input[name="placa"]) {
+    display: none;
+}
+
+.filters-wrapper {
+    border: 0;
+    background: none;
+    box-shadow: none;
+}
+
+/* El botón Filtros solo existe en el celular (site.css lo esconde en pantallas grandes) */
+.filters-toggle {
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 46px;
+    padding: 0 14px;
+    border: 1px solid var(--linea);
+    border-radius: var(--r-md);
+    background: var(--panel);
+    color: var(--tinta-2);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+}
+
+.filters-toggle span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filters-chevron {
+    transition: transform var(--t-rapido) var(--ease-out);
+}
+
+.search-section.filters-panel {
+    margin-top: 8px;
+    padding: 16px 14px 4px;
+}
+
+/* La acción Nuevo ya está en la barra (abajo en el celular, en el riel en pantallas grandes) */
+.container > .header .btn-nuevo {
+    display: none !important;
+}
+
+@media (max-width: 767.98px) {
+
+    .header-info h2 {
+        font-size: 26px;
+    }
+
+    .header-info p {
+        display: none;
+    }
+
+    /* Cada carro, una ficha: placa y acciones arriba, estación y pago abajo */
+    .table-container {
+        background: none;
+        border: 0;
+        box-shadow: none;
+        overflow: visible;
+    }
+
+    .tabla-ingresos,
+    .tabla-ingresos tbody {
+        display: block;
+        min-width: 0 !important;
+        background: none;
+    }
+
+    .tabla-ingresos thead {
+        display: none;
+    }
+
+    .tabla-ingresos tbody tr {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        grid-template-areas:
+            "placa  placa  acciones"
+            "estado estado pago";
+        align-items: center;
+        gap: 10px 8px;
+        margin-bottom: 10px;
+        padding: 12px 12px 12px 14px;
+        border: 1px solid var(--linea);
+        border-radius: var(--r-lg);
+        background: var(--panel) !important;
+        box-shadow: var(--sombra-1);
+    }
+
+    /* Solicitado: la ficha entera con el borde rojo (sin franja de un lado) */
+    .tabla-ingresos tbody tr.alerta-solicitado {
+        border: 1.5px solid var(--rojo);
+        background: var(--panel) !important;
+    }
+
+    .tabla-ingresos tbody td {
+        display: block;
+        padding: 0 !important;
+        border: 0;
+        white-space: normal;
+        font-size: var(--fs-sm);
+    }
+
+    .filters-toggle {
+        display: flex;
+    }
+
+    .tabla-ingresos td[data-label="Placa"] { grid-area: placa; text-align: left; }
+    .tabla-ingresos td[data-label="Estado Servicio"] { grid-area: estado; }
+    .tabla-ingresos td[data-label="Estado Pago"] { grid-area: pago; justify-self: end; }
+    .tabla-ingresos td.cell-action { grid-area: acciones; }
+    .tabla-ingresos td.col-solicitud { display: none; }
+
+    .tabla-ingresos .ingreso-placa {
+        margin: 0;
+        padding: 6px 12px 4px;
+        font-size: 19px;
+    }
+
+    .tabla-ingresos td[data-label="Estado Servicio"] {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 10px;
+    }
+
+    .tabla-ingresos .solicitud-movil {
+        flex-basis: 100%;
+        margin: 0;
+        color: var(--gris);
+        font-size: var(--fs-xs);
+        font-weight: 600;
+    }
+}
+
+/* Estado del carro: la palabra con el color de su estación */
+/* Lo más fuerte es lo que pide acción (solicitado); lo más común (parqueado), lo más callado */
+.info-chip[data-estado="solicitado"] {
+    background: var(--rojo);
+    border-color: var(--rojo);
+    color: #fff;
+}
+
+.info-chip[data-estado="despachado"] {
+    background: var(--panel);
+    border-color: var(--tinta);
+    color: var(--tinta);
+}
+
+.info-chip[data-estado="finalizado"] {
+    background: var(--ok-50);
+    border-color: transparent;
+    color: var(--ok);
+}
+
+.info-chip[data-estado="parqueado"] {
+    background: var(--panel);
+    border-color: var(--linea-2);
+    color: var(--gris);
+}
+
+.info-chip[data-estado="cancelado"] {
+    color: var(--gris);
+    text-decoration: line-through;
+}
+
+.info-chip.chip-pendiente {
+    background: var(--panel);
+    border-color: var(--linea-2);
+    color: var(--gris);
+}
+
+/* Acciones de cada carro: botones de 44 px, claros y del mismo tamaño */
+.tabla-ingresos td.cell-action {
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tabla-ingresos td.cell-action i.btn-action {
+    display: inline-grid;
+    place-items: center;
+    width: 44px !important;
+    height: 44px !important;
+    margin: 0;
+    border: 1px solid var(--linea-2);
+    border-radius: 12px;
+    background: var(--panel);
+    color: var(--tinta);
+    font-size: 19px !important;
+    box-shadow: var(--sombra-1);
+    transition: transform var(--t-press) var(--ease-out), background-color var(--t-rapido) ease;
+}
+
+.tabla-ingresos td.cell-action i.btn-action > .ico {
+    width: 20px;
+    height: 20px;
+}
+
+.tabla-ingresos td.cell-action i.btn-action:active {
+    transform: scale(.94);
+}
+
+/* Cobrar y la foto del parqueo: lo que mueve al carro a su siguiente estación */
+.tabla-ingresos td.cell-action i.btn-pago-ingreso,
+.tabla-ingresos td.cell-action i.btn-foto-ingreso {
+    background: var(--tinta);
+    border-color: var(--tinta);
+    color: #fff;
+}
+
+/* Tomar / asignar valet: una acción, en el rojo de las acciones */
+.btn-tomar-vehiculo {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 14px !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: var(--rojo) !important;
+    color: #fff !important;
+    font-weight: 800;
+    font-size: var(--fs-sm) !important;
+    box-shadow: none !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .tabla-ingresos td.cell-action i.btn-action:hover {
+        background: var(--suelo);
+    }
+
+    .tabla-ingresos td.cell-action i.btn-pago-ingreso:hover,
+    .tabla-ingresos td.cell-action i.btn-foto-ingreso:hover {
+        background: #000;
+    }
+}
+
+/* Tableta y computador: la tabla de siempre, limpia */
+@media (min-width: 768px) {
+    .tabla-ingresos td[data-label="Estado Servicio"] {
+        text-align: left;
+    }
+
+    .tabla-ingresos td[data-label="Estado Servicio"] .cps-mini {
+        display: flex;
+        margin: 0 0 6px 2px;
+    }
+
+    .tabla-ingresos td.cell-action,
+    .tabla-key td.cell-action {
+        flex-wrap: nowrap;
+    }
+
+    .tabla-ingresos tbody tr:hover {
+        background: #fafbfc;
+    }
+}
+
+/* ---------- 10c. Nuevo ingreso: formulario compacto; un solo rojo (Ingresar), siempre al alcance ---------- */
+.ingreso-container {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+}
+
+.ingreso-container .logo-section {
+    display: none;
+}
+
+.ingreso-container .ingreso-title {
+    margin: 6px 0 16px;
+    font-size: var(--fs-2xl);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    text-align: left;
+}
+
+#ingresoForm .input-group {
+    margin-bottom: 12px;
+}
+
+/* .input-group de Bootstrap es flex: las filas compuestas (placa + cámara, país + WhatsApp) ocupan todo el ancho */
+#ingresoForm .placa-con-foto,
+#ingresoForm .telefono-pais {
+    flex: 1 1 100%;
+    width: 100%;
+}
+
+#ingresoForm .input-group input,
+#ingresoForm .input-group select,
+#ingresoForm .input-group textarea,
+#ingresoForm .campo-buscador input {
+    min-height: 52px;
+    padding: 14px 14px 12px;
+    font-size: var(--fs-md);
+}
+
+/* La placa: la ficha amarilla del carro desde el momento en que se registra */
+#ingresoForm #placa {
+    border: 2.5px solid var(--placa-borde);
+    background: var(--placa);
+    color: var(--tinta);
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: .16em;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .5);
+}
+
+/* Tinta al 68% sobre el amarillo de la placa: unos 5.7:1 */
+#ingresoForm #placa::placeholder {
+    letter-spacing: .16em;
+    color: rgba(20, 22, 26, .68);
+}
+
+#ingresoForm #placa:focus {
+    border-color: var(--placa-borde);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .5), 0 0 0 4px rgba(20, 22, 26, .16);
+}
+
+#ingresoForm #placa.input-error {
+    border-color: var(--rojo-700);
+}
+
+/* Etiquetas cortas encima de los campos que, ya llenos, no dicen qué son (valet, banco, parqueadero, ubicación) */
+.cps-etiqueta {
+    flex: 1 1 100%;
+    margin: 0 0 6px 2px;
+    text-align: left;
+    color: var(--gris);
+    font-size: var(--fs-xs);
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.placa-foto-btn {
+    min-width: 54px;
+    border-radius: var(--r-md);
+    background: var(--tinta);
+    font-size: 22px;
+    transition: transform var(--t-press) var(--ease-out);
+}
+
+.placa-foto-btn:active {
+    transform: scale(.95);
+}
+
+/* Bloques de evidencia: paneles neutros (antes rayados y rojos) */
+#ingresoForm .notas-group,
+#ingresoForm .photo-section,
+#ingresoForm .firma-section {
+    margin: 14px 0;
+    padding: 16px 14px;
+    border: 1px solid var(--linea) !important;
+    border-radius: var(--r-lg) !important;
+    background: var(--panel) !important;
+    box-shadow: var(--sombra-1);
+}
+
+#ingresoForm .notas-pestana {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 6px;
+    width: auto;
+    margin: 18px 0 -6px 4px;
+    padding: 0;
+    border: 0;
+    background: none !important;
+    color: var(--tinta) !important;
+    font-size: var(--fs-sm);
+    font-weight: 800;
+    box-shadow: none !important;
+}
+
+#ingresoForm .photo-title,
+#ingresoForm .firma-title {
+    margin: 0 0 12px;
+    color: var(--tinta);
+    font-size: var(--fs-md);
+    font-weight: 800;
+    text-align: left;
+}
+
+/* Botones de captura: secundarios, en tinta (el rojo queda para Ingresar) */
+#ingresoForm .photo-btn,
+#ingresoForm .photo-btn-2 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 50px;
+    margin: 8px 0 0;
+    padding: 0 16px;
+    border: 1px solid var(--tinta) !important;
+    border-radius: var(--r-md) !important;
+    background: var(--panel) !important;
+    color: var(--tinta) !important;
+    font-size: var(--fs-md) !important;
+    font-weight: 800 !important;
+    box-shadow: none !important;
+    transition: transform var(--t-press) var(--ease-out), background-color var(--t-rapido) ease;
+}
+
+#ingresoForm .photo-btn:active,
+#ingresoForm .photo-btn-2:active {
+    transform: scale(.97);
+}
+
+#ingresoForm .photo-btn .camera-icon,
+#ingresoForm .photo-btn-2 .camera-icon {
+    width: 20px;
+    height: 20px;
+    stroke-width: 1.85;
+}
+
+#ingresoForm .photo-counter {
+    margin: 8px 0 0;
+    color: var(--gris);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-align: left;
+}
+
+/* Indicativo del país: la flecha no se monta sobre el texto */
+#ingresoForm .telefono-pais select {
+    padding-right: 30px !important;
+    background-position: right 10px center !important;
+}
+
+/* Lupas de los buscadores (valet, banco, parqueadero, ubicación): en gris, el rojo es para actuar */
+#ingresoForm .btn-buscador {
+    color: var(--gris) !important;
+}
+
+#ingresoForm .notas-toggle-btn {
+    border-radius: 999px !important;
+    border: 1px solid var(--linea-2) !important;
+    background: var(--suelo) !important;
+    color: var(--tinta-2) !important;
+    font-weight: 700;
+}
+
+#ingresoForm .firma-abrir {
+    width: 100%;
+    min-height: 64px;
+    border: 1.5px dashed var(--linea-2) !important;
+    border-radius: var(--r-md) !important;
+    background: var(--suelo) !important;
+    color: var(--tinta) !important;
+    font-weight: 800;
+}
+
+/* Ingresar: fijo encima de la barra inferior, siempre al alcance del pulgar */
+#ingresoForm .ingreso-btn {
+    position: sticky;
+    bottom: calc(var(--nav-h) + var(--safe-b) + 10px);
+    z-index: 30;
+    width: 100%;
+    min-height: 56px;
+    margin-top: 16px;
+    border: 0;
+    border-radius: var(--r-lg);
+    background: var(--rojo);
+    color: #fff;
+    font-size: var(--fs-lg);
+    font-weight: 800;
+    box-shadow: 0 14px 28px -12px rgba(211, 47, 47, .75), 0 0 0 6px var(--suelo);
+    transition: transform var(--t-press) var(--ease-out), background-color var(--t-rapido) ease;
+}
+
+#ingresoForm .ingreso-btn:hover {
+    background: var(--rojo-700);
+}
+
+#ingresoForm .ingreso-btn:active {
+    transform: scale(.98);
+}
+
+@media (min-width: 768px) {
+    #ingresoForm .ingreso-btn {
+        bottom: 16px;
+    }
+}
+
+/* ---------- 10d. Vista Key (parqueadero) ---------- */
+body.cps-key > .container {
+    padding: 16px 16px 0;
+    margin-top: 0 !important;
+}
+
+body.cps-key .container > .header {
+    flex-wrap: wrap;
+    text-align: left;
+}
+
+body.cps-key .header-info {
+    text-align: left;
+}
+
+body.cps-key .header-info h2 {
+    font-size: 24px;
+    text-transform: none;
+}
+
+.cambiar-parqueadero {
+    justify-content: flex-start !important;
+}
+
+.cambiar-parqueadero select {
+    min-height: 44px;
+    padding-right: 34px;
+}
+
+/* El rol ya está en la hoja "Más" */
+body.cps-key .container > .header > .titulo-rol {
+    display: none;
+}
+
+body.cps-key .search-section {
+    padding: 14px 14px 2px;
+}
+
+.cambiar-parqueadero {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    margin-top: 10px;
+}
+
+.cambiar-parqueadero label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--gris);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px 3px !important;
+    border-radius: 999px !important;
+    background: var(--suelo) !important;
+    color: var(--tinta-2) !important;
+    font-size: var(--fs-xs) !important;
+    font-weight: 800;
+    letter-spacing: .03em;
+    box-shadow: none !important;
+}
+
+/* Vista Key, mismos estados que en Ingresos */
+.status-badge.status-pendiente {
+    background: var(--rojo) !important;
+    color: #fff !important;
+}
+
+.status-badge.status-pagado {
+    background: var(--panel) !important;
+    color: var(--gris) !important;
+    box-shadow: inset 0 0 0 1px var(--linea-2) !important;
+}
+
+.status-badge.status-esperando-valet {
+    background: var(--panel) !important;
+    color: var(--tinta) !important;
+    box-shadow: inset 0 0 0 1px var(--tinta) !important;
+}
+
+@media (min-width: 768px) {
+    .tabla-key td[data-label="Estado"] {
+        text-align: left;
+    }
+
+    .tabla-key td[data-label="Estado"] .cps-mini {
+        display: flex;
+        margin: 0 0 6px 2px;
+    }
+
+    /* Encabezado y celdas con la misma alineación: todo a la izquierda, las acciones a la derecha */
+    .tabla-key thead th,
+    .tabla-ingresos thead th,
+    .tabla-key tbody td,
+    .tabla-ingresos tbody td {
+        text-align: left !important;
+    }
+
+    .tabla-key thead th:last-child,
+    .tabla-ingresos thead th:last-child {
+        text-align: right !important;
+    }
+}
+
+/* Búsqueda de Vista Key: el campo Placa del filtro lo maneja la búsqueda de arriba; Estado y Limpiar en una fila */
+.cps-filtro-key .form-group:has(> input[name="placa"]) {
+    display: none;
+}
+
+.cps-filtro-key > form {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: nowrap;
+    gap: 10px;
+    margin: 0;
+}
+
+.cps-filtro-key > form > div {
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
+    margin: 0 !important;
+    padding: 0;
+}
+
+.cps-filtro-key > form > div:last-child {
+    flex: 0 0 auto;
+}
+
+body.cps-key .search-section.cps-filtro-key {
+    padding: 12px;
+}
+
+.tabla-key td.cell-action {
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.tabla-key .actions-form {
+    display: inline-flex !important;
+    gap: 8px;
+}
+
+.btn-icon {
+    display: inline-grid !important;
+    place-items: center;
+    width: 44px !important;
+    height: 44px !important;
+    border: 1px solid var(--linea-2) !important;
+    border-radius: 12px !important;
+    background: var(--panel) !important;
+    color: var(--tinta) !important;
+    font-size: 19px !important;
+    box-shadow: var(--sombra-1) !important;
+    transition: transform var(--t-press) var(--ease-out);
+}
+
+.btn-icon:active {
+    transform: scale(.94);
+}
+
+/* Parquear y despachar: lo que mueve al carro de estación */
+.btn-icon.btn-icon-success,
+.btn-icon.btn-icon-warning {
+    background: var(--tinta) !important;
+    border-color: var(--tinta) !important;
+    color: #fff !important;
+}
+
+@media (max-width: 767.98px) {
+    .tabla-key,
+    .tabla-key tbody {
+        display: block;
+        min-width: 0 !important;
+        background: none;
+    }
+
+    .tabla-key thead {
+        display: none;
+    }
+
+    .tabla-key tbody tr {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "placa  acciones"
+            "estado estado";
+        align-items: center;
+        gap: 10px 8px;
+        margin-bottom: 10px;
+        padding: 12px 12px 12px 14px;
+        border: 1px solid var(--linea);
+        border-radius: var(--r-lg);
+        background: var(--panel) !important;
+        box-shadow: var(--sombra-1);
+    }
+
+    .tabla-key tbody tr.alerta-solicitado {
+        border: 1.5px solid var(--rojo);
+        background: var(--panel) !important;
+    }
+
+    .tabla-key tbody td {
+        display: block;
+        padding: 0 !important;
+        border: 0;
+    }
+
+    .tabla-key td[data-label="Placa"] { grid-area: placa; text-align: left; }
+    .tabla-key td[data-label="Estado"] { grid-area: estado; display: flex; align-items: center; gap: 10px; }
+    .tabla-key td.cell-action { grid-area: acciones; }
+
+    .tabla-key .ingreso-placa {
+        font-size: 19px;
+        padding: 6px 12px 4px;
+    }
+
+    body.cps-key .table-container {
+        background: none;
+        border: 0;
+        box-shadow: none;
+        overflow: visible;
+    }
+}
+
+/* Ventanas de Bootstrap (despacho en Vista Key, etc.) */
+.modal-content {
+    border: 0;
+    border-radius: var(--r-xl);
+    box-shadow: var(--sombra-2);
+}
+
+/* ---------- 10e. Vistas del administrador (Estado Turnos, Configuración, Liquidaciones, Despachos y cobros) ---------- */
+/* Encabezado: sin el recuadro del logo ni la etiqueta "Modo Administrador" (el rol está en la hoja "Más") */
+.admin-container > .header {
+    margin-bottom: 8px;
+}
+
+.admin-container .logo-container,
+.admin-container .header-actions {
+    display: none !important;
+}
+
+.admin-container .header-info {
+    flex-grow: 1;
+    padding-left: 0 !important;
+}
+
+.admin-container .header-info h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 !important;
+    font-size: 26px !important;
+}
+
+.admin-container .header-info h2 > .lc,
+.admin-container .header-info h2 > i {
+    color: var(--rojo) !important;
+    font-size: 24px;
+}
+
+.admin-container .header-info p {
+    margin-top: 4px;
+}
+
+@media (max-width: 767.98px) {
+    .admin-container .header-info p {
+        display: none;
+    }
+
+    /* "Volver" del encabezado: solo la flecha (el texto lo siguen leyendo los lectores de pantalla) */
+    .container > .header > a.btn-secondary,
+    .admin-container > .header > a.btn-secondary {
+        display: inline-grid;
+        place-items: center;
+        flex: 0 0 44px;
+        width: 44px;
+        height: 44px;
+        min-height: 0;
+        margin-left: auto;
+        padding: 0;
+        border-radius: 12px;
+        font-size: 0;
+    }
+
+    .container > .header > a.btn-secondary > i,
+    .admin-container > .header > a.btn-secondary > i {
+        font-size: 20px;
+    }
+}
+
+/* Configuración: una lista de opciones (antes, tarjetas grandes centradas) */
+.section-header {
+    margin: 8px 0 12px !important;
+}
+
+.section-tag {
+    padding: 0 2px !important;
+    background: none !important;
+    color: var(--gris) !important;
+    font-size: var(--fs-xs) !important;
+    font-weight: 800 !important;
+    letter-spacing: .08em !important;
+}
+
+.section-line {
+    height: 1px !important;
+    background: var(--linea) !important;
+}
+
+.admin-cards-container {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0 !important;
+    overflow: hidden;
+    border: 1px solid var(--linea);
+    border-radius: var(--r-lg);
+    background: var(--panel);
+    box-shadow: var(--sombra-1);
+}
+
+.admin-cards-container .admin-card {
+    display: grid !important;
+    grid-template-columns: 44px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--linea) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    text-align: left !important;
+    transform: none !important;
+    transition: background-color var(--t-rapido) ease !important;
+}
+
+.admin-cards-container .admin-card:last-child {
+    border-bottom: 0 !important;
+}
+
+.admin-cards-container .admin-card:hover {
+    background: var(--suelo) !important;
+}
+
+.admin-cards-container .admin-card:active {
+    background: var(--linea) !important;
+}
+
+.admin-card-icon {
+    width: 44px !important;
+    height: 44px !important;
+    margin: 0 !important;
+    border-radius: 12px !important;
+    background: var(--suelo) !important;
+    color: var(--tinta) !important;
+    font-size: 20px !important;
+}
+
+.admin-card-content h3 {
+    margin: 0 0 2px !important;
+    color: var(--tinta) !important;
+    font-size: var(--fs-md) !important;
+    font-weight: 800 !important;
+}
+
+.admin-card-content p {
+    color: var(--gris) !important;
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+}
+
+/* La flecha de la fila (el texto "Ir a gestión" sobra en una lista) */
+.admin-card-btn {
+    padding: 0 !important;
+    background: none !important;
+    color: var(--gris-2) !important;
+    font-size: 0 !important;
+}
+
+.admin-card-btn > i,
+.admin-card-btn > .lc {
+    font-size: 20px !important;
+}
+
+/* Tablas del admin (Estado Turnos): encabezado neutro, como la tabla de ingresos */
+.adm-table thead tr {
+    background: var(--panel) !important;
+}
+
+.adm-table thead th {
+    border-bottom: 1px solid var(--linea);
+    color: var(--gris) !important;
+    font-size: 11.5px !important;
+    font-weight: 800 !important;
+    letter-spacing: .06em !important;
+    text-transform: uppercase;
+}
+
+.adm-table {
+    font-family: var(--font) !important;
+}
+
+.adm-pill-total {
+    background: var(--panel) !important;
+    border: 1px solid var(--linea) !important;
+    color: var(--tinta) !important;
+}
+
+/* ---------- 11. Ventanas de acciones (modal-acciones y compañía): hoja desde abajo en el celular ---------- */
+.Editar-Ingreso .modal-overlay,
+.modal-overlay {
+    background: rgba(12, 14, 18, .45);
+}
+
+.Card-Ingreso,
+.Editar-Ingreso > .Card-Ingreso,
+#modal-acciones .Card-Ingreso {
+    border-radius: var(--r-xl);
+    box-shadow: var(--sombra-2);
+    animation: cps-entrar var(--t-hoja) var(--ease-drawer);
+}
+
+@keyframes cps-entrar {
+    from { opacity: 0; transform: translateY(16px) scale(.98); }
+}
+
+.close-btn {
+    border-radius: 50% !important;
+    background: var(--suelo) !important;
+    color: var(--tinta) !important;
+}
+
+/* Información del carro: títulos de sección en tinta (el rojo es para actuar, no para rotular) */
+.info-seccion {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--tinta) !important;
+    font-size: var(--fs-xs) !important;
+    font-weight: 800 !important;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.info-seccion > .lc,
+.info-seccion > i {
+    color: var(--gris) !important;
+}
+
+/* Enlaces de acción dentro de las ventanas (Cambiar valor total, Leer comprobante) */
+.cobro-valor-cambiar,
+.cobro-valor-leer {
+    color: var(--tinta) !important;
+    text-underline-offset: 3px;
+}
+
+@media (max-width: 767.98px) {
+    .Editar-Ingreso {
+        align-items: flex-end !important;
+    }
+
+    .Editar-Ingreso > .Card-Ingreso,
+    .Editar-Ingreso .Card-Ingreso {
+        width: 100% !important;
+        max-width: none !important;
+        max-height: 92dvh;
+        border-radius: var(--r-xl) var(--r-xl) 0 0;
+        padding-bottom: calc(24px + var(--safe-b));
+        animation: cps-subir var(--t-hoja) var(--ease-drawer);
+    }
+
+    @keyframes cps-subir {
+        from { transform: translateY(100%); }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .Card-Ingreso,
+    .Editar-Ingreso .Card-Ingreso {
+        animation-name: cps-aparecer !important;
+    }
+
+    @keyframes cps-aparecer {
+        from { opacity: 0; }
+    }
+}
+
+/* ---------- 12. Burbujas: en la barra superior, junto al avatar (antes flotaban sobre la lista y tapaban las
+   acciones de las fichas). La de solicitudes es una campana con su número; la de WhatsApp, su ícono de marca ---------- */
+body.cps-app .bubble,
+body.cps-app .bubble-whatsapp {
+    position: fixed !important;
+    top: calc(var(--safe-t) + 10px) !important;
+    bottom: auto !important;
+    z-index: 960 !important;
+    width: 36px;
+    height: 36px !important;
+    min-width: 36px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background: var(--suelo) !important;
+    box-shadow: none !important;
+    gap: 0 !important;
+}
+
+body.cps-app .bubble {
+    right: 60px !important;
+}
+
+body.cps-app .bubble-whatsapp {
+    right: 104px !important;
+}
+
+body.cps-app .bubble i,
+body.cps-app .bubble-whatsapp i {
+    font-size: 19px !important;
+}
+
+body.cps-app .bubble i {
+    color: var(--tinta) !important;
+}
+
+body.cps-app .bubble-whatsapp i {
+    color: #1a9e4f !important;
+}
+
+/* Con solicitudes: la campana se pone roja (la estación que pide atención) y el número va como insignia */
+body.cps-app .bubble.active {
+    background: var(--rojo) !important;
+}
+
+body.cps-app .bubble.active i {
+    color: #fff !important;
+}
+
+body.cps-app .bubble-count {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    display: grid;
+    place-items: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 1px 5px 0;
+    border-radius: 9px;
+    background: var(--tinta);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    box-shadow: 0 0 0 2px var(--panel);
+}
+
+body.cps-app .bubble-count.hidden,
+body.cps-app .bubble-count:empty {
+    display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    body.cps-app .bubble:hover,
+    body.cps-app .bubble-whatsapp:hover {
+        transform: none;
+        background: var(--linea) !important;
+    }
+
+    body.cps-app .bubble.active:hover {
+        background: var(--rojo-700) !important;
+    }
+}
+
+/* Espacio para las burbujas en la barra (la zona se recorta si hace falta) */
+body.cps-app:has(.bubble) .cps-zona {
+    margin-right: 46px;
+}
+
+body.cps-app:has(.bubble-whatsapp) .cps-zona {
+    margin-right: 90px;
+}
+
+@media (max-width: 419.98px) {
+    body.cps-app:has(.bubble-whatsapp) .cps-marca span:last-child {
+        display: none;
+    }
+}
+
+body.cps-app .recibir-aviso {
+    top: auto !important;
+    right: 16px !important;
+    bottom: calc(var(--nav-h) + var(--safe-b) + 16px) !important;
+}
+
+@media (min-width: 768px) {
+    body.cps-app .recibir-aviso {
+        bottom: 24px !important;
+    }
+}
+
+/* ---------- 13. Inicio ---------- */
+.cps-inicio {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.cps-saludo h1 {
+    margin: 6px 0 2px;
+    font-size: var(--fs-2xl);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+
+.cps-saludo p {
+    margin: 0;
+    color: var(--gris);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+}
+
+/* Carros solicitados: la fila que hay que atender primero */
+.cps-solicitados {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 64px;
+    padding: 12px 16px;
+    border: 1.5px solid var(--rojo);
+    border-radius: var(--r-lg);
+    background: var(--panel);
+    color: var(--tinta);
+    text-decoration: none;
+    box-shadow: var(--sombra-1);
+    transition: transform var(--t-press) var(--ease-out);
+}
+
+.cps-solicitados:active {
+    transform: scale(.98);
+}
+
+.cps-solicitados:hover {
+    color: var(--tinta);
+}
+
+.cps-solicitados strong {
+    display: block;
+    font-size: var(--fs-md);
+    font-weight: 800;
+}
+
+.cps-solicitados small {
+    color: var(--gris);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.cps-solicitados > .ico {
+    margin-left: auto;
+    font-size: 20px;
+    color: var(--gris-2);
+}
+
+/* El punto rojo de la estación, con un anillo que late despacio */
+.cps-solicitados-punto {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--rojo);
+    box-shadow: 0 0 0 5px var(--rojo-100);
+    animation: cps-latir 2s ease-in-out infinite;
+}
+
+@keyframes cps-latir {
+    50% { box-shadow: 0 0 0 8px var(--rojo-50); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cps-solicitados-punto { animation: none; }
+}
+
+.cps-tablero {
+    padding: 16px 14px 14px;
+    background: var(--panel);
+    border: 1px solid var(--linea);
+    border-radius: var(--r-lg);
+    box-shadow: var(--sombra-1);
+}
+
+.cps-tablero-cabeza {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0 2px 16px;
+}
+
+.cps-tablero-cabeza h2 {
+    margin: 0;
+    font-size: var(--fs-lg);
+    font-weight: 800;
+}
+
+.cps-tablero-cabeza a,
+.cps-tablero-cabeza span {
+    color: var(--gris);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.cps-tablero-cabeza a:hover {
+    color: var(--rojo-700);
+}
+
+.cps-acciones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.cps-accion {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    min-height: 104px;
+    padding: 14px;
+    border: 1px solid var(--linea);
+    border-radius: var(--r-lg);
+    background: var(--panel);
+    color: var(--tinta);
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    box-shadow: var(--sombra-1);
+    cursor: pointer;
+    transition: transform var(--t-press) var(--ease-out), border-color var(--t-rapido) ease;
+}
+
+.cps-accion:active {
+    transform: scale(.97);
+}
+
+.cps-accion:hover {
+    color: var(--tinta);
+    border-color: var(--linea-2);
+}
+
+.cps-accion .ico {
+    font-size: 24px;
+    color: var(--tinta);
+}
+
+.cps-accion strong {
+    display: block;
+    font-size: var(--fs-md);
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.cps-accion small {
+    display: block;
+    margin-top: 2px;
+    color: var(--gris);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.cps-accion.principal {
+    background: var(--rojo);
+    border-color: var(--rojo);
+    color: #fff;
+    box-shadow: 0 10px 22px -12px rgba(211, 47, 47, .8);
+}
+
+.cps-accion.principal .ico,
+.cps-accion.principal small {
+    color: rgba(255, 255, 255, .88);
+}
+
+.cps-accion.principal:hover {
+    background: var(--rojo-700);
+    color: #fff;
+}
+
+/* Nuevo ingreso: toda la tarjeta lleva al formulario; el botón de la esquina, al escáner */
+.cps-accion:has(> .cps-accion-link) {
+    position: relative;
+    padding: 0;
+}
+
+.cps-accion-link {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    width: 100%;
+    height: 100%;
+    padding: 14px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.cps-accion-link:hover {
+    color: inherit;
+}
+
+.cps-accion-extra {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .16);
+    color: #fff;
+    transition: background-color var(--t-rapido) ease, transform var(--t-press) var(--ease-out);
+}
+
+.cps-accion-extra .ico {
+    font-size: 22px;
+    color: #fff !important;
+}
+
+.cps-accion-extra:hover {
+    background: rgba(255, 255, 255, .26);
+    color: #fff;
+}
+
+.cps-accion-extra:active {
+    transform: scale(.94);
+}
+
+.cps-aviso-liquidar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: var(--r-lg);
+    background: var(--aviso-50);
+    color: #6b3507;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.cps-aviso-liquidar .ico {
+    font-size: 22px;
+    color: var(--aviso);
+}
+
+.cps-aviso-liquidar strong {
+    color: #4a2504;
+}
+
+.cps-aviso-liquidar:hover {
+    color: #4a2504;
+}
+
+
+/* ---------- 13b. Entrar (login, rol y zona, recuperar contraseña): el logo es el momento de marca ---------- */
+body.auth-body {
+    background: var(--panel);
+    padding: calc(24px + var(--safe-t)) 20px calc(24px + var(--safe-b));
+}
+
+.auth-body .login-container {
+    padding: 8px 4px;
+    text-align: left;
+}
+
+.auth-body .logo-section {
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.auth-body .logo-img {
+    width: 200px;
+    margin-bottom: 0;
+}
+
+.auth-body .login-title {
+    margin: 0 0 20px;
+    color: var(--tinta);
+    font-size: var(--fs-2xl);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    text-align: center;
+}
+
+.auth-body .input-group {
+    margin-bottom: 14px;
+}
+
+.auth-body .input-group input,
+.auth-body .input-group select,
+.auth-body .form-control {
+    min-height: 54px;
+    padding: 15px 16px 13px;
+    font-size: var(--fs-md);
+}
+
+.auth-body .login-btn {
+    min-height: 56px;
+    margin-top: 6px;
+    border-radius: var(--r-lg);
+    background: var(--rojo);
+    font-size: var(--fs-lg);
+    font-weight: 800;
+    box-shadow: 0 14px 28px -14px rgba(211, 47, 47, .8);
+    transition: transform var(--t-press) var(--ease-out), background-color var(--t-rapido) ease;
+}
+
+.auth-body .login-btn:hover {
+    background: var(--rojo-700);
+}
+
+.auth-body .login-btn:active {
+    transform: scale(.98);
+}
+
+.auth-body .login-btn:disabled {
+    box-shadow: none;
+}
+
+.auth-body .forgot-password {
+    align-items: center;
+}
+
+.auth-body .forgot-password a {
+    color: var(--gris);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+}
+
+.auth-body .forgot-password a:hover {
+    color: var(--rojo-700);
+    opacity: 1;
+}
+
+.error-credenciales {
+    border: 0 !important;
+    border-radius: var(--r-md) !important;
+    background: var(--rojo-50) !important;
+    color: var(--rojo-700) !important;
+    font-weight: 700;
+}
+
+/* ---------- 13c. Liquidación ---------- */
+body.cps-liquidacion {
+    background: var(--suelo);
+}
+
+body.cps-liquidacion > :not(.cps-top):not(.cps-nav):not(dialog):not(script) {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Ya no hay casita fija arriba: sin el espacio que le dejaba */
+body.cps-liquidacion .page {
+    padding: 16px 16px 0;
+    background: transparent;
+    font-family: var(--font);
+}
+
+/* El total a liquidar: en tinta, el dato más fuerte sin pintar un bloque de rojo */
+body.cps-liquidacion .stat-card.highlight {
+    background: var(--tinta) !important;
+    border-color: var(--tinta) !important;
+}
+
+/* ---------- 13d. Página del cliente (Payment: estado del servicio, pedir el carro y pagar) ---------- */
+/* Encabezado blanco con el logo (antes, un bloque rojo degradado) */
+.servicio-header,
+.pago-header {
+    background: var(--panel) !important;
+    color: var(--tinta) !important;
+    border-bottom: 1px solid var(--linea);
+    padding: 28px 24px 20px !important;
+}
+
+.servicio-header::before,
+.servicio-header::after,
+.pago-header::before,
+.pago-header::after {
+    display: none !important;
+}
+
+.servicio-header .logo-container {
+    width: 132px;
+    height: auto;
+    background: none;
+    box-shadow: none;
+}
+
+.servicio-header .logo-image {
+    width: 100%;
+    height: auto;
+}
+
+.header-badge {
+    background: var(--suelo) !important;
+    color: var(--tinta-2) !important;
+    font-size: 11.5px !important;
+    font-weight: 800 !important;
+    letter-spacing: .08em !important;
+}
+
+/* Datos del servicio: campos limpios, sin franja roja de un lado */
+.descripcion-servicio li,
+.pago-info-box,
+.pago-confirmation-item,
+.instruccion-card {
+    border: 1px solid var(--linea) !important;
+    border-left: 1px solid var(--linea) !important;
+    background: var(--panel) !important;
+    box-shadow: none !important;
+}
+
+.campo-label {
+    color: var(--gris) !important;
+    font-weight: 800 !important;
+    letter-spacing: .08em !important;
+}
+
+/* La placa del cliente: la misma ficha amarilla de la app */
+.descripcion-servicio li:first-child .campo-valor {
+    display: inline-flex;
+    padding: .3em .6em .18em;
+    border: 2px solid var(--placa-borde);
+    border-radius: 7px;
+    background: var(--placa);
+    color: var(--tinta);
+    font-weight: 800;
+    letter-spacing: .14em;
+}
+
+.servicio-btn {
+    border-radius: var(--r-lg) !important;
+    background: var(--rojo) !important;
+    font-weight: 800 !important;
+}
+
+/* Políticas: texto de lectura, alineado a la izquierda y a tamaño normal */
+.home-welcome .home-card {
+    text-align: left;
+}
+
+.home-welcome .home-card p:not(.home-greeting) {
+    max-width: 65ch;
+    margin-left: auto;
+    margin-right: auto;
+    color: var(--tinta-2);
+    font-size: var(--fs-md) !important;
+    line-height: 1.6;
+}
+
+/* ---------- 14. Avisos (mostrarAlertaWhatsApp) ---------- */
+#customAlertContainer > * {
+    font-family: var(--font);
+    border-radius: var(--r-md) !important;
+    box-shadow: var(--sombra-2) !important;
+}
+
+/* ---------- 14b. Imprimir / PDF: sin barras ni burbujas ---------- */
+@media print {
+    .cps-top,
+    .cps-nav,
+    .cps-hoja,
+    .bubble,
+    .bubble-whatsapp,
+    .recibir-aviso {
+        display: none !important;
+    }
+
+    body.cps-app {
+        padding: 0 !important;
+        background: #fff;
+    }
+}
+
+/* ---------- 15. Movimiento reducido ---------- */
+@media (prefers-reduced-motion: reduce) {
+    .btn:active,
+    .cps-btn:active,
+    .cps-accion:active,
+    .home-action-btn:active,
+    .cps-nav-item:active .ico,
+    .cps-nav-nuevo:active .cps-nav-boton {
+        transform: none;
+    }
+}

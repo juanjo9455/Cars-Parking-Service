@@ -15,9 +15,9 @@
 
     max-width: 1400px;
     margin: 0 auto;
-    padding: 20px 16px 40px;
+    padding: 4px 0 40px;   /* el margen de los lados lo pone .page-wrapper (barra de navegación del rediseño) */
     color: var(--dsh-texto);
-    background: var(--dsh-fondo);
+    background: transparent;
     font-variant-numeric: tabular-nums;
 }
 
@@ -31,7 +31,6 @@
 }
 
 /* ---------- Encabezado ---------- */
-/* padding-left: espacio para el botón fijo del menú (.div-abrir-menu, 42 px arriba a la izquierda) */
 .dsh-encabezado {
     display: flex;
     align-items: center;
@@ -39,7 +38,6 @@
     gap: 12px;
     min-height: 48px;
     margin-bottom: 16px;
-    padding-left: 52px;
 }
 
 .dsh-encabezado h1 {

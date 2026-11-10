@@ -123,7 +123,7 @@
         </div>
     </div>
 
-    <h1 class="ingreso-title">Ingresar Vehiculo</h1>
+    <h1 class="ingreso-title">Nuevo ingreso</h1>
 
     @if (TempData["Error"] != null)
     {
@@ -205,6 +205,7 @@
         <!-- Selección de Valet (Opcional, valor 0 envía 'Aún sin valet').
              Valet, parqueadero y ubicación se eligen con la lupa (buscador-lista.js); el select es el que se envía -->
         <div class="input-group">
+            <label class="cps-etiqueta" for="id_valet">Valet</label>
             <div class="campo-buscador">
                 <select name="id_valet" id="id_valet" style="width:100%;" tabindex="-1">
                     <option value="0">Aún sin valet</option>
@@ -224,6 +225,7 @@
 
         <!-- Banco / Cajero (Informativo, envía el ID oculto) -->
         <div class="input-group">
+            <label class="cps-etiqueta" for="banco_display">Banco</label>
             <input type="text"
                    id="banco_display"
                    value="@ViewBag.UsuarioSesion?.nombre @ViewBag.UsuarioSesion?.apellido"
@@ -238,6 +240,7 @@
 
         <!-- Selección de Parqueadero -->
         <div class="input-group">
+            <label class="cps-etiqueta" for="id_parqueadero">Parqueadero</label>
             <div class="campo-buscador">
                 <select name="id_parqueadero" id="id_parqueadero" style="width:100%;" tabindex="-1" required>
                     <option value="">Selecciona un Parqueadero</option>
@@ -260,6 +263,7 @@
 
         <!-- Ubicación: obligatoria para todos, solo las de su zona. Cambiar de restaurante no cambia el turno -->
         <div class="input-group">
+            <label class="cps-etiqueta" for="id_ubicacion">Ubicación</label>
             <div class="campo-buscador">
                 <select name="id_ubicacion" id="id_ubicacion" style="width:100%;" tabindex="-1" required>
                     <option value="">Selecciona una Ubicación</option>

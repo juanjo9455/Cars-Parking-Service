@@ -9,6 +9,10 @@
     var valoresUbicacion = ViewBag.ValoresUbicacion as Dictionary<int, decimal> ?? new Dictionary<int, decimal>();
     var moneda = System.Globalization.CultureInfo.GetCultureInfo("es-CO");
 }
+@functions {
+    // Las estaciones de la línea de cada carro, en orden (cancelado no está: su línea queda vacía)
+    static readonly string[] EstacionesLinea = ["activo", "parqueado", "solicitado", "despachado", "finalizado"];
+}
 @* Filas de la tabla de ingresos. Las usan la página y su refresco automático (FilasIngresos, punto 16),
    así los botones salen siempre de las mismas reglas *@
 
@@ -37,13 +41,23 @@
                     horaSolicitud = ingresos.fecha_solicitud.Value.ToString(ingresos.fecha_solicitud.Value.Date == DateTime.Today ? "HH:mm" : "dd/MM HH:mm");
                 }
 
+                // Dónde va el carro en su línea (rediseño): recibido, parqueado, solicitado, despachado, pagado
+                var estadoLinea = (ingresos.estado_servicio ?? "").Trim().ToLower();
+                var posicion = Array.IndexOf(EstacionesLinea, estadoLinea);
+
                 <tr class="@claseAlerta">
 
                     @* La placa va en un span: la celda conserva su relleno y la placa no queda pegada a los bordes *@
                     <td data-label="Placa"><span class="ingreso-placa">@ingresos.placa</span></td>
 
                     <td data-label="Estado Servicio">
-                        <span class="info-chip">@(string.IsNullOrWhiteSpace(ingresos.estado_servicio) ? "—" : ingresos.estado_servicio)</span>
+                        <span class="cps-mini" data-estado="@estadoLinea" aria-hidden="true">
+                            @for (var k = 0; k < EstacionesLinea.Length; k++)
+                            {
+                                <i class="@(k < posicion ? "pasada" : k == posicion ? "actual" : "")"></i>
+                            }
+                        </span>
+                        <span class="info-chip" data-estado="@estadoLinea">@(string.IsNullOrWhiteSpace(ingresos.estado_servicio) ? "—" : ingresos.estado_servicio)</span>
                         @if (quienSolicito != null)
                         {
                             <span class="solicitud-movil">Pidió: @quienSolicito · @horaSolicitud</span>

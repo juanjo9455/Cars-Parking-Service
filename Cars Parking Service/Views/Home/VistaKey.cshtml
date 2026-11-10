@@ -67,7 +67,8 @@
 <div class="container mt-4">
     <div class="header">
         <div class="header-info">
-            <h2>@ViewData["NombreParqueadero"]</h2>
+            @* El nombre viene en mayúsculas de la BD: como título de letrero, cada palabra con mayúscula inicial *@
+            <h2>@System.Globalization.CultureInfo.GetCultureInfo("es-CO").TextInfo.ToTitleCase((ViewData["NombreParqueadero"]?.ToString() ?? "").ToLower())</h2>
             <p>Gestión de vehículos en la sucursal</p>
 
             @* Cambiar de parqueadero sin salir: al escoger otro se envía solo (CambiarParqueaderoVista) *@
@@ -98,8 +99,16 @@
         </div>
     </div>
 
-    <p style="color: #857D7B;">Filtrar vehículos</p>
-    <div class="search-section mb-4">
+    @* Búsqueda de placa siempre a la vista (rediseño), como en Ingresos: escribe en el campo Placa del filtro (cps.js) *@
+    <label class="cps-buscar" for="cpsBuscarPlaca">
+        <svg class="ico" aria-hidden="true" focusable="false"><use href="/img/iconos.svg?v=1#i-search"></use></svg>
+        <span class="visually-hidden">Buscar placa</span>
+        <input type="search" id="cpsBuscarPlaca" placeholder="Buscar placa" autocomplete="off" autocapitalize="characters"
+               spellcheck="false" maxlength="6" enterkeyhint="search" value="@ViewData["FiltroPlaca"]"
+               data-espejo=".search-section form [name='placa']" />
+    </label>
+
+    <div class="search-section cps-filtro-key mb-4">
         <form method="get" action="@Url.Action("VistaKey", "Home")" class="row">
             <div class="form-group col-md-4 mb-3">
                 <label>Placa</label>

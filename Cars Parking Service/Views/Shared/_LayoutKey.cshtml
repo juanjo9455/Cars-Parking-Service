@@ -1,10 +1,5 @@
-@using Microsoft.AspNetCore.Http
-@{
-    var idRol = Context.Session.GetInt32("id_rol");
-    var imagenUsuario = Context.Session.GetString("imagen_usuario_url");
-}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -21,56 +16,25 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/ui.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    @* Rediseño: la letra (Overpass) y el sistema visual van de últimos para que manden sobre los estilos de antes *@
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700;800;900&display=swap" />
+    <link rel="stylesheet" href="~/css/cps.css" asp-append-version="true" />
 </head>
-<body>
+<body class="cps-app cps-key">
 
-    <aside class="menu-lateral-container" id="menu-lateral">
-        <div class="div-cerrar-menu">
-            <i class="fa-solid fa-x" id="cerrar-menu-lateral"></i>
-        </div>
-        @* La foto también abre Mi perfil *@
-        <a class="usuario" asp-controller="Home" asp-action="MiPerfil" title="Mi perfil" aria-label="Mi perfil" style="display: block; width: 2.8cm; height: 2.8cm;">
-            @if (!string.IsNullOrEmpty(imagenUsuario))
-            {
-                <img src="@imagenUsuario" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />
-            }
-            else
-            {
-                <i class="fa-solid fa-user"></i>
-            }
-        </a>
-        <div class="menu-lateral">
-            <ol>
-
-                @if (ViewBag.idRol == 1 && ViewBag.EstaEnParqueadero == true)
-                {
-
-                    <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-key"></i>Vista Valet</a></li>
-
-                }
-                @if (ViewBag.idRol == 3)
-                {
-                    <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-crown"></i>Panel Admin</a></li>
-                }
-                @* El banco entra a Parqueaderos desde su menú: así vuelve (Index también le quita el parqueadero) *@
-                @if (ViewBag.idRol == 2)
-                {
-                    <li><a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-building-columns"></i>Vista Banco</a></li>
-                }
-
-                <li><a asp-controller="Home" asp-action="MiPerfil"><i class="fa-solid fa-user-gear"></i>Mi perfil</a></li>
-                <li><a asp-controller="Auth" asp-action="CerrarSesion" id="cerrar-sesion"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</a></li>
-            </ol>
-        </div>
-    </aside>
-    <div class="div-abrir-menu" id="div-abrir-menu">
-        <i class="fa-solid fa-bars" id="abrir-menu-lateral"></i>
-    </div>
+    @* Barra superior, barra inferior y hoja "Más" (antes, menú lateral): las mismas opciones por rol que en _Layout.
+       Inicio quita el parqueadero escogido, como hacían "Vista Valet", "Panel Admin" y "Vista Banco" *@
+    <partial name="_NavInferior" />
 
     @* Latido solo con actividad y cierre de sesión a la hora sin actividad *@
     <script src="~/js/inactividad.js" asp-append-version="true"></script>
 
     @RenderBody()
+
+    @* Íconos Lucide y hoja "Más": antes que los demás scripts, para cambiar los íconos antes de pintar *@
+    <script src="~/js/cps.js" asp-append-version="true"></script>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/pwa-register.js" asp-append-version="true"></script>

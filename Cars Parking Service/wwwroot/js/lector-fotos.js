@@ -436,3 +436,6 @@ async function leerValorComprobante(idIngreso, boton) {
         mostrarAlertaWhatsApp(`Valor leído: ${PESOS.format(valor)}. Revísalo antes de generar el código.`, 'success');
     });
 }
+
+// Desde Inicio ("Nuevo ingreso" con el botón de escanear, ?escanear=1): el escáner sale abierto
+if (document.getElementById("placa") && new URLSearchParams(location.search).has("escanear")) abrirEscanerPlaca();

@@ -67,6 +67,18 @@ namespace CarsParkingService.Controllers
             ViewBag.pendientesVehiculos = pendientes.Count;
             ViewBag.pendientesUbicaciones = pendientes.Distinct().Count();
 
+            // "La línea de hoy" (Inicio): cuántos carros hay en cada estado en la zona en la que entró. Los abiertos sin
+            // importar el día; los pagados, los entregados desde las 6 am (la jornada). Solo lee
+            var inicioJornada = DateTime.Now.AddHours(-6).Date.AddHours(6);
+            ViewBag.Linea = DeLaZona(_context.ingresos.AsNoTracking(), ZonaSesion())
+                .Where(i => i.estado_servicio == "activo" || i.estado_servicio == "parqueado" || i.estado_servicio == "solicitado" ||
+                            i.estado_servicio == "despachado" || (i.estado_servicio == "finalizado" && i.fecha_entrega >= inicioJornada))
+                .GroupBy(i => i.estado_servicio)
+                .Select(g => new { estado = g.Key, cantidad = g.Count() })
+                .AsEnumerable()
+                .GroupBy(x => (x.estado ?? "").Trim().ToLower())
+                .ToDictionary(g => g.Key, g => g.Sum(x => x.cantidad));
+
             return View();
 
         }
