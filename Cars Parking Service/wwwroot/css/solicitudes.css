@@ -603,6 +603,34 @@
     margin-right: 3px;
 }
 
+/* Solo el admin: solicitados de otras zonas, aparte y con el nombre de la zona; tocarlos abre Ingresos de esa zona */
+.req-otras-titulo {
+    padding: 10px 12px 6px;
+    border-top: 1px solid #e4e7eb;
+    color: #5a6069;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.req-item-otra {
+    color: inherit;
+    text-decoration: none;
+}
+
+.req-item-zona {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #14161a;
+    font-size: 13px;
+    font-weight: 700;
+}
+
 .btn-despachar-burbuja {
     display: inline-flex;
     align-items: center;

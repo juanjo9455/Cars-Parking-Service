@@ -16,9 +16,21 @@
     // Historial de cambios de cada vehículo, el más reciente primero (punto 6)
     var cambios = ViewBag.Cambios as Dictionary<int, List<cambio_ingreso>> ?? new Dictionary<int, List<cambio_ingreso>>();
 
-    // Suma de la columna Cobro: lo que pagaron los clientes, con propinas, y cuánto de eso fue propina
-    decimal totalPagado = 0;
-    decimal totalPropinas = 0;
+    // Páginas de 50: el enlace de cada una lleva los mismos filtros
+    var pagina = (int)ViewBag.Pagina;
+    var totalPaginas = (int)ViewBag.TotalPaginas;
+    string UrlPagina(int p) => Url.Action("DespachosCobros", new
+    {
+        desde = ((DateTime?)ViewData["FiltroDesde"])?.ToString("yyyy-MM-dd"),
+        hasta = ((DateTime?)ViewData["FiltroHasta"])?.ToString("yyyy-MM-dd"),
+        placa = ViewData["FiltroPlaca"],
+        usuario = ViewData["FiltroUsuario"],
+        como = ViewData["FiltroComo"],
+        zona = ViewData["FiltroZona"],
+        turno = ViewData["FiltroTurno"],
+        estado = ViewData["FiltroEstado"],
+        pagina = p
+    })!;
 }
 
 @* Despachos y cobros (punto 28, solo administrador): un vehículo por fila con su ingreso, solicitud,
@@ -175,14 +187,6 @@
         </p>
     }
 
-    @if (Model.Count >= 500)
-    {
-        <p class="wa-aviso">
-            <i class="fa-solid fa-circle-info"></i>
-            Se muestran los 500 vehículos más recientes. Usa los filtros para acotar la búsqueda.
-        </p>
-    }
-
     <!-- Tabla: lo principal de cada vehículo; la placa abre toda la información (despachos-cobros.js) -->
     <p class="dc-ayuda"><i class="fa-solid fa-hand-pointer"></i> Toca la placa para ver toda la información</p>
 
@@ -222,12 +226,6 @@
                     var cobro = i.usuario_cobro.HasValue
                         ? Nombre(i.usuario_cobro) + (string.IsNullOrEmpty(i.rol_cobrador) ? "" : $" ({i.rol_cobrador})")
                         : null;
-
-                    if (pagado)
-                    {
-                        totalPagado += total;
-                        totalPropinas += propina;
-                    }
 
                     var cambiosIngreso = cambios.GetValueOrDefault(i.id_ingreso) ?? new List<cambio_ingreso>();
                     var ultimoCambio = cambiosIngreso.FirstOrDefault();
@@ -308,7 +306,7 @@
                             }
                             else
                             {
-                                <span class="dc-vacio">Pendiente</span>
+                                <span class="status-badge dc-pendiente">Pendiente</span>
                             }
                         </td>
 
@@ -349,9 +347,12 @@
                 }
             </tbody>
 
-            @* Total de la columna Cobro: lo que pagaron los clientes de la lista, con propinas, y cuánto fue de propinas *@
-            @if (Model.Any(i => i.estado_pago == "pagado"))
+            @* Total de la columna Cobro: lo que pagaron los clientes de la lista (todas las páginas), con propinas, y
+               cuánto fue de propinas *@
+            @if ((int)ViewBag.Cobrados > 0)
             {
+                var totalPagado = (decimal)ViewBag.TotalPagado;
+                var totalPropinas = (decimal)ViewBag.TotalPropinas;
                 <tfoot>
                     <tr class="dc-total">
                         <td colspan="2">Total pagado</td>
@@ -365,6 +366,29 @@
             }
         </table>
     </div>
+
+    @if (totalPaginas > 1)
+    {
+        <nav class="cps-paginas" aria-label="Páginas de vehículos">
+            @if (pagina > 1)
+            {
+                <a class="cps-pag-btn" href="@UrlPagina(pagina - 1)"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i> Anterior</a>
+            }
+            else
+            {
+                <span class="cps-pag-btn" aria-disabled="true"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i> Anterior</span>
+            }
+            <span class="cps-pag-info">Página @pagina de @totalPaginas</span>
+            @if (pagina < totalPaginas)
+            {
+                <a class="cps-pag-btn" href="@UrlPagina(pagina + 1)">Siguiente <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>
+            }
+            else
+            {
+                <span class="cps-pag-btn" aria-disabled="true">Siguiente <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span>
+            }
+        </nav>
+    }
 
     @* Para guardar los cambios de método y valor (EditarCobro) *@
     @Html.AntiForgeryToken()

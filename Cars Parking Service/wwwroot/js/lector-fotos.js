@@ -185,6 +185,7 @@ function abrirEscanerPlaca() {
     capa.innerHTML = `
         <header class="escaner-barra">
             <h2 id="escanerTitulo"><i class="fa-solid fa-expand" aria-hidden="true"></i> Escanear placa</h2>
+            <button type="button" class="escaner-linterna" data-no-spinner="true" aria-label="Prender linterna" aria-pressed="false" hidden><i class="fa-solid fa-lightbulb" aria-hidden="true"></i></button>
             <button type="button" class="escaner-cerrar" data-no-spinner="true" aria-label="Cerrar">&times;</button>
         </header>
         <div class="escaner-camara">
@@ -216,6 +217,7 @@ function abrirEscanerPlaca() {
     e.campo.value = document.getElementById('placa')?.value || '';
 
     capa.querySelector('.escaner-cerrar').onclick = cerrarEscanerPlaca;
+    capa.querySelector('.escaner-linterna').onclick = () => ponerLinternaEscaner(e, !e.linterna);
     capa.querySelector('.escaner-usar').onclick = usarPlacaEscaner;
     // Sin cámara (no dio permiso o se cayó) vuelve a pedirla
     capa.querySelector('.escaner-otra').onclick = () => {
@@ -248,6 +250,7 @@ async function iniciarCamaraEscaner(e) {
         if (escaner !== e) return detenerFlujo(e);   // la cerraron mientras pedía permiso
         e.video.srcObject = e.flujo;
         await e.video.play();
+        prepararLinternaEscaner(e);
 
         e.worker ??= await (await cargarTesseract()).createWorker('eng');
         if (escaner !== e) return e.worker.terminate();
@@ -256,6 +259,36 @@ async function iniciarCamaraEscaner(e) {
         console.warn('Escáner de placa:', error);
         if (escaner === e) estadoEscaner(e, 'sin-camara');
     }
+}
+
+// Linterna: el botón solo sale donde el navegador deja controlarla (Android con Chrome; iPhone no). Arranca apagada:
+// la placa es reflectiva y la luz de frente puede encandilar la lectura. Se apaga sola al cerrar (track.stop).
+// Algunos Android solo avisan que la tienen cuando la cámara ya da imagen: se revisa otra vez un momento después
+function prepararLinternaEscaner(e, reintento = true) {
+    const pista = e.flujo?.getVideoTracks()[0];
+    const tiene = !!pista?.getCapabilities?.().torch;
+    e.linterna = false;
+    pintarLinternaEscaner(e);
+    e.capa.querySelector('.escaner-linterna').hidden = !tiene;
+    if (!tiene && reintento && pista) setTimeout(() => { if (escaner === e && e.flujo) prepararLinternaEscaner(e, false); }, 700);
+}
+
+async function ponerLinternaEscaner(e, prender) {
+    const pista = e.flujo?.getVideoTracks()[0];
+    if (!pista) return;
+    try {
+        await pista.applyConstraints({ advanced: [{ torch: prender }] });
+        e.linterna = prender;
+    } catch (error) {
+        console.warn('No se pudo cambiar la linterna:', error);
+    }
+    pintarLinternaEscaner(e);
+}
+
+function pintarLinternaEscaner(e) {
+    const boton = e.capa.querySelector('.escaner-linterna');
+    boton.setAttribute('aria-pressed', String(!!e.linterna));
+    boton.setAttribute('aria-label', e.linterna ? 'Apagar linterna' : 'Prender linterna');
 }
 
 function reanudarEscaner(e) {

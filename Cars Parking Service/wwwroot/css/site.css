@@ -3750,7 +3750,8 @@ body.escaner-abierto {
     margin-right: 6px;
 }
 
-.escaner-cerrar {
+.escaner-cerrar,
+.escaner-linterna {
     width: 44px;
     height: 44px;
     border: 0;
@@ -3760,6 +3761,25 @@ body.escaner-abierto {
     font-size: 28px;
     line-height: 1;
     cursor: pointer;
+}
+
+/* Linterna, a la izquierda de la X; prendida en amarillo, como la del video */
+.escaner-linterna {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: 10px;
+    font-size: 20px;
+}
+
+.escaner-linterna[hidden] {
+    display: none;
+}
+
+.escaner-linterna[aria-pressed="true"] {
+    background: #ffd54f;
+    color: #000;
 }
 
 .escaner-camara {
@@ -3975,6 +3995,7 @@ body.escaner-abierto {
 
 .escaner-usar:focus-visible,
 .escaner-acciones button:focus-visible,
+.escaner-linterna:focus-visible,
 .escaner-cerrar:focus-visible {
     outline: 3px solid #ffd54f;
     outline-offset: 2px;

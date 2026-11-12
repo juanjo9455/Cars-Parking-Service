@@ -771,13 +771,49 @@ namespace CarsParkingService.Controllers
             // Contamos solicitudes
             var cantidad = solicitudes.Count();
 
+            // El admin también se entera de las de las otras zonas, aparte y con el nombre de la zona: al tocarlas
+            // ve la tabla de esa zona (filtro Zona) sin cambiar la de su sesión, así no se mezclan los ingresos
+            var zonaSesion = ZonaSesion();
+            var otrasZonas = rolUsuario == 3 && zonaSesion.HasValue
+                ? SolicitudesOtrasZonas(zonaSesion.Value)
+                : new List<object>();
+
             // Retornamos JSON
             return Json(new
             {
                 cantidad = cantidad,
                 solicitudes = solicitudes,
+                otrasZonas,
                 serverTime = DateTime.Now.ToString("O")
             });
+        }
+
+        // Solicitados que no son de la zona dada (la del ingreso o, si no la tiene guardada, la de su ubicación)
+        private List<object> SolicitudesOtrasZonas(int zona)
+        {
+            var nombres = _context.zonas.AsNoTracking().ToDictionary(z => z.id_zona, z => z.nombre_zona);
+
+            return _context.ingresos
+                .AsNoTracking()
+                .Where(i => i.estado_servicio != null && i.estado_servicio.Trim().ToLower() == "solicitado")
+                .Where(i => !(i.id_zona == zona || (i.id_zona == null && i.Ubicacion != null && i.Ubicacion.id_zona == zona)))
+                .Select(i => new
+                {
+                    id = i.id_ingreso,
+                    placa = i.placa,
+                    lugar_entrega = i.lugar_entrega,
+                    id_zona = i.id_zona ?? (i.Ubicacion != null ? i.Ubicacion.id_zona : null)
+                })
+                .ToList()
+                .Select(i => (object)new
+                {
+                    i.id,
+                    i.placa,
+                    i.lugar_entrega,
+                    i.id_zona,
+                    zona = i.id_zona.HasValue ? nombres.GetValueOrDefault(i.id_zona.Value, "Sin zona") : "Sin zona"
+                })
+                .ToList();
         }
 
         [HttpGet]
@@ -2015,7 +2051,7 @@ namespace CarsParkingService.Controllers
         // Despachos y cobros (punto 28, solo administrador): cada vehículo que ingresó en el período (solo la fecha
         // de ingreso, la que se ve en la fila), con quién lo recibió, quién lo solicitó, quién lo despachó, quién lo cobró y su liquidación
         [HttpGet]
-        public IActionResult DespachosCobros(DateTime? desde, DateTime? hasta, string? placa, int? usuario, string? como, int? zona, int? turno, string? estado)
+        public IActionResult DespachosCobros(DateTime? desde, DateTime? hasta, string? placa, int? usuario, string? como, int? zona, int? turno, string? estado, int pagina = 1)
         {
             if (HttpContext.Session.GetInt32("id_rol") != 3)
             {
@@ -2067,11 +2103,21 @@ namespace CarsParkingService.Controllers
                 _ => consulta
             };
 
-            // Máximo 500 filas para que la página no se vuelva pesada
-            var ingresos = consulta
+            // Todos los del filtro para el resumen y el total pagado; en la tabla, de a 50 (páginas). El id desempata
+            // para que un vehículo no salte de página
+            var todos = consulta
                 .OrderByDescending(i => i.fecha_ingreso)
-                .Take(500)
+                .ThenByDescending(i => i.id_ingreso)
                 .ToList();
+
+            const int porPagina = 50;
+            var totalPaginas = Math.Max(1, (todos.Count + porPagina - 1) / porPagina);
+            pagina = Math.Clamp(pagina, 1, totalPaginas);
+
+            var ingresos = todos.Skip((pagina - 1) * porPagina).Take(porPagina).ToList();
+
+            ViewBag.Pagina = pagina;
+            ViewBag.TotalPaginas = totalPaginas;
 
             // Historial de cambios de cada vehículo (punto 6): la columna Modificó y la ventana de información
             ViewBag.Cambios = CambiosIngresos(ingresos.Select(i => i.id_ingreso))
@@ -2093,14 +2139,18 @@ namespace CarsParkingService.Controllers
 
             // Resumen del período con las mismas cuentas de la liquidación (LiquidacionReglas.Calcular): transferencias
             // con propinas, propinas de QR, efectivo a entregar y total (vehículos × servicio). Son los mismos vehículos
-            // de la lista: uno que ingresó hoy y se cobra mañana cuenta en el resumen de hoy
-            var cobrados = ingresos.Where(i => i.estado_pago == "pagado").ToList();
+            // de la lista (todas las páginas): uno que ingresó hoy y se cobra mañana cuenta en el resumen de hoy
+            var cobrados = todos.Where(i => i.estado_pago == "pagado").ToList();
 
-            ViewBag.Vehiculos = ingresos.Count;
-            ViewBag.Despachados = ingresos.Count(i => i.valet_despacho.HasValue);
+            ViewBag.Vehiculos = todos.Count;
+            ViewBag.Despachados = todos.Count(i => i.valet_despacho.HasValue);
             ViewBag.Cobrados = cobrados.Count;
             ViewBag.Cuentas = LiquidacionReglas.Calcular(cobrados);
             ViewBag.SinLiquidar = cobrados.Count(i => i.estado_liquidacion != true);
+
+            // Total de la columna Cobro: lo que pagaron los clientes, con propinas (en efectivo nunca hay propina)
+            ViewBag.TotalPagado = cobrados.Sum(LiquidacionReglas.Cobrado);
+            ViewBag.TotalPropinas = cobrados.Where(i => !LiquidacionReglas.EsEfectivo(i)).Sum(i => i.valor_propina ?? 0);
 
             // Usuarios del filtro, en orden alfabético (punto 15)
             ViewBag.UsuariosFiltro = _context.usuarios.AsNoTracking()

@@ -1791,6 +1791,71 @@ body.cps-key .search-section {
     box-shadow: inset 0 0 0 1px var(--tinta) !important;
 }
 
+/* Despachos y cobros (y errores de WhatsApp enviados): sin liquidar en rojo, liquidado en verde, cobro pendiente
+   en ámbar */
+.status-badge.wa-badge-error {
+    background: var(--rojo) !important;
+    color: #fff !important;
+}
+
+.tabla-despachos .status-badge.status-pagado {
+    background: var(--ok-50) !important;
+    color: var(--ok) !important;
+    box-shadow: none !important;
+}
+
+.status-badge.dc-pendiente {
+    background: var(--aviso-50) !important;
+    color: var(--aviso) !important;
+}
+
+/* Páginas de las tablas largas (Despachos y cobros, Liquidaciones) */
+.cps-paginas {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 14px 0 6px;
+}
+
+.cps-paginas[hidden] {
+    display: none;
+}
+
+.cps-pag-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--linea-2);
+    border-radius: var(--r-md);
+    background: var(--panel);
+    color: var(--tinta);
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.cps-pag-btn:disabled,
+.cps-pag-btn[aria-disabled="true"] {
+    color: var(--gris-2);
+    background: var(--suelo);
+    cursor: default;
+}
+
+.cps-pag-info {
+    color: var(--gris);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    text-align: center;
+}
+
+/* Filas fuera de la página que se ve (también en modo fichas, que les pone display) */
+tr[hidden] {
+    display: none !important;
+}
+
 @media (min-width: 768px) {
     .tabla-key td[data-label="Estado"] {
         text-align: left;

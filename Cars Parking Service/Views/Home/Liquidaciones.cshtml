@@ -85,6 +85,13 @@
             </tbody>
         </table>
     </div>
+
+    @* Páginas de 25 (script de abajo): las filas ya están todas, solo se muestran de a 25 *@
+    <nav class="cps-paginas" id="paginasLiquidaciones" aria-label="Páginas de liquidaciones" hidden>
+        <button type="button" class="cps-pag-btn" data-pag="-1" data-no-spinner="true"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i> Anterior</button>
+        <span class="cps-pag-info" aria-live="polite"></span>
+        <button type="button" class="cps-pag-btn" data-pag="1" data-no-spinner="true">Siguiente <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+    </nav>
 </div>
 
 <partial name="_ModalDetalleLiquidacion" />
@@ -105,6 +112,32 @@
                 fila.querySelector('.liq-btn-vehiculos').click();
             });
 
+            // Páginas de 25. Al filtrar se vuelve a la primera
+            const POR_PAGINA = 25;
+            const paginas = document.getElementById('paginasLiquidaciones');
+            let pagina = 1;
+
+            function paginar() {
+                const filas = [...tbody.querySelectorAll('tr.liq-fila')];
+                const total = Math.max(1, Math.ceil(filas.length / POR_PAGINA));
+                pagina = Math.min(Math.max(pagina, 1), total);
+                filas.forEach((fila, i) => { fila.hidden = Math.floor(i / POR_PAGINA) !== pagina - 1; });
+                paginas.hidden = total === 1;
+                paginas.querySelector('.cps-pag-info').textContent = `Página ${pagina} de ${total}`;
+                paginas.querySelector('[data-pag="-1"]').disabled = pagina === 1;
+                paginas.querySelector('[data-pag="1"]').disabled = pagina === total;
+            }
+
+            paginas.addEventListener('click', function (e) {
+                const boton = e.target.closest('button[data-pag]');
+                if (!boton || boton.disabled) return;
+                pagina += Number(boton.dataset.pag);
+                paginar();
+                tbody.closest('table').scrollIntoView({ block: 'start' });
+            });
+
+            paginar();
+
             // Filtros automáticos: al cambiar uno se piden solo las filas, con los filtros que quedaron en la URL.
             // Si llegan dos respuestas, solo cuenta la del último cambio
             let ultimoPedido = 0;
@@ -122,6 +155,8 @@
 
                     tbody.innerHTML = html;
                     document.getElementById('cantidadLiquidaciones').textContent = tbody.querySelectorAll('tr.liq-fila').length;
+                    pagina = 1;
+                    paginar();
                 } catch (error) {
                     console.error('Error al filtrar las liquidaciones:', error);
                 }

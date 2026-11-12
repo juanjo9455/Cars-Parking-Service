@@ -97,6 +97,9 @@ function cerrarPanelSolicitudes() {
 // Creamos array con las solicitudes
 let solicitudes = [];
 
+// Solo el admin: solicitados de las otras zonas (aparte, con el nombre de la zona)
+let solicitudesOtrasZonas = [];
+
 // Creamos array con los vehiculos en curso
 let vehiculosDespachados = [];
 
@@ -153,10 +156,14 @@ async function cargarSolicitudes(){
 
     // Llenamos el array global con solicitudes
     solicitudes = ingresos.solicitudes;
+    solicitudesOtrasZonas = ingresos.otrasZonas || [];
+
+    // Las de otras zonas (solo el admin) también suenan y cuentan
+    const cantidad = solicitudes.length + solicitudesOtrasZonas.length;
 
     // Mientras haya solicitados suena y vibra en cada refresco, para que siempre estén alertas
     // (7,5 s y no 10: si una respuesta llega tarde no se salta un turno; igual suena una consulta sí y otra no)
-    if (solicitudes.length && Date.now() - ultimaCampana >= 7500) {
+    if (cantidad && Date.now() - ultimaCampana >= 7500) {
         ultimaCampana = Date.now();
         window.reproducirSonido?.('solicitud');
     }
@@ -167,12 +174,12 @@ async function cargarSolicitudes(){
     const totalAcum = document.getElementById('totalAcum');
     const badgeSolicitados = document.getElementById('badge-solicitados');
 
-    if (contadorBurbuja) contadorBurbuja.textContent = ingresos.cantidad;
-    if (contadorPend) contadorPend.textContent = ingresos.cantidad;
-    if (totalAcum) totalAcum.textContent = ingresos.cantidad;
-    if (badgeSolicitados) badgeSolicitados.textContent = ingresos.cantidad;
+    if (contadorBurbuja) contadorBurbuja.textContent = cantidad;
+    if (contadorPend) contadorPend.textContent = cantidad;
+    if (totalAcum) totalAcum.textContent = cantidad;
+    if (badgeSolicitados) badgeSolicitados.textContent = cantidad;
 
-    actualizarEstadoBurbuja(Number(ingresos.cantidad) || 0);
+    actualizarEstadoBurbuja(cantidad);
 
 }
 
@@ -258,7 +265,7 @@ function mostrarSolicitados() {
         return;
     }
 
-    if (solicitudes.length === 0) {
+    if (solicitudes.length === 0 && solicitudesOtrasZonas.length === 0) {
 
         panelEmpty.style.display = "block";
         panelSolicitados.style.display = "none";
@@ -324,6 +331,27 @@ function mostrarSolicitados() {
         panelSolicitados.innerHTML += solicitudHTML;
 
     })
+
+    // Solo el admin: las de otras zonas, sin acciones. Al tocarlas abre Ingresos de esa zona con esa placa (filtro
+    // Zona), sin cambiar la zona de la sesión
+    if (solicitudesOtrasZonas.length) {
+        panelSolicitados.innerHTML += '<div class="req-otras-titulo">Otras zonas</div>' +
+            solicitudesOtrasZonas.map(s => {
+                const url = `/Home/Tabla_Vehiculos?zona=${encodeURIComponent(s.id_zona ?? 'todas')}&placa=${encodeURIComponent(s.placa ?? '')}`;
+                return `
+                    <a class="req-item req-item-otra" href="${url}">
+                        <div class="req-item-info">
+                            <div class="req-item-fila">
+                                <span class="req-item-placa">${escaparHtml(s.placa ?? '')}</span>
+                                <span class="req-item-zona"><i class="fa-solid fa-location-dot"></i> ${escaparHtml(s.zona)}</span>
+                            </div>
+                            <div class="req-item-lugar">
+                                Entrega en: <strong>${escaparHtml(s.lugar_entrega || 'Sin lugar registrado')}</strong>
+                            </div>
+                        </div>
+                    </a>`;
+            }).join('');
+    }
 }
 // Vehículo de la lista de solicitados que está abierto, el que se está despachando y el que espera
 // el segundo toque para reversar. Se guardan aparte porque la lista se vuelve a dibujar cada 5 s
