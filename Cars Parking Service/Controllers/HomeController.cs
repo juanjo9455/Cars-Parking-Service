@@ -2729,11 +2729,16 @@ namespace CarsParkingService.Controllers
                 // aunque llegue otro valor. El método es el que quedó al generar el código (GenerarCodigoSeguridad)
                 var esEfectivo = ingreso.metodo_pago == "Efectivo";
 
-                // QR o transferencia: lo que el cliente pagó de verdad, con propina. Llega con lo que puso en la app
-                // (con la solicitud y el pago juntos, casi todos) o con la tarifa, y el banco lo puede cambiar
+                // QR o transferencia: lo que el cliente pagó de verdad, con propina. Es obligatorio: el banco lo escribe
+                // del comprobante (el campo arranca vacío)
                 var valorCobrado = !esEfectivo && dto.ValorCobrado.HasValue
                     ? decimal.Round(dto.ValorCobrado.Value, 0)
                     : (decimal?)null;
+
+                if (!esEfectivo && !valorCobrado.HasValue)
+                {
+                    return Json(new { success = false, message = "Escribe el valor que pagó el cliente." });
+                }
 
                 // Menos de $1.000 casi siempre es "20.000" mal escrito (quedaba en 20): se pide el valor completo
                 if (valorCobrado < 1000)

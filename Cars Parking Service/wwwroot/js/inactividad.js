@@ -1,4 +1,4 @@
-﻿// Cierre de sesión por inactividad (todos los roles): si en 1 hora nadie toca la pantalla ni escribe, se cierra la
+﻿// Cierre de sesión por inactividad (todos los roles): si en 2 horas nadie toca la pantalla ni escribe, se cierra la
 // sesión (InactividadController.Cerrar) y se va al login con el aviso. Se mide aquí porque el servidor no distingue
 // a la persona de los refrescos automáticos de las páginas (burbujas, tabla de ingresos, VistaKey).
 // - La hora de la última actividad se comparte entre pestañas (localStorage): si trabaja en una, la otra no lo saca.
@@ -6,7 +6,7 @@
 // - El latido (KeepAlive) solo sale cuando hay actividad, máximo uno por minuto. Así, si se cierra la pestaña o se
 //   apaga el celular, el limpiador del servidor (LimpiadorSesionesService) cierra el turno.
 (() => {
-    const LIMITE_MS = 60 * 60 * 1000;    // 1 hora sin actividad
+    const LIMITE_MS = 2 * 60 * 60 * 1000;    // 2 horas sin actividad
     const LATIDO_MS = 60 * 1000;         // máximo un latido por minuto
     const REVISION_MS = 30 * 1000;       // cada cuánto se revisa
     const ESCRITURA_MS = 5 * 1000;       // no escribir en localStorage con cada movimiento del dedo
@@ -62,7 +62,7 @@
     function registrarActividad() {
         if (cerrando) return;
 
-        // Volvió después de la hora y la revisión no alcanzó a correr: se cierra, no se renueva
+        // Volvió después de las 2 horas y la revisión no alcanzó a correr: se cierra, no se renueva
         if (vencida()) {
             cerrar();
             return;

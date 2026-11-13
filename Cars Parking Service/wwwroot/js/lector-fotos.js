@@ -261,8 +261,8 @@ async function iniciarCamaraEscaner(e) {
     }
 }
 
-// Linterna: el botón solo sale donde el navegador deja controlarla (Android con Chrome; iPhone no). Arranca apagada:
-// la placa es reflectiva y la luz de frente puede encandilar la lectura. Se apaga sola al cerrar (track.stop).
+// Linterna: el botón solo sale donde el navegador deja controlarla (Android con Chrome; iPhone no). Se prende sola
+// al abrir la cámara y el botón la apaga o prende. Se apaga sola al cerrar (track.stop).
 // Algunos Android solo avisan que la tienen cuando la cámara ya da imagen: se revisa otra vez un momento después
 function prepararLinternaEscaner(e, reintento = true) {
     const pista = e.flujo?.getVideoTracks()[0];
@@ -270,7 +270,8 @@ function prepararLinternaEscaner(e, reintento = true) {
     e.linterna = false;
     pintarLinternaEscaner(e);
     e.capa.querySelector('.escaner-linterna').hidden = !tiene;
-    if (!tiene && reintento && pista) setTimeout(() => { if (escaner === e && e.flujo) prepararLinternaEscaner(e, false); }, 700);
+    if (tiene) ponerLinternaEscaner(e, true);
+    else if (reintento && pista) setTimeout(() => { if (escaner === e && e.flujo) prepararLinternaEscaner(e, false); }, 700);
 }
 
 async function ponerLinternaEscaner(e, prender) {

@@ -1257,8 +1257,9 @@ function editarValorCobro(idIngreso) {
 }
 
 // Según el método (al abrir el cobro y al cambiarlo): en efectivo se cobra la tarifa, sin propina, y el valor no
-// se cambia; con QR o transferencia arranca con lo de la app (o la tarifa) y "Cambiar valor total" deja escribir
-// lo que pagó. El servidor aplica la misma regla (FinalizarServicio)
+// se cambia. Con QR o transferencia el campo queda abierto y vacío, y es obligatorio: el banco escribe lo que dice
+// el comprobante (generarCodigoSeguridad y FinalizarServicio no siguen sin él). Entre QR y transferencia se
+// conserva lo escrito. El servidor aplica la misma regla
 function ajustarValorPorMetodo(idIngreso) {
     const input = document.getElementById(`valor-cobrado-${idIngreso}`);
     const caja = input?.closest('.cobro-valor');
@@ -1266,25 +1267,24 @@ function ajustarValorPorMetodo(idIngreso) {
     if (!caja || input.readOnly) return;
 
     const efectivo = document.getElementById(`metodo-pago-${idIngreso}`)?.value === 'Efectivo';
-    const valor = efectivo ? Number(input.dataset.tarifa) : Number(input.dataset.inicial);
+    const tarifa = Number(input.dataset.tarifa);
+    const veniaDeEfectivo = input.dataset.modo !== 'transferencia';
+    input.dataset.modo = efectivo ? 'efectivo' : 'transferencia';
 
-    // Vuelve a como se abrió: el valor como texto y el campo cerrado
-    input.value = valor;
-    input.hidden = true;
+    if (efectivo) input.value = tarifa;
+    else if (veniaDeEfectivo) input.value = '';
+
+    input.hidden = efectivo;
     mostrarPesos(input);
-    caja.querySelector('.campo-pesos-ver').hidden = true;
-    caja.querySelector('.cobro-valor-ayuda-editar').hidden = true;
+    caja.querySelector('.campo-pesos-ver').hidden = efectivo;
+    caja.querySelector('.cobro-valor-ayuda-editar').hidden = efectivo;
 
     const precio = caja.querySelector('.cobro-valor-precio');
-    precio.textContent = PESOS.format(valor);
-    precio.hidden = false;
+    precio.textContent = PESOS.format(tarifa);
+    precio.hidden = !efectivo;
 
-    caja.querySelector('.cobro-valor-cambiar').hidden = efectivo;
+    caja.querySelector('.cobro-valor-cambiar').hidden = true;
     caja.querySelector('.cobro-valor-efectivo').hidden = !efectivo;
-
-    // "Leer comprobante" (lector-fotos.js), solo en las páginas que cargan el lector y si no es efectivo
-    const leer = caja.querySelector('.cobro-valor-leer');
-    if (leer) leer.hidden = efectivo || typeof leerValorComprobante !== 'function';
 
     const notaApp = caja.querySelector('.cobro-valor-app');
     if (notaApp) notaApp.hidden = efectivo;
@@ -1317,9 +1317,9 @@ function abrirModalPago(btn) {
     const pagoApp = btn.getAttribute('data-pago-app') === 'true';
     const totalApp = Number(btn.getAttribute('data-total')) || 0;
 
-    // Cuánto se cobra: lo que el cliente puso en la app (con la propina) o, si no pagó por ella, la tarifa de la
-    // ubicación. Se ve como texto; "Cambiar valor total" muestra el campo (editarValorCobro) para escribir lo que
-    // pagó de verdad: lo de más sobre la tarifa queda como propina (FinalizarServicio)
+    // Cuánto se cobra: en efectivo, la tarifa de la ubicación. Con QR o transferencia el banco escribe lo que dice
+    // el comprobante (ajustarValorPorMetodo deja el campo vacío); lo que puso el cliente en la app queda como nota.
+    // Lo de más sobre la tarifa queda como propina (FinalizarServicio)
     const valorInicial = pagoApp && totalApp > 0 ? totalApp : Number(tarifa);
     const servicioApp = Math.min(totalApp, Number(tarifa));
     const notaApp = pagoApp && totalApp > 0
@@ -1332,12 +1332,11 @@ function abrirModalPago(btn) {
                <span class="cobro-valor-precio">${PESOS.format(valorInicial)}</span>
                ${notaApp}
                <input type="text" inputmode="numeric" autocomplete="off" id="valor-cobrado-${id}" class="cobro-valor-input campo-pesos"
-                      data-tarifa="${tarifa}" data-inicial="${valorInicial}" value="${valorInicial}" hidden />
+                      data-tarifa="${tarifa}" data-inicial="${valorInicial}" value="${valorInicial}" placeholder="$ 0" required hidden />
                <span class="campo-pesos-ver" data-pesos-de="valor-cobrado-${id}" hidden>${PESOS.format(valorInicial)}</span>
-               <span class="cobro-valor-ayuda cobro-valor-ayuda-editar" hidden>Servicio ${PESOS.format(tarifa)}. Si el cliente paga más (propina), escribe lo que pagó.</span>
+               <span class="cobro-valor-ayuda cobro-valor-ayuda-editar" hidden>Obligatorio: escribe lo que dice el comprobante. Servicio ${PESOS.format(tarifa)}; si pagó más, la diferencia es propina.</span>
                <span class="cobro-valor-ayuda cobro-valor-efectivo" hidden>En efectivo se cobra la tarifa, sin propina</span>
-               <button type="button" class="cobro-valor-cambiar" onclick="editarValorCobro('${id}')">Cambiar valor total</button>
-               <button type="button" class="cobro-valor-leer" data-no-spinner="true" onclick="leerValorComprobante('${id}', this)"><i class="fa-solid fa-camera"></i> Leer comprobante</button>
+               <button type="button" class="cobro-valor-cambiar" onclick="editarValorCobro('${id}')" hidden>Cambiar valor total</button>
            </div>`
         : valor
             ? `<div class="cobro-valor">
