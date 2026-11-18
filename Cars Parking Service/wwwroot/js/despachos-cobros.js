@@ -20,7 +20,8 @@ function abrirInfoDespacho(info) {
     infoDespacho = info;
 
     const contenido = document.getElementById('contenido-modal-acciones');
-    const editable = info.pagado && !info.liquidado;
+    // Solo el admin edita (data-editar en la tabla); banco y valet solo miran
+    const editable = info.pagado && !info.liquidado && document.querySelector('.tabla-despachos')?.dataset.editar === 'true';
 
     // Etiquetas fijas; los valores vienen de la base y se escriben como texto
     const dato = (etiqueta, valor, vacio = '—', completo = false) => `

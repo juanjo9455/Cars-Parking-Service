@@ -46,9 +46,12 @@
             <p>Vehículos que ingresaron en el período: quién los recibió, parqueó, solicitó, despachó y cobró</p>
         </div>
 
-        <a asp-controller="Home" asp-action="Administrador" class="btn btn-secondary">
-            <i class="fa-solid fa-arrow-left"></i> Volver al panel
-        </a>
+        @if (ViewBag.PuedeEditar == true)
+        {
+            <a asp-controller="Home" asp-action="Administrador" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Volver al panel
+            </a>
+        }
     </div>
 
     <!-- Filtros -->
@@ -78,7 +81,10 @@
                            class="form-control" style="text-transform: uppercase;">
                 </div>
 
-                @* Usuario y en qué participó: con "Cobró" o "Liquidó" el resumen muestra lo de esa persona *@
+                @* Usuario y en qué participó: con "Cobró" o "Liquidó" el resumen muestra lo de esa persona.
+                   Banco y valet no los ven: siempre ven lo que cobraron ellos *@
+                @if (ViewBag.PuedeEditar == true)
+                {
                 <div class="form-group col-md-4 mb-3">
                     <label>Usuario</label>
                     <select name="usuario" style="width:100%;">
@@ -99,6 +105,7 @@
                         }
                     </select>
                 </div>
+                }
 
                 @* Zona y turno en que entró el vehículo (punto 10) *@
                 <div class="form-group col-md-4 mb-3">
@@ -191,7 +198,7 @@
     <p class="dc-ayuda"><i class="fa-solid fa-hand-pointer"></i> Toca la placa para ver toda la información</p>
 
     <div class="table-container">
-        <table class="tabla-despachos">
+        <table class="tabla-despachos" data-editar="@(ViewBag.PuedeEditar == true ? "true" : "false")">
             <thead>
                 <tr>
                     <th>Placa</th>
