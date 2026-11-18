@@ -208,6 +208,71 @@ async function guardarLugar(campo, boton) {
     await enviarCambioAdmin('/Home/CambiarLugar', datos, boton, () => abrirModalInformacion(window.infoOperadores.boton));
 }
 
+// =========================== Placa y celular =========================== \\
+
+// La placa o el celular se vuelven un campo de texto, con Cancelar y Guardar (CambiarDatoCliente valida todo)
+function editarDatoCliente(campo) {
+    cancelarEdicionOperador();
+
+    const caja = document.getElementById(`op-dato-${campo}`);
+    const esPlaca = campo === 'placa';
+    const actual = esPlaca ? window.infoOperadores.placa ?? '' : caja.querySelector('.info-tel')?.textContent.trim() ?? '';
+
+    caja.dataset.completo = caja.classList.contains('info-item-completo');
+    caja.classList.add('info-item-completo', 'op-editando');
+    caja.querySelector('.dc-editable').hidden = true;
+
+    caja.insertAdjacentHTML('beforeend', `
+        <div class="dc-edicion">
+            <input type="${esPlaca ? 'text' : 'tel'}" id="op-nuevo-dato" value="${escaparHtml(actual)}"
+                   maxlength="${esPlaca ? 7 : 20}" placeholder="${esPlaca ? 'ABC123' : '3001234567'}"
+                   ${esPlaca ? 'style="text-transform: uppercase;" autocapitalize="characters"' : 'inputmode="tel"'}
+                   aria-label="${esPlaca ? 'Nueva placa' : 'Nuevo celular'}" />
+            <div class="dc-edicion-botones">
+                <button type="button" class="btn btn-secondary" onclick="cancelarEdicionOperador()">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarDatoCliente('${campo}', this)">Guardar</button>
+            </div>
+        </div>`);
+
+    caja.querySelector('input').focus();
+}
+
+async function guardarDatoCliente(campo, boton) {
+    const { idIngreso, placa } = window.infoOperadores;
+    const campoTexto = document.getElementById('op-nuevo-dato');
+    const esPlaca = campo === 'placa';
+    const nuevo = esPlaca ? campoTexto.value.trim().toUpperCase() : campoTexto.value.trim();
+    const antes = esPlaca ? placa : document.querySelector('#op-dato-telefono .info-tel')?.textContent.trim() || 'sin número';
+
+    if (!nuevo) {
+        mostrarAlertaWhatsApp(esPlaca ? 'Escribe la placa.' : 'Escribe el celular.', 'error');
+        campoTexto.focus();
+        return;
+    }
+
+    if (nuevo === antes) {
+        cancelarEdicionOperador();
+        return;
+    }
+
+    let pregunta = `¿Estás seguro de cambiar ${esPlaca ? 'la placa' : 'el celular'} de ${placa}?\n\nAntes: ${antes}\nAhora: ${nuevo}`;
+    if (!esPlaca) {
+        pregunta += '\n\nNo se reenvía el WhatsApp: los próximos mensajes van al número nuevo.';
+    }
+
+    if (!confirm(pregunta)) return;
+
+    const datos = new FormData();
+    datos.append('id_ingreso', idIngreso);
+    datos.append('campo', campo);
+    datos.append('valor', nuevo);
+
+    await enviarCambioAdmin('/Home/CambiarDatoCliente', datos, boton, () => {
+        abrirModalInformacion(window.infoOperadores.boton);
+        if (esPlaca) window.refrescarTablaIngresos?.();
+    });
+}
+
 // =========================== Cancelar servicio (punto 8) =========================== \\
 
 // Al final de Información y plegado. El botón necesita doble clic (o dos toques seguidos en el celular), motivo y
