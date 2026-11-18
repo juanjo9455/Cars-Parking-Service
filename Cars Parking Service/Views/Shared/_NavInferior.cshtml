@@ -120,6 +120,10 @@
             <li><a class="cps-hoja-link" asp-controller="Home" asp-action="VistaKey">@Ico("square-parking") Parqueaderos @Ico("chevron-right")</a></li>
             <li><a class="cps-hoja-link" asp-controller="Home" asp-action="Administrador">@Ico("settings") Configuración @Ico("chevron-right")</a></li>
         }
+        @if (idRol is 1 or 2 or 3)
+        {
+            <li><a class="cps-hoja-link" asp-controller="Home" asp-action="DespachosCobros">@Ico("receipt") Despachos y cobros @Ico("chevron-right")</a></li>
+        }
         @if (verLiquidacion)
         {
             <li><a class="cps-hoja-link" asp-controller="Liquidacion" asp-action="Liquidacion">@Ico("wallet") Liquidación @Ico("chevron-right")</a></li>

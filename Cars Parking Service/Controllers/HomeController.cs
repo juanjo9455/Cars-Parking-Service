@@ -2048,15 +2048,26 @@ namespace CarsParkingService.Controllers
             ("cobro", "Cobró"), ("liquido", "Liquidó")
         ];
 
-        // Despachos y cobros (punto 28, solo administrador): cada vehículo que ingresó en el período (solo la fecha
+        // Despachos y cobros (punto 28; banco y valet ven solo lo que cobraron, sin editar): cada vehículo que ingresó en el período (solo la fecha
         // de ingreso, la que se ve en la fila), con quién lo recibió, quién lo solicitó, quién lo despachó, quién lo cobró y su liquidación
         [HttpGet]
         public IActionResult DespachosCobros(DateTime? desde, DateTime? hasta, string? placa, int? usuario, string? como, int? zona, int? turno, string? estado, int pagina = 1)
         {
-            if (HttpContext.Session.GetInt32("id_rol") != 3)
+            var rolDespachos = HttpContext.Session.GetInt32("id_rol");
+
+            if (rolDespachos is not (1 or 2 or 3))
             {
                 return RedirectToAction("Index");
             }
+
+            // Banco y valet: solo lo que cobraron ellos (el mismo filtro Usuario + "Cobró" del admin) y sin editar
+            if (rolDespachos != 3)
+            {
+                usuario = HttpContext.Session.GetInt32("id") ?? 0;   // sin id en la sesión, no ve nada
+                como = "cobro";
+            }
+
+            ViewBag.PuedeEditar = rolDespachos == 3;
 
             // Por defecto, solo lo de hoy
             var fechaDesde = (desde ?? DateTime.Today).Date;
