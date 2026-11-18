@@ -2267,9 +2267,21 @@ async function abrirModalInformacion(btn) {
             : "";
 
         // Celular: con un toque se llama desde el celular
-        const celular = info.telefono
+        const celularTexto = info.telefono
             ? `<a class="info-valor info-tel" href="tel:${escaparHtml(info.telefono)}"><i class="fa-solid fa-phone"></i> ${escaparHtml(info.telefono)}</a>`
             : valor(null, "Sin número registrado");
+
+        // Lápiz del admin en la placa y el celular (editarDatoCliente en operadores-ingreso.js). El servidor manda
+        // info.datosCliente solo si se pueden corregir
+        const hayLapizDato = !!info.datosCliente && typeof editarDatoCliente === 'function';
+        const lapizDato = (campo, etiqueta) => hayLapizDato
+            ? `<button type="button" class="dc-lapiz" onclick="editarDatoCliente('${campo}')" aria-label="Cambiar ${etiqueta}">
+                   <i class="fa-solid fa-pen"></i>
+               </button>`
+            : "";
+        const celular = hayLapizDato
+            ? `<div class="dc-editable">${celularTexto}${lapizDato('telefono', 'el celular')}</div>`
+            : celularTexto;
 
         const firma = info.firma
             ? `<div class="info-firma"><img src="${info.firma}" alt="Firma del cliente" /></div>`
@@ -2360,8 +2372,10 @@ async function abrirModalInformacion(btn) {
 
             <div class="info-panel">
 
-                <div class="info-header">
-                    <span class="info-placa">${escaparHtml(info.placa ?? "—")}</span>
+                <div class="info-header" id="op-dato-placa">
+                    ${hayLapizDato
+                        ? `<div class="dc-editable"><span class="info-placa">${escaparHtml(info.placa ?? "—")}</span>${lapizDato('placa', 'la placa')}</div>`
+                        : `<span class="info-placa">${escaparHtml(info.placa ?? "—")}</span>`}
                 </div>
 
                 ${avisoCancelado}
@@ -2376,7 +2390,7 @@ async function abrirModalInformacion(btn) {
                         <span class="info-label">Nombre</span>
                         ${valor(info.nombreCliente, "Sin nombre registrado")}
                     </div>
-                    <div class="info-item">
+                    <div class="info-item" id="op-dato-telefono">
                         <span class="info-label">Celular</span>
                         ${celular}
                     </div>

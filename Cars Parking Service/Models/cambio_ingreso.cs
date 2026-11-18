@@ -24,6 +24,8 @@
             "banco" => "Banco a cargo",
             "lugar_ingreso" => "Lugar de ingreso",
             "lugar_entrega" => "Lugar de entrega",
+            "placa" => "Placa",
+            "telefono" => "Celular",
             "comprobante" => "Foto del comprobante",
             "cancelacion" => "Servicio cancelado",
             _ => campo

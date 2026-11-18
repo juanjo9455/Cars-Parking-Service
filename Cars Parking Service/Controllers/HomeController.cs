@@ -3714,6 +3714,8 @@ namespace CarsParkingService.Controllers
                             .Select(u => new { id = u.id_ubicacion, nombre = u.nombre_ubicacion })
                     }
                     : null,
+                // Lápiz del admin en la placa y el celular (CambiarDatoCliente). No si está liquidado o cancelado
+                datosCliente = esAdmin && !liquidado && !cancelado,
                 // Cancelar el servicio (punto 8): solo el admin, sin cobrar ni liquidar (CancelarServicio)
                 puedeCancelar = esAdmin && IngresoReglas.PuedeCancelarse(ingreso),
                 cancelacion = cancelacion != null ? CambioParaVista(cancelacion) : null,
@@ -3990,6 +3992,93 @@ namespace CarsParkingService.Controllers
 
             return Json(cambio
                 ? new { success = true, mensaje }
+                : new { success = false, mensaje = $"No se pudo cambiar: {ingreso.placa} cambió mientras tanto. Vuelve a abrir Información." });
+        }
+
+        // Lápiz del admin en Información: corrige la placa o el celular. Mismas reglas que al registrar el ingreso
+        // (placa ABC123 sin otro servicio activo; celular de 7 a 15 dígitos, o con + si es de otro país). Nunca en
+        // un vehículo liquidado o cancelado. sp_cambiarDatoCliente vuelve a validar, guarda y deja el historial
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CambiarDatoCliente(int id_ingreso, string? campo, string? valor)
+        {
+            if (!EsAdmin())
+            {
+                return Json(new { success = false, mensaje = "Solo el administrador puede corregir la placa o el celular." });
+            }
+
+            var ingreso = _context.ingresos.AsNoTracking().FirstOrDefault(i => i.id_ingreso == id_ingreso);
+
+            if (ingreso == null)
+            {
+                return Json(new { success = false, mensaje = "No se encontró el vehículo." });
+            }
+
+            if (Liquidado(ingreso))
+            {
+                return Json(new { success = false, mensaje = $"El vehículo {ingreso.placa} ya está liquidado: no se corrige." });
+            }
+
+            if (IngresoReglas.EstaCancelado(ingreso))
+            {
+                return Json(new { success = false, mensaje = $"El servicio de {ingreso.placa} está cancelado: no se corrige." });
+            }
+
+            // Sin espacios, guiones ni paréntesis, como en el ingreso
+            var nuevo = System.Text.RegularExpressions.Regex.Replace(valor ?? "", @"[\s\-()]", "");
+            string antes, que;
+
+            if (campo == "placa")
+            {
+                nuevo = nuevo.ToUpper();
+                antes = ingreso.placa ?? "";
+                que = "la placa";
+
+                if (!System.Text.RegularExpressions.Regex.IsMatch(nuevo, "^[A-Z]{3}[0-9]{3}$"))
+                {
+                    return Json(new { success = false, mensaje = "La placa debe ser como ABC123." });
+                }
+
+                var otroActivo = _context.ingresos.AsNoTracking().Any(i =>
+                    i.id_ingreso != ingreso.id_ingreso &&
+                    i.placa != null && i.placa.Trim().ToUpper() == nuevo &&
+                    (i.estado_servicio == "esperando valet" || i.estado_servicio == "activo" || i.estado_servicio == "parqueado" ||
+                     i.estado_servicio == "solicitado" || i.estado_servicio == "despachado"));
+
+                if (otroActivo)
+                {
+                    return Json(new { success = false, mensaje = $"La placa {nuevo} ya tiene un servicio activo." });
+                }
+            }
+            else if (campo == "telefono")
+            {
+                antes = ingreso.telefono ?? "";
+                que = "el celular";
+
+                if (!System.Text.RegularExpressions.Regex.IsMatch(nuevo, @"^([0-9]{7,15}|\+[0-9]{8,15})$"))
+                {
+                    return Json(new { success = false, mensaje = "El celular debe tener de 7 a 15 números (con + y el indicativo si es de otro país)." });
+                }
+            }
+            else
+            {
+                return Json(new { success = false, mensaje = "Ese dato no se puede cambiar." });
+            }
+
+            if (nuevo == antes)
+            {
+                return Json(new { success = false, mensaje = "Es el mismo dato: no cambió nada." });
+            }
+
+            var cambio = EjecutarCambio("EXEC sp_cambiarDatoCliente @id_ingreso, @id_usuario, @campo, @valor, @ahora",
+                new SqlParameter("@id_ingreso", ingreso.id_ingreso),
+                new SqlParameter("@id_usuario", HttpContext.Session.GetInt32("id")!.Value),
+                new SqlParameter("@campo", System.Data.SqlDbType.VarChar, 30) { Value = campo },
+                new SqlParameter("@valor", System.Data.SqlDbType.NVarChar, 150) { Value = nuevo },
+                new SqlParameter("@ahora", System.Data.SqlDbType.DateTime2) { Value = DateTime.Now });
+
+            return Json(cambio
+                ? new { success = true, mensaje = $"Listo: {que} de {ingreso.placa} ahora es {nuevo} (antes {(antes == "" ? "sin dato" : antes)})." }
                 : new { success = false, mensaje = $"No se pudo cambiar: {ingreso.placa} cambió mientras tanto. Vuelve a abrir Información." });
         }
 
