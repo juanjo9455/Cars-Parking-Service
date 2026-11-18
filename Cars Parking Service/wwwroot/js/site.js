@@ -1866,6 +1866,9 @@ function abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, m
         const valorCobrado = valorInput ? Number(valorInput.value) : null;
         const tarifaCobro = valorInput ? Number(valorInput.dataset.tarifa) : null;
 
+        // Con QR o transferencia el valor no va en el resumen: sale junto a la foto para revisarlo con el comprobante
+        const conComprobante = metodo_pago === "Transferencia" || metodo_pago == "QR";
+
         let detalleValor = '';
         if (valorCobrado > tarifaCobro) {
             detalleValor = ` (servicio ${PESOS.format(tarifaCobro)} + propina ${PESOS.format(valorCobrado - tarifaCobro)})`;
@@ -1903,7 +1906,7 @@ function abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, m
             <p><strong>Estado Actual:</strong>
                 ${estado_servicio}
             </p>
-            ${valorCobrado ? `<p><strong>Valor cobrado:</strong> ${PESOS.format(valorCobrado)}${detalleValor}</p>` : ''}
+            ${valorCobrado && !(conComprobante && valorInput) ? `<p><strong>Valor cobrado:</strong> ${PESOS.format(valorCobrado)}${detalleValor}</p>` : ''}
 
         </div>
 
@@ -1962,6 +1965,16 @@ function abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, m
 
                 </div>
 
+                <!-- El valor que se escribió en el Pago, para revisarlo con la foto: si no coincide, se corrige aquí -->
+                ${valorInput ? `
+                <div class="cobro-valor">
+                    <label class="cobro-valor-label" for="valor-final-${idIngreso}">Valor cobrado</label>
+                    <input type="text" inputmode="numeric" autocomplete="off" id="valor-final-${idIngreso}"
+                           class="cobro-valor-input campo-pesos" value="${valorCobrado || ''}" placeholder="$ 0" required />
+                    <span class="campo-pesos-ver" data-pesos-de="valor-final-${idIngreso}">${valorCobrado ? PESOS.format(valorCobrado) : ''}</span>
+                    <span class="cobro-valor-ayuda">Revisa que sea el mismo del comprobante. Si no, corrígelo${tarifaCobro ? `: servicio ${PESOS.format(tarifaCobro)}; si pagó más, la diferencia es propina` : ''}.</span>
+                </div>` : ''}
+
                 <input type="file"
                         id="cameraInputTransferencia"
                         accept="image/*"
@@ -2008,6 +2021,21 @@ function abrirModalFinalizacion(idIngreso, placa, nombre_cliente, metodo_pago, m
 function finalizarServicio(idIngreso, metodoPago, valorCobrado = null) {
 
     const estadoServicio = 'finalizado';
+
+    // QR o transferencia: va el valor revisado junto a la foto (el del Pago, o el corregido). Mismas reglas del Pago
+    const valorFinal = document.getElementById(`valor-final-${idIngreso}`);
+
+    if (valorFinal) {
+        if (!(Number(valorFinal.value) >= 1000)) {
+            mostrarAlertaWhatsApp(Number(valorFinal.value) > 0
+                ? 'El valor parece incompleto: escribe el valor completo (por ejemplo 20000).'
+                : 'Escribe el valor que pagó el cliente.', 'error');
+            valorFinal.focus();
+            return;
+        }
+
+        valorCobrado = Number(valorFinal.value);
+    }
 
     // Obtener foto si el método es transferencia o QR
     let fotoBase64 = '';
