@@ -2612,6 +2612,21 @@ i.btn-foto-ingreso {
     }
 }
 
+/* Lugar de entrega de un solicitado o despachado: debajo de quién lo pidió (columna Solicitud) o, en el
+   celular, debajo del estado. Si el nombre es largo, pasa a la siguiente línea */
+.tabla-ingresos .solicitud-lugar {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #c62828;
+    white-space: normal;
+}
+
+.tabla-ingresos .solicitud-movil.solicitud-lugar-movil {
+    color: #c62828;
+    white-space: normal;
+}
+
 /* En el celular, más compacta para que las 4 columnas sigan cabiendo sin desborde */
 @media (max-width: 768px) {
     .ingreso-placa {
