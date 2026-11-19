@@ -45,6 +45,12 @@
                 var estadoLinea = (ingresos.estado_servicio ?? "").Trim().ToLower();
                 var posicion = Array.IndexOf(EstacionesLinea, estadoLinea);
 
+                // Dónde se entrega: el que eligió el cliente en su enlace o el que se puso al solicitarlo. Solo
+                // mientras está solicitado o despachado
+                var lugarEntrega = estadoLinea is "solicitado" or "despachado" && !string.IsNullOrWhiteSpace(ingresos.lugar_entrega)
+                    ? ingresos.lugar_entrega.Trim()
+                    : null;
+
                 <tr class="@claseAlerta">
 
                     @* La placa va en un span: la celda conserva su relleno y la placa no queda pegada a los bordes *@
@@ -61,6 +67,10 @@
                         @if (quienSolicito != null)
                         {
                             <span class="solicitud-movil">Pidió: @quienSolicito · @horaSolicitud</span>
+                        }
+                        @if (lugarEntrega != null)
+                        {
+                            <span class="solicitud-movil solicitud-lugar-movil"><i class="fa-solid fa-location-dot"></i> Entregar en: @lugarEntrega</span>
                         }
                     </td>
 
@@ -89,6 +99,10 @@
                         else
                         {
                             <span class="solicitud-vacia">—</span>
+                        }
+                        @if (lugarEntrega != null)
+                        {
+                            <span class="solicitud-lugar"><i class="fa-solid fa-location-dot"></i> @lugarEntrega</span>
                         }
                     </td>
 
