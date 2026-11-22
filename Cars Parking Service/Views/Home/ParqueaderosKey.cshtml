@@ -1,0 +1,109 @@
+﻿@model List<CarsParkingService.Models.ingresos>
+@{
+    ViewData["Title"] = "Todos los parqueaderos";
+    Layout = "~/Views/Shared/_LayoutKey.cshtml";
+
+    var parqueaderosZona = (List<parqueaderos>)ViewBag.Parqueaderos;
+    var propio = (int?)ViewBag.ParqueaderoPropio;
+    var porParqueadero = Model.GroupBy(i => i.id_parqueadero).ToDictionary(g => g.Key, g => g.ToList());
+
+    // El nombre viene en mayúsculas de la BD: cada palabra con mayúscula inicial, como en VistaKey
+    string Titulo(string? nombre) => System.Globalization.CultureInfo.GetCultureInfo("es-CO").TextInfo.ToTitleCase((nombre ?? "").ToLower());
+}
+@* Key > Todos (HomeController.ParqueaderosKey): los carros parqueados en cada parqueadero de su zona. Solo para
+   mirar; la (i) abre la misma Información de VistaKey, sin solicitar ni parquear (data-sin-solicitar) *@
+
+<link rel="stylesheet" href="~/css/vistakey.css" />
+
+<div class="container mt-4">
+    <div class="header">
+        <div class="header-info">
+            <h2>Todos los parqueaderos</h2>
+            <p>Carros parqueados en cada parqueadero@(ViewData["Zona"] is string zona && zona != "" ? $" de {zona}" : "")</p>
+        </div>
+    </div>
+
+    <form method="get" asp-action="ParqueaderosKey">
+        <label class="cps-buscar" for="buscarPlacaTodos">
+            <svg class="ico" aria-hidden="true" focusable="false"><use href="/img/iconos.svg?v=1#i-search"></use></svg>
+            <span class="visually-hidden">Buscar placa</span>
+            <input type="search" id="buscarPlacaTodos" name="placa" placeholder="Buscar placa" autocomplete="off" autocapitalize="characters"
+                   spellcheck="false" maxlength="6" enterkeyhint="search" value="@ViewData["FiltroPlaca"]" />
+        </label>
+    </form>
+
+    @foreach (var p in parqueaderosZona)
+    {
+        var carros = porParqueadero.GetValueOrDefault(p.id_parqueadero) ?? new List<ingresos>();
+
+        <section class="key-parqueadero">
+            <h3 class="key-parqueadero-titulo">
+                <span>@Titulo(p.nombre_parqueadero)@(p.id_parqueadero == propio ? " · el tuyo" : "")</span>
+                <span class="key-parqueadero-cuenta" title="Carros parqueados">@carros.Count</span>
+            </h3>
+
+            <div class="table-container">
+                <table class="tabla-key">
+                    <thead>
+                        <tr>
+                            <th>Placa</th>
+                            <th>Parqueado desde</th>
+                            <th>Información</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (carros.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center" style="padding: 20px; color:#4b5563;">Sin carros parqueados</td>
+                            </tr>
+                        }
+                        @foreach (var c in carros)
+                        {
+                            @* data-label Placa / Estado y cell-action: así la fila se ve como ficha en el celular (cps.css) *@
+                            <tr>
+                                <td data-label="Placa"><span class="ingreso-placa">@c.placa</span></td>
+                                <td data-label="Estado">Parqueado desde @((c.fecha_parqueo ?? c.fecha_ingreso)?.ToString("dd/MM HH:mm"))</td>
+                                <td data-label="Acciones" class="cell-action">
+                                    <button type="button"
+                                            class="btn-icon btn-icon-info"
+                                            title="Ver información del vehículo"
+                                            onclick="abrirModalInformacion(this)"
+                                            data-id-ingreso="@c.id_ingreso"
+                                            data-sin-solicitar="true">
+                                        <i class="fa-solid fa-circle-info"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+</div>
+
+<!-- Modal de información: el mismo de VistaKey (abrirModalInformacion en site.js) -->
+<style>
+    .card-ingreso-vehiculos {
+        width: 30%;
+        max-width: 1100px;
+    }
+</style>
+
+<div id="modal-acciones" class="Editar-Ingreso" style="display:none;">
+    <div class="modal-overlay" onclick="cerrarModalAcciones()"></div>
+    <div class="Card-Ingreso card-ingreso-vehiculos">
+        <span class="close-btn" onclick="cerrarModalAcciones()">&times;</span>
+        <div id="contenido-modal-acciones"></div>
+    </div>
+</div>
+
+<!-- Visor de imagen en grande (fotos de Información) -->
+<div id="visor-imagen" class="visor-imagen" style="display:none;">
+    <div class="visor-overlay" onclick="cerrarVisorImagen()"></div>
+    <div class="visor-contenido">
+        <button class="visor-cerrar" type="button" onclick="cerrarVisorImagen()">&times;</button>
+        <img id="imagen-grande" src="" alt="Imagen ampliada">
+    </div>
+</div>

@@ -546,6 +546,49 @@ namespace CarsParkingService.Controllers
                 .ToList();
         }
 
+        // Key > Todos: los carros parqueados en cada parqueadero de su zona. Solo para mirar: no cambia su
+        // parqueadero ni su turno (parquear y despachar siguen en VistaKey). El suyo va primero
+        [HttpGet]
+        public IActionResult ParqueaderosKey(string? placa)
+        {
+            var idUsuario = HttpContext.Session.GetInt32("id");
+
+            if (!idUsuario.HasValue || HttpContext.Session.GetInt32("id_rol") != 4)
+            {
+                return RedirectToAction("VistaKey");
+            }
+
+            var propio = _context.sesiones
+                .Where(s => s.id_usuario == idUsuario && s.fecha_fin == null)
+                .Select(s => s.id_parqueadero)
+                .FirstOrDefault();
+
+            var parqueaderos = ParqueaderosZona(ZonaSesion())
+                .Where(p => p.estado == "activo")
+                .OrderByDescending(p => p.id_parqueadero == propio)
+                .ThenBy(p => p.nombre_parqueadero)
+                .ToList();
+
+            var ids = parqueaderos.Select(p => p.id_parqueadero).ToList();
+
+            var consulta = _context.ingresos
+                .AsNoTracking()
+                .Where(i => ids.Contains(i.id_parqueadero) && i.estado_servicio == "parqueado");
+
+            if (!string.IsNullOrWhiteSpace(placa))
+            {
+                var placaFiltro = placa.Trim().ToUpper();
+                consulta = consulta.Where(i => i.placa != null && i.placa.Contains(placaFiltro));
+            }
+
+            ViewBag.Parqueaderos = parqueaderos;
+            ViewBag.ParqueaderoPropio = propio;
+            ViewData["FiltroPlaca"] = placa;
+            ViewData["Zona"] = NombreZona(ZonaSesion());
+
+            return View(consulta.OrderByDescending(i => i.fecha_parqueo ?? i.fecha_ingreso).ToList());
+        }
+
         // POST: Cambiar el estado desde la vista Key, o Parquear desde el modal de Información de la
         // tabla de ingresos (volver = "tabla", puntos 13 y 18)
         [HttpPost]
