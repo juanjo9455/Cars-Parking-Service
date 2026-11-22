@@ -656,7 +656,7 @@
 
                     // El total de arriba sigue a las filas
                     const total = document.querySelector('.total-registros-filtro strong');
-                    if (total) total.textContent = tbody.querySelectorAll('tr').length;
+                    if (total) total.textContent = tbody.querySelectorAll('tr:not([data-estado="cancelado"])').length;
                 } catch (error) {
                     console.error('Error al refrescar la tabla de ingresos:', error);
                 } finally {
