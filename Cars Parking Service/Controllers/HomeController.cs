@@ -610,6 +610,13 @@ namespace CarsParkingService.Controllers
                 return RedirectToAction("VistaKey");
             }
 
+            // Solo parquear o despachar. Si no llega qué hacer (un celular que no manda el botón que se tocó), no se
+            // toca el carro: antes se guardaba vacío y el vehículo quedaba sin estado
+            if (nuevo_estado is not ("parqueado" or "despachado"))
+            {
+                return Volver("Error: no llegó qué hacer con el vehículo. Intenta de nuevo.");
+            }
+
             // La regla se valida aquí porque el botón Parquear puede seguir en pantalla (refresco o página sin recargar)
             if (ingreso != null && nuevo_estado == "parqueado" && !IngresoReglas.PuedeParquear(ingreso))
             {
@@ -2535,8 +2542,19 @@ namespace CarsParkingService.Controllers
 
         // Consultamos la tabla de ingresos
 
+        // Ninguna pantalla la usa hoy. Queda solo para el admin y con estados válidos: antes cualquiera con sesión
+        // podía dejar un vehículo sin estado
+        private static readonly string[] EstadosServicio = { "esperando valet", "activo", "parqueado", "solicitado", "despachado", "finalizado", "cancelado" };
+        private static readonly string[] EstadosPago = { "pendiente", "pagado" };
+
+        [HttpPost]
         public IActionResult ActualizarEstadosIngreso(int id_ingreso, string estado_pago, string estado_servicio)
         {
+            if (!EsAdmin() || !EstadosServicio.Contains(estado_servicio) || !EstadosPago.Contains(estado_pago))
+            {
+                return RedirectToAction("Tabla_Vehiculos");
+            }
+
             var ingreso = _context.ingresos.FirstOrDefault(i => i.id_ingreso == id_ingreso);
 
             if (ingreso == null)

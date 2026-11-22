@@ -41,7 +41,9 @@
                 @* Misma regla que valida ActualizarEstadoKey: activo y con valet asignado *@
                 @if (IngresoReglas.PuedeParquear(item))
                 {
-                    <button type="submit" name="nuevo_estado" value="parqueado" class="btn-icon btn-icon-success" title="Marcar como Parqueado">
+                    @* La orden va en un campo y no en el botón: hay celulares que no mandan el botón que se tocó *@
+                    <input type="hidden" name="nuevo_estado" value="parqueado" />
+                    <button type="submit" class="btn-icon btn-icon-success" title="Marcar como Parqueado">
                         <i class="fa-solid fa-square-parking"></i>
                     </button>
                 }
