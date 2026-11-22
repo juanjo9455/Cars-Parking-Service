@@ -2450,17 +2450,17 @@ async function abrirModalInformacion(btn) {
                     : ""}
                 <div class="info-grid">
                     <div class="info-item info-item-completo">
-                        <span class="info-label">Banco ingreso</span>
+                        <span class="info-label">Banco que registró el ingreso</span>
                         ${valor(info.banco, "Sin banco registrado")}
                     </div>
                     ${info.bancoACargo && (info.bancoACargo !== info.banco || hayLapiz('banco'))
-                        ? operador('banco', 'Banco a cargo', info.bancoACargo, "Sin banco", true)
+                        ? operador('banco', 'Banco a cargo del cobro', info.bancoACargo, "Sin banco", true)
                         : ""}
-                    ${operador('valet', 'Valet parqueo', info.valetIngreso, sinValet)}
-                    ${operador('despacho', 'Valet despacho', info.valetDespacho, sinValet)}
-                    ${operador('parqueo', 'Parqueó', info.parqueadoPor, "Sin registro")}
+                    ${operador('valet', 'Valet que lo recibió', info.valetIngreso, sinValet)}
+                    ${operador('despacho', 'Valet que lo despachó', info.valetDespacho, sinValet)}
+                    ${operador('parqueo', 'Quién lo parqueó (Key, valet o banco)', info.parqueadoPor, "Sin registro")}
                     <div class="info-item">
-                        <span class="info-label">Solicitó</span>
+                        <span class="info-label">Quién lo solicitó (cliente u operador)</span>
                         ${valor(info.solicitadoPor, "Aún no se ha solicitado")}
                     </div>
                 </div>

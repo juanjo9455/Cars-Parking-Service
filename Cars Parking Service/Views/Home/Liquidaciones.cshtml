@@ -66,6 +66,21 @@
 
     <p class="liq-cantidad"><span id="cantidadLiquidaciones">@Model.Count</span> liquidaciones</p>
 
+    @* Total general: suma todas las liquidaciones del filtro (también las de otras páginas). Al filtrar lo
+       recalcula sumarTotales (abajo) con los data-* de cada fila *@
+    @{
+        var moneda = System.Globalization.CultureInfo.GetCultureInfo("es-CO");
+    }
+    <div class="liq-total-general" aria-live="polite">
+        <span class="liq-total-label">Total liquidado</span>
+        <strong class="liq-total-valor" id="totalLiquidado">@Model.Sum(l => l.total_liquidado).ToString("C0", moneda)</strong>
+        <span class="liq-total-detalle">
+            Efectivo <b id="totalEfectivo">@Model.Sum(l => l.total_efectivo).ToString("C0", moneda)</b>
+            &ensp;·&ensp;Transferencias <b id="totalTransferencias">@Model.Sum(l => l.total_transferencias).ToString("C0", moneda)</b>
+            &ensp;·&ensp;<b id="totalVehiculos">@Model.Sum(l => l.total_vehiculos)</b> vehículos
+        </span>
+    </div>
+
     <!-- Tabla -->
     <div class="table-container">
         <table class="tabla-liquidaciones">
@@ -138,6 +153,17 @@
 
             paginar();
 
+            // Total general de todas las filas del filtro (no solo la página visible). PESOS: site.js
+            function sumarTotales() {
+                const filas = [...tbody.querySelectorAll('tr.liq-fila')];
+                const suma = campo => filas.reduce((s, f) => s + (Number(f.dataset[campo]) || 0), 0);
+
+                document.getElementById('totalLiquidado').textContent = PESOS.format(suma('total'));
+                document.getElementById('totalEfectivo').textContent = PESOS.format(suma('efectivo'));
+                document.getElementById('totalTransferencias').textContent = PESOS.format(suma('transferencias'));
+                document.getElementById('totalVehiculos').textContent = suma('vehiculos');
+            }
+
             // Filtros automáticos: al cambiar uno se piden solo las filas, con los filtros que quedaron en la URL.
             // Si llegan dos respuestas, solo cuenta la del último cambio
             let ultimoPedido = 0;
@@ -155,6 +181,7 @@
 
                     tbody.innerHTML = html;
                     document.getElementById('cantidadLiquidaciones').textContent = tbody.querySelectorAll('tr.liq-fila').length;
+                    sumarTotales();
                     pagina = 1;
                     paginar();
                 } catch (error) {
