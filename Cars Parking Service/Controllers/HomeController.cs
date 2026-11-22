@@ -1070,7 +1070,8 @@ namespace CarsParkingService.Controllers
             var ingresos = IngresosTabla(idUsuario, placa, lugar, estados, estado_pago, parqueadero, fechaInicio, usuario, zonaTabla, turno, como);
             ViewBag.NombresSolicitud = NombresSolicitud(ingresos);
             ViewBag.ValoresUbicacion = ValoresUbicacion();
-            int totalRegistros = ingresos.Count();
+            // "Ingresos activos": los cancelados no cuentan (sí salen en la tabla si el filtro los incluye)
+            int totalRegistros = ingresos.Count(i => (i.estado_servicio ?? "").Trim().ToLower() != "cancelado");
 
             // Filtros Usuario, Zona y Turno, solo para el admin: usuarios activos en orden alfabético, las zonas del
             // login y los turnos

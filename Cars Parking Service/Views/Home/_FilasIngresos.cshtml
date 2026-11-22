@@ -51,7 +51,8 @@
                     ? ingresos.lugar_entrega.Trim()
                     : null;
 
-                <tr class="@claseAlerta">
+                @* data-estado: el contador "Ingresos activos" no cuenta los cancelados al refrescar (Tabla_Vehiculos) *@
+                <tr class="@claseAlerta" data-estado="@estadoLinea">
 
                     @* La placa va en un span: la celda conserva su relleno y la placa no queda pegada a los bordes *@
                     <td data-label="Placa"><span class="ingreso-placa">@ingresos.placa</span></td>
