@@ -59,6 +59,7 @@
     @if (idRol == 4)
     {
         <a class="cps-nav-item" asp-controller="Home" asp-action="VistaKey" aria-current="@Actual("Home", "VistaKey")">@Ico("square-parking")<span>Parqueadero</span></a>
+        <a class="cps-nav-item" asp-controller="Home" asp-action="ParqueaderosKey" aria-current="@Actual("Home", "ParqueaderosKey")">@Ico("warehouse")<span>Todos</span></a>
         <a class="cps-nav-item" asp-controller="Home" asp-action="MiPerfil" aria-current="@Actual("Home", "MiPerfil")">@Ico("user-cog")<span>Mi perfil</span></a>
     }
     else

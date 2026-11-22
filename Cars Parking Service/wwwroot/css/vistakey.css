@@ -761,3 +761,28 @@
         justify-content: center;
     }
 }
+
+/* Key > Todos: un bloque por parqueadero con la cantidad de carros parqueados (ParqueaderosKey.cshtml) */
+.key-parqueadero {
+    margin-top: 20px;
+}
+
+.key-parqueadero-titulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 0 10px;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.key-parqueadero-cuenta {
+    min-width: 32px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #111827;
+    color: #fff;
+    font-size: .9rem;
+    text-align: center;
+}
