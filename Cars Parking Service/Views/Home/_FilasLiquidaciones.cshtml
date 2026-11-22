@@ -18,7 +18,12 @@
     var funcionario = string.IsNullOrWhiteSpace(l.funcionario) ? "—" : l.funcionario;
     var fecha = l.fecha?.ToString("dd/MM/yyyy HH:mm") ?? "—";
 
-    <tr class="liq-fila">
+    @* Los valores sin formato van en data-*: con ellos se suma el total general al filtrar (Liquidaciones.cshtml) *@
+    <tr class="liq-fila"
+        data-total="@l.total_liquidado.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+        data-efectivo="@l.total_efectivo.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+        data-transferencias="@l.total_transferencias.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+        data-vehiculos="@l.total_vehiculos">
         <td class="liq-numero">#@l.id_liquidacion</td>
         <td>@fecha</td>
         <td>@funcionario</td>

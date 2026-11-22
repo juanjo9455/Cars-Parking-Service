@@ -3382,6 +3382,41 @@ i.btn-foto-ingreso {
     color: #4b5563;
 }
 
+/* Total general de las liquidaciones del filtro: el total grande y debajo efectivo, transferencias y vehículos */
+.liq-total-general {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 12px;
+    margin: 0 0 12px;
+    padding: 12px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.liq-total-label {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #4b5563;
+}
+
+.liq-total-valor {
+    font-size: 1.5rem;
+    font-variant-numeric: tabular-nums;
+    color: #111827;
+}
+
+.liq-total-detalle {
+    flex-basis: 100%;
+    font-size: 14px;
+    color: #4b5563;
+    font-variant-numeric: tabular-nums;
+}
+
 /* Montos alineados para compararlos de una fila a otra */
 .tabla-liquidaciones .liq-dinero {
     font-variant-numeric: tabular-nums;
