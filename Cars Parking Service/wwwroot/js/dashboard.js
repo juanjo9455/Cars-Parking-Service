@@ -300,8 +300,10 @@
     }
 
     // ---------- Costos de parqueaderos ----------
-    // Por cada parqueadero alquilado, su costo: la tarifa guardada, sin cálculos
-    function pintarCostos(filas) {
+    // Por cada parqueadero alquilado, su costo en el período: la tarifa guardada × los vehículos que entraron a él
+    // (sin cancelados, como en sp_dashboardCostosParqueaderos). El de mayor costo, arriba
+    function pintarCostos(datos) {
+        const filas = datos.map(f => ({ ...f, total: f.costo * f.vehiculos })).sort((a, b) => b.total - a.total);
         const tarjeta = $('tabCostos');
         const canvas = tarjeta.querySelector('canvas');
         canvas.parentElement.style.height = `${Math.max(220, filas.length * 34 + 50)}px`;
@@ -312,7 +314,7 @@
             data: {
                 labels: filas.map(f => f.nombre),
                 datasets: [
-                    { label: 'Costo del parqueadero', data: filas.map(f => f.costo), backgroundColor: COLOR.marca, borderRadius: 6, maxBarThickness: 22 }
+                    { label: 'Costo del parqueadero', data: filas.map(f => f.total), backgroundColor: COLOR.marca, borderRadius: 6, maxBarThickness: 22 }
                 ]
             },
             plugins: [VALORES],
@@ -322,7 +324,15 @@
                 plugins: {
                     legend: { display: false },
                     valores: { texto: pesos },
-                    tooltip: { callbacks: { label: c => `${c.dataset.label}: ${pesos(c.raw)}` } }
+                    tooltip: {
+                        callbacks: {
+                            label: c => `${c.dataset.label}: ${pesos(c.raw)}`,
+                            footer: items => {
+                                const f = filas[items[0].dataIndex];
+                                return `Tarifa ${pesos(f.costo)} × ${numero(f.vehiculos)} vehículos`;
+                            }
+                        }
+                    }
                 },
                 scales: {
                     x: { beginAtZero: true, grid: { color: COLOR.reja }, ticks: { callback: pesosCorto } },
