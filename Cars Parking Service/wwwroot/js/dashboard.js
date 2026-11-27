@@ -300,11 +300,11 @@
     }
 
     // ---------- Costos de parqueaderos ----------
-    // Por cada parqueadero alquilado: lo recaudado por sus vehículos contra su costo (la tarifa guardada, sin cálculos)
+    // Por cada parqueadero alquilado, su costo: la tarifa guardada, sin cálculos
     function pintarCostos(filas) {
         const tarjeta = $('tabCostos');
         const canvas = tarjeta.querySelector('canvas');
-        canvas.parentElement.style.height = `${Math.max(220, filas.length * 56 + 70)}px`;
+        canvas.parentElement.style.height = `${Math.max(220, filas.length * 34 + 50)}px`;
         vacio(tarjeta, filas.length ? null : 'Sin parqueaderos con costo para los filtros seleccionados');
 
         dibujar(canvas, filas.length && {
@@ -312,8 +312,7 @@
             data: {
                 labels: filas.map(f => f.nombre),
                 datasets: [
-                    { label: 'Recaudo', data: filas.map(f => f.recaudado), backgroundColor: COLOR.efectivo, borderRadius: 6, maxBarThickness: 20 },
-                    { label: 'Costo del parqueadero', data: filas.map(f => f.costo), backgroundColor: COLOR.marca, borderRadius: 6, maxBarThickness: 20 }
+                    { label: 'Costo del parqueadero', data: filas.map(f => f.costo), backgroundColor: COLOR.marca, borderRadius: 6, maxBarThickness: 22 }
                 ]
             },
             plugins: [VALORES],
@@ -321,17 +320,9 @@
                 indexAxis: 'y',
                 layout: { padding: { right: 84 } },
                 plugins: {
-                    legend: { position: 'bottom' },
+                    legend: { display: false },
                     valores: { texto: pesos },
-                    tooltip: {
-                        callbacks: {
-                            label: c => `${c.dataset.label}: ${pesos(c.raw)}`,
-                            footer: items => {
-                                const f = filas[items[0].dataIndex];
-                                return `${numero(f.vehiculos)} vehículos · Diferencia: ${pesos(f.recaudado - f.costo)}`;
-                            }
-                        }
-                    }
+                    tooltip: { callbacks: { label: c => `${c.dataset.label}: ${pesos(c.raw)}` } }
                 },
                 scales: {
                     x: { beginAtZero: true, grid: { color: COLOR.reja }, ticks: { callback: pesosCorto } },
