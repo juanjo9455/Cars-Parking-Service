@@ -90,6 +90,11 @@ namespace CarsParkingService.Controllers
         public IActionResult GetIngresosPorLugar([FromQuery] Filtros f) =>
             Json(Consultar<dashboard_grupo>("sp_dashboardRecaudoPor", f, new SqlParameter("@por", "lugar")));
 
+        // Costos de parqueaderos: la tarifa guardada de cada parqueadero alquilado contra lo recaudado por sus vehículos
+        [HttpGet]
+        public IActionResult GetCostosParqueaderos([FromQuery] Filtros f) =>
+            Json(Consultar<dashboard_costo_parqueadero>("sp_dashboardCostosParqueaderos", f));
+
         [HttpGet]
         public IActionResult GetLiquidacionesPorFecha([FromQuery] Filtros f) =>
             Json(Consultar<dashboard_periodo>("sp_dashboardLiquidacionesPorFecha", f,

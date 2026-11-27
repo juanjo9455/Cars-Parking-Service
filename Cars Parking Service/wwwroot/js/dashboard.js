@@ -148,6 +148,52 @@
         if (config) new Chart(canvas, config);
     }
 
+    // ---------- Valores en las barras ----------
+    // El número exacto al final de cada barra horizontal o encima de cada columna. Cada gráfica dice cómo se escribe
+    // (options.plugins.valores.texto); en las columnas apiladas va uno solo arriba, el total (valores.totales), y
+    // con muchas columnas va de lado para que no se monten (valores.rotar)
+    const VALORES = {
+        id: 'valores',
+        afterDatasetsDraw(chart, _, op) {
+            if (!op?.texto) return;
+            const { ctx } = chart;
+            const horizontal = chart.options.indexAxis === 'y';
+            const visibles = chart.data.datasets.map((_, i) => i).filter(i => chart.isDatasetVisible(i));
+
+            ctx.save();
+            ctx.font = `600 11px ${Chart.defaults.font.family}`;
+            ctx.fillStyle = '#263238';
+            ctx.textAlign = horizontal ? 'left' : 'center';
+            ctx.textBaseline = horizontal ? 'middle' : 'bottom';
+
+            if (op.totales) {
+                op.totales.forEach((total, j) => {
+                    const barras = visibles.map(i => chart.getDatasetMeta(i).data[j]).filter(Boolean);
+                    if (!barras.length) return;
+                    const arriba = Math.min(...barras.map(b => Math.min(b.y, b.base)));
+                    if (!op.rotar) {
+                        ctx.fillText(op.texto(total, j), barras[0].x, arriba - 4);
+                        return;
+                    }
+                    ctx.save();
+                    ctx.translate(barras[0].x, arriba - 4);
+                    ctx.rotate(-Math.PI / 2);
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(op.texto(total, j), 0, 0);
+                    ctx.restore();
+                });
+            } else {
+                visibles.forEach(i => chart.getDatasetMeta(i).data.forEach((barra, j) => {
+                    const texto = op.texto(chart.data.datasets[i].data[j], j, i);
+                    if (horizontal) ctx.fillText(texto, barra.x + 6, barra.y);
+                    else ctx.fillText(texto, barra.x, barra.y - 4);
+                }));
+            }
+            ctx.restore();
+        }
+    };
+
     const $ = id => document.getElementById(id);
     const datos = {};
 
@@ -166,6 +212,7 @@
         cargar('GetKpis', q, $('dshKpis'), pintarKpis);
         cargar('GetIngresosPorZona', q, $('tabZona'), d => { datos.zona = d; pintarBarras('zona'); });
         cargar('GetIngresosPorLugar', q, $('tabLugar'), d => { datos.lugar = d; pintarBarras('lugar'); });
+        cargar('GetCostosParqueaderos', q, $('tabCostos'), pintarCostos);
         cargar('GetLiquidacionesPorFecha', q, $('tabFechas'), pintarFechas);
         cargar('GetHorasPico', q, $('tabHoras'), pintarHoras);
         cargar('GetRendimientoValets', q, $('tabValets'), pintarValets);
@@ -232,10 +279,13 @@
                 labels: filas.map(f => f.nombre),
                 datasets: [{ data: filas.map(f => f[ver]), backgroundColor: cual === 'zona' ? COLOR.marca : COLOR.oscuro, borderRadius: 6, maxBarThickness: 22 }]
             },
+            plugins: [VALORES],
             options: {
                 indexAxis: 'y',
+                layout: { padding: { right: 84 } },   // espacio para el valor al final de la barra
                 plugins: {
                     legend: { display: false },
+                    valores: { texto: v => enPesos ? pesos(v) : numero(v) },
                     tooltip: { callbacks: { label: c => enPesos ? pesos(c.raw) : `${numero(c.raw)} vehículos` } }
                 },
                 scales: {
@@ -245,6 +295,57 @@
                 // Restaurante: un clic deja el dashboard solo con ese lugar
                 onClick: cual === 'lugar' ? (_, el) => el.length && filtrarLugar(filas[el[0].index].id) : undefined,
                 onHover: cual === 'lugar' ? (e, el) => { e.native.target.style.cursor = el.length ? 'pointer' : 'default'; } : undefined
+            }
+        });
+    }
+
+    // ---------- Costos de parqueaderos ----------
+    // Por cada parqueadero alquilado: lo recaudado por sus vehículos contra su costo (la tarifa guardada, sin cálculos)
+    function pintarCostos(filas) {
+        const tarjeta = $('tabCostos');
+        const canvas = tarjeta.querySelector('canvas');
+        canvas.parentElement.style.height = `${Math.max(220, filas.length * 56 + 70)}px`;
+        vacio(tarjeta, filas.length ? null : 'Sin parqueaderos con costo para los filtros seleccionados');
+
+        dibujar(canvas, filas.length && {
+            type: 'bar',
+            data: {
+                labels: filas.map(f => f.nombre),
+                datasets: [
+                    { label: 'Recaudo', data: filas.map(f => f.recaudado), backgroundColor: COLOR.efectivo, borderRadius: 6, maxBarThickness: 20 },
+                    { label: 'Costo del parqueadero', data: filas.map(f => f.costo), backgroundColor: COLOR.marca, borderRadius: 6, maxBarThickness: 20 }
+                ]
+            },
+            plugins: [VALORES],
+            options: {
+                indexAxis: 'y',
+                layout: { padding: { right: 84 } },
+                plugins: {
+                    legend: { position: 'bottom' },
+                    valores: { texto: pesos },
+                    tooltip: {
+                        callbacks: {
+                            label: c => `${c.dataset.label}: ${pesos(c.raw)}`,
+                            footer: items => {
+                                const f = filas[items[0].dataIndex];
+                                return `${numero(f.vehiculos)} vehículos · Diferencia: ${pesos(f.recaudado - f.costo)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { beginAtZero: true, grid: { color: COLOR.reja }, ticks: { callback: pesosCorto } },
+                    y: {
+                        grid: { display: false },
+                        // En el celular los nombres largos van en dos líneas para que no se corten
+                        ticks: {
+                            callback(v) {
+                                const nombre = this.getLabelForValue(v);
+                                return this.chart.width < 500 && nombre.length > 12 ? nombre.split(' ') : nombre;
+                            }
+                        }
+                    }
+                }
             }
         });
     }
@@ -276,10 +377,15 @@
                     { label: 'Transferencias', data: filas.map(f => f.transferencias), backgroundColor: COLOR.transferencia, borderRadius: 4, maxBarThickness: 48 }
                 ]
             },
+            plugins: [VALORES],
             options: {
                 interaction: { mode: 'index', intersect: false },
+                // Espacio para el total encima de cada columna (de lado necesita más)
+                layout: { padding: { top: filas.length > 12 ? 76 : 18 } },
                 plugins: {
                     legend: { position: 'bottom' },
+                    // El total liquidado exacto encima de cada columna; con más de 12 columnas, de lado
+                    valores: { texto: pesos, totales: filas.map(f => f.total), rotar: filas.length > 12 },
                     tooltip: {
                         callbacks: {
                             label: c => `${c.dataset.label}: ${pesos(c.raw)}`,
@@ -344,7 +450,15 @@
             options: {
                 cutout: '62%',
                 plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 12 } },
+                    // La leyenda lleva el valor de cada parte: vehículos y pesos
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            generateLabels: c => Chart.overrides.doughnut.plugins.legend.labels.generateLabels(c)
+                                .map((l, i) => ({ ...l, text: `${l.text}: ${numero(grupo[i].vehiculos)} (${pesos(grupo[i].valor)})` }))
+                        }
+                    },
                     tooltip: { callbacks: { label: c => `${c.label}: ${numero(c.raw)} vehículos · ${pesos(grupo[c.dataIndex].valor)}` } }
                 }
             }
