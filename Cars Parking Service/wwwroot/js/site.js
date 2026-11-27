@@ -2473,6 +2473,12 @@ async function abrirModalInformacion(btn) {
                         <span class="info-label">Parqueadero</span>
                         ${valor(info.parqueadero, "Sin parqueadero asignado")}
                     </div>
+                    ${info.costoParqueadero != null
+                        ? `<div class="info-item info-item-completo">
+                               <span class="info-label">Costo parqueadero</span>
+                               ${valor(PESOS.format(info.costoParqueadero), "—")}
+                           </div>`
+                        : ""}
                 </div>
 
                 ${seccionCambios}

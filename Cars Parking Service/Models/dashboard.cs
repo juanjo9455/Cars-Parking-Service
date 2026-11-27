@@ -29,6 +29,17 @@
         public int vehiculos { get; set; }
     }
 
+    // sp_dashboardCostosParqueaderos (Database/dashboard-costos-parqueaderos.sql): un parqueadero alquilado, su costo
+    // (la tarifa guardada) y lo recaudado por sus vehículos
+    public class dashboard_costo_parqueadero
+    {
+        public int id { get; set; }
+        public string nombre { get; set; } = "";
+        public decimal costo { get; set; }
+        public decimal recaudado { get; set; }
+        public int vehiculos { get; set; }
+    }
+
     // sp_dashboardLiquidacionesPorFecha: un día, mes o año
     public class dashboard_periodo
     {

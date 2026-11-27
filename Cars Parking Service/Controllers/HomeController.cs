@@ -3718,6 +3718,8 @@ namespace CarsParkingService.Controllers
                 lugarEntrega = ingreso.lugar_entrega ?? ingreso.Ubicacion?.nombre_ubicacion,
                 lugarIngreso = ingreso.Ubicacion?.nombre_ubicacion,
                 parqueadero = ingreso.Parqueadero?.nombre_parqueadero,
+                // Costo del parqueadero: la tarifa guardada, tal cual. Solo el admin
+                costoParqueadero = esAdmin ? ingreso.Parqueadero?.tarifa : null,
                 objetosValor = ingreso.notas,
                 estadoPago = ingreso.estado_pago,
                 estadoServicio = ingreso.estado_servicio,
