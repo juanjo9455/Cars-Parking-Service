@@ -26,8 +26,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // SMS de ingreso por Onurix (Services/SmsService.cs), a la par del WhatsApp. La configuración está en la sección "Sms";
 // Client, Key y Habilitado van en appsettings.Secretos.json, que no se sube a git (el repositorio es público) y se
-// publica con la app. En desarrollo no se carga: las pruebas locales no mandan SMS reales
-if (!builder.Environment.IsDevelopment())
+// publica con la app. En desarrollo no se carga (las pruebas locales no mandan SMS reales), salvo que se pida con
+// "Sms": { "CargarSecretosEnDesarrollo": true } en appsettings.Development.json (rama de pruebas)
+if (!builder.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Sms:CargarSecretosEnDesarrollo"))
 {
     builder.Configuration.AddJsonFile("appsettings.Secretos.json", optional: true, reloadOnChange: true);
 }
