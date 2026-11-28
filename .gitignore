@@ -363,3 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
+
+# Claves que nunca van al repositorio (público): SMS Onurix. Se publica con la app desde Visual Studio
+appsettings.Secretos.json
