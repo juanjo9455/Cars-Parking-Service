@@ -1,17 +1,14 @@
-﻿// Banco de turno: vehículos sin cobrar de un banco cuyo turno ya terminó (Database/turnos.sql). Al entrar sale la
-// ventana para recibirlos, todos marcados: si entraron varios bancos, se ponen de acuerdo y cada uno desmarca los
-// que no le tocan. "Ahora no" la cierra y deja el aviso flotante para recibirlos después.
+﻿// Banco de turno: vehículos sin cobrar de un banco cuyo turno ya terminó (Database/turnos.sql). Mientras haya,
+// sale el botón redondo de arriba con la cantidad. La ventana para recibirlos solo se abre al tocarlo (nunca sola:
+// así nadie los recibe por error); salen todos marcados y cada banco desmarca los que no le tocan.
 // Usa de site.js: escaparHtml y mostrarAlertaWhatsApp
 (() => {
     const modal = document.getElementById('recibir-vehiculos');
     const aviso = document.getElementById('recibir-aviso');
     if (!modal || !aviso) return;
 
-    // "Ahora no": en esta sesión del navegador no vuelve a abrirse sola con los mismos vehículos
-    const CLAVE = 'cps-recibir-visto';
     let vehiculos = [];
 
-    const firma = () => vehiculos.map(v => v.id).join(',');
     const plural = (n, palabra) => `${n} ${palabra}${n === 1 ? '' : 's'}`;
 
     function pintar() {
@@ -29,11 +26,16 @@
                 <span class="recibir-detalle">${escaparHtml(v.estado ?? '')} · ${escaparHtml(v.ubicacion ?? '')}</span>
             </label>`).join('');
 
-        aviso.innerHTML = `<i class="fa-solid fa-right-left"></i> ${plural(n, 'vehículo')} del turno anterior por recibir`;
+        // Botón de arriba: la cantidad en la insignia y el texto para quien no ve el ícono
+        const texto = `${plural(n, 'vehículo')} del turno anterior por recibir`;
+        aviso.querySelector('.bubble-count').textContent = n || '';
+        aviso.setAttribute('aria-label', texto);
+        aviso.title = texto;
         aviso.hidden = n === 0;
     }
 
-    async function cargar(abrir) {
+    // Trae los vehículos y actualiza el botón de arriba. La ventana no se abre aquí
+    async function cargar() {
         try {
             const respuesta = await fetch('/Home/VehiculosPorRecibir', { cache: 'no-store' });
             vehiculos = (await respuesta.json()).vehiculos || [];
@@ -42,18 +44,11 @@
         }
 
         pintar();
-
-        let visto = null;
-        try { visto = sessionStorage.getItem(CLAVE); } catch { }
-
-        if (abrir && vehiculos.length > 0 && visto !== firma()) {
-            modal.hidden = false;
-        }
     }
 
+    // "Ahora no": la cierra; el botón de arriba sigue para recibirlos después
     document.getElementById('recibir-ahora-no').addEventListener('click', () => {
         modal.hidden = true;
-        try { sessionStorage.setItem(CLAVE, firma()); } catch { }
     });
 
     aviso.addEventListener('click', () => { modal.hidden = false; });
@@ -82,7 +77,7 @@
             if (data.success) {
                 setTimeout(() => location.reload(), 1500);
             } else {
-                cargar(false);
+                cargar();
             }
         } catch {
             mostrarAlertaWhatsApp('No se pudieron recibir los vehículos. Revisa la conexión e intenta de nuevo.', 'error');
@@ -91,5 +86,5 @@
         }
     });
 
-    cargar(true);
+    cargar();
 })();

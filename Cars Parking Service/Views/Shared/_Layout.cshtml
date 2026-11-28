@@ -70,7 +70,12 @@
             </div>
         </div>
 
-        <button type="button" id="recibir-aviso" class="recibir-aviso" hidden></button>
+        @* Botón redondo en la barra de arriba mientras haya vehículos por recibir: abre la ventana (recibir-vehiculos.js) *@
+        <button type="button" id="recibir-aviso" class="recibir-boton" hidden data-no-spinner="true"
+                aria-label="Vehículos del turno anterior por recibir" title="Vehículos del turno anterior por recibir">
+            <i class="fa-solid fa-right-left" aria-hidden="true"></i>
+            <span class="bubble-count"></span>
+        </button>
 
         <script src="~/js/recibir-vehiculos.js" asp-append-version="true"></script>
     }
