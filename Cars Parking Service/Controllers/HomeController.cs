@@ -21,11 +21,13 @@ namespace CarsParkingService.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly CarsParkingService.Services.ISmsService _sms;
 
-        public HomeController(ApplicationDbContext context, IConfiguration configuration)
+        public HomeController(ApplicationDbContext context, IConfiguration configuration, CarsParkingService.Services.ISmsService sms)
         {
             _context = context;
             _configuration = configuration;
+            _sms = sms;
         }
 
         public class FinalizarServicioDTO
@@ -1694,6 +1696,20 @@ namespace CarsParkingService.Controllers
                     System.Diagnostics.Debug.WriteLine($"Error enviado Whatsapp: {ex.Message}");
                     TempData["WhatsAppError"] = "No se pudo enviar el WhatsApp al cliente.";
 
+                }
+
+                // SMS de "vehículo recibido", a la par del WhatsApp (Services/SmsService.cs, Onurix). Va aparte y después:
+                // el WhatsApp de arriba no cambia, y si el SMS falla el ingreso sigue (queda en tbl_sms_enviados)
+                if (enviarWhatsapp)
+                {
+                    try
+                    {
+                        await _sms.EnviarIngresoAsync(obj_ingreso.id_ingreso, placaNormalized, obj_ingreso.telefono);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error enviando SMS: {ex.Message}");
+                    }
                 }
 
                 TempData["Exito"] = "¡Vehículo registrado exitosamente!";

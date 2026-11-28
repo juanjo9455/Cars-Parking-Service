@@ -24,6 +24,17 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
+// SMS de ingreso por Onurix (Services/SmsService.cs), a la par del WhatsApp. La configuración está en la sección "Sms";
+// Client, Key y Habilitado van en appsettings.Secretos.json, que no se sube a git (el repositorio es público) y se
+// publica con la app. En desarrollo no se carga: las pruebas locales no mandan SMS reales
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddJsonFile("appsettings.Secretos.json", optional: true, reloadOnChange: true);
+}
+
+builder.Services.Configure<SmsOptions>(builder.Configuration.GetSection("Sms"));
+builder.Services.AddHttpClient<ISmsService, SmsService>(cliente => cliente.Timeout = TimeSpan.FromSeconds(10));
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
