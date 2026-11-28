@@ -2598,6 +2598,66 @@ body.cps-app:has(.bubble-whatsapp) .cps-zona {
     }
 }
 
+/* Vehículos del turno anterior por recibir (banco): botón redondo en la barra, a la izquierda de las otras burbujas
+   (recibir-vehiculos.js). Lleva la insignia de las solicitudes (.bubble-count) con la cantidad */
+body.cps-app .recibir-boton {
+    position: fixed;
+    top: calc(var(--safe-t) + 10px);
+    right: 60px;
+    z-index: 960;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--suelo);
+    color: var(--rojo);
+    cursor: pointer;
+}
+
+body.cps-app .recibir-boton[hidden] {
+    display: none;
+}
+
+body.cps-app .recibir-boton i {
+    font-size: 18px;
+}
+
+body.cps-app:has(.bubble) .recibir-boton {
+    right: 104px;
+}
+
+body.cps-app:has(.bubble-whatsapp) .recibir-boton {
+    right: 148px;
+}
+
+/* Espacio en la barra mientras se ve (la zona se recorta si hace falta) */
+body.cps-app:has(.recibir-boton:not([hidden])) .cps-zona {
+    margin-right: 46px;
+}
+
+body.cps-app:has(.bubble):has(.recibir-boton:not([hidden])) .cps-zona {
+    margin-right: 90px;
+}
+
+body.cps-app:has(.bubble-whatsapp):has(.recibir-boton:not([hidden])) .cps-zona {
+    margin-right: 134px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    body.cps-app .recibir-boton:hover {
+        background: var(--linea);
+    }
+}
+
+@media print {
+    .recibir-boton {
+        display: none !important;
+    }
+}
+
 body.cps-app .recibir-aviso {
     top: auto !important;
     right: 16px !important;
