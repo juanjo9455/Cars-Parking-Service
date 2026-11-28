@@ -2,6 +2,8 @@ using CarsParkingService.Data;
 using CarsParkingService.Services;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
+using System.Net.Sockets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,7 +36,28 @@ if (!builder.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>
 }
 
 builder.Services.Configure<SmsOptions>(builder.Configuration.GetSection("Sms"));
-builder.Services.AddHttpClient<ISmsService, SmsService>(cliente => cliente.Timeout = TimeSpan.FromSeconds(10));
+builder.Services.AddHttpClient<ISmsService, SmsService>(cliente => cliente.Timeout = TimeSpan.FromSeconds(10))
+    // Onurix autoriza por IP y las registradas son IPv4: la conexión del SMS sale siempre por IPv4. Si el equipo tiene
+    // IPv6, Onurix vería esa otra dirección y respondería "IP no aprobada" (error 1005). Solo afecta al SMS
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+    {
+        ConnectCallback = async (contexto, cancelacion) =>
+        {
+            var ips = await Dns.GetHostAddressesAsync(contexto.DnsEndPoint.Host, AddressFamily.InterNetwork, cancelacion);
+            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
+
+            try
+            {
+                await socket.ConnectAsync(ips, contexto.DnsEndPoint.Port, cancelacion);
+                return new NetworkStream(socket, ownsSocket: true);
+            }
+            catch
+            {
+                socket.Dispose();
+                throw;
+            }
+        }
+    });
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
